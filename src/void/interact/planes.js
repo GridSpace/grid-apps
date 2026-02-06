@@ -2,10 +2,14 @@
 
 import { THREE } from '../../ext/three.js';
 import { space } from '../../moto/space.js';
+import { api } from '../api.js';
 
 function getInteractiveObjects() {
     const objects = [];
     for (const plane of this.planes) {
+        if (!plane?.getGroup?.().visible) {
+            continue;
+        }
         // Add plane mesh and outline
         objects.push(plane.mesh);
         // objects.push(plane.outline);
@@ -110,8 +114,9 @@ function handleHover(intersection, event, allIntersections) {
 
     // Use first intersection (closest) - just like kiri/mesh
     const plane = intersection.object?.userData?.plane;
+    const planeVisible = plane?.getGroup?.().visible !== false;
 
-    if (plane && !plane.isSelected()) {
+    if (plane && planeVisible && !plane.isSelected()) {
         // Found a plane that's not selected
         if (this.hoveredPlane !== plane) {
             // Clear previous hover
@@ -122,7 +127,7 @@ function handleHover(intersection, event, allIntersections) {
             plane.setHovered(true);
             this.hoveredPlane = plane;
         }
-    } else if (!plane || plane.isSelected()) {
+    } else if (!plane || !planeVisible || plane.isSelected()) {
         // No plane found or plane is already selected, clear hover
         if (this.hoveredPlane && !this.hoveredPlane.isSelected()) {
             this.hoveredPlane.setHovered(false);
@@ -145,11 +150,12 @@ function getBestPlaneFromIntersections(allIntersections) {
     camera.getWorldDirection(cameraDir);
 
     let bestPlane = null;
-    let bestDot = -Infinity;
+    let bestDot = Infinity;
 
     for (const int of allIntersections) {
         const plane = int.object?.userData?.plane;
         if (!plane) continue;
+        if (plane.getGroup?.().visible === false) continue;
 
         if (int.face && int.face.normal) {
             const normal = int.face.normal.clone();
@@ -193,7 +199,8 @@ function handleMouseUp(intersection, event, allIntersections) {
         return;
     }
 
-    const plane = intersection.object?.userData?.plane;
+    const best = this.getBestPlaneFromIntersections(allIntersections);
+    const plane = (best && best.getGroup?.().visible !== false) ? best : intersection.object?.userData?.plane;
     if (plane) {
         this.selectPlane(plane, event);
     } else if (!event.ctrlKey && !event.metaKey) {
@@ -305,17 +312,26 @@ function viewNormalToHover() {
     let target = this.resolveViewNormalTarget(this.hoverIntersection) || this.resolveViewNormalFromSelection();
     if (!target && this.isSketchEditing && this.isSketchEditing()) {
         const sketch = this.getEditingSketchFeature && this.getEditingSketchFeature();
-        const frame = sketch?.plane;
-        if (frame) {
+        const rec = sketch?.id ? api.sketchRuntime?.getRecord?.(sketch.id) : null;
+        const runtimePlane = rec?.plane;
+        if (runtimePlane?.mesh && runtimePlane?.group) {
+            runtimePlane.mesh.updateMatrixWorld(true);
+            runtimePlane.group.updateMatrixWorld(true);
+            const xAxis = new THREE.Vector3();
+            const yAxis = new THREE.Vector3();
+            const normal = new THREE.Vector3();
+            runtimePlane.mesh.matrixWorld.extractBasis(xAxis, yAxis, normal);
+            normal.normalize();
+            const point = new THREE.Vector3();
+            runtimePlane.group.getWorldPosition(point);
+            target = { normal, point };
+        } else if (sketch?.plane) {
+            const frame = sketch.plane;
             const normal = new THREE.Vector3(
                 frame.normal?.x ?? 0,
                 frame.normal?.y ?? 0,
                 frame.normal?.z ?? 1
-            );
-            if (normal.lengthSq() < 1e-12) {
-                normal.set(0, 0, 1);
-            }
-            normal.normalize();
+            ).normalize();
             const point = new THREE.Vector3(
                 frame.origin?.x || 0,
                 frame.origin?.y || 0,
@@ -361,6 +377,9 @@ function resolveViewNormalFromSelection() {
         return null;
     }
     const plane = this.selectedPlanes.values().next().value;
+    if (plane?.getGroup && !plane.getGroup().visible) {
+        return null;
+    }
     if (!plane?.mesh || !plane?.group) {
         return null;
     }
@@ -383,6 +402,10 @@ function resolveViewNormalFromSelection() {
 function resolveViewNormalTarget(intersection) {
     const object = intersection?.object;
     if (!object) return null;
+    const plane = object.userData?.plane;
+    if (plane && !plane.getGroup?.().visible) {
+        return null;
+    }
 
     const resolver = object.userData?.viewNormalResolver;
     if (typeof resolver === 'function') {

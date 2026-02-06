@@ -71,7 +71,11 @@ const toolbar = {
             if (!sketch) {
                 return;
             }
+            api.sketchRuntime?.setEditing(sketch.id);
+            api.interact?.clearSketchSelection?.();
+            tree.selectedFeatureId = sketch.id;
             tree.render();
+            window.dispatchEvent(new CustomEvent('void-state-change'));
         }, { id: 'btn-sketch' });
         this.sketchToolButtons = {
             point: this.addButton(container, 'Point', () => api.interact.setSketchTool('point')),

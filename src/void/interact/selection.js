@@ -59,6 +59,7 @@ function deselectAll() {
     this.clearSelectedPoints();
     this.clearSketchSelection?.();
     this.cancelSketchLine?.();
+    this.setSketchTool?.('select');
     this.updateHandleScreenScales();
     window.dispatchEvent(new CustomEvent('void-state-change'));
 }

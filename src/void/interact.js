@@ -69,6 +69,11 @@ const interact = {
                 event.preventDefault();
             }
         });
+        window.addEventListener('mousemove', event => {
+            if (this.isSketchEditing()) {
+                this.handleSketchHover(event);
+            }
+        });
 
         space.mouse.downSelect((int, event, ints) => {
             if (event && event.button !== 0) {
@@ -106,6 +111,10 @@ const interact = {
                 return;
             }
             if (this.isSketchEditing()) {
+                // Query phase from space.js: return selectable objects only.
+                if (!event && int === undefined) {
+                    return this.getInteractiveObjects();
+                }
                 this.upSelectCalled = true;
                 this.handleSketchMouseUp(event);
                 this.sketchPointerDown = null;
@@ -137,6 +146,21 @@ const interact = {
             }
             if (!this.upSelectCalled && !this.draggedHandle && !this.wasHandleDrag && ints && ints.length > 0) {
                 this.handleMouseUp(ints[0], event, ints);
+            }
+            this.upSelectCalled = false;
+        });
+        window.addEventListener('mouseup', event => {
+            if (event && event.button !== 0) {
+                return;
+            }
+            if (!this.isSketchEditing()) {
+                return;
+            }
+            // When space.js doesn't emit up/upSelect (empty selection array),
+            // complete the sketch interaction here.
+            if (!this.upSelectCalled && this.sketchPointerDown) {
+                this.handleSketchMouseUp(event);
+                this.sketchPointerDown = null;
             }
             this.upSelectCalled = false;
         });

@@ -91,7 +91,7 @@ function createSketchRuntimeApi(getApi) {
             entitiesGroup.name = `sketch-entities-${feature.id}`;
 
             group.add(planeGroup);
-            group.add(entitiesGroup);
+            planeGroup.add(entitiesGroup);
 
             return {
                 feature,

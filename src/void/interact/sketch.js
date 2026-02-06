@@ -59,11 +59,15 @@ function handleSketchKeyDown(event) {
     }
 
     if (event.code === 'Escape') {
-        if (this.sketchLineStart) {
+        const hadLine = !!this.sketchLineStart;
+        if (hadLine) {
             this.cancelSketchLine();
+        }
+        if (this.getSketchTool() !== 'select') {
+            this.setSketchTool('select');
             return true;
         }
-        return false;
+        return hadLine;
     }
 
     if (event.code === 'KeyV') {
@@ -80,7 +84,46 @@ function handleSketchKeyDown(event) {
         return this.toggleSelectedConstruction();
     }
 
+    if (event.code === 'Delete' || event.code === 'Backspace') {
+        return this.deleteSelectedSketchEntities();
+    }
+
     return false;
+}
+
+function deleteSelectedSketchEntities() {
+    const feature = this.getEditingSketchFeature();
+    if (!feature || !this.selectedSketchEntities.size) {
+        return false;
+    }
+
+    const removeIds = new Set(this.selectedSketchEntities);
+    let removed = 0;
+    api.features.update(feature.id, sketch => {
+        sketch.entities = Array.isArray(sketch.entities) ? sketch.entities : [];
+        const keep = [];
+        for (const entity of sketch.entities) {
+            if (removeIds.has(entity.id)) {
+                removed++;
+            } else {
+                keep.push(entity);
+            }
+        }
+        sketch.entities = keep;
+    }, {
+        opType: 'feature.update',
+        payload: { field: 'entities.remove', ids: Array.from(removeIds) }
+    });
+
+    if (!removed) {
+        return false;
+    }
+
+    this.selectedSketchEntities.clear();
+    this.hoveredSketchEntityId = null;
+    this.setSketchTool('select');
+    this.updateSketchInteractionVisuals();
+    return true;
 }
 
 function toggleSelectedConstruction() {
@@ -471,38 +514,41 @@ function getEventViewportXY(event) {
 }
 
 function getSketchBasis(feature) {
+    const rec = api.sketchRuntime?.getRecord?.(feature?.id);
+    const runtimePlane = rec?.plane;
+    if (runtimePlane?.mesh && runtimePlane?.group) {
+        runtimePlane.mesh.updateMatrixWorld(true);
+        runtimePlane.group.updateMatrixWorld(true);
+        const xAxis = new THREE.Vector3();
+        const yAxis = new THREE.Vector3();
+        const normal = new THREE.Vector3();
+        runtimePlane.mesh.matrixWorld.extractBasis(xAxis, yAxis, normal);
+        xAxis.normalize();
+        yAxis.normalize();
+        normal.normalize();
+        const origin = new THREE.Vector3();
+        runtimePlane.group.getWorldPosition(origin);
+        return { origin, normal, xAxis, yAxis };
+    }
+
     const frame = feature?.plane;
     if (!frame) return null;
-
     const origin = new THREE.Vector3(
         frame.origin?.x || 0,
         frame.origin?.y || 0,
         frame.origin?.z || 0
     );
-
     const normal = new THREE.Vector3(
         frame.normal?.x ?? 0,
         frame.normal?.y ?? 0,
         frame.normal?.z ?? 1
-    );
-    if (normal.lengthSq() < 1e-12) normal.set(0, 0, 1);
-    normal.normalize();
-
+    ).normalize();
     const xAxis = new THREE.Vector3(
         frame.x_axis?.x ?? 1,
         frame.x_axis?.y ?? 0,
         frame.x_axis?.z ?? 0
-    );
-    xAxis.addScaledVector(normal, -xAxis.dot(normal));
-    if (xAxis.lengthSq() < 1e-12) {
-        xAxis.copy(Math.abs(normal.z) < 0.9 ? new THREE.Vector3(0, 0, 1) : new THREE.Vector3(0, 1, 0));
-        xAxis.addScaledVector(normal, -xAxis.dot(normal));
-    }
-    xAxis.normalize();
-
+    ).normalize();
     const yAxis = new THREE.Vector3().crossVectors(normal, xAxis).normalize();
-    xAxis.crossVectors(yAxis, normal).normalize();
-
     return { origin, normal, xAxis, yAxis };
 }
 
@@ -570,5 +616,6 @@ export {
     projectEventToSketchLocal,
     collectSelectedCoordinateRefs,
     createSketchPoint,
-    createSketchLine
+    createSketchLine,
+    deleteSelectedSketchEntities
 };
