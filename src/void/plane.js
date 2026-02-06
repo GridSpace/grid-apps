@@ -2,7 +2,7 @@
 
 import { THREE } from '../ext/three.js';
 
-const { Group, PlaneGeometry, MeshBasicMaterial, Mesh, DoubleSide, EdgesGeometry, LineSegments, LineBasicMaterial, SphereGeometry } = THREE;
+const { Group, PlaneGeometry, CircleGeometry, MeshBasicMaterial, Mesh, DoubleSide, EdgesGeometry, LineSegments, LineBasicMaterial } = THREE;
 
 /**
  * Plane primitive - a fundamental void:form feature
@@ -54,9 +54,17 @@ class Plane {
         // Clear existing geometry
         while (this.group.children.length > 0) {
             const child = this.group.children[0];
+            child.traverse(obj => {
+                if (obj.geometry) obj.geometry.dispose();
+                if (obj.material) {
+                    if (Array.isArray(obj.material)) {
+                        obj.material.forEach(m => m.dispose());
+                    } else {
+                        obj.material.dispose();
+                    }
+                }
+            });
             this.group.remove(child);
-            if (child.geometry) child.geometry.dispose();
-            if (child.material) child.material.dispose();
         }
         this.handles = [];
 
@@ -105,12 +113,23 @@ class Plane {
     createHandles() {
         const halfWidth = this.size / 2;
         const halfHeight = (this.height !== undefined ? this.height : this.size) / 2;
-        const handleRadius = 3;
-        const handleGeometry = new SphereGeometry(handleRadius, 8, 8);
+        const handleRadius = 4;
+        const handleGeometry = new CircleGeometry(handleRadius, 24);
+        const handleOutlineGeometry = new CircleGeometry(handleRadius, 24);
         const handleMaterial = new MeshBasicMaterial({
+            color: 0x707070,
+            transparent: true,
+            opacity: 0.35,
+            depthWrite: false,
+            side: DoubleSide,
+            polygonOffset: true,
+            polygonOffsetFactor: -2,
+            polygonOffsetUnits: -2
+        });
+        const handleOutlineMaterial = new LineBasicMaterial({
             color: 0xffffff,
             transparent: true,
-            opacity: 0.8,
+            opacity: 0.95,
             depthWrite: false
         });
 
@@ -123,11 +142,19 @@ class Plane {
 
         for (const corner of corners) {
             const handle = new Mesh(handleGeometry.clone(), handleMaterial.clone());
-            handle.position.set(corner.x, corner.y, corner.z);
+            handle.position.set(corner.x, corner.y, 0);
             handle.renderOrder = 3;
             handle.userData.handleType = 'plane-resize';
             handle.userData.handleName = corner.name;
             handle.userData.plane = this;
+
+            const handleOutline = new LineSegments(
+                new EdgesGeometry(handleOutlineGeometry.clone()),
+                handleOutlineMaterial.clone()
+            );
+            handleOutline.position.z = 0.01;
+            handleOutline.renderOrder = 4;
+            handle.add(handleOutline);
 
             // Handles start hidden (only visible when selected)
             handle.visible = false;
@@ -171,7 +198,7 @@ class Plane {
             ];
 
             for (let i = 0; i < this.handles.length && i < positions.length; i++) {
-                this.handles[i].position.set(positions[i].x, positions[i].y, 0);
+                this.handles[i].position.set(positions[i].x, positions[i].y, this.handles[i].position.z);
             }
         }
 
@@ -425,16 +452,19 @@ class Plane {
      * Dispose of all resources
      */
     dispose() {
-        if (this.mesh) {
-            this.mesh.geometry.dispose();
-            this.mesh.material.dispose();
-        }
-        if (this.outline) {
-            this.outline.geometry.dispose();
-            this.outline.material.dispose();
-        }
         while (this.group.children.length > 0) {
-            this.group.remove(this.group.children[0]);
+            const child = this.group.children[0];
+            child.traverse(obj => {
+                if (obj.geometry) obj.geometry.dispose();
+                if (obj.material) {
+                    if (Array.isArray(obj.material)) {
+                        obj.material.forEach(m => m.dispose());
+                    } else {
+                        obj.material.dispose();
+                    }
+                }
+            });
+            this.group.remove(child);
         }
     }
 }
