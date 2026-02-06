@@ -5,6 +5,9 @@ import { overlay } from './overlay.js';
 import { datum } from './datum.js';
 import { Plane } from './plane.js';
 import { interact } from './interact.js';
+import { createOriginApi } from './api/origin.js';
+import { createFeaturesApi } from './api/features.js';
+import { createSketchApi } from './api/sketch.js';
 
 const DOC_SCHEMA_VERSION = 1;
 const ADMIN_CURRENT_DOC_KEY = 'current_doc_id';
@@ -39,78 +42,7 @@ const api = {
     datum,
     Plane,
     interact,
-    origin: {
-        state: { x: 0, y: 0, z: 0, show: true },
-        changeHandlers: new Set(),
-
-        defaultState() {
-            return { x: 0, y: 0, z: 0, show: true };
-        },
-
-        toJSON() {
-            const { x, y, z, show } = this.state;
-            return { x, y, z, show };
-        },
-
-        applyJSON(data = {}, notify = true) {
-            const next = {
-                x: data.x ?? 0,
-                y: data.y ?? 0,
-                z: data.z ?? 0,
-                show: data.show !== undefined ? !!data.show : true
-            };
-            this.state = next;
-            this.syncOverlayPoint();
-            if (notify) {
-                this.notifyChange();
-            }
-            return this.state;
-        },
-
-        isVisible() {
-            return !!this.state.show;
-        },
-
-        setVisible(visible) {
-            const next = !!visible;
-            if (this.state.show === next) {
-                return this.state;
-            }
-            this.applyJSON({ ...this.state, show: next }, true);
-            return this.state;
-        },
-
-        toggleVisible() {
-            return this.setVisible(!this.isVisible());
-        },
-
-        onChange(handler) {
-            if (typeof handler === 'function') {
-                this.changeHandlers.add(handler);
-            }
-            return this;
-        },
-
-        offChange(handler) {
-            this.changeHandlers.delete(handler);
-            return this;
-        },
-
-        notifyChange() {
-            for (const handler of this.changeHandlers) {
-                handler(this.state);
-            }
-        },
-
-        syncOverlayPoint() {
-            const item = api.overlay?.elements?.get('origin-point');
-            if (item?.el) {
-                item.opts = item.opts || {};
-                item.opts.hidden = !this.state.show;
-                item.el.style.display = this.state.show ? '' : 'none';
-            }
-        }
-    },
+    origin: null,
 
     // Document management
     document: {
@@ -551,71 +483,8 @@ const api = {
     },
 
     // Feature management
-    sketch: {
-        createFromTarget(target) {
-            const doc = api.document.current;
-            if (!doc || !target?.frame) {
-                return null;
-            }
-            const sketchCount = (doc.features || []).filter(f => f?.type === 'sketch').length;
-            const feature = {
-                id: shortId(),
-                type: 'sketch',
-                name: `Sketch ${sketchCount + 1}`,
-                created_at: Date.now(),
-                plane: JSON.parse(JSON.stringify(target.frame)),
-                target: {
-                    kind: target.kind || 'plane',
-                    id: target.id || null,
-                    name: target.name || null,
-                    label: target.label || null,
-                    source: target.source || null
-                }
-            };
-            api.features.add(feature);
-            return feature;
-        }
-    },
-
-    features: {
-        list() {
-            const doc = api.document.current;
-            return doc ? doc.features : [];
-        },
-
-        add(feature) {
-            const doc = api.document.current;
-            if (doc) {
-                doc.features.push(feature);
-                api.document.save({
-                    kind: 'micro',
-                    opType: 'feature.add',
-                    payload: {
-                        type: feature?.type || 'unknown',
-                        id: feature?.id || null
-                    }
-                });
-            }
-        },
-
-        remove(feature) {
-            const doc = api.document.current;
-            if (doc) {
-                const index = doc.features.indexOf(feature);
-                if (index >= 0) {
-                    doc.features.splice(index, 1);
-                    api.document.save({
-                        kind: 'micro',
-                        opType: 'feature.remove',
-                        payload: {
-                            type: feature?.type || 'unknown',
-                            id: feature?.id || null
-                        }
-                    });
-                }
-            }
-        }
-    },
+    sketch: null,
+    features: null,
 
     // Selection management
     selection: {
@@ -647,5 +516,9 @@ const api = {
         console.log({ api_initialized: true });
     }
 };
+
+api.origin = createOriginApi(() => api);
+api.features = createFeaturesApi(() => api);
+api.sketch = createSketchApi(() => api, shortId);
 
 export { api };
