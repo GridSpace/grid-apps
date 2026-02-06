@@ -19,6 +19,18 @@ function getInteractiveObjects() {
         }
     }
 
+    if (this.isSketchEditing && this.isSketchEditing()) {
+        const sketch = this.getEditingSketchFeature && this.getEditingSketchFeature();
+        const rec = sketch?.id ? api.sketchRuntime?.getRecord?.(sketch.id) : null;
+        if (rec?.entityViews) {
+            for (const view of rec.entityViews.values()) {
+                if (view?.object) {
+                    objects.push(view.object);
+                }
+            }
+        }
+    }
+
     // DON'T add trackPlane here - space.js adds it as trackTo separately
     // This ensures it's detected as trackInt, not selectInt
 

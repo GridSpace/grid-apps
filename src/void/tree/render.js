@@ -13,7 +13,7 @@ function createDivider() {
     return el;
 }
 
-function createRow({ label, depth = 0, expanded, onToggle, eyeVisible, onEye }) {
+function createRow({ label, depth = 0, expanded, onToggle, eyeVisible, onEye, onSelect, onHoverEnter, onHoverLeave }) {
     const row = document.createElement('div');
     row.className = 'tree-row';
     if (onEye && eyeVisible === false) {
@@ -57,6 +57,16 @@ function createRow({ label, depth = 0, expanded, onToggle, eyeVisible, onEye }) 
             onEye();
         };
         row.appendChild(eye);
+    }
+
+    if (typeof onSelect === 'function') {
+        row.onclick = () => onSelect();
+    }
+    if (typeof onHoverEnter === 'function') {
+        row.onmouseenter = () => onHoverEnter();
+    }
+    if (typeof onHoverLeave === 'function') {
+        row.onmouseleave = () => onHoverLeave();
     }
 
     return row;

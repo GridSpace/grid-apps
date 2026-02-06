@@ -6,7 +6,7 @@ import { Plane } from '../plane.js';
 const SKETCH_COLORS = {
     planeDefault: { fill: 0x5a9fd4, fillOpacity: 0.1, outline: 0x5a9fd4, outlineOpacity: 0.65 },
     planeHover: { fill: 0xff9933, fillOpacity: 0.14, outline: 0xff9933, outlineOpacity: 0.95 },
-    planeEdit: { fill: 0x9ec7ff, fillOpacity: 0.16, outline: 0x5a9fd4, outlineOpacity: 0.95 },
+    planeEdit: { fill: 0x9ec7ff, fillOpacity: 0.08, outline: 0x5a9fd4, outlineOpacity: 0.9 },
     linesGray: 0x8f8f8f,
     linesHover: 0xff9933,
     linesEdit: 0xffffff,
@@ -89,19 +89,36 @@ function createSketchRuntimeApi(getApi) {
 
             const entitiesGroup = new THREE.Group();
             entitiesGroup.name = `sketch-entities-${feature.id}`;
+            const previewLine = new THREE.Line(
+                new THREE.BufferGeometry().setFromPoints([
+                    new THREE.Vector3(0, 0, 0),
+                    new THREE.Vector3(0, 0, 0)
+                ]),
+                new THREE.LineBasicMaterial({
+                    color: SKETCH_COLORS.linesHover,
+                    transparent: true,
+                    opacity: 0.9,
+                    depthWrite: false
+                })
+            );
+            previewLine.visible = false;
+            previewLine.renderOrder = 9;
+            entitiesGroup.add(previewLine);
 
             group.add(planeGroup);
-            planeGroup.add(entitiesGroup);
+            group.add(entitiesGroup);
 
             return {
                 feature,
                 group,
                 plane,
                 entitiesGroup,
+                previewLine,
                 entityViews: new Map(),
                 interaction: {
                     hoveredId: null,
-                    selectedIds: new Set()
+                    selectedIds: new Set(),
+                    previewLine: null
                 },
                 labelId: `sketch-label-${feature.id}`
             };
@@ -111,6 +128,10 @@ function createSketchRuntimeApi(getApi) {
             const feature = rec.feature;
             if (feature?.plane) {
                 rec.plane.setFrame(this.toDisplayPlaneFrame(feature.plane));
+                const pg = rec.plane.getGroup();
+                rec.entitiesGroup.position.copy(pg.position);
+                rec.entitiesGroup.quaternion.copy(pg.quaternion);
+                rec.entitiesGroup.scale.copy(pg.scale);
             }
             this.rebuildEntities(rec);
             this.applySketchState(rec);
@@ -133,6 +154,10 @@ function createSketchRuntimeApi(getApi) {
         rebuildEntities(rec) {
             while (rec.entitiesGroup.children.length) {
                 const child = rec.entitiesGroup.children[0];
+                if (child === rec.previewLine) {
+                    rec.entitiesGroup.remove(child);
+                    continue;
+                }
                 child.geometry?.dispose?.();
                 child.material?.dispose?.();
                 rec.entitiesGroup.remove(child);
@@ -140,14 +165,22 @@ function createSketchRuntimeApi(getApi) {
             rec.entityViews.clear();
 
             const entities = Array.isArray(rec.feature?.entities) ? rec.feature.entities : [];
+            const pointById = new Map();
+            for (const entity of entities) {
+                if (entity?.type === 'point' && entity.id) {
+                    pointById.set(entity.id, entity);
+                }
+            }
             for (const entity of entities) {
                 if (!entity?.id) {
                     continue;
                 }
                 if (entity.type === 'line' && entity.a && entity.b) {
+                    const [a, b] = this.getLineEndpoints(entity, pointById);
+                    if (!a || !b) continue;
                     const geometry = new THREE.BufferGeometry().setFromPoints([
-                        new THREE.Vector3(entity.a.x || 0, entity.a.y || 0, 0),
-                        new THREE.Vector3(entity.b.x || 0, entity.b.y || 0, 0)
+                        new THREE.Vector3(a.x || 0, a.y || 0, 0),
+                        new THREE.Vector3(b.x || 0, b.y || 0, 0)
                     ]);
                     const material = entity.construction
                         ? new THREE.LineDashedMaterial({
@@ -177,11 +210,11 @@ function createSketchRuntimeApi(getApi) {
                 }
 
                 if (entity.type === 'point') {
-                    const geometry = new THREE.CircleGeometry(1.6, 20);
+                    const geometry = new THREE.CircleGeometry(1.15, 20);
                     const material = new THREE.MeshBasicMaterial({
                         color: SKETCH_COLORS.pointsGray,
                         transparent: true,
-                        opacity: 1,
+                        opacity: 0.45,
                         depthWrite: false,
                         side: THREE.DoubleSide
                     });
@@ -190,9 +223,34 @@ function createSketchRuntimeApi(getApi) {
                     point.renderOrder = 8;
                     point.userData.sketchEntityId = entity.id;
                     point.userData.sketchEntityType = 'point';
+                    const loopVerts = [];
+                    const seg = 24;
+                    for (let i = 0; i <= seg; i++) {
+                        const t = (i / seg) * Math.PI * 2;
+                        loopVerts.push(Math.cos(t) * 1.15, Math.sin(t) * 1.15, 0.01);
+                    }
+                    const loopGeo = new THREE.BufferGeometry();
+                    loopGeo.setAttribute('position', new THREE.Float32BufferAttribute(loopVerts, 3));
+                    const loop = new THREE.Line(
+                        loopGeo,
+                        new THREE.LineBasicMaterial({
+                            color: 0x5a9fd4,
+                            transparent: true,
+                            opacity: 0.95,
+                            depthWrite: false
+                        })
+                    );
+                    loop.renderOrder = 9;
+                    point.add(loop);
                     rec.entitiesGroup.add(point);
                     rec.entityViews.set(entity.id, { entity, object: point, type: 'point' });
                 }
+            }
+            if (rec.previewLine && rec.previewLine.parent !== rec.entitiesGroup) {
+                rec.entitiesGroup.add(rec.previewLine);
+            } else if (rec.previewLine) {
+                rec.entitiesGroup.remove(rec.previewLine);
+                rec.entitiesGroup.add(rec.previewLine);
             }
         },
 
@@ -211,6 +269,7 @@ function createSketchRuntimeApi(getApi) {
             const mode = editing ? 'edit' : (hovered ? 'hover' : 'default');
             this.applyPlaneStyle(rec.plane, mode);
             this.applyEntityStyle(rec, mode);
+            this.applyPreviewLine(rec, mode, editing);
             this.applyLabelState(rec, mode, showPlane);
         },
 
@@ -262,8 +321,27 @@ function createSketchRuntimeApi(getApi) {
                             ? SKETCH_COLORS.pointsHover
                             : basePointColor;
                     view.object.material.color.setHex(color);
+                    const outline = view.object.children?.[0];
+                    if (outline?.material?.color) {
+                        outline.material.color.setHex(selected || hovered ? SKETCH_COLORS.linesHover : 0x5a9fd4);
+                    }
                 }
             }
+        },
+
+        applyPreviewLine(rec, mode, editing) {
+            if (!rec.previewLine) return;
+            const preview = rec.interaction?.previewLine;
+            if (!editing || !preview?.a || !preview?.b) {
+                rec.previewLine.visible = false;
+                return;
+            }
+            const a = new THREE.Vector3(preview.a.x || 0, preview.a.y || 0, 0);
+            const b = new THREE.Vector3(preview.b.x || 0, preview.b.y || 0, 0);
+            rec.previewLine.geometry.dispose();
+            rec.previewLine.geometry = new THREE.BufferGeometry().setFromPoints([a, b]);
+            rec.previewLine.material.color.setHex(mode === 'edit' ? SKETCH_COLORS.linesEdit : SKETCH_COLORS.linesHover);
+            rec.previewLine.visible = true;
         },
 
         applyLabelState(rec, mode, showPlane) {
@@ -323,6 +401,7 @@ function createSketchRuntimeApi(getApi) {
             if (!rec) return;
             rec.interaction.hoveredId = interaction.hoveredId || null;
             rec.interaction.selectedIds = new Set(interaction.selectedIds || []);
+            rec.interaction.previewLine = interaction.previewLine || null;
             this.applySketchState(rec);
         },
 
@@ -331,7 +410,24 @@ function createSketchRuntimeApi(getApi) {
             if (!rec) return;
             rec.interaction.hoveredId = null;
             rec.interaction.selectedIds = new Set();
+            rec.interaction.previewLine = null;
             this.applySketchState(rec);
+        },
+
+        getLineEndpoints(line, pointById) {
+            let a = null;
+            let b = null;
+            if (typeof line?.a === 'string') {
+                a = pointById?.get(line.a) || null;
+            } else if (line?.a && typeof line.a === 'object') {
+                a = line.a;
+            }
+            if (typeof line?.b === 'string') {
+                b = pointById?.get(line.b) || null;
+            } else if (line?.b && typeof line.b === 'object') {
+                b = line.b;
+            }
+            return [a, b];
         },
 
         refreshStates() {

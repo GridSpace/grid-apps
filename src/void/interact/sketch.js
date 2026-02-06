@@ -8,6 +8,7 @@ const SKETCH_HIT_POINT_PX = 10;
 const SKETCH_HIT_LINE_PX = 8;
 const SKETCH_DRAG_START_PX = 3;
 const SKETCH_MIN_LINE_LENGTH = 1e-4;
+const SKETCH_POINT_MERGE_EPS = 1e-4;
 
 function getEditingSketchFeature() {
     const sketchId = api.sketchRuntime?.editingId;
@@ -39,11 +40,13 @@ function getSketchTool() {
 function cancelSketchLine() {
     this.sketchLineStart = null;
     this.sketchLineStartSeq = null;
+    this.sketchLinePreview = null;
 }
 
 function clearSketchSelection() {
     this.selectedSketchEntities.clear();
     this.hoveredSketchEntityId = null;
+    this.sketchLinePreview = null;
     this.updateSketchInteractionVisuals();
 }
 
@@ -192,9 +195,33 @@ function handleSketchHover(event) {
         return true;
     }
 
+    const tool = this.getSketchTool();
+    let previewChanged = false;
+    if (tool === 'line' && this.sketchLineStart) {
+        const local = event ? this.projectEventToSketchLocal(event, feature) : null;
+        const next = local ? { a: this.sketchLineStart, b: local } : null;
+        const prev = this.sketchLinePreview;
+        const same = !!(prev && next
+            && prev.a && next.a
+            && prev.b && next.b
+            && prev.a.x === next.a.x
+            && prev.a.y === next.a.y
+            && prev.b.x === next.b.x
+            && prev.b.y === next.b.y);
+        if (!same) {
+            this.sketchLinePreview = next;
+            previewChanged = true;
+        }
+    } else {
+        if (this.sketchLinePreview !== null) {
+            this.sketchLinePreview = null;
+            previewChanged = true;
+        }
+    }
+
     const hit = this.hitTestSketchEntity(event, feature);
     const hoveredId = hit && !this.selectedSketchEntities.has(hit.id) ? hit.id : null;
-    if (this.hoveredSketchEntityId !== hoveredId) {
+    if (this.hoveredSketchEntityId !== hoveredId || previewChanged) {
         this.hoveredSketchEntityId = hoveredId;
         this.updateSketchInteractionVisuals();
     }
@@ -256,13 +283,16 @@ function handleSketchMouseUp(event) {
         if (this.sketchLineStartSeq === pointerDown?.seq) {
             if (dist > SKETCH_DRAG_START_PX) {
                 this.createSketchLine(feature, this.sketchLineStart, local);
+                // Drag gesture creates one segment and exits pending state.
                 this.cancelSketchLine();
             }
             return true;
         }
 
         this.createSketchLine(feature, this.sketchLineStart, local);
-        this.cancelSketchLine();
+        // Click-chain mode: keep endpoint as next segment start.
+        this.sketchLineStart = { x: local.x, y: local.y };
+        this.sketchLineStartSeq = null;
         return true;
     }
 
@@ -347,6 +377,12 @@ function handleSketchDrag(delta, offset, isDone) {
 function collectSelectedCoordinateRefs(feature) {
     const refs = new Set();
     const entities = Array.isArray(feature.entities) ? feature.entities : [];
+    const pointById = new Map();
+    for (const entity of entities) {
+        if (entity?.type === 'point' && entity.id) {
+            pointById.set(entity.id, entity);
+        }
+    }
     for (const entity of entities) {
         if (!this.selectedSketchEntities.has(entity.id)) {
             continue;
@@ -355,15 +391,24 @@ function collectSelectedCoordinateRefs(feature) {
             refs.add(entity);
             continue;
         }
-        if (entity.type === 'line' && entity.a && entity.b) {
-            refs.add(entity.a);
-            refs.add(entity.b);
+        if (entity.type === 'line') {
+            const [a, b] = this.getLineEndpoints(entity, pointById);
+            if (a) refs.add(a);
+            if (b) refs.add(b);
         }
     }
     return Array.from(refs);
 }
 
 function createSketchPoint(feature, local) {
+    const existing = this.findPointByCoord(feature, local, SKETCH_POINT_MERGE_EPS);
+    if (existing) {
+        this.selectedSketchEntities.clear();
+        this.selectedSketchEntities.add(existing.id);
+        this.hoveredSketchEntityId = null;
+        this.updateSketchInteractionVisuals();
+        return;
+    }
     const id = this.newSketchEntityId('point');
     api.features.update(feature.id, sketch => {
         sketch.entities = Array.isArray(sketch.entities) ? sketch.entities : [];
@@ -395,12 +440,14 @@ function createSketchLine(feature, a, b) {
     const id = this.newSketchEntityId('line');
     api.features.update(feature.id, sketch => {
         sketch.entities = Array.isArray(sketch.entities) ? sketch.entities : [];
+        const pa = this.ensureSketchPoint(sketch, a);
+        const pb = this.ensureSketchPoint(sketch, b);
         sketch.entities.push({
             id,
             type: 'line',
             construction: false,
-            a: { x: a.x, y: a.y },
-            b: { x: b.x, y: b.y }
+            a: pa.id,
+            b: pb.id
         });
     }, {
         opType: 'feature.update',
@@ -410,6 +457,7 @@ function createSketchLine(feature, a, b) {
     this.selectedSketchEntities.clear();
     this.selectedSketchEntities.add(id);
     this.hoveredSketchEntityId = null;
+    this.sketchLinePreview = null;
     this.updateSketchInteractionVisuals();
 }
 
@@ -420,7 +468,8 @@ function updateSketchInteractionVisuals() {
     }
     api.sketchRuntime?.setEntityInteraction(feature.id, {
         hoveredId: this.sketchDrag ? null : this.hoveredSketchEntityId,
-        selectedIds: Array.from(this.selectedSketchEntities)
+        selectedIds: Array.from(this.selectedSketchEntities),
+        previewLine: this.sketchLinePreview
     });
     window.dispatchEvent(new CustomEvent('void-state-change'));
 }
@@ -453,6 +502,12 @@ function hitTestSketchEntity(event, feature) {
 
     let bestPoint = null;
     let bestLine = null;
+    const pointById = new Map();
+    for (const entity of entities) {
+        if (entity?.type === 'point' && entity.id) {
+            pointById.set(entity.id, entity);
+        }
+    }
 
     for (const entity of entities) {
         if (!entity?.id) continue;
@@ -468,9 +523,11 @@ function hitTestSketchEntity(event, feature) {
             continue;
         }
 
-        if (entity.type === 'line' && entity.a && entity.b) {
-            const wa = this.sketchLocalToWorld(entity.a, basis);
-            const wb = this.sketchLocalToWorld(entity.b, basis);
+        if (entity.type === 'line') {
+            const [a, b] = this.getLineEndpoints(entity, pointById);
+            if (!a || !b) continue;
+            const wa = this.sketchLocalToWorld(a, basis);
+            const wb = this.sketchLocalToWorld(b, basis);
             const pa = api.overlay.project3Dto2D(wa);
             const pb = api.overlay.project3Dto2D(wb);
             if (!pa?.visible || !pb?.visible) continue;
@@ -482,6 +539,50 @@ function hitTestSketchEntity(event, feature) {
     }
 
     return bestPoint || bestLine;
+}
+
+function findPointByCoord(feature, local, eps = SKETCH_POINT_MERGE_EPS) {
+    const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+    for (const entity of entities) {
+        if (entity?.type !== 'point' || !entity.id) continue;
+        if (Math.abs((entity.x || 0) - local.x) <= eps && Math.abs((entity.y || 0) - local.y) <= eps) {
+            return entity;
+        }
+    }
+    return null;
+}
+
+function ensureSketchPoint(sketch, local) {
+    sketch.entities = Array.isArray(sketch.entities) ? sketch.entities : [];
+    const existing = this.findPointByCoord(sketch, local, SKETCH_POINT_MERGE_EPS);
+    if (existing) {
+        return existing;
+    }
+    const point = {
+        id: this.newSketchEntityId('point'),
+        type: 'point',
+        x: local.x,
+        y: local.y,
+        fixed: false
+    };
+    sketch.entities.push(point);
+    return point;
+}
+
+function getLineEndpoints(line, pointById) {
+    let a = null;
+    let b = null;
+    if (typeof line?.a === 'string') {
+        a = pointById?.get(line.a) || null;
+    } else if (line?.a && typeof line.a === 'object') {
+        a = line.a;
+    }
+    if (typeof line?.b === 'string') {
+        b = pointById?.get(line.b) || null;
+    } else if (line?.b && typeof line.b === 'object') {
+        b = line.b;
+    }
+    return [a, b];
 }
 
 function distanceToSegmentPx(px, py, ax, ay, bx, by) {
@@ -617,5 +718,8 @@ export {
     collectSelectedCoordinateRefs,
     createSketchPoint,
     createSketchLine,
-    deleteSelectedSketchEntities
+    deleteSelectedSketchEntities,
+    findPointByCoord,
+    ensureSketchPoint,
+    getLineEndpoints
 };

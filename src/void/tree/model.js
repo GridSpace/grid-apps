@@ -3,6 +3,8 @@
 import { api } from '../api.js';
 import { properties } from '../properties.js';
 
+const treePlaneHoverState = new WeakMap();
+
 function bindRuntimeChanges() {
     if (this._boundRuntimeChanges) return;
     this._boundRuntimeChanges = true;
@@ -94,6 +96,27 @@ function renderDefaultGeometrySection() {
             label: plane.getLabel() || entry.fallbackLabel,
             depth: 1,
             eyeVisible: visible,
+            onSelect: () => {
+                api.interact.selectPlane(plane, { ctrlKey: false, metaKey: false });
+            },
+            onHoverEnter: () => {
+                const group = plane.getGroup?.();
+                const wasVisible = !!group?.visible;
+                treePlaneHoverState.set(plane, wasVisible);
+                if (!wasVisible) {
+                    group.visible = true;
+                }
+                plane.setHovered(true);
+            },
+            onHoverLeave: () => {
+                plane.setHovered(false);
+                const wasVisible = treePlaneHoverState.get(plane);
+                treePlaneHoverState.delete(plane);
+                if (wasVisible === false) {
+                    const group = plane.getGroup?.();
+                    if (group) group.visible = false;
+                }
+            },
             onEye: () => {
                 plane.setVisible(!visible);
                 this.render();

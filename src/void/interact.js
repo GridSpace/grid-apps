@@ -41,6 +41,7 @@ const interact = {
     sketchLineStart: null,
     sketchLineStartSeq: null,
     sketchPointerSeq: 0,
+    _lastSketchDownStamp: null,
 
     init() {
         this.planes = datum.getPlanes();
@@ -80,6 +81,10 @@ const interact = {
                 return;
             }
             if (this.isSketchEditing()) {
+                if (!int && int !== null) {
+                    return this.getInteractiveObjects();
+                }
+                this._lastSketchDownStamp = event?.timeStamp ?? null;
                 this.handleSketchPointerDown(event);
                 return;
             }
@@ -163,6 +168,22 @@ const interact = {
                 this.sketchPointerDown = null;
             }
             this.upSelectCalled = false;
+        });
+        window.addEventListener('mousedown', event => {
+            if (event && event.button !== 0) {
+                return;
+            }
+            if (!this.isSketchEditing()) {
+                return;
+            }
+            if (this._lastSketchDownStamp !== null && event.timeStamp === this._lastSketchDownStamp) {
+                return;
+            }
+            const { container } = space.internals();
+            if (!container || !container.contains(event.target)) {
+                return;
+            }
+            this.handleSketchPointerDown(event);
         });
 
         space.mouse.onHover((int, event, ints) => {
