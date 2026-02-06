@@ -200,6 +200,7 @@ function tweenCamPan(x,y,z,left,up) {
 function tweenCam(pos) {
     let hasScale = pos.scale !== undefined;
     let prevScale = 1;
+    let tweenDuration = pos.time ?? tweenTime;
     let tf = function () {
         const next = {
             left: this.left,
@@ -233,7 +234,7 @@ function tweenCam(pos) {
         }
     }
     new TWEEN.Tween(from).
-        to(to, tweenTime).
+        to(to, tweenDuration).
         onUpdate(tf).
         onComplete(() => {
             const finalPos = {
@@ -1455,6 +1456,7 @@ let Space = {
 
             if (opts.tween !== false) {
                 fitPos.scale = fitScaleRatio;
+                fitPos.time = opts.time ?? 350;
                 fitPos.then = then;
                 tweenCam(fitPos);
             } else {
