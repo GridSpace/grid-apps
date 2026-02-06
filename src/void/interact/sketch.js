@@ -9,6 +9,7 @@ const SKETCH_HIT_LINE_PX = 10;
 const SKETCH_DRAG_START_PX = 5;
 const SKETCH_MIN_LINE_LENGTH = 1e-4;
 const SKETCH_POINT_MERGE_EPS = 1e-4;
+const SKETCH_VIRTUAL_ORIGIN_ID = '__sketch-origin__';
 
 function getEditingSketchFeature() {
     const sketchId = api.sketchRuntime?.editingId;
@@ -168,8 +169,7 @@ function handleSketchPointerDown(event, intersections) {
     const seq = this.sketchPointerSeq;
     const local = this.projectEventToSketchLocal(event, feature);
     const hit = this.getSketchEntityHitFromIntersections(intersections, feature) || this.hitTestSketchEntity(event, feature);
-    const pointById = new Map((feature.entities || []).filter(e => e?.type === 'point' && e.id).map(e => [e.id, e]));
-    const hitPoint = hit?.id ? pointById.get(hit.id) : null;
+    const hitLocal = this.getSketchHitLocalPoint(feature, hit);
 
     this.sketchPointerDown = {
         seq,
@@ -180,7 +180,7 @@ function handleSketchPointerDown(event, intersections) {
     };
 
     if (this.getSketchTool() === 'line' && !this.sketchLineStart) {
-        const start = hitPoint ? { x: hitPoint.x || 0, y: hitPoint.y || 0 } : local;
+        const start = hitLocal || local;
         if (!start) {
             return true;
         }
@@ -253,14 +253,15 @@ function handleSketchMouseUp(event, intersections) {
 
     const tool = this.getSketchTool();
     if (tool === 'select') {
-        if (dist > SKETCH_DRAG_START_PX) {
-            return true;
-        }
         const upHit = this.getSketchEntityHitFromIntersections(intersections, feature) || this.hitTestSketchEntity(event, feature);
         const hit = upHit
             || (pointerDown?.hitId ? { id: pointerDown.hitId } : null)
             || (this.hoveredSketchEntityId ? { id: this.hoveredSketchEntityId } : null);
         if (hit?.id) {
+            if (hit.id === SKETCH_VIRTUAL_ORIGIN_ID) {
+                this.updateSketchInteractionVisuals();
+                return true;
+            }
             if (this.selectedSketchEntities.has(hit.id)) {
                 this.selectedSketchEntities.delete(hit.id);
             } else {
@@ -287,9 +288,7 @@ function handleSketchMouseUp(event, intersections) {
 
     if (tool === 'line') {
         const upHit = this.getSketchEntityHitFromIntersections(intersections, feature) || this.hitTestSketchEntity(event, feature);
-        const pointById = new Map((feature.entities || []).filter(e => e?.type === 'point' && e.id).map(e => [e.id, e]));
-        const hitPoint = upHit?.id ? pointById.get(upHit.id) : null;
-        const local = hitPoint ? { x: hitPoint.x || 0, y: hitPoint.y || 0 } : this.projectEventToSketchLocal(event, feature);
+        const local = this.getSketchHitLocalPoint(feature, upHit) || this.projectEventToSketchLocal(event, feature);
         if (!local || !this.sketchLineStart) {
             return true;
         }
@@ -304,7 +303,7 @@ function handleSketchMouseUp(event, intersections) {
         }
 
         this.createSketchLine(feature, this.sketchLineStart, local);
-        if (hitPoint) {
+        if (this.getSketchHitLocalPoint(feature, upHit)) {
             // Common polygon workflow: close/attach on existing point and exit line mode.
             this.cancelSketchLine();
             this.setSketchTool('select');
@@ -355,10 +354,14 @@ function handleSketchDrag(delta, offset, isDone) {
         if (offsetMag < SKETCH_DRAG_START_PX) {
             return false;
         }
-        if (!this.sketchPointerDown.hitId || !this.selectedSketchEntities.has(this.sketchPointerDown.hitId)) {
+        const downId = this.sketchPointerDown.hitId || this.hoveredSketchEntityId || null;
+        if (!downId || downId === SKETCH_VIRTUAL_ORIGIN_ID) {
             return false;
         }
-        const refs = this.collectSelectedCoordinateRefs(feature);
+        const activeIds = this.selectedSketchEntities.has(downId)
+            ? new Set(this.selectedSketchEntities)
+            : new Set([downId]);
+        const refs = this.collectCoordinateRefsFromIds(feature, activeIds);
         if (!refs.length || !this.sketchPointerDown.local) {
             return false;
         }
@@ -395,6 +398,10 @@ function handleSketchDrag(delta, offset, isDone) {
 }
 
 function collectSelectedCoordinateRefs(feature) {
+    return this.collectCoordinateRefsFromIds(feature, this.selectedSketchEntities);
+}
+
+function collectCoordinateRefsFromIds(feature, selectedIds) {
     const refs = new Set();
     const entities = Array.isArray(feature.entities) ? feature.entities : [];
     const pointById = new Map();
@@ -404,7 +411,7 @@ function collectSelectedCoordinateRefs(feature) {
         }
     }
     for (const entity of entities) {
-        if (!this.selectedSketchEntities.has(entity.id)) {
+        if (!selectedIds?.has(entity.id)) {
             continue;
         }
         if (entity.type === 'point') {
@@ -511,9 +518,6 @@ function hitTestSketchEntity(event, feature) {
     }
 
     const entities = Array.isArray(feature.entities) ? feature.entities : [];
-    if (!entities.length) {
-        return null;
-    }
 
     const basis = this.getSketchBasis(feature);
     const screenPoint = this.getEventViewportXY(event);
@@ -559,6 +563,14 @@ function hitTestSketchEntity(event, feature) {
         }
     }
 
+    const originProj = api.overlay.project3Dto2D(basis.origin);
+    if (originProj?.visible) {
+        const originDist = Math.hypot(screenPoint.x - originProj.x, screenPoint.y - originProj.y);
+        if (originDist <= SKETCH_HIT_POINT_PX && (!bestPoint || originDist < bestPoint.dist)) {
+            bestPoint = { id: SKETCH_VIRTUAL_ORIGIN_ID, type: 'point', dist: originDist };
+        }
+    }
+
     return bestPoint || bestLine;
 }
 
@@ -568,12 +580,44 @@ function getSketchEntityHitFromIntersections(intersections, feature) {
     }
     const rec = api.sketchRuntime?.getRecord?.(feature?.id);
     const allowed = rec?.entityViews ? new Set(Array.from(rec.entityViews.keys())) : null;
+    let bestPoint = null;
+    let bestLine = null;
     for (const hit of intersections) {
         const id = hit?.object?.userData?.sketchEntityId;
         if (!id) continue;
         if (allowed && !allowed.has(id)) continue;
         const type = hit.object.userData?.sketchEntityType || null;
-        return { id, type };
+        const cand = { id, type, distance: hit.distance ?? Infinity };
+        if (type === 'point') {
+            if (!bestPoint || cand.distance < bestPoint.distance) {
+                bestPoint = cand;
+            }
+        } else if (!bestLine || cand.distance < bestLine.distance) {
+            bestLine = cand;
+        }
+    }
+    return bestPoint || bestLine || null;
+}
+
+function getSketchHitLocalPoint(feature, hit) {
+    if (!hit?.id) {
+        return null;
+    }
+    if (hit.id === SKETCH_VIRTUAL_ORIGIN_ID) {
+        return { x: 0, y: 0 };
+    }
+
+    const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+    for (const entity of entities) {
+        if (entity?.type === 'point' && entity.id === hit.id) {
+            return { x: entity.x || 0, y: entity.y || 0 };
+        }
+    }
+
+    const rec = api.sketchRuntime?.getRecord?.(feature?.id);
+    const view = rec?.entityViews?.get?.(hit.id);
+    if (view?.type === 'point' && view.entity) {
+        return { x: view.entity.x || 0, y: view.entity.y || 0 };
     }
     return null;
 }
@@ -748,12 +792,14 @@ export {
     pointerDistance,
     hitTestSketchEntity,
     getSketchEntityHitFromIntersections,
+    getSketchHitLocalPoint,
     distanceToSegmentPx,
     getEventViewportXY,
     getSketchBasis,
     sketchLocalToWorld,
     projectEventToSketchLocal,
     collectSelectedCoordinateRefs,
+    collectCoordinateRefsFromIds,
     createSketchPoint,
     createSketchLine,
     deleteSelectedSketchEntities,

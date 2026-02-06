@@ -1,6 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { THREE } from '../../ext/three.js';
+import { space } from '../../moto/space.js';
 import { Plane } from '../plane.js';
 
 const SKETCH_COLORS = {
@@ -21,6 +22,9 @@ const SKETCH_COLORS = {
 };
 const SKETCH_PLANE_SCALE = 0.86;
 const SKETCH_PLANE_MIN_SIZE = 24;
+const SKETCH_POINT_SCREEN_RADIUS_PX = 6;
+const SKETCH_POINT_BASE_RADIUS = 1.8;
+const SKETCH_VIRTUAL_ORIGIN_ID = '__sketch-origin__';
 
 function createSketchRuntimeApi(getApi) {
     return {
@@ -35,6 +39,12 @@ function createSketchRuntimeApi(getApi) {
             this.root = new THREE.Group();
             this.root.name = 'sketch-runtime';
             world.add(this.root);
+            this._tmpPointWorld = new THREE.Vector3();
+            const viewCtrl = space.view?.ctrl;
+            if (viewCtrl && viewCtrl.addEventListener) {
+                viewCtrl.addEventListener('change', () => this.updatePointScreenScales());
+            }
+            window.addEventListener('resize', () => this.updatePointScreenScales());
         },
 
         sync() {
@@ -62,6 +72,7 @@ function createSketchRuntimeApi(getApi) {
                 }
                 this.updateSketchRecord(rec);
             }
+            this.updatePointScreenScales();
         },
 
         getRecord(featureId) {
@@ -167,6 +178,66 @@ function createSketchRuntimeApi(getApi) {
             return out;
         },
 
+        makePointRing(radius, color, opacity = 1) {
+            const seg = 24;
+            const verts = [];
+            for (let i = 0; i <= seg; i++) {
+                const t = (i / seg) * Math.PI * 2;
+                verts.push(Math.cos(t) * radius, Math.sin(t) * radius, 0.01);
+            }
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+            const mat = new THREE.LineBasicMaterial({
+                color,
+                transparent: opacity < 1,
+                opacity,
+                depthWrite: false
+            });
+            const ring = new THREE.Line(geo, mat);
+            return ring;
+        },
+
+        createSketchPointMarker(x = 0, y = 0, opts = {}) {
+            const marker = new THREE.Group();
+            marker.position.set(x, y, 0);
+            marker.renderOrder = 8;
+
+            const core = new THREE.Mesh(
+                new THREE.CircleGeometry(0.72, 20),
+                new THREE.MeshBasicMaterial({
+                    color: 0x8f8f8f,
+                    transparent: false,
+                    depthWrite: false,
+                    side: THREE.DoubleSide
+                })
+            );
+            core.renderOrder = 8;
+            marker.add(core);
+
+            const ringBlack = this.makePointRing(0.94, 0x101010, 0.95);
+            ringBlack.renderOrder = 9;
+            marker.add(ringBlack);
+
+            const ringWhite = this.makePointRing(1.18, 0xffffff, 0.95);
+            ringWhite.renderOrder = 10;
+            marker.add(ringWhite);
+
+            const ringHighlight = this.makePointRing(1.45, SKETCH_COLORS.pointsHover, 0.95);
+            ringHighlight.renderOrder = 11;
+            ringHighlight.visible = false;
+            marker.add(ringHighlight);
+
+            marker.userData._markerParts = {
+                core,
+                ringBlack,
+                ringWhite,
+                ringHighlight
+            };
+            marker.userData._isVirtualOrigin = !!opts.virtualOrigin;
+
+            return marker;
+        },
+
         rebuildEntities(rec) {
             while (rec.entitiesGroup.children.length) {
                 const child = rec.entitiesGroup.children[0];
@@ -174,11 +245,29 @@ function createSketchRuntimeApi(getApi) {
                     rec.entitiesGroup.remove(child);
                     continue;
                 }
-                child.geometry?.dispose?.();
-                child.material?.dispose?.();
+                child.traverse?.(obj => {
+                    obj.geometry?.dispose?.();
+                    if (Array.isArray(obj.material)) {
+                        for (const mat of obj.material) mat?.dispose?.();
+                    } else {
+                        obj.material?.dispose?.();
+                    }
+                });
                 rec.entitiesGroup.remove(child);
             }
             rec.entityViews.clear();
+
+            // Sketch-local origin point, always available for snapping/line anchoring.
+            const originPoint = this.createSketchPointMarker(0, 0, { virtualOrigin: true });
+            originPoint.userData.sketchEntityId = SKETCH_VIRTUAL_ORIGIN_ID;
+            originPoint.userData.sketchEntityType = 'point';
+            rec.entitiesGroup.add(originPoint);
+            rec.entityViews.set(SKETCH_VIRTUAL_ORIGIN_ID, {
+                entity: { id: SKETCH_VIRTUAL_ORIGIN_ID, type: 'point', x: 0, y: 0, virtual: true },
+                object: originPoint,
+                type: 'point',
+                virtual: true
+            });
 
             const entities = Array.isArray(rec.feature?.entities) ? rec.feature.entities : [];
             const pointById = new Map();
@@ -226,38 +315,9 @@ function createSketchRuntimeApi(getApi) {
                 }
 
                 if (entity.type === 'point') {
-                    const geometry = new THREE.CircleGeometry(1.15, 20);
-                    const material = new THREE.MeshBasicMaterial({
-                        color: SKETCH_COLORS.pointsGray,
-                        transparent: true,
-                        opacity: 0.45,
-                        depthWrite: false,
-                        side: THREE.DoubleSide
-                    });
-                    const point = new THREE.Mesh(geometry, material);
-                    point.position.set(entity.x || 0, entity.y || 0, 0);
-                    point.renderOrder = 8;
+                    const point = this.createSketchPointMarker(entity.x || 0, entity.y || 0);
                     point.userData.sketchEntityId = entity.id;
                     point.userData.sketchEntityType = 'point';
-                    const loopVerts = [];
-                    const seg = 24;
-                    for (let i = 0; i <= seg; i++) {
-                        const t = (i / seg) * Math.PI * 2;
-                        loopVerts.push(Math.cos(t) * 1.15, Math.sin(t) * 1.15, 0.01);
-                    }
-                    const loopGeo = new THREE.BufferGeometry();
-                    loopGeo.setAttribute('position', new THREE.Float32BufferAttribute(loopVerts, 3));
-                    const loop = new THREE.Line(
-                        loopGeo,
-                        new THREE.LineBasicMaterial({
-                            color: 0x5a9fd4,
-                            transparent: true,
-                            opacity: 0.95,
-                            depthWrite: false
-                        })
-                    );
-                    loop.renderOrder = 9;
-                    point.add(loop);
                     rec.entitiesGroup.add(point);
                     rec.entityViews.set(entity.id, { entity, object: point, type: 'point' });
                 }
@@ -315,11 +375,7 @@ function createSketchRuntimeApi(getApi) {
                 : mode === 'hover'
                     ? SKETCH_COLORS.linesHover
                     : SKETCH_COLORS.linesGray;
-            const basePointColor = mode === 'edit'
-                ? SKETCH_COLORS.pointsEdit
-                : mode === 'hover'
-                    ? SKETCH_COLORS.pointsHover
-                    : SKETCH_COLORS.pointsGray;
+            const basePointColor = SKETCH_COLORS.pointsGray;
 
             const hoveredId = rec.interaction?.hoveredId || null;
             const selectedIds = rec.interaction?.selectedIds || new Set();
@@ -339,15 +395,22 @@ function createSketchRuntimeApi(getApi) {
                 }
 
                 if (view.type === 'point') {
-                    const color = selected
-                        ? SKETCH_COLORS.pointsHover
-                        : hovered
-                            ? SKETCH_COLORS.pointsHover
-                            : basePointColor;
-                    view.object.material.color.setHex(color);
-                    const outline = view.object.children?.[0];
-                    if (outline?.material?.color) {
-                        outline.material.color.setHex(selected || hovered ? SKETCH_COLORS.linesHover : 0x5a9fd4);
+                    const parts = view.object.userData?._markerParts || {};
+                    const active = selected || hovered;
+                    if (parts.core?.material?.color) {
+                        parts.core.material.color.setHex(active ? SKETCH_COLORS.pointsHover : basePointColor);
+                    }
+                    if (parts.ringHighlight) {
+                        parts.ringHighlight.visible = !!active;
+                        if (parts.ringHighlight.material?.color) {
+                            parts.ringHighlight.material.color.setHex(SKETCH_COLORS.pointsHover);
+                        }
+                    }
+                    if (parts.ringWhite?.material?.color) {
+                        parts.ringWhite.material.color.setHex(active ? 0xffffff : 0xffffff);
+                    }
+                    if (parts.ringBlack?.material?.color) {
+                        parts.ringBlack.material.color.setHex(0x101010);
                     }
                 }
             }
@@ -471,6 +534,34 @@ function createSketchRuntimeApi(getApi) {
                 b = line.b;
             }
             return [a, b];
+        },
+
+        updatePointScreenScales() {
+            const { camera, renderer } = space.internals();
+            if (!camera || !renderer) return;
+            const viewHeightPx = renderer.domElement?.clientHeight || renderer.domElement?.height;
+            if (!viewHeightPx) return;
+            const tmp = this._tmpPointWorld || new THREE.Vector3();
+
+            for (const rec of this.sketches.values()) {
+                for (const view of rec.entityViews.values()) {
+                    if (view.type !== 'point' || !view.object) continue;
+                    view.object.getWorldPosition(tmp);
+                    let worldPerPixel;
+                    if (camera.isPerspectiveCamera) {
+                        const distance = camera.position.distanceTo(tmp);
+                        const fovRad = camera.fov * Math.PI / 180;
+                        worldPerPixel = (2 * Math.tan(fovRad / 2) * distance) / viewHeightPx;
+                    } else if (camera.isOrthographicCamera) {
+                        worldPerPixel = ((camera.top - camera.bottom) / camera.zoom) / viewHeightPx;
+                    } else {
+                        continue;
+                    }
+                    const desiredWorldRadius = SKETCH_POINT_SCREEN_RADIUS_PX * worldPerPixel;
+                    const scale = Math.max(0.0001, desiredWorldRadius / SKETCH_POINT_BASE_RADIUS);
+                    view.object.scale.setScalar(scale);
+                }
+            }
         },
 
         refreshStates() {

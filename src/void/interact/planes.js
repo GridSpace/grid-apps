@@ -23,11 +23,18 @@ function getInteractiveObjects() {
         const sketch = this.getEditingSketchFeature && this.getEditingSketchFeature();
         const rec = sketch?.id ? api.sketchRuntime?.getRecord?.(sketch.id) : null;
         if (rec?.entityViews) {
+            const points = [];
+            const lines = [];
             for (const view of rec.entityViews.values()) {
                 if (view?.object) {
-                    objects.push(view.object);
+                    if (view.type === 'point') {
+                        points.push(view.object);
+                    } else {
+                        lines.push(view.object);
+                    }
                 }
             }
+            objects.push(...points, ...lines);
         }
     }
 
