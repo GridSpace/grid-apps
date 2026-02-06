@@ -7,6 +7,9 @@ const DATUM_OPTIONS = [
     { id: 'datum-yz', name: 'Right', key: 'yz' },
     { id: 'datum-xz', name: 'Front', key: 'xz' }
 ];
+const PROPS_PANEL_POS_KEY = 'props_panel_pos';
+const PANEL_MIN_LEFT = 10;
+const PANEL_MIN_TOP = 60;
 
 const properties = {
     panel: null,
@@ -15,6 +18,8 @@ const properties = {
     currentFeatureId: null,
     _onChange: null,
     _drag: null,
+    _savedPos: null,
+    _loadingPos: false,
 
     init() {
         if (this.panel) return;
@@ -51,7 +56,101 @@ const properties = {
         this.header = header;
         this.body = body;
 
+        this.restorePosition();
         this.bindDrag();
+    },
+
+    setPanelPosition(x, y) {
+        if (!this.panel) return;
+        this.panel.style.right = 'auto';
+        this.panel.style.bottom = 'auto';
+        this.panel.style.left = `${Math.max(PANEL_MIN_LEFT, x)}px`;
+        this.panel.style.top = `${Math.max(PANEL_MIN_TOP, y)}px`;
+    },
+
+    applyPlacement(pos) {
+        if (!this.panel || !pos) return;
+        const anchor = String(pos.anchor || 'tl');
+        const x = Number(pos.x);
+        const y = Number(pos.y);
+        if (!['tl', 'tr', 'bl', 'br'].includes(anchor)) return;
+        if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+
+        this.panel.style.left = 'auto';
+        this.panel.style.right = 'auto';
+        this.panel.style.top = 'auto';
+        this.panel.style.bottom = 'auto';
+
+        if (anchor[1] === 'r') {
+            this.panel.style.right = `${Math.max(PANEL_MIN_LEFT, x)}px`;
+        } else {
+            this.panel.style.left = `${Math.max(PANEL_MIN_LEFT, x)}px`;
+        }
+        if (anchor[0] === 'b') {
+            this.panel.style.bottom = `${Math.max(PANEL_MIN_LEFT, y)}px`;
+        } else {
+            this.panel.style.top = `${Math.max(PANEL_MIN_TOP, y)}px`;
+        }
+    },
+
+    restorePosition() {
+        if (this._loadingPos) return;
+        this._loadingPos = true;
+        const admin = api.db?.admin;
+        if (!admin) {
+            this._loadingPos = false;
+            return;
+        }
+        admin.get(PROPS_PANEL_POS_KEY).then(pos => {
+            if (!pos || !this.panel) return;
+            // Backward compatible with legacy format { x, y }.
+            if (!pos.anchor) {
+                const x = Number(pos.x);
+                const y = Number(pos.y);
+                if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+                this._savedPos = { x, y };
+                this.setPanelPosition(x, y);
+                return;
+            }
+            const anchor = String(pos.anchor);
+            const x = Number(pos.x);
+            const y = Number(pos.y);
+            if (!['tl', 'tr', 'bl', 'br'].includes(anchor)) return;
+            if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+            this._savedPos = { anchor, x, y };
+            this.applyPlacement(this._savedPos);
+        }).catch(() => {
+            // ignore persistence read errors
+        }).finally(() => {
+            this._loadingPos = false;
+        });
+    },
+
+    persistPosition() {
+        const admin = api.db?.admin;
+        if (!admin || !this.panel) return;
+        const rect = this.panel.getBoundingClientRect();
+        const midX = window.innerWidth / 2;
+        const midY = window.innerHeight / 2;
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const horizontal = centerX >= midX ? 'r' : 'l';
+        const vertical = centerY >= midY ? 'b' : 't';
+        const pos = { anchor: `${vertical}${horizontal}` };
+        if (horizontal === 'r') {
+            pos.x = Math.round(window.innerWidth - rect.right);
+        } else {
+            pos.x = Math.round(rect.left);
+        }
+        if (vertical === 'b') {
+            pos.y = Math.round(window.innerHeight - rect.bottom);
+        } else {
+            pos.y = Math.round(rect.top);
+        }
+        this._savedPos = pos;
+        admin.put(PROPS_PANEL_POS_KEY, pos).catch(() => {
+            // ignore persistence write errors
+        });
     },
 
     bindDrag() {
@@ -70,12 +169,23 @@ const properties = {
             if (!this._drag || !this.panel) return;
             const x = event.clientX - this._drag.dx;
             const y = event.clientY - this._drag.dy;
-            this.panel.style.left = `${Math.max(10, x)}px`;
-            this.panel.style.top = `${Math.max(60, y)}px`;
+            this.setPanelPosition(x, y);
         });
 
         window.addEventListener('mouseup', () => {
+            if (this._drag) {
+                this.persistPosition();
+            }
             this._drag = null;
+        });
+
+        window.addEventListener('resize', () => {
+            if (!this.panel || this.panel.classList.contains('hidden') || !this._savedPos) return;
+            if (this._savedPos.anchor) {
+                this.applyPlacement(this._savedPos);
+            } else {
+                this.setPanelPosition(this._savedPos.x, this._savedPos.y);
+            }
         });
     },
 
@@ -85,6 +195,15 @@ const properties = {
         this.currentFeatureId = feature.id;
         this._onChange = opts.onChange || null;
         api.sketchRuntime?.setEditing(feature.type === 'sketch' ? feature.id : null);
+        if (this._savedPos) {
+            if (this._savedPos.anchor) {
+                this.applyPlacement(this._savedPos);
+            } else {
+                this.setPanelPosition(this._savedPos.x, this._savedPos.y);
+            }
+        } else {
+            this.restorePosition();
+        }
         this.panel.classList.remove('hidden');
         this.renderFeature(feature);
     },
