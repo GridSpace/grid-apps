@@ -16,6 +16,7 @@ const datum = {
     visible: true,
     overlay: null,        // Overlay reference for label updates
     labelHandlers: new Map(),
+    changeHandlers: new Set(),
 
     /**
      * Initialize datum with three orthogonal planes
@@ -129,6 +130,7 @@ const datum = {
         for (const plane of Object.values(this.planes)) {
             plane.setSize(size);
         }
+        this.notifyChange();
     },
 
     /**
@@ -139,6 +141,7 @@ const datum = {
         if (this.group) {
             this.group.visible = visible;
         }
+        this.notifyChange();
     },
 
     /**
@@ -215,6 +218,128 @@ const datum = {
                 yz: this.planes.yz.toJSON()
             }
         };
+    },
+
+    /**
+     * Canonical default datum state for new documents.
+     */
+    defaultState(size = 200) {
+        return {
+            type: 'datum',
+            size,
+            visible: true,
+            planes: {
+                xy: {
+                    id: 'datum-xy',
+                    name: 'XY Plane',
+                    label: 'Top',
+                    type: 'plane',
+                    size,
+                    height: size,
+                    visible: true,
+                    position: { x: 0, y: 0, z: 0 },
+                    rotation: { x: 0, y: 0, z: 0 }
+                },
+                xz: {
+                    id: 'datum-xz',
+                    name: 'XZ Plane',
+                    label: 'Front',
+                    type: 'plane',
+                    size,
+                    height: size,
+                    visible: true,
+                    position: { x: 0, y: 0, z: 0 },
+                    rotation: { x: Math.PI / 2, y: 0, z: 0 }
+                },
+                yz: {
+                    id: 'datum-yz',
+                    name: 'YZ Plane',
+                    label: 'Right',
+                    type: 'plane',
+                    size,
+                    height: size,
+                    visible: true,
+                    position: { x: 0, y: 0, z: 0 },
+                    rotation: { x: 0, y: Math.PI / 2, z: 0 }
+                }
+            }
+        };
+    },
+
+    /**
+     * Apply serialized datum state onto existing runtime planes.
+     */
+    applyJSON(data) {
+        if (!data || !this.planes) return;
+
+        if (typeof data.size === 'number') {
+            this.size = data.size;
+        }
+        if (typeof data.visible === 'boolean') {
+            this.setVisible(data.visible);
+        }
+
+        const planeData = data.planes || {};
+        for (const [key, plane] of Object.entries(this.planes)) {
+            const src = planeData[key];
+            if (!src) continue;
+
+            if (src.name !== undefined) plane.name = src.name;
+            if (src.label !== undefined) plane.setLabel(src.label);
+            if (src.color !== undefined) plane.setColor(src.color);
+            if (src.outlineColor !== undefined) plane.setOutlineColor(src.outlineColor);
+            if (src.opacity !== undefined) plane.setOpacity(src.opacity);
+            if (src.outlineOpacity !== undefined) plane.setOutlineOpacity(src.outlineOpacity);
+            if (src.showHandles !== undefined) plane.showHandles = src.showHandles;
+            if (src.visible !== undefined) plane.setVisible(src.visible);
+
+            const width = src.size !== undefined ? src.size : plane.size;
+            const height = src.height !== undefined ? src.height : undefined;
+            plane.setSize(width, height);
+
+            if (src.position) {
+                plane.setPosition(
+                    src.position.x || 0,
+                    src.position.y || 0,
+                    src.position.z || 0
+                );
+            }
+            if (src.rotation) {
+                plane.setRotation(
+                    src.rotation.x || 0,
+                    src.rotation.y || 0,
+                    src.rotation.z || 0
+                );
+            }
+        }
+        this.notifyChange();
+    },
+
+    /**
+     * Register callback for datum-level changes.
+     */
+    onChange(handler) {
+        if (typeof handler === 'function') {
+            this.changeHandlers.add(handler);
+        }
+        return this;
+    },
+
+    /**
+     * Remove registered datum-level callback.
+     */
+    offChange(handler) {
+        this.changeHandlers.delete(handler);
+        return this;
+    },
+
+    /**
+     * Notify listeners datum changed.
+     */
+    notifyChange() {
+        for (const handler of this.changeHandlers) {
+            handler(this);
+        }
     },
 
     /**

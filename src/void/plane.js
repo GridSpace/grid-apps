@@ -266,6 +266,7 @@ class Plane {
      */
     setVisible(visible) {
         this.group.visible = visible;
+        this.notifyChange();
     }
 
     /**
@@ -403,6 +404,8 @@ class Plane {
             label: this.label,
             type: 'plane',
             size: this.size,
+            height: this.height !== undefined ? this.height : this.size,
+            visible: this.group.visible,
             color: this.color,
             outlineColor: this.outlineColor,
             opacity: this.opacity,
@@ -443,6 +446,14 @@ class Plane {
 
         if (data.rotation) {
             plane.setRotation(data.rotation.x, data.rotation.y, data.rotation.z);
+        }
+
+        if (data.height !== undefined || data.size !== undefined) {
+            plane.setSize(data.size, data.height);
+        }
+
+        if (data.visible !== undefined) {
+            plane.setVisible(data.visible);
         }
 
         return plane;

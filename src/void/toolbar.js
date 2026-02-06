@@ -2,6 +2,7 @@
 
 import { $, h } from '../moto/webui.js';
 import { api } from './api.js';
+import { tree } from './tree.js';
 
 const { div, button } = h;
 
@@ -26,7 +27,9 @@ const toolbar = {
         // Main tools
         this.addButton(container, 'New', () => {
             console.log('New document');
-            api.document.create();
+            api.document.createAndSelect().then(() => {
+                tree.render();
+            });
         });
 
         this.addButton(container, 'Open', () => {

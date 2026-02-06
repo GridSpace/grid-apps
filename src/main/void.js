@@ -22,7 +22,7 @@ const VOID_HOME_LEFT = Math.PI / 4;
 const VOID_HOME_UP = Math.acos(1 / Math.sqrt(3));
 
 // Main initialization function
-function init() {
+async function init() {
     console.log({ void_form_init: version });
 
     // Initialize IndexedDB
@@ -62,6 +62,7 @@ function init() {
 
     // Initialize interaction system (hover, select, drag)
     interact.init();
+    api.document.bindRuntimeObservers();
 
     // Initialize ViewCube navigation widget
     const viewcube = new ViewCube({
@@ -122,6 +123,10 @@ function init() {
     // Build UI components
     toolbar.build();
     tree.build();
+
+    // Restore last active document, or seed a new blank one.
+    await api.document.restoreOrCreate();
+    tree.render();
 
     // TEST: Add example overlay elements
     // These demonstrate the 2D overlay tracking 3D points
