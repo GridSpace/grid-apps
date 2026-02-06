@@ -116,18 +116,9 @@ function createSketchRuntimeApi(getApi) {
             previewLine.visible = false;
             previewLine.renderOrder = 9;
             entitiesGroup.add(previewLine);
-            const previewStart = new THREE.Mesh(
-                new THREE.CircleGeometry(1.15, 20),
-                new THREE.MeshBasicMaterial({
-                    color: SKETCH_COLORS.pointsEdit,
-                    transparent: true,
-                    opacity: 0.55,
-                    depthWrite: false,
-                    side: THREE.DoubleSide
-                })
-            );
+            const previewStart = this.createSketchPointMarker(0, 0, { virtualOrigin: true });
             previewStart.visible = false;
-            previewStart.renderOrder = 9;
+            previewStart.renderOrder = 11;
             entitiesGroup.add(previewStart);
 
             group.add(planeGroup);
@@ -241,7 +232,7 @@ function createSketchRuntimeApi(getApi) {
         rebuildEntities(rec) {
             while (rec.entitiesGroup.children.length) {
                 const child = rec.entitiesGroup.children[0];
-                if (child === rec.previewLine) {
+                if (child === rec.previewLine || child === rec.previewStart) {
                     rec.entitiesGroup.remove(child);
                     continue;
                 }
@@ -439,7 +430,16 @@ function createSketchRuntimeApi(getApi) {
                 return;
             }
             rec.previewStart.position.set(start.x || 0, start.y || 0, 0);
-            rec.previewStart.material.color.setHex(mode === 'edit' ? SKETCH_COLORS.pointsEdit : SKETCH_COLORS.pointsHover);
+            const parts = rec.previewStart.userData?._markerParts || {};
+            if (parts.core?.material?.color) {
+                parts.core.material.color.setHex(SKETCH_COLORS.pointsGray);
+            }
+            if (parts.ringHighlight) {
+                parts.ringHighlight.visible = true;
+                if (parts.ringHighlight.material?.color) {
+                    parts.ringHighlight.material.color.setHex(SKETCH_COLORS.pointsHover);
+                }
+            }
             rec.previewStart.visible = true;
         },
 
@@ -560,6 +560,22 @@ function createSketchRuntimeApi(getApi) {
                     const desiredWorldRadius = SKETCH_POINT_SCREEN_RADIUS_PX * worldPerPixel;
                     const scale = Math.max(0.0001, desiredWorldRadius / SKETCH_POINT_BASE_RADIUS);
                     view.object.scale.setScalar(scale);
+                }
+                if (rec.previewStart) {
+                    rec.previewStart.getWorldPosition(tmp);
+                    let worldPerPixel;
+                    if (camera.isPerspectiveCamera) {
+                        const distance = camera.position.distanceTo(tmp);
+                        const fovRad = camera.fov * Math.PI / 180;
+                        worldPerPixel = (2 * Math.tan(fovRad / 2) * distance) / viewHeightPx;
+                    } else if (camera.isOrthographicCamera) {
+                        worldPerPixel = ((camera.top - camera.bottom) / camera.zoom) / viewHeightPx;
+                    } else {
+                        continue;
+                    }
+                    const desiredWorldRadius = SKETCH_POINT_SCREEN_RADIUS_PX * worldPerPixel;
+                    const scale = Math.max(0.0001, desiredWorldRadius / SKETCH_POINT_BASE_RADIUS);
+                    rec.previewStart.scale.setScalar(scale);
                 }
             }
         },

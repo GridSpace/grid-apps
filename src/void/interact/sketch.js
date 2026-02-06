@@ -168,7 +168,7 @@ function handleSketchPointerDown(event, intersections) {
     this.sketchPointerSeq = (this.sketchPointerSeq || 0) + 1;
     const seq = this.sketchPointerSeq;
     const local = this.projectEventToSketchLocal(event, feature);
-    const hit = this.getSketchEntityHitFromIntersections(intersections, feature) || this.hitTestSketchEntity(event, feature);
+    const hit = this.resolveSketchHit(event, intersections, feature);
     const hitLocal = this.getSketchHitLocalPoint(feature, hit);
 
     this.sketchPointerDown = {
@@ -227,7 +227,7 @@ function handleSketchHover(event, intersections) {
         }
     }
 
-    const hit = this.getSketchEntityHitFromIntersections(intersections, feature) || this.hitTestSketchEntity(event, feature);
+    const hit = this.resolveSketchHit(event, intersections, feature);
     const hoveredId = hit && !this.selectedSketchEntities.has(hit.id) ? hit.id : null;
     if (this.hoveredSketchEntityId !== hoveredId || previewChanged) {
         this.hoveredSketchEntityId = hoveredId;
@@ -253,7 +253,7 @@ function handleSketchMouseUp(event, intersections) {
 
     const tool = this.getSketchTool();
     if (tool === 'select') {
-        const upHit = this.getSketchEntityHitFromIntersections(intersections, feature) || this.hitTestSketchEntity(event, feature);
+        const upHit = this.resolveSketchHit(event, intersections, feature);
         const hit = upHit
             || (pointerDown?.hitId ? { id: pointerDown.hitId } : null)
             || (this.hoveredSketchEntityId ? { id: this.hoveredSketchEntityId } : null);
@@ -287,7 +287,7 @@ function handleSketchMouseUp(event, intersections) {
     }
 
     if (tool === 'line') {
-        const upHit = this.getSketchEntityHitFromIntersections(intersections, feature) || this.hitTestSketchEntity(event, feature);
+        const upHit = this.resolveSketchHit(event, intersections, feature);
         const local = this.getSketchHitLocalPoint(feature, upHit) || this.projectEventToSketchLocal(event, feature);
         if (!local || !this.sketchLineStart) {
             return true;
@@ -599,6 +599,18 @@ function getSketchEntityHitFromIntersections(intersections, feature) {
     return bestPoint || bestLine || null;
 }
 
+function resolveSketchHit(event, intersections, feature) {
+    const rayHit = this.getSketchEntityHitFromIntersections(intersections, feature);
+    const screenHit = this.hitTestSketchEntity(event, feature);
+    if (screenHit?.type === 'point') {
+        return screenHit;
+    }
+    if (rayHit?.type === 'point') {
+        return rayHit;
+    }
+    return rayHit || screenHit || null;
+}
+
 function getSketchHitLocalPoint(feature, hit) {
     if (!hit?.id) {
         return null;
@@ -792,6 +804,7 @@ export {
     pointerDistance,
     hitTestSketchEntity,
     getSketchEntityHitFromIntersections,
+    resolveSketchHit,
     getSketchHitLocalPoint,
     distanceToSegmentPx,
     getEventViewportXY,
