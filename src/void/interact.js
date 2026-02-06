@@ -20,6 +20,7 @@ const interact = {
     planes: [],       // List of all interactive planes
     upSelectCalled: false,  // Track if upSelect was called for this click
     wasHandleDrag: false,  // Track if we just finished a handle drag
+    hoverIntersection: null,  // Last hovered intersection for view-normal
     handleScreenRadiusPx: 7,  // Desired handle radius in screen pixels
     handleBaseRadius: 4,      // Base radius from Plane.createHandles()
     _tmpWorldPos: new THREE.Vector3(),
@@ -45,6 +46,9 @@ const interact = {
                 case 'Space':
                     this.deselectAll();
                     handled = true;
+                    break;
+                case 'KeyN':
+                    handled = this.viewNormalToHover();
                     break;
             }
             if (handled) {
@@ -275,12 +279,15 @@ const interact = {
     handleHover(intersection, event, allIntersections) {
         // No intersection means mouse left all objects
         if (!intersection) {
+            this.hoverIntersection = null;
             if (this.hoveredPlane && !this.hoveredPlane.isSelected()) {
                 this.hoveredPlane.setHovered(false);
                 this.hoveredPlane = null;
             }
             return;
         }
+
+        this.hoverIntersection = intersection;
 
         // Use first intersection (closest) - just like kiri/mesh
         const plane = intersection.object?.userData?.plane;
@@ -593,6 +600,131 @@ const interact = {
      */
     isSelected(plane) {
         return this.selectedPlanes.has(plane);
+    },
+
+    /**
+     * Resolve view-normal data from the current hover hit and tween camera to it.
+     */
+    viewNormalToHover() {
+        const target = this.resolveViewNormalTarget(this.hoverIntersection) || this.resolveViewNormalFromSelection();
+        if (!target) {
+            return false;
+        }
+
+        const { normal, point } = target;
+        const { camera } = space.internals();
+        const focus = space.view.getFocus().clone();
+
+        // Orbit uses spherical direction from focus -> camera.
+        // Pick normal side closest to current camera hemisphere to avoid flips.
+        const camDir = camera.position.clone().sub(focus).normalize();
+        const normalA = normal.clone().normalize();
+        const normalB = normalA.clone().negate();
+        const offsetDir = camDir.dot(normalA) >= camDir.dot(normalB) ? normalA : normalB;
+
+        const left = Math.atan2(offsetDir.x, offsetDir.z);
+        const up = Math.acos(Math.max(-1, Math.min(1, offsetDir.y)));
+
+        space.view.panTo(point.x, point.y, point.z, left, up);
+        return true;
+    },
+
+    /**
+     * Fallback for view-normal: use a single selected plane when nothing is hovered.
+     */
+    resolveViewNormalFromSelection() {
+        if (this.selectedPlanes.size !== 1) {
+            return null;
+        }
+        const plane = this.selectedPlanes.values().next().value;
+        if (!plane?.mesh || !plane?.group) {
+            return null;
+        }
+
+        plane.mesh.updateMatrixWorld(true);
+        plane.group.updateMatrixWorld(true);
+
+        const xAxis = new THREE.Vector3();
+        const yAxis = new THREE.Vector3();
+        const normal = new THREE.Vector3();
+        plane.mesh.matrixWorld.extractBasis(xAxis, yAxis, normal);
+        normal.normalize();
+
+        const point = new THREE.Vector3();
+        plane.group.getWorldPosition(point);
+
+        return { normal, point };
+    },
+
+    /**
+     * Resolve world-space normal + focus point from an intersection.
+     * Extension hook: object.userData.viewNormalResolver({ intersection, object })
+     * returning { normal: THREE.Vector3, point: THREE.Vector3 }.
+     */
+    resolveViewNormalTarget(intersection) {
+        const object = intersection?.object;
+        if (!object) return null;
+
+        const resolver = object.userData?.viewNormalResolver;
+        if (typeof resolver === 'function') {
+            const resolved = resolver({ intersection, object });
+            if (resolved?.normal && resolved?.point) {
+                return resolved;
+            }
+        }
+
+        object.updateMatrixWorld(true);
+
+        let normal = null;
+        if (intersection.face?.normal) {
+            normal = intersection.face.normal.clone().transformDirection(object.matrixWorld).normalize();
+        }
+
+        // Fallback for plane primitives when face data is missing.
+        if (!normal && object.userData?.plane?.mesh) {
+            const xAxis = new THREE.Vector3();
+            const yAxis = new THREE.Vector3();
+            normal = new THREE.Vector3();
+            object.userData.plane.mesh.matrixWorld.extractBasis(xAxis, yAxis, normal);
+            normal.normalize();
+        }
+
+        if (!normal) return null;
+
+        const point = this.getFaceCenterWorld(intersection, object) || (() => {
+            const p = new THREE.Vector3();
+            object.getWorldPosition(p);
+            return p;
+        })();
+
+        return { normal, point };
+    },
+
+    /**
+     * Resolve geometric center of hovered face in world space.
+     * - Triangle meshes: use triangle centroid from face indices.
+     * - Plane primitives: use plane group/world center.
+     */
+    getFaceCenterWorld(intersection, object) {
+        if (object.userData?.plane?.group) {
+            const center = new THREE.Vector3();
+            object.userData.plane.group.getWorldPosition(center);
+            return center;
+        }
+
+        const geom = object.geometry;
+        const face = intersection.face;
+
+        if (geom?.attributes?.position && face) {
+            const pos = geom.attributes.position;
+            const a = new THREE.Vector3().fromBufferAttribute(pos, face.a);
+            const b = new THREE.Vector3().fromBufferAttribute(pos, face.b);
+            const c = new THREE.Vector3().fromBufferAttribute(pos, face.c);
+            const center = a.add(b).add(c).multiplyScalar(1 / 3);
+            return center.applyMatrix4(object.matrixWorld);
+        }
+
+        return null;
     }
 };
 
