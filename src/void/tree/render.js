@@ -68,6 +68,9 @@ function createItemRow(label, feature, depth = 0, opts = {}) {
     if (opts.selected) {
         row.classList.add('active');
     }
+    if (opts.eyeVisible === false) {
+        row.classList.add('is-off');
+    }
     row.style.paddingLeft = `${8 + depth * 16}px`;
 
     const icon = document.createElement('span');
@@ -93,6 +96,24 @@ function createItemRow(label, feature, depth = 0, opts = {}) {
             opts.onEdit(feature);
         }
     };
+    if (typeof opts.onHoverEnter === 'function') {
+        row.onmouseenter = () => opts.onHoverEnter(feature);
+    }
+    if (typeof opts.onHoverLeave === 'function') {
+        row.onmouseleave = () => opts.onHoverLeave(feature);
+    }
+
+    if (typeof opts.onEye === 'function') {
+        const eye = document.createElement('button');
+        eye.className = `tree-eye ${opts.eyeVisible !== false ? 'visible' : 'off'}`;
+        eye.textContent = '👁';
+        eye.title = opts.eyeVisible !== false ? 'Hide' : 'Show';
+        eye.onclick = event => {
+            event.stopPropagation();
+            opts.onEye(feature);
+        };
+        row.appendChild(eye);
+    }
 
     return row;
 }

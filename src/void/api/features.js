@@ -12,6 +12,9 @@ function createFeaturesApi(getApi) {
             const api = getApi();
             const doc = api.document.current;
             if (doc) {
+                if (feature?.visible === undefined) {
+                    feature.visible = true;
+                }
                 doc.features.push(feature);
                 api.document.save({
                     kind: 'micro',
@@ -21,6 +24,7 @@ function createFeaturesApi(getApi) {
                         id: feature?.id || null
                     }
                 });
+                api.sketchRuntime?.sync();
             }
         },
 
@@ -39,6 +43,7 @@ function createFeaturesApi(getApi) {
                             id: feature?.id || null
                         }
                     });
+                    api.sketchRuntime?.sync();
                 }
             }
         },
@@ -73,6 +78,7 @@ function createFeaturesApi(getApi) {
                 }
             });
 
+            api.sketchRuntime?.sync();
             return feature;
         },
 
@@ -84,6 +90,15 @@ function createFeaturesApi(getApi) {
             }, {
                 opType: 'feature.rename',
                 payload: { name: nextName }
+            });
+        },
+
+        setVisible(featureId, visible) {
+            return this.update(featureId, feature => {
+                feature.visible = !!visible;
+            }, {
+                opType: 'feature.update',
+                payload: { field: 'visible', value: !!visible }
             });
         }
     };

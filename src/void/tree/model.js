@@ -26,11 +26,17 @@ function render() {
 
 function onFeatureSelected(feature) {
     this.selectedFeatureId = feature?.id || null;
+    api.sketchRuntime?.setEditing(null);
     this.render();
 }
 
 function onFeatureEdit(feature) {
     this.selectedFeatureId = feature?.id || null;
+    if (feature?.type === 'sketch') {
+        api.sketchRuntime?.setEditing(feature.id);
+    } else {
+        api.sketchRuntime?.setEditing(null);
+    }
     properties.showFeature(feature, {
         onChange: () => this.render()
     });
@@ -119,10 +125,19 @@ function renderFeaturesSection() {
         }
         for (const feature of features) {
             const label = feature?.name || feature?.type || 'Feature';
+            const isSketch = feature?.type === 'sketch';
+            const visible = feature?.visible !== false;
             this.container.appendChild(this.createItemRow(label, feature, 1, {
                 selected: this.selectedFeatureId === feature?.id,
+                eyeVisible: visible,
+                onEye: isSketch ? f => {
+                    api.features.setVisible(f.id, f.visible === false);
+                    this.render();
+                } : null,
                 onSelect: f => this.onFeatureSelected(f),
-                onEdit: f => this.onFeatureEdit(f)
+                onEdit: f => this.onFeatureEdit(f),
+                onHoverEnter: isSketch ? f => api.sketchRuntime?.setHovered(f.id) : null,
+                onHoverLeave: isSketch ? () => api.sketchRuntime?.setHovered(null) : null
             }));
         }
         return;
@@ -157,10 +172,19 @@ function renderFeaturesSection() {
 
         for (const feature of items) {
             const label = feature?.name || feature?.type || 'Feature';
+            const isSketch = feature?.type === 'sketch';
+            const visible = feature?.visible !== false;
             this.container.appendChild(this.createItemRow(label, feature, 2, {
                 selected: this.selectedFeatureId === feature?.id,
+                eyeVisible: visible,
+                onEye: isSketch ? f => {
+                    api.features.setVisible(f.id, f.visible === false);
+                    this.render();
+                } : null,
                 onSelect: f => this.onFeatureSelected(f),
-                onEdit: f => this.onFeatureEdit(f)
+                onEdit: f => this.onFeatureEdit(f),
+                onHoverEnter: isSketch ? f => api.sketchRuntime?.setHovered(f.id) : null,
+                onHoverLeave: isSketch ? () => api.sketchRuntime?.setHovered(null) : null
             }));
         }
     }

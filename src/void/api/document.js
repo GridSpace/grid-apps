@@ -145,6 +145,7 @@ function createDocumentApi(getApi, cfg) {
                 this.isHydrating = false;
             }
             api.datum.updateLabels(api.overlay);
+            api.sketchRuntime?.sync();
             space.update();
         },
 

@@ -84,6 +84,7 @@ const properties = {
         if (!feature || !this.panel || !this.body) return;
         this.currentFeatureId = feature.id;
         this._onChange = opts.onChange || null;
+        api.sketchRuntime?.setEditing(feature.type === 'sketch' ? feature.id : null);
         this.panel.classList.remove('hidden');
         this.renderFeature(feature);
     },
@@ -91,6 +92,7 @@ const properties = {
     hide() {
         if (!this.panel) return;
         this.panel.classList.add('hidden');
+        api.sketchRuntime?.setEditing(null);
         this.currentFeatureId = null;
         this._onChange = null;
     },

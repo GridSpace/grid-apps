@@ -7,6 +7,7 @@ import { interact } from './interact.js';
 import { createOriginApi } from './api/origin.js';
 import { createFeaturesApi } from './api/features.js';
 import { createSketchApi } from './api/sketch.js';
+import { createSketchRuntimeApi } from './api/sketch_runtime.js';
 import { createDocumentApi } from './api/document.js';
 
 const DOC_SCHEMA_VERSION = 1;
@@ -50,6 +51,7 @@ const api = {
 
     // Feature management
     sketch: null,
+    sketchRuntime: null,
     features: null,
 
     // Selection management
@@ -86,6 +88,7 @@ const api = {
 api.origin = createOriginApi(() => api);
 api.features = createFeaturesApi(() => api);
 api.sketch = createSketchApi(() => api, shortId);
+api.sketchRuntime = createSketchRuntimeApi(() => api);
 api.document = createDocumentApi(() => api, {
     DOC_SCHEMA_VERSION,
     ADMIN_CURRENT_DOC_KEY,

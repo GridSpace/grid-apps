@@ -45,6 +45,7 @@ async function init() {
     space.setAntiAlias(true);
     space.useDefaultKeys(true);
     space.init($('container'), delta => {}, false);
+    api.sketchRuntime.init(space.world);
 
     // Initialize 2D overlay system
     overlay.init();
@@ -162,6 +163,7 @@ async function init() {
 
     // Restore last active document, or seed a new blank one.
     await api.document.restoreOrCreate();
+    api.sketchRuntime.sync();
     toolbar.updateDocumentTitle();
     tree.render();
 
