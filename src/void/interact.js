@@ -20,6 +20,9 @@ const interact = {
     planes: [],       // List of all interactive planes
     upSelectCalled: false,  // Track if upSelect was called for this click
     wasHandleDrag: false,  // Track if we just finished a handle drag
+    handleScreenRadiusPx: 7,  // Desired handle radius in screen pixels
+    handleBaseRadius: 4,      // Base radius from Plane.createHandles()
+    _tmpWorldPos: new THREE.Vector3(),
 
     /**
      * Initialize interaction system
@@ -166,6 +169,9 @@ const interact = {
             // Called with args: handle the drag
             this.handleDrag(delta, offset, isDone, intersections);
         });
+
+        this.setupHandleScaleHooks();
+        this.updateHandleScreenScales();
     },
 
     /**
@@ -196,6 +202,7 @@ const interact = {
     registerPlane(plane) {
         if (!this.planes.includes(plane)) {
             this.planes.push(plane);
+            this.updateHandleScreenScales();
         }
     },
 
@@ -210,6 +217,55 @@ const interact = {
         this.selectedPlanes.delete(plane);
         if (this.hoveredPlane === plane) {
             this.hoveredPlane = null;
+        }
+        this.updateHandleScreenScales();
+    },
+
+    /**
+     * Keep handle size visually constant in screen space.
+     */
+    setupHandleScaleHooks() {
+        const viewCtrl = space.view.ctrl;
+        if (viewCtrl && viewCtrl.addEventListener) {
+            viewCtrl.addEventListener('change', () => {
+                this.updateHandleScreenScales();
+            });
+        }
+        window.addEventListener('resize', () => {
+            this.updateHandleScreenScales();
+        });
+    },
+
+    /**
+     * Scale handle meshes to maintain constant screen-space radius.
+     */
+    updateHandleScreenScales() {
+        const { camera, renderer } = space.internals();
+        if (!camera || !renderer) return;
+
+        const viewHeightPx = renderer.domElement?.clientHeight || renderer.domElement?.height;
+        if (!viewHeightPx) return;
+
+        for (const plane of this.planes) {
+            if (!plane?.handles?.length) continue;
+            for (const handle of plane.handles) {
+                handle.getWorldPosition(this._tmpWorldPos);
+
+                let worldPerPixel;
+                if (camera.isPerspectiveCamera) {
+                    const distance = camera.position.distanceTo(this._tmpWorldPos);
+                    const fovRad = camera.fov * Math.PI / 180;
+                    worldPerPixel = (2 * Math.tan(fovRad / 2) * distance) / viewHeightPx;
+                } else if (camera.isOrthographicCamera) {
+                    worldPerPixel = ((camera.top - camera.bottom) / camera.zoom) / viewHeightPx;
+                } else {
+                    continue;
+                }
+
+                const desiredWorldRadius = this.handleScreenRadiusPx * worldPerPixel;
+                const scale = Math.max(0.001, desiredWorldRadius / this.handleBaseRadius);
+                handle.scale.setScalar(scale);
+            }
         }
     },
 
@@ -467,6 +523,7 @@ const interact = {
 
         // Position changed directly on group, so notify listeners.
         this.draggedPlane.notifyChange();
+        this.updateHandleScreenScales();
 
         // Request refresh to show changes
         space.update();
@@ -504,6 +561,7 @@ const interact = {
             plane.setHovered(false);
             this.selectedPlanes.add(plane);
         }
+        this.updateHandleScreenScales();
     },
 
     /**
@@ -519,6 +577,7 @@ const interact = {
             this.hoveredPlane.setHovered(false);
             this.hoveredPlane = null;
         }
+        this.updateHandleScreenScales();
     },
 
     /**
