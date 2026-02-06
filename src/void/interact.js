@@ -59,12 +59,27 @@ const interact = {
                 return this.getInteractiveObjects();
             }
             // Second call - handle mouse down (for drag operations)
-            const obj = int?.object;
+            let targetInt = int;
+
+            // Prioritize handle intersections so selected handles can be dragged
+            // even when partially/fully occluded by plane meshes.
+            if (ints && ints.length > 0) {
+                const handleInt = ints.find(hit => {
+                    const handleType = hit?.object?.userData?.handleType;
+                    const plane = hit?.object?.userData?.plane;
+                    return handleType === 'plane-resize' && plane && this.selectedPlanes.has(plane);
+                });
+                if (handleInt) {
+                    targetInt = handleInt;
+                }
+            }
+
+            const obj = targetInt?.object;
             const handleType = obj?.userData?.handleType;
 
             if (handleType === 'plane-resize') {
                 // Clicked a handle - start drag resize
-                this.startHandleDrag(obj, int, event);
+                this.startHandleDrag(obj, targetInt, event);
             }
         });
 
