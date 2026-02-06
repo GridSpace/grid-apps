@@ -262,6 +262,57 @@ class Plane {
     }
 
     /**
+     * Set plane frame using canonical document-space data.
+     * frame = { origin:{x,y,z}, normal:{x,y,z}, x_axis:{x,y,z}, size:{width,height} }
+     */
+    setFrame(frame = {}) {
+        const { origin, normal, x_axis, size } = frame;
+
+        if (origin) {
+            this.group.position.set(origin.x || 0, origin.y || 0, origin.z || 0);
+        }
+
+        const zAxis = new THREE.Vector3(
+            normal?.x ?? 0,
+            normal?.y ?? 0,
+            normal?.z ?? 1
+        );
+        if (zAxis.lengthSq() < 1e-12) {
+            zAxis.set(0, 0, 1);
+        }
+        zAxis.normalize();
+
+        const xAxis = new THREE.Vector3(
+            x_axis?.x ?? 1,
+            x_axis?.y ?? 0,
+            x_axis?.z ?? 0
+        );
+        // Gram-Schmidt project x-axis onto plane normal.
+        xAxis.addScaledVector(zAxis, -xAxis.dot(zAxis));
+        if (xAxis.lengthSq() < 1e-12) {
+            // Choose stable fallback basis if provided axis is degenerate.
+            xAxis.copy(Math.abs(zAxis.z) < 0.9 ? new THREE.Vector3(0, 0, 1) : new THREE.Vector3(0, 1, 0));
+            xAxis.addScaledVector(zAxis, -xAxis.dot(zAxis));
+        }
+        xAxis.normalize();
+
+        const yAxis = new THREE.Vector3().crossVectors(zAxis, xAxis).normalize();
+        xAxis.crossVectors(yAxis, zAxis).normalize();
+
+        const basis = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis);
+        this.group.quaternion.setFromRotationMatrix(basis);
+
+        if (size) {
+            this.setSize(
+                size.width !== undefined ? size.width : this.size,
+                size.height !== undefined ? size.height : this.height
+            );
+        }
+
+        this.notifyChange();
+    }
+
+    /**
      * Set visibility
      */
     setVisible(visible) {
@@ -395,32 +446,45 @@ class Plane {
     }
 
     /**
+     * Get canonical plane frame in document space.
+     */
+    getFrame() {
+        const origin = {
+            x: this.group.position.x,
+            y: this.group.position.y,
+            z: this.group.position.z
+        };
+        const xAxis = new THREE.Vector3(1, 0, 0).applyQuaternion(this.group.quaternion).normalize();
+        const normal = new THREE.Vector3(0, 0, 1).applyQuaternion(this.group.quaternion).normalize();
+        return {
+            origin,
+            normal: { x: normal.x, y: normal.y, z: normal.z },
+            x_axis: { x: xAxis.x, y: xAxis.y, z: xAxis.z },
+            size: {
+                width: this.size,
+                height: this.height !== undefined ? this.height : this.size
+            }
+        };
+    }
+
+    /**
      * Serialize plane to JSON
      */
     toJSON() {
+        const frame = this.getFrame();
         return {
             id: this.id,
             name: this.name,
             label: this.label,
             type: 'plane',
-            size: this.size,
-            height: this.height !== undefined ? this.height : this.size,
+            frame,
+            size: frame.size,
             visible: this.group.visible,
             color: this.color,
             outlineColor: this.outlineColor,
             opacity: this.opacity,
             outlineOpacity: this.outlineOpacity,
-            showHandles: this.showHandles,
-            position: {
-                x: this.group.position.x,
-                y: this.group.position.y,
-                z: this.group.position.z
-            },
-            rotation: {
-                x: this.group.rotation.x,
-                y: this.group.rotation.y,
-                z: this.group.rotation.z
-            }
+            showHandles: this.showHandles
         };
     }
 
@@ -432,7 +496,7 @@ class Plane {
             id: data.id,
             name: data.name,
             label: data.label,
-            size: data.size,
+            size: data?.size?.width ?? data.size,
             color: data.color,
             outlineColor: data.outlineColor,
             opacity: data.opacity,
@@ -440,16 +504,21 @@ class Plane {
             showHandles: data.showHandles
         });
 
-        if (data.position) {
-            plane.setPosition(data.position.x, data.position.y, data.position.z);
-        }
+        if (data.frame) {
+            plane.setFrame(data.frame);
+        } else {
+            // Legacy fallback for pre-frame documents.
+            if (data.position) {
+                plane.setPosition(data.position.x, data.position.y, data.position.z);
+            }
 
-        if (data.rotation) {
-            plane.setRotation(data.rotation.x, data.rotation.y, data.rotation.z);
-        }
+            if (data.rotation) {
+                plane.setRotation(data.rotation.x, data.rotation.y, data.rotation.z);
+            }
 
-        if (data.height !== undefined || data.size !== undefined) {
-            plane.setSize(data.size, data.height);
+            if (data.height !== undefined || data.size !== undefined) {
+                plane.setSize(data.size, data.height);
+            }
         }
 
         if (data.visible !== undefined) {

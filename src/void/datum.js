@@ -234,33 +234,42 @@ const datum = {
                     name: 'XY Plane',
                     label: 'Top',
                     type: 'plane',
-                    size,
-                    height: size,
+                    size: { width: size, height: size },
                     visible: true,
-                    position: { x: 0, y: 0, z: 0 },
-                    rotation: { x: 0, y: 0, z: 0 }
+                    frame: {
+                        origin: { x: 0, y: 0, z: 0 },
+                        normal: { x: 0, y: 0, z: 1 },
+                        x_axis: { x: 1, y: 0, z: 0 },
+                        size: { width: size, height: size }
+                    }
                 },
                 xz: {
                     id: 'datum-xz',
                     name: 'XZ Plane',
                     label: 'Front',
                     type: 'plane',
-                    size,
-                    height: size,
+                    size: { width: size, height: size },
                     visible: true,
-                    position: { x: 0, y: 0, z: 0 },
-                    rotation: { x: Math.PI / 2, y: 0, z: 0 }
+                    frame: {
+                        origin: { x: 0, y: 0, z: 0 },
+                        normal: { x: 0, y: -1, z: 0 },
+                        x_axis: { x: 1, y: 0, z: 0 },
+                        size: { width: size, height: size }
+                    }
                 },
                 yz: {
                     id: 'datum-yz',
                     name: 'YZ Plane',
                     label: 'Right',
                     type: 'plane',
-                    size,
-                    height: size,
+                    size: { width: size, height: size },
                     visible: true,
-                    position: { x: 0, y: 0, z: 0 },
-                    rotation: { x: 0, y: Math.PI / 2, z: 0 }
+                    frame: {
+                        origin: { x: 0, y: 0, z: 0 },
+                        normal: { x: 1, y: 0, z: 0 },
+                        x_axis: { x: 0, y: 1, z: 0 },
+                        size: { width: size, height: size }
+                    }
                 }
             }
         };
@@ -293,23 +302,28 @@ const datum = {
             if (src.showHandles !== undefined) plane.showHandles = src.showHandles;
             if (src.visible !== undefined) plane.setVisible(src.visible);
 
-            const width = src.size !== undefined ? src.size : plane.size;
-            const height = src.height !== undefined ? src.height : undefined;
-            plane.setSize(width, height);
+            if (src.frame) {
+                plane.setFrame(src.frame);
+            } else {
+                // Legacy fallback for older document data.
+                const width = src?.size?.width !== undefined ? src.size.width : (src.size !== undefined ? src.size : plane.size);
+                const height = src?.size?.height !== undefined ? src.size.height : (src.height !== undefined ? src.height : undefined);
+                plane.setSize(width, height);
 
-            if (src.position) {
-                plane.setPosition(
-                    src.position.x || 0,
-                    src.position.y || 0,
-                    src.position.z || 0
-                );
-            }
-            if (src.rotation) {
-                plane.setRotation(
-                    src.rotation.x || 0,
-                    src.rotation.y || 0,
-                    src.rotation.z || 0
-                );
+                if (src.position) {
+                    plane.setPosition(
+                        src.position.x || 0,
+                        src.position.y || 0,
+                        src.position.z || 0
+                    );
+                }
+                if (src.rotation) {
+                    plane.setRotation(
+                        src.rotation.x || 0,
+                        src.rotation.y || 0,
+                        src.rotation.z || 0
+                    );
+                }
             }
         }
         this.notifyChange();
