@@ -123,6 +123,7 @@ class Orbit extends EventDispatcher {
             pan = new Vector3(),
             lastPosition = new Vector3(),
             lastQuaternion = new Quaternion(),
+            lastZoom = object.zoom !== undefined ? object.zoom : 1,
             // so camera.up is the orbit axis
             quat = new Quaternion().setFromUnitVectors(object.up, new Vector3(0, 1, 0)),
             quatInverse = quat.clone().invert(),
@@ -332,11 +333,13 @@ class Orbit extends EventDispatcher {
             // min(camera displacement, camera rotation in radians)^2 > EPS
             // using small-angle approximation cos(x/2) = 1 - x^2 / 8
             if (lastPosition.distanceToSquared(this.object.position) > EPS
-                || 8 * (1 - lastQuaternion.dot(this.object.quaternion)) > EPS) {
+                || 8 * (1 - lastQuaternion.dot(this.object.quaternion)) > EPS
+                || Math.abs(lastZoom - this.object.zoom) > EPS) {
 
                 this.dispatchEvent(changeEvent);
                 lastPosition.copy(this.object.position);
                 lastQuaternion.copy(this.object.quaternion);
+                lastZoom = this.object.zoom;
                 if (notify) notify(position, true);
             } else {
                 if (notify) notify(position, false);

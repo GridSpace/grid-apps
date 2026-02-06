@@ -1344,7 +1344,7 @@ let Space = {
     },
 
     preset: {
-        top:    {left: home, up: 0,   panX, panY, panZ},
+        top:    {left: 0,    up: 0,   panX, panY, panZ},
         back:   {left: PI,   up: PI2, panX, panY, panZ},
         home:   {left: home, up,      panX, panY, panZ},
         front:  {left: 0,    up: PI2, panX, panY, panZ},
@@ -1353,7 +1353,7 @@ let Space = {
     },
 
     view: {
-        top:    (then) => { tweenCam({left: home, up: 0,   panX, panY, panZ, then}) },
+        top:    (then) => { tweenCam({left: 0,    up: 0,   panX, panY, panZ, then}) },
         bottom: (then) => { tweenCam({left: home, up: PI,  panX, panY, panZ, then}) },
         back:   (then) => { tweenCam({left: PI,   up: PI2, panX, panY, panZ, then}) },
         home:   (then) => { tweenCam({left: home, up,      panX, panY, panZ, then}) },

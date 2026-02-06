@@ -60,11 +60,15 @@ const overlay = {
      * Setup camera movement hook with debouncing
      */
     setupCameraHook() {
-        const viewCtrl = space.view.ctrl;
+        // Rebind when projection/control object changes.
+        if (this.viewCtrl && this.onViewChange) {
+            this.viewCtrl.removeEventListener('change', this.onViewChange);
+        }
+
+        const viewCtrl = this.viewCtrl = space.view.ctrl;
         if (viewCtrl && viewCtrl.addEventListener) {
             let updateQueued = false;
-
-            viewCtrl.addEventListener('change', () => {
+            this.onViewChange = () => {
                 if (this.enabled && !updateQueued) {
                     updateQueued = true;
                     requestAnimationFrame(() => {
@@ -72,8 +76,20 @@ const overlay = {
                         updateQueued = false;
                     });
                 }
-            });
+            };
+            viewCtrl.addEventListener('change', this.onViewChange);
         }
+    },
+
+    /**
+     * Called when camera/control internals are recreated (e.g. projection toggle).
+     */
+    onProjectionChanged() {
+        const internals = space.internals();
+        this.camera = internals.camera;
+        this.renderer = internals.renderer;
+        this.setupCameraHook();
+        this.updateAll();
     },
 
     /**

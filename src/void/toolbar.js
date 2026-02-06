@@ -3,11 +3,13 @@
 import { $, h } from '../moto/webui.js';
 import { api } from './api.js';
 import { tree } from './tree.js';
+import { space } from '../moto/space.js';
 
 const { div, button } = h;
 
 const toolbar = {
     buttons: [],
+    cameraToggleBtn: null,
 
     build() {
         const container = $('top-bar');
@@ -60,42 +62,62 @@ const toolbar = {
         // View tools
         this.addButton(container, 'Fit', () => {
             console.log('Fit view');
-            // TODO: implement fit view
+            space.view.fit(null, { tween: true });
         });
 
         this.addButton(container, 'Top', () => {
             console.log('Top view');
-            // TODO: implement top view
+            space.view.top();
         });
 
         this.addButton(container, 'Front', () => {
             console.log('Front view');
-            // TODO: implement front view
+            space.view.front();
         });
 
         this.addButton(container, 'Right', () => {
             console.log('Right view');
-            // TODO: implement right view
+            space.view.right();
         });
+
+        container.appendChild(this.separator());
+
+        this.cameraToggleBtn = this.addButton(container, this.getProjectionLabel(), () => {
+            const current = space.view.getProjection();
+            const next = current === 'perspective' ? 'orthographic' : 'perspective';
+            space.view.setProjection(next);
+            // setProjection recreates controls/camera; restore void bindings/hooks.
+            space.view.setCtrl('void');
+            api.overlay.onProjectionChanged();
+            this.updateProjectionLabel();
+        }, { id: 'btn-camera-toggle' });
 
         console.log({ toolbar_built: true });
     },
 
+    getProjectionLabel() {
+        const mode = space.view.getProjection();
+        return mode === 'perspective' ? 'Ortho' : 'Persp';
+    },
+
+    updateProjectionLabel() {
+        if (this.cameraToggleBtn) {
+            this.cameraToggleBtn.textContent = this.getProjectionLabel();
+        }
+    },
+
     addButton(container, label, onclick, options = {}) {
-        const attr = {
-            class: 'toolbar-btn',
-            _: label,
-            click: onclick
-        };
+        const btn = document.createElement('button');
+        btn.className = 'toolbar-btn';
+        btn.textContent = label;
+        btn.onclick = onclick;
         if (options.id) {
-            attr.id = options.id;
+            btn.id = options.id;
         }
         if (options.disabled) {
-            attr._disabled = true;
+            btn.disabled = true;
         }
-
-        const map = h.bind(container, button(attr), { append: true });
-        const btn = map[Object.keys(map)[0]];
+        container.appendChild(btn);
         this.buttons.push(btn);
         return btn;
     },
