@@ -419,6 +419,13 @@ function createSketchRuntimeApi(getApi) {
                     pointById.set(entity.id, entity);
                 }
             }
+            // Circle endpoint points are implementation details; hide their markers.
+            const hiddenPointIds = new Set();
+            for (const entity of entities) {
+                if (entity?.type !== 'arc' || !entity?.circle) continue;
+                if (typeof entity.a === 'string') hiddenPointIds.add(entity.a);
+                if (typeof entity.b === 'string') hiddenPointIds.add(entity.b);
+            }
             this.addClosedProfileFills(rec, entities, pointById);
             for (const entity of entities) {
                 if (!entity?.id) {
@@ -502,6 +509,9 @@ function createSketchRuntimeApi(getApi) {
                 }
 
                 if (entity.type === 'point') {
+                    if (hiddenPointIds.has(entity.id)) {
+                        continue;
+                    }
                     const point = this.createSketchPointMarker(entity.x || 0, entity.y || 0);
                     point.userData.sketchEntityId = entity.id;
                     point.userData.sketchEntityType = 'point';
