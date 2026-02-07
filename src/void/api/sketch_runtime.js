@@ -218,8 +218,8 @@ function createSketchRuntimeApi(getApi) {
             const labels = {
                 horizontal: 'H',
                 vertical: 'V',
-                perpendicular: '⟂',
-                coincident: '●',
+                perpendicular: 'P',
+                coincident: 'C',
                 fixed: 'F',
                 tangent: 'T',
                 equal: '='

@@ -41,6 +41,7 @@ const interact = {
     sketchPointerDown: null,
     sketchDrag: null,
     sketchLineStart: null,
+    sketchLineStartRefId: null,
     sketchLineStartSeq: null,
     sketchPointerSeq: 0,
     sketchMarquee: null,

@@ -3,6 +3,7 @@
 import { THREE } from '../../ext/three.js';
 import { space } from '../../moto/space.js';
 import { api } from '../api.js';
+import { enforceSketchConstraintsInPlace } from '../sketch_constraints.js';
 
 const SKETCH_HIT_POINT_PX = 11;
 const SKETCH_HIT_LINE_PX = 10;
@@ -40,6 +41,7 @@ function getSketchTool() {
 
 function cancelSketchLine() {
     this.sketchLineStart = null;
+    this.sketchLineStartRefId = null;
     this.sketchLineStartSeq = null;
     this.sketchLinePreview = null;
 }
@@ -176,6 +178,7 @@ function deleteSelectedSketchConstraints() {
             }
         }
         sketch.constraints = keep;
+        enforceSketchConstraintsInPlace(sketch);
     }, {
         opType: 'feature.update',
         payload: { field: 'constraints.remove', ids: Array.from(removeIds) }
@@ -213,6 +216,7 @@ function deleteSelectedSketchEntities() {
             const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
             return !refs.some(ref => removeIds.has(ref));
         });
+        enforceSketchConstraintsInPlace(sketch);
     }, {
         opType: 'feature.update',
         payload: { field: 'entities.remove', ids: Array.from(removeIds) }
@@ -303,9 +307,12 @@ function applySketchConstraint(type) {
     api.features.update(feature.id, sketch => {
         sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
         for (const spec of specs) {
-            if (this.toggleSketchConstraintInList(sketch.constraints, spec.type, spec.refs)) {
+            if (this.toggleSketchConstraintInList(sketch, sketch.constraints, spec.type, spec.refs)) {
                 changed = true;
             }
+        }
+        if (changed) {
+            enforceSketchConstraintsInPlace(sketch);
         }
     }, {
         opType: 'feature.update',
@@ -319,7 +326,7 @@ function applySketchConstraint(type) {
     return changed;
 }
 
-function toggleSketchConstraintInList(list, type, refs) {
+function toggleSketchConstraintInList(sketch, list, type, refs) {
     const key = this.makeSketchConstraintKey(type, refs);
     for (let i = 0; i < list.length; i++) {
         const existing = list[i];
@@ -328,10 +335,23 @@ function toggleSketchConstraintInList(list, type, refs) {
             return true;
         }
     }
+    const data = {};
+    if (type === 'fixed') {
+        data.anchors = {};
+        const entities = Array.isArray(sketch?.entities) ? sketch.entities : [];
+        const pointById = new Map(entities.filter(e => e?.type === 'point' && e.id).map(e => [e.id, e]));
+        for (const id of this.normalizeConstraintRefs(type, refs)) {
+            const p = pointById.get(id);
+            if (p) {
+                data.anchors[id] = { x: p.x || 0, y: p.y || 0 };
+            }
+        }
+    }
     list.push({
         id: this.newSketchEntityId('cst'),
         type,
         refs: this.normalizeConstraintRefs(type, refs),
+        data,
         created_at: Date.now()
     });
     return true;
@@ -375,6 +395,7 @@ function handleSketchPointerDown(event, intersections) {
             return true;
         }
         this.sketchLineStart = start;
+        this.sketchLineStartRefId = (hit?.type === 'point' && hit?.id && hit.id !== SKETCH_VIRTUAL_ORIGIN_ID) ? hit.id : null;
         this.sketchLineStartSeq = seq;
         this.sketchLinePreview = { a: start, b: start };
         this.updateSketchInteractionVisuals();
@@ -518,20 +539,27 @@ function handleSketchMouseUp(event, intersections) {
     if (tool === 'line') {
         const upHit = this.resolveSketchHit(event, intersections, feature);
         const local = this.getSketchHitLocalPoint(feature, upHit) || this.projectEventToSketchLocal(event, feature);
+        const endRefId = (upHit?.type === 'point' && upHit?.id && upHit.id !== SKETCH_VIRTUAL_ORIGIN_ID) ? upHit.id : null;
         if (!local || !this.sketchLineStart) {
             return true;
         }
 
         if (this.sketchLineStartSeq === pointerDown?.seq) {
             if (dist > SKETCH_DRAG_START_PX) {
-                this.createSketchLine(feature, this.sketchLineStart, local);
+                this.createSketchLine(feature, this.sketchLineStart, local, {
+                    startRefId: this.sketchLineStartRefId || null,
+                    endRefId
+                });
                 // Drag gesture creates one segment and exits pending state.
                 this.cancelSketchLine();
             }
             return true;
         }
 
-        this.createSketchLine(feature, this.sketchLineStart, local);
+        const created = this.createSketchLine(feature, this.sketchLineStart, local, {
+            startRefId: this.sketchLineStartRefId || null,
+            endRefId
+        });
         if (this.getSketchHitLocalPoint(feature, upHit)) {
             // Common polygon workflow: close/attach on existing point and exit line mode.
             this.cancelSketchLine();
@@ -540,6 +568,7 @@ function handleSketchMouseUp(event, intersections) {
         }
         // Click-chain mode: keep endpoint as next segment start.
         this.sketchLineStart = { x: local.x, y: local.y };
+        this.sketchLineStartRefId = created?.endPointId || null;
         this.sketchLineStartSeq = null;
         return true;
     }
@@ -632,6 +661,7 @@ function handleSketchDrag(delta, offset, isDone) {
         ref.y = base.y + dy;
     }
 
+    enforceSketchConstraintsInPlace(feature);
     this.sketchDrag.moved = this.sketchDrag.moved || Math.hypot(dx, dy) > 0;
     api.sketchRuntime.sync();
     this.updateSketchInteractionVisuals();
@@ -876,6 +906,7 @@ function createSketchPoint(feature, local) {
             y: local.y,
             fixed: false
         });
+        enforceSketchConstraintsInPlace(sketch);
     }, {
         opType: 'feature.update',
         payload: { field: 'entities.add', entity: 'point' }
@@ -887,18 +918,45 @@ function createSketchPoint(feature, local) {
     this.updateSketchInteractionVisuals();
 }
 
-function createSketchLine(feature, a, b) {
+function createSketchLine(feature, a, b, options = {}) {
     const dx = (b.x || 0) - (a.x || 0);
     const dy = (b.y || 0) - (a.y || 0);
     if (Math.hypot(dx, dy) < SKETCH_MIN_LINE_LENGTH) {
-        return;
+        return null;
     }
 
     const id = this.newSketchEntityId('line');
+    let createdStartPointId = null;
+    let createdEndPointId = null;
     api.features.update(feature.id, sketch => {
         sketch.entities = Array.isArray(sketch.entities) ? sketch.entities : [];
-        const pa = this.ensureSketchPoint(sketch, a);
-        const pb = this.ensureSketchPoint(sketch, b);
+        sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
+
+        const pa = {
+            id: this.newSketchEntityId('point'),
+            type: 'point',
+            x: a.x,
+            y: a.y,
+            fixed: false
+        };
+        const pb = {
+            id: this.newSketchEntityId('point'),
+            type: 'point',
+            x: b.x,
+            y: b.y,
+            fixed: false
+        };
+        createdStartPointId = pa.id;
+        createdEndPointId = pb.id;
+        sketch.entities.push(pa, pb);
+
+        if (options.startRefId) {
+            addCoincidentConstraintIfMissing.call(this, sketch, pa.id, options.startRefId);
+        }
+        if (options.endRefId) {
+            addCoincidentConstraintIfMissing.call(this, sketch, pb.id, options.endRefId);
+        }
+
         sketch.entities.push({
             id,
             type: 'line',
@@ -906,6 +964,7 @@ function createSketchLine(feature, a, b) {
             a: pa.id,
             b: pb.id
         });
+        enforceSketchConstraintsInPlace(sketch);
     }, {
         opType: 'feature.update',
         payload: { field: 'entities.add', entity: 'line' }
@@ -916,6 +975,26 @@ function createSketchLine(feature, a, b) {
     this.hoveredSketchEntityId = null;
     this.sketchLinePreview = null;
     this.updateSketchInteractionVisuals();
+    return { lineId: id, startPointId: createdStartPointId, endPointId: createdEndPointId };
+}
+
+function addCoincidentConstraintIfMissing(sketch, aId, bId) {
+    if (!aId || !bId || aId === bId) return;
+    sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
+    const refs = [aId, bId].sort();
+    const key = `coincident:${refs.join(',')}`;
+    for (const c of sketch.constraints) {
+        if (this.makeSketchConstraintKey(c?.type, c?.refs || []) === key) {
+            return;
+        }
+    }
+    sketch.constraints.push({
+        id: this.newSketchEntityId('cst'),
+        type: 'coincident',
+        refs,
+        data: {},
+        created_at: Date.now()
+    });
 }
 
 function updateSketchInteractionVisuals() {
