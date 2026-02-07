@@ -24,7 +24,7 @@ function isSketchEditing() {
 }
 
 function setSketchTool(tool = 'select') {
-    const allowed = new Set(['select', 'point', 'line', 'arc', 'circle']);
+    const allowed = new Set(['select', 'point', 'line', 'arc', 'circle', 'rect', 'rect-center']);
     const next = allowed.has(tool) ? tool : 'select';
     if (this.sketchTool === next) return;
     this.sketchTool = next;
@@ -37,6 +37,10 @@ function setSketchTool(tool = 'select') {
     if (next !== 'circle') {
         this.cancelSketchCircle();
     }
+    if (next !== 'rect' && next !== 'rect-center') {
+        this.cancelSketchRect();
+    }
+    this.sketchRectCenterMode = next === 'rect-center';
     this.updateSketchInteractionVisuals();
     window.dispatchEvent(new CustomEvent('void-state-change'));
 }
@@ -65,6 +69,13 @@ function cancelSketchCircle() {
     this.sketchCircleCenterRefId = null;
 }
 
+function cancelSketchRect() {
+    this.sketchRectStart = null;
+    this.sketchRectStartRefId = null;
+    this.sketchRectStartSeq = null;
+    this.sketchRectPreview = null;
+}
+
 function clearSketchSelection() {
     this.selectedSketchEntities.clear();
     this.selectedSketchArcCenters?.clear?.();
@@ -73,6 +84,7 @@ function clearSketchSelection() {
     this.hoveredSketchConstraintId = null;
     this.sketchLinePreview = null;
     this.sketchArcPreview = null;
+    this.sketchRectPreview = null;
     this.clearSketchMarquee();
     this.updateSketchInteractionVisuals();
 }
@@ -95,17 +107,21 @@ function handleSketchKeyDown(event) {
         }
         const hadLine = !!this.sketchLineStart;
         const hadArc = !!this.sketchArcStart || !!this.sketchArcEnd;
+        const hadRect = !!this.sketchRectStart;
         if (hadLine) {
             this.cancelSketchLine();
         }
         if (hadArc) {
             this.cancelSketchArc();
         }
+        if (hadRect) {
+            this.cancelSketchRect();
+        }
         if (this.getSketchTool() !== 'select') {
             this.setSketchTool('select');
             return true;
         }
-        return hadLine || hadArc || hadMarquee;
+        return hadLine || hadArc || hadRect || hadMarquee;
     }
 
     if (event.code === 'KeyV') {
@@ -125,6 +141,10 @@ function handleSketchKeyDown(event) {
         this.setSketchTool('circle');
         return true;
     }
+    if (event.code === 'KeyR') {
+        this.setSketchTool(event.shiftKey ? 'rect-center' : 'rect');
+        return true;
+    }
 
     if (event.code === 'KeyQ') {
         return this.toggleSelectedConstruction();
@@ -140,6 +160,15 @@ function handleSketchKeyDown(event) {
 
     if (event.code === 'KeyK') {
         return this.applySketchConstraint('perpendicular');
+    }
+    if (event.code === 'KeyE') {
+        return this.applySketchConstraint('equal');
+    }
+    if (event.code === 'KeyG') {
+        return this.applySketchConstraint('collinear');
+    }
+    if (event.code === 'KeyT') {
+        return this.applySketchConstraint('tangent');
     }
 
     if (event.code === 'KeyC') {
@@ -340,6 +369,7 @@ function applySketchConstraint(type) {
     }
 
     const lines = selected.filter(entity => entity.type === 'line');
+    const arcs = selected.filter(entity => entity.type === 'arc');
     const points = selected.filter(entity => entity.type === 'point');
     const arcCenters = selected.filter(entity => entity.type === 'arc' && this.selectedSketchArcCenters?.has?.(entity.id));
     const specs = [];
@@ -353,6 +383,24 @@ function applySketchConstraint(type) {
             return false;
         }
         specs.push({ type, refs: [lines[0].id, lines[1].id] });
+    } else if (type === 'equal') {
+        if (lines.length < 2) {
+            return false;
+        }
+        const base = lines[0];
+        for (let i = 1; i < lines.length; i++) {
+            specs.push({ type, refs: [base.id, lines[i].id] });
+        }
+    } else if (type === 'collinear') {
+        if (lines.length !== 2) {
+            return false;
+        }
+        specs.push({ type, refs: [lines[0].id, lines[1].id] });
+    } else if (type === 'tangent') {
+        if (lines.length !== 1 || arcs.length !== 1) {
+            return false;
+        }
+        specs.push({ type, refs: [lines[0].id, arcs[0].id] });
     } else if (type === 'coincident') {
         if (points.length === 2) {
             const circleArc = this.findArcWithEndpoints(feature, points[0].id, points[1].id);
@@ -562,6 +610,17 @@ function handleSketchPointerDown(event, intersections) {
         this.sketchLinePreview = { a: start, b: start };
         this.updateSketchInteractionVisuals();
     }
+    if ((this.getSketchTool() === 'rect' || this.getSketchTool() === 'rect-center') && !this.sketchRectStart) {
+        const start = hitLocal || local;
+        if (!start) {
+            return true;
+        }
+        this.sketchRectStart = start;
+        this.sketchRectStartRefId = (hit?.type === 'point' && hit?.id && hit.id !== SKETCH_VIRTUAL_ORIGIN_ID) ? hit.id : null;
+        this.sketchRectStartSeq = seq;
+        this.sketchRectPreview = this.makeSketchRectPreview(start, start, this.getSketchTool() === 'rect-center');
+        this.updateSketchInteractionVisuals();
+    }
     return true;
 }
 
@@ -640,6 +699,22 @@ function handleSketchHover(event, intersections) {
             this.sketchArcPreview = nextArc;
             previewChanged = true;
         }
+    }
+    if (tool === 'rect' || tool === 'rect-center') {
+        const local = event ? this.projectEventToSketchLocal(event, feature) : null;
+        let nextRect = null;
+        if (this.sketchRectStart && local) {
+            nextRect = this.makeSketchRectPreview(this.sketchRectStart, local, tool === 'rect-center');
+        }
+        const prevRect = this.sketchRectPreview;
+        const sameRect = JSON.stringify(prevRect || null) === JSON.stringify(nextRect || null);
+        if (!sameRect) {
+            this.sketchRectPreview = nextRect;
+            previewChanged = true;
+        }
+    } else if (this.sketchRectPreview !== null) {
+        this.sketchRectPreview = null;
+        previewChanged = true;
     }
 
     const hit = this.resolveSketchHit(event, intersections, feature);
@@ -857,6 +932,41 @@ function handleSketchMouseUp(event, intersections) {
         });
         if (created) {
             this.cancelSketchCircle();
+            this.setSketchTool('select');
+        }
+        return true;
+    }
+    if (tool === 'rect' || tool === 'rect-center') {
+        const upHit = this.resolveSketchHit(event, intersections, feature);
+        const fallbackHovered = this.hoveredSketchEntityId && this.hoveredSketchEntityId !== SKETCH_VIRTUAL_ORIGIN_ID
+            ? { id: this.hoveredSketchEntityId, type: 'point' }
+            : null;
+        const resolved = upHit || fallbackHovered;
+        const local = this.getSketchHitLocalPoint(feature, resolved) || this.projectEventToSketchLocal(event, feature);
+        const endRefId = (resolved?.type === 'point' && resolved?.id && resolved.id !== SKETCH_VIRTUAL_ORIGIN_ID) ? resolved.id : null;
+        if (!local || !this.sketchRectStart) {
+            return true;
+        }
+        const centerMode = tool === 'rect-center';
+        if (this.sketchRectStartSeq === pointerDown?.seq) {
+            if (dist > SKETCH_DRAG_START_PX) {
+                this.createSketchRectangle(feature, this.sketchRectStart, local, {
+                    centerMode,
+                    startRefId: this.sketchRectStartRefId || null,
+                    endRefId
+                });
+                this.cancelSketchRect();
+                this.setSketchTool('select');
+            }
+            return true;
+        }
+        const created = this.createSketchRectangle(feature, this.sketchRectStart, local, {
+            centerMode,
+            startRefId: this.sketchRectStartRefId || null,
+            endRefId
+        });
+        if (created) {
+            this.cancelSketchRect();
             this.setSketchTool('select');
         }
         return true;
@@ -1530,6 +1640,105 @@ function createSketchCircle(feature, center, edge, options = {}) {
     return { circleId: id, pointIds: [p1Id, p2Id] };
 }
 
+function makeSketchRectPreview(start, end, centerMode = false) {
+    const corners = this.getRectangleCorners(start, end, centerMode);
+    if (!corners) return null;
+    return {
+        mode: centerMode ? 'center' : 'corner',
+        corners
+    };
+}
+
+function getRectangleCorners(start, end, centerMode = false) {
+    if (!start || !end) return null;
+    const sx = Number(start.x || 0);
+    const sy = Number(start.y || 0);
+    const ex = Number(end.x || 0);
+    const ey = Number(end.y || 0);
+    let p1, p2, p3, p4;
+    if (centerMode) {
+        const dx = ex - sx;
+        const dy = ey - sy;
+        p1 = { x: sx - dx, y: sy - dy };
+        p3 = { x: sx + dx, y: sy + dy };
+        p2 = { x: p3.x, y: p1.y };
+        p4 = { x: p1.x, y: p3.y };
+    } else {
+        p1 = { x: sx, y: sy };
+        p3 = { x: ex, y: ey };
+        p2 = { x: p3.x, y: p1.y };
+        p4 = { x: p1.x, y: p3.y };
+    }
+    if (Math.abs(p3.x - p1.x) < SKETCH_MIN_LINE_LENGTH || Math.abs(p3.y - p1.y) < SKETCH_MIN_LINE_LENGTH) {
+        return null;
+    }
+    return [p1, p2, p3, p4];
+}
+
+function createSketchRectangle(feature, start, end, options = {}) {
+    const corners = this.getRectangleCorners(start, end, !!options.centerMode);
+    if (!corners) {
+        return null;
+    }
+    const [c1, c2, c3, c4] = corners;
+    const ids = {
+        p1: this.newSketchEntityId('point'),
+        p2: this.newSketchEntityId('point'),
+        p3: this.newSketchEntityId('point'),
+        p4: this.newSketchEntityId('point'),
+        l1: this.newSketchEntityId('line'),
+        l2: this.newSketchEntityId('line'),
+        l3: this.newSketchEntityId('line'),
+        l4: this.newSketchEntityId('line')
+    };
+    api.features.update(feature.id, sketch => {
+        sketch.entities = Array.isArray(sketch.entities) ? sketch.entities : [];
+        sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
+
+        sketch.entities.push(
+            { id: ids.p1, type: 'point', x: c1.x, y: c1.y, fixed: false },
+            { id: ids.p2, type: 'point', x: c2.x, y: c2.y, fixed: false },
+            { id: ids.p3, type: 'point', x: c3.x, y: c3.y, fixed: false },
+            { id: ids.p4, type: 'point', x: c4.x, y: c4.y, fixed: false }
+        );
+
+        if (options.startRefId) {
+            addCoincidentConstraintIfMissing.call(this, sketch, ids.p1, options.startRefId);
+        }
+        if (options.endRefId) {
+            addCoincidentConstraintIfMissing.call(this, sketch, ids.p3, options.endRefId);
+        }
+
+        sketch.entities.push(
+            { id: ids.l1, type: 'line', construction: false, a: ids.p1, b: ids.p2 },
+            { id: ids.l2, type: 'line', construction: false, a: ids.p2, b: ids.p3 },
+            { id: ids.l3, type: 'line', construction: false, a: ids.p3, b: ids.p4 },
+            { id: ids.l4, type: 'line', construction: false, a: ids.p4, b: ids.p1 }
+        );
+
+        this.toggleSketchConstraintInList(sketch, sketch.constraints, 'horizontal', [ids.l1]);
+        this.toggleSketchConstraintInList(sketch, sketch.constraints, 'horizontal', [ids.l3]);
+        this.toggleSketchConstraintInList(sketch, sketch.constraints, 'vertical', [ids.l2]);
+        this.toggleSketchConstraintInList(sketch, sketch.constraints, 'vertical', [ids.l4]);
+        enforceSketchConstraintsInPlace(sketch);
+    }, {
+        opType: 'feature.update',
+        payload: { field: 'entities.add', entity: options.centerMode ? 'rect-center' : 'rect' }
+    });
+
+    this.selectedSketchEntities.clear();
+    this.selectedSketchArcCenters?.clear?.();
+    this.selectedSketchEntities.add(ids.l1);
+    this.selectedSketchEntities.add(ids.l2);
+    this.selectedSketchEntities.add(ids.l3);
+    this.selectedSketchEntities.add(ids.l4);
+    this.hoveredSketchEntityId = null;
+    this.sketchRectPreview = null;
+    this.updateSketchInteractionVisuals();
+
+    return ids;
+}
+
 function computeArcGeometry(start, end, onArc) {
     if (!start || !end || !onArc) {
         return null;
@@ -1649,9 +1858,10 @@ function updateSketchInteractionVisuals() {
         hoveredConstraintId: this.hoveredSketchConstraintId || null,
         selectedConstraintIds: Array.from(this.selectedSketchConstraints || []),
         previewLine: this.sketchLinePreview,
-        previewStart: this.sketchLineStart || this.sketchArcStart || this.sketchCircleCenter,
+        previewStart: this.sketchLineStart || this.sketchArcStart || this.sketchCircleCenter || this.sketchRectStart,
         previewEnd: this.sketchArcEnd || null,
-        previewArc: this.sketchArcPreview
+        previewArc: this.sketchArcPreview,
+        previewRect: this.sketchRectPreview
     });
     window.dispatchEvent(new CustomEvent('void-state-change'));
 }
@@ -2227,6 +2437,7 @@ export {
     cancelSketchLine,
     cancelSketchArc,
     cancelSketchCircle,
+    cancelSketchRect,
     clearSketchSelection,
     selectSketchConstraint,
     setHoveredSketchConstraint,
@@ -2271,6 +2482,9 @@ export {
     isPointOnSelectedSketchLine,
     createSketchArc,
     createSketchCircle,
+    createSketchRectangle,
+    makeSketchRectPreview,
+    getRectangleCorners,
     findArcWithEndpoints,
     convertArcToCircle,
     convertArcToCircleInSketch,

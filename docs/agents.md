@@ -190,10 +190,11 @@ src/
 
 **Phase 2: Sketch System (Current Workstream)**
 - planegcs constraint solver integration is active
-- sketch runtime supports line/arc/circle workflows
-- constraints currently wired: coincident, fixed, horizontal, vertical, perpendicular, arc-center coincident
-- next constraints in-progress order: equal, collinear, tangent
-- next tools after constraints: corner rectangle, center rectangle (as constrained line sets)
+- sketch runtime supports point/line/arc/circle/rectangle workflows
+- constraints currently wired: coincident, fixed, horizontal, vertical, perpendicular, equal, collinear, tangent, arc-center coincident
+- rectangle tools are implemented as constrained line sets:
+  - corner rectangle
+  - center rectangle
 
 **Sketch MVP Contract (checkpointed, 2026-02-06)**
 - Primitive rollout:

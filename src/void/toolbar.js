@@ -100,7 +100,18 @@ const toolbar = {
                 api.interact.setSketchTool('circle');
             } }
         ]);
-        this.sketchToolMenuItems = arcMenu.items;
+        const rectMenu = this.addMenu(container, 'Rect', [
+            { key: 'rect', label: 'Corner Rect', onClick: () => {
+                api.interact.setSketchTool('rect');
+            } },
+            { key: 'rect-center', label: 'Center Rect', onClick: () => {
+                api.interact.setSketchTool('rect-center');
+            } }
+        ]);
+        this.sketchToolMenuItems = {
+            ...arcMenu.items,
+            ...rectMenu.items
+        };
         this.addPipe(container);
         this.sketchConstraintMenu = this.addMenu(container, 'Constraints', [
             { key: 'horizontal', label: 'Horizontal', onClick: () => api.interact.applySketchConstraint?.('horizontal') },
@@ -108,6 +119,7 @@ const toolbar = {
             { key: 'perpendicular', label: 'Perpendicular', onClick: () => api.interact.applySketchConstraint?.('perpendicular') },
             { key: 'equal', label: 'Equal', onClick: () => api.interact.applySketchConstraint?.('equal') },
             { key: 'collinear', label: 'Collinear', onClick: () => api.interact.applySketchConstraint?.('collinear') },
+            { key: 'tangent', label: 'Tangent', onClick: () => api.interact.applySketchConstraint?.('tangent') },
             { key: 'coincident', label: 'Coincident', onClick: () => api.interact.applySketchConstraint?.('coincident') },
             { key: 'fixed', label: 'Fixed', onClick: () => api.interact.applySketchConstraint?.('fixed') }
         ]);
@@ -215,6 +227,16 @@ const toolbar = {
             if (circle) {
                 circle.disabled = !editing;
                 circle.classList.toggle('active', editing && tool === 'circle');
+            }
+            const rect = this.sketchToolMenuItems.rect;
+            if (rect) {
+                rect.disabled = !editing;
+                rect.classList.toggle('active', editing && tool === 'rect');
+            }
+            const rectCenter = this.sketchToolMenuItems['rect-center'];
+            if (rectCenter) {
+                rectCenter.disabled = !editing;
+                rectCenter.classList.toggle('active', editing && tool === 'rect-center');
             }
         }
         if (this.sketchConstraintButtons) {
@@ -339,6 +361,8 @@ const toolbar = {
                     { key: 'L', desc: 'Line tool' },
                     { key: 'A', desc: 'Arc tool' },
                     { key: 'O', desc: 'Circle tool' },
+                    { key: 'R', desc: 'Corner rectangle tool' },
+                    { key: 'Shift+R', desc: 'Center rectangle tool' },
                     { key: 'Q', desc: 'Toggle construction on selected lines/arcs' },
                     { key: 'Esc', desc: 'Cancel line mode / close dialogs' }
                 ]
@@ -351,6 +375,7 @@ const toolbar = {
                     { key: 'K', desc: 'Perpendicular (exactly 2 selected lines)' },
                     { key: 'E', desc: 'Equal length (selected line pair/group)' },
                     { key: 'G', desc: 'Collinear (exactly 2 selected lines)' },
+                    { key: 'T', desc: 'Tangent (one selected line + one selected arc/circle)' },
                     { key: 'C', desc: 'Coincident (exactly 2 selected points)' },
                     { key: 'F', desc: 'Fixed (selected point(s))' }
                 ]

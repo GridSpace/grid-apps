@@ -166,6 +166,24 @@ function createSketchRuntimeApi(getApi) {
             previewArcCenter.visible = false;
             previewArcCenter.renderOrder = 11;
             entitiesGroup.add(previewArcCenter);
+            const previewRect = new THREE.Line(
+                new THREE.BufferGeometry().setFromPoints([
+                    new THREE.Vector3(0, 0, 0),
+                    new THREE.Vector3(0, 0, 0),
+                    new THREE.Vector3(0, 0, 0),
+                    new THREE.Vector3(0, 0, 0),
+                    new THREE.Vector3(0, 0, 0)
+                ]),
+                new THREE.LineBasicMaterial({
+                    color: SKETCH_COLORS.linesHover,
+                    transparent: true,
+                    opacity: 0.9,
+                    depthWrite: false
+                })
+            );
+            previewRect.visible = false;
+            previewRect.renderOrder = 9;
+            entitiesGroup.add(previewRect);
 
             group.add(planeGroup);
             group.add(entitiesGroup);
@@ -180,6 +198,7 @@ function createSketchRuntimeApi(getApi) {
                 previewStart,
                 previewEnd,
                 previewArcCenter,
+                previewRect,
                 entityViews: new Map(),
                 interaction: {
                     hoveredId: null,
@@ -188,6 +207,7 @@ function createSketchRuntimeApi(getApi) {
                     selectedConstraintIds: new Set(),
                     previewLine: null,
                     previewArc: null,
+                    previewRect: null,
                     previewStart: null,
                     previewEnd: null
                 },
@@ -248,6 +268,7 @@ function createSketchRuntimeApi(getApi) {
                 horizontal: 'H',
                 vertical: 'V',
                 perpendicular: 'P',
+                collinear: 'L',
                 coincident: 'C',
                 arc_center_coincident: 'C',
                 fixed: 'F',
@@ -357,7 +378,7 @@ function createSketchRuntimeApi(getApi) {
         rebuildEntities(rec) {
             while (rec.entitiesGroup.children.length) {
                 const child = rec.entitiesGroup.children[0];
-                if (child === rec.previewLine || child === rec.previewArc || child === rec.previewStart || child === rec.previewEnd || child === rec.previewArcCenter) {
+                if (child === rec.previewLine || child === rec.previewArc || child === rec.previewRect || child === rec.previewStart || child === rec.previewEnd || child === rec.previewArcCenter) {
                     rec.entitiesGroup.remove(child);
                     continue;
                 }
@@ -513,6 +534,12 @@ function createSketchRuntimeApi(getApi) {
             } else if (rec.previewArcCenter) {
                 rec.entitiesGroup.remove(rec.previewArcCenter);
                 rec.entitiesGroup.add(rec.previewArcCenter);
+            }
+            if (rec.previewRect && rec.previewRect.parent !== rec.entitiesGroup) {
+                rec.entitiesGroup.add(rec.previewRect);
+            } else if (rec.previewRect) {
+                rec.entitiesGroup.remove(rec.previewRect);
+                rec.entitiesGroup.add(rec.previewRect);
             }
         },
 
@@ -719,6 +746,7 @@ function createSketchRuntimeApi(getApi) {
             this.applyEntityStyle(rec, mode);
             this.applyPreviewLine(rec, mode, editing);
             this.applyPreviewArc(rec, mode, editing);
+            this.applyPreviewRect(rec, mode, editing);
             this.applyPreviewStart(rec, mode, editing);
             this.applyPreviewEnd(rec, mode, editing);
             this.applyLabelState(rec, mode, showPlane);
@@ -934,6 +962,27 @@ function createSketchRuntimeApi(getApi) {
             }
         },
 
+        applyPreviewRect(rec, mode, editing) {
+            if (!rec.previewRect) return;
+            const preview = rec.interaction?.previewRect;
+            const corners = Array.isArray(preview?.corners) ? preview.corners : null;
+            if (!editing || !corners || corners.length !== 4) {
+                rec.previewRect.visible = false;
+                return;
+            }
+            const pts = [
+                new THREE.Vector3(corners[0].x || 0, corners[0].y || 0, 0),
+                new THREE.Vector3(corners[1].x || 0, corners[1].y || 0, 0),
+                new THREE.Vector3(corners[2].x || 0, corners[2].y || 0, 0),
+                new THREE.Vector3(corners[3].x || 0, corners[3].y || 0, 0),
+                new THREE.Vector3(corners[0].x || 0, corners[0].y || 0, 0)
+            ];
+            rec.previewRect.geometry.dispose();
+            rec.previewRect.geometry = new THREE.BufferGeometry().setFromPoints(pts);
+            rec.previewRect.material.color.setHex(mode === 'edit' ? SKETCH_COLORS.linesEdit : SKETCH_COLORS.linesHover);
+            rec.previewRect.visible = true;
+        },
+
         applyLabelState(rec, mode, showPlane) {
             const api = getApi();
             const overlay = api.overlay;
@@ -1000,6 +1049,7 @@ function createSketchRuntimeApi(getApi) {
             rec.interaction.selectedConstraintIds = new Set(interaction.selectedConstraintIds || []);
             rec.interaction.previewLine = interaction.previewLine || null;
             rec.interaction.previewArc = interaction.previewArc || null;
+            rec.interaction.previewRect = interaction.previewRect || null;
             rec.interaction.previewStart = interaction.previewStart || null;
             rec.interaction.previewEnd = interaction.previewEnd || null;
             this.applySketchState(rec);
@@ -1015,6 +1065,7 @@ function createSketchRuntimeApi(getApi) {
             rec.interaction.selectedConstraintIds = new Set();
             rec.interaction.previewLine = null;
             rec.interaction.previewArc = null;
+            rec.interaction.previewRect = null;
             rec.interaction.previewStart = null;
             rec.interaction.previewEnd = null;
             this.applySketchState(rec);
@@ -1269,7 +1320,7 @@ function createSketchRuntimeApi(getApi) {
             const entities = Array.isArray(feature?.entities) ? feature.entities : [];
             const byId = new Map(entities.map(e => [e?.id, e]));
             const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
-            const lineTypes = new Set(['horizontal', 'vertical', 'tangent', 'equal']);
+            const lineTypes = new Set(['horizontal', 'vertical', 'tangent', 'equal', 'collinear']);
 
             if (lineTypes.has(constraint?.type)) {
                 const line = refs.map(id => byId.get(id)).find(e => e?.type === 'line');

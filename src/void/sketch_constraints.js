@@ -136,6 +136,7 @@ function enforceWithPlanegcs(sketch) {
 
     const fixed = captureFixedAnchors(constraints, pointEntityById);
     changed = applyArcCenterCoincidentConstraints(constraints, pointEntityById, lineById, arcById, fixed) || changed;
+    changed = applyTangentConstraints(constraints, pointEntityById, lineById, arcById, fixed) || changed;
 
     return changed;
 }
@@ -183,6 +184,35 @@ function toPlanegcsConstraint(c, pointById, lineById) {
             l1_id: String(refs[0]),
             l2_id: String(refs[1])
         };
+    }
+    if (c.type === 'equal') {
+        if (refs.length < 2 || !lineById.has(refs[0]) || !lineById.has(refs[1])) return null;
+        return {
+            id,
+            type: 'equal_length',
+            l1_id: String(refs[0]),
+            l2_id: String(refs[1])
+        };
+    }
+    if (c.type === 'collinear') {
+        if (refs.length < 2 || !lineById.has(refs[0]) || !lineById.has(refs[1])) return null;
+        const l1 = lineById.get(refs[0]);
+        const l2 = lineById.get(refs[1]);
+        if (!l1 || !l2) return null;
+        return [
+            {
+                id: `${id}:parallel`,
+                type: 'parallel',
+                l1_id: String(refs[0]),
+                l2_id: String(refs[1])
+            },
+            {
+                id: `${id}:point_on`,
+                type: 'point_on_line_pl',
+                p_id: String(l2.p1_id),
+                l_id: String(refs[0])
+            }
+        ];
     }
 
     if (c.type === 'fixed') {
@@ -257,6 +287,15 @@ function enforceWithFallback(sketch, opts = {}) {
                     break;
                 case 'perpendicular':
                     iterChanged = applyPerpendicular(c, points, lines, fixed) || iterChanged;
+                    break;
+                case 'equal':
+                    iterChanged = applyEqual(c, points, lines, fixed) || iterChanged;
+                    break;
+                case 'collinear':
+                    iterChanged = applyCollinear(c, points, lines, fixed) || iterChanged;
+                    break;
+                case 'tangent':
+                    iterChanged = applyTangent(c, points, lines, arcs, fixed) || iterChanged;
                     break;
                 case 'arc_center_coincident':
                     iterChanged = applyArcCenterCoincident(c, points, lines, arcs, fixed) || iterChanged;
@@ -422,6 +461,111 @@ function applyPerpendicular(constraint, points, lines, fixed) {
     return cc || cd;
 }
 
+function applyEqual(constraint, points, lines, fixed) {
+    const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
+    if (refs.length < 2) return false;
+    const l1 = lines.get(refs[0]);
+    const l2 = lines.get(refs[1]);
+    if (!l1 || !l2) return false;
+    const [a, b] = getLineEndpoints(l1, points);
+    const [c, d] = getLineEndpoints(l2, points);
+    if (!a || !b || !c || !d) return false;
+
+    const len1 = Math.hypot((b.x || 0) - (a.x || 0), (b.y || 0) - (a.y || 0));
+    const len2 = Math.hypot((d.x || 0) - (c.x || 0), (d.y || 0) - (c.y || 0));
+    if (len1 < EPS || len2 < EPS) return false;
+    const target = (len1 + len2) * 0.5;
+
+    const cId = getLineEndpointId(l2, 'a');
+    const dId = getLineEndpointId(l2, 'b');
+    const fc = isFixed(cId, fixed);
+    const fd = isFixed(dId, fixed);
+    if (fc && fd) {
+        const aId = getLineEndpointId(l1, 'a');
+        const bId = getLineEndpointId(l1, 'b');
+        const fa = isFixed(aId, fixed);
+        const fb = isFixed(bId, fixed);
+        if (fa && fb) return false;
+        const ux1 = ((b.x || 0) - (a.x || 0)) / len1;
+        const uy1 = ((b.y || 0) - (a.y || 0)) / len1;
+        if (fa) return setPoint(b, (a.x || 0) + ux1 * len2, (a.y || 0) + uy1 * len2);
+        if (fb) return setPoint(a, (b.x || 0) - ux1 * len2, (b.y || 0) - uy1 * len2);
+        const mx = ((a.x || 0) + (b.x || 0)) * 0.5;
+        const my = ((a.y || 0) + (b.y || 0)) * 0.5;
+        const hx = ux1 * len2 * 0.5;
+        const hy = uy1 * len2 * 0.5;
+        return setPoint(a, mx - hx, my - hy) || setPoint(b, mx + hx, my + hy);
+    }
+
+    const ux = ((d.x || 0) - (c.x || 0)) / len2;
+    const uy = ((d.y || 0) - (c.y || 0)) / len2;
+    if (fc) return setPoint(d, (c.x || 0) + ux * target, (c.y || 0) + uy * target);
+    if (fd) return setPoint(c, (d.x || 0) - ux * target, (d.y || 0) - uy * target);
+    const mx = ((c.x || 0) + (d.x || 0)) * 0.5;
+    const my = ((c.y || 0) + (d.y || 0)) * 0.5;
+    const hx = ux * target * 0.5;
+    const hy = uy * target * 0.5;
+    return setPoint(c, mx - hx, my - hy) || setPoint(d, mx + hx, my + hy);
+}
+
+function applyCollinear(constraint, points, lines, fixed) {
+    const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
+    if (refs.length < 2) return false;
+    const l1 = lines.get(refs[0]);
+    const l2 = lines.get(refs[1]);
+    if (!l1 || !l2) return false;
+    const changedParallel = applyParallelLike(l1, l2, points, fixed);
+    const changedPointOn = projectPointToLine(getLineEndpointId(l2, 'a'), l1, points, fixed);
+    return changedParallel || changedPointOn;
+}
+
+function applyParallelLike(l1, l2, points, fixed) {
+    const [a, b] = getLineEndpoints(l1, points);
+    const [c, d] = getLineEndpoints(l2, points);
+    if (!a || !b || !c || !d) return false;
+    const ux = (b.x || 0) - (a.x || 0);
+    const uy = (b.y || 0) - (a.y || 0);
+    const ulen = Math.hypot(ux, uy);
+    if (ulen < EPS) return false;
+    const vx = (d.x || 0) - (c.x || 0);
+    const vy = (d.y || 0) - (c.y || 0);
+    const vlen = Math.hypot(vx, vy);
+    if (vlen < EPS) return false;
+    const dirx = ux / ulen;
+    const diry = uy / ulen;
+    const dot = vx * dirx + vy * diry;
+    const sx = dot >= 0 ? dirx : -dirx;
+    const sy = dot >= 0 ? diry : -diry;
+    const cId = getLineEndpointId(l2, 'a');
+    const dId = getLineEndpointId(l2, 'b');
+    const fc = isFixed(cId, fixed);
+    const fd = isFixed(dId, fixed);
+    if (fc && fd) return false;
+    if (fc) return setPoint(d, (c.x || 0) + sx * vlen, (c.y || 0) + sy * vlen);
+    if (fd) return setPoint(c, (d.x || 0) - sx * vlen, (d.y || 0) - sy * vlen);
+    const mx = ((c.x || 0) + (d.x || 0)) * 0.5;
+    const my = ((c.y || 0) + (d.y || 0)) * 0.5;
+    const hx = sx * vlen * 0.5;
+    const hy = sy * vlen * 0.5;
+    return setPoint(c, mx - hx, my - hy) || setPoint(d, mx + hx, my + hy);
+}
+
+function projectPointToLine(pointId, line, points, fixed) {
+    if (!pointId || isFixed(pointId, fixed)) return false;
+    const p = points.get(pointId);
+    if (!p) return false;
+    const [a, b] = getLineEndpoints(line, points);
+    if (!a || !b) return false;
+    const abx = (b.x || 0) - (a.x || 0);
+    const aby = (b.y || 0) - (a.y || 0);
+    const abLenSq = abx * abx + aby * aby;
+    if (abLenSq < EPS) return false;
+    const apx = (p.x || 0) - (a.x || 0);
+    const apy = (p.y || 0) - (a.y || 0);
+    const t = (apx * abx + apy * aby) / abLenSq;
+    return setPoint(p, (a.x || 0) + abx * t, (a.y || 0) + aby * t);
+}
+
 function applyArcCenterCoincident(constraint, points, lines, arcs, fixed) {
     const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
     if (refs.length < 2) return false;
@@ -448,6 +592,58 @@ function applyArcCenterCoincidentConstraints(constraints, points, lines, arcs, f
     for (const c of constraints) {
         if (c?.type !== 'arc_center_coincident') continue;
         changed = applyArcCenterCoincident(c, points, lines, arcs, fixed) || changed;
+    }
+    return changed;
+}
+
+function applyTangent(constraint, points, lines, arcs, fixed) {
+    const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
+    if (refs.length < 2) return false;
+    const line = lines.get(refs[0]);
+    const arc = arcs.get(refs[1]);
+    if (!line || !arc) return false;
+    const [a, b] = getLineEndpoints(line, points);
+    if (!a || !b) return false;
+    const circ = getArcCircleData(arc, points);
+    if (!circ) return false;
+
+    const x1 = a.x || 0;
+    const y1 = a.y || 0;
+    const x2 = b.x || 0;
+    const y2 = b.y || 0;
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const len = Math.hypot(dx, dy);
+    if (len < EPS) return false;
+    const nx = -dy / len;
+    const ny = dx / len;
+    const dist = ((circ.cx - x1) * nx + (circ.cy - y1) * ny);
+    const sign = dist >= 0 ? 1 : -1;
+    const target = sign * circ.radius;
+    const err = dist - target;
+    if (Math.abs(err) < 1e-5) return false;
+
+    const aId = getLineEndpointId(line, 'a');
+    const bId = getLineEndpointId(line, 'b');
+    const fa = isFixed(aId, fixed);
+    const fb = isFixed(bId, fixed);
+    if (fa && fb) return false;
+    if (!fa && !fb) {
+        const mx = -err * nx;
+        const my = -err * ny;
+        return setPoint(a, x1 + mx, y1 + my) || setPoint(b, x2 + mx, y2 + my);
+    }
+    if (!fa) {
+        return setPoint(a, x1 - err * nx, y1 - err * ny);
+    }
+    return setPoint(b, x2 - err * nx, y2 - err * ny);
+}
+
+function applyTangentConstraints(constraints, points, lines, arcs, fixed) {
+    let changed = false;
+    for (const c of constraints) {
+        if (c?.type !== 'tangent') continue;
+        changed = applyTangent(c, points, lines, arcs, fixed) || changed;
     }
     return changed;
 }
@@ -611,6 +807,24 @@ function getArcCenter(arc, a, b) {
         return { x: cx, y: cy };
     }
     return null;
+}
+
+function getArcCircleData(arc, points) {
+    const [a, b] = getLineEndpoints(arc, points);
+    if (!a || !b) return null;
+    if (arc?.circle && Number.isFinite(arc?.cx) && Number.isFinite(arc?.cy)) {
+        let r = Number(arc?.radius);
+        if (!Number.isFinite(r) || r < EPS) {
+            r = Math.hypot((a.x || 0) - (arc.cx || 0), (a.y || 0) - (arc.cy || 0));
+        }
+        if (!Number.isFinite(r) || r < EPS) return null;
+        return { cx: Number(arc.cx), cy: Number(arc.cy), radius: r };
+    }
+    const c = getArcCenter(arc, a, b);
+    if (!c) return null;
+    const r = Math.hypot((a.x || 0) - c.x, (a.y || 0) - c.y);
+    if (!Number.isFinite(r) || r < EPS) return null;
+    return { cx: c.x, cy: c.y, radius: r };
 }
 
 function computeArcGeometry(start, end, onArc) {
