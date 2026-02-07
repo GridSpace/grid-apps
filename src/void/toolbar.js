@@ -10,6 +10,7 @@ const toolbar = {
     cameraToggleBtn: null,
     sketchBtn: null,
     sketchToolButtons: null,
+    sketchConstraintButtons: null,
     docNameEl: null,
     openDialogEl: null,
     openDialogListEl: null,
@@ -88,6 +89,16 @@ const toolbar = {
                 api.interact.setSketchTool(current === 'line' ? 'select' : 'line');
             })
         };
+        this.sketchConstraintButtons = {
+            horizontal: this.addButton(container, 'Horizontal', () => api.interact.applySketchConstraint?.('horizontal')),
+            vertical: this.addButton(container, 'Vertical', () => api.interact.applySketchConstraint?.('vertical')),
+            perpendicular: this.addButton(container, 'Perp', () => api.interact.applySketchConstraint?.('perpendicular')),
+            coincident: this.addButton(container, 'Coincident', () => api.interact.applySketchConstraint?.('coincident')),
+            fixed: this.addButton(container, 'Fixed', () => api.interact.applySketchConstraint?.('fixed'))
+        };
+        for (const btn of Object.values(this.sketchConstraintButtons)) {
+            btn.classList.add('compact');
+        }
 
         this.addButton(container, 'Extrude', () => {
             console.log('Extrude');
@@ -173,6 +184,11 @@ const toolbar = {
                 const enabled = editing;
                 btn.disabled = !enabled;
                 btn.classList.toggle('active', enabled && name === tool);
+            }
+        }
+        if (this.sketchConstraintButtons) {
+            for (const btn of Object.values(this.sketchConstraintButtons)) {
+                btn.disabled = !editing;
             }
         }
     },

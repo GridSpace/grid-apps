@@ -162,6 +162,43 @@ html, body {
     border: 1px dashed rgba(255, 153, 51, 0.95);
 }
 
+.sketch-constraint-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 145;
+}
+
+.sketch-constraint-glyph {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    margin-left: -9px;
+    margin-top: -9px;
+    border-radius: 3px;
+    border: 1px solid rgba(40, 40, 40, 0.95);
+    background: rgba(28, 28, 28, 0.86);
+    color: #d4d4d4;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 16px;
+    text-align: center;
+    cursor: move;
+    pointer-events: auto;
+    user-select: none;
+    padding: 0;
+}
+
+.sketch-constraint-glyph.hover {
+    color: #ff9933;
+    border-color: #ff9933;
+}
+
+.sketch-constraint-glyph.selected {
+    color: #5a9fd4;
+    border-color: #5a9fd4;
+}
+
 /* Sketch overlay (2D SVG overlay) */
 #sketch-overlay {
     position: absolute;

@@ -46,7 +46,9 @@ function cancelSketchLine() {
 
 function clearSketchSelection() {
     this.selectedSketchEntities.clear();
+    this.selectedSketchConstraints.clear();
     this.hoveredSketchEntityId = null;
+    this.hoveredSketchConstraintId = null;
     this.sketchLinePreview = null;
     this.clearSketchMarquee();
     this.updateSketchInteractionVisuals();
@@ -93,11 +95,98 @@ function handleSketchKeyDown(event) {
         return this.toggleSelectedConstruction();
     }
 
+    if (event.code === 'KeyH') {
+        return this.applySketchConstraint('horizontal');
+    }
+
+    if (event.code === 'KeyI') {
+        return this.applySketchConstraint('vertical');
+    }
+
+    if (event.code === 'KeyK') {
+        return this.applySketchConstraint('perpendicular');
+    }
+
+    if (event.code === 'KeyC') {
+        return this.applySketchConstraint('coincident');
+    }
+
+    if (event.code === 'KeyF') {
+        return this.applySketchConstraint('fixed');
+    }
+
     if (event.code === 'Delete' || event.code === 'Backspace') {
+        if (this.selectedSketchConstraints?.size) {
+            return this.deleteSelectedSketchConstraints();
+        }
         return this.deleteSelectedSketchEntities();
     }
 
     return false;
+}
+
+function selectSketchConstraint(constraintId, event = {}) {
+    if (!constraintId) {
+        return false;
+    }
+    const multi = !!(event.ctrlKey || event.metaKey || event.shiftKey);
+    if (!multi) {
+        if (this.selectedSketchConstraints.size === 1 && this.selectedSketchConstraints.has(constraintId)) {
+            return false;
+        }
+        this.selectedSketchConstraints.clear();
+        this.selectedSketchConstraints.add(constraintId);
+    } else {
+        if (this.selectedSketchConstraints.has(constraintId)) {
+            this.selectedSketchConstraints.delete(constraintId);
+        } else {
+            this.selectedSketchConstraints.add(constraintId);
+        }
+    }
+    this.hoveredSketchConstraintId = constraintId;
+    this.updateSketchInteractionVisuals();
+    return true;
+}
+
+function setHoveredSketchConstraint(constraintId) {
+    const next = constraintId || null;
+    if (this.hoveredSketchConstraintId === next) {
+        return false;
+    }
+    this.hoveredSketchConstraintId = next;
+    this.updateSketchInteractionVisuals();
+    return true;
+}
+
+function deleteSelectedSketchConstraints() {
+    const feature = this.getEditingSketchFeature();
+    if (!feature || !this.selectedSketchConstraints?.size) {
+        return false;
+    }
+    const removeIds = new Set(this.selectedSketchConstraints);
+    let removed = 0;
+    api.features.update(feature.id, sketch => {
+        sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
+        const keep = [];
+        for (const c of sketch.constraints) {
+            if (c?.id && removeIds.has(c.id)) {
+                removed++;
+            } else {
+                keep.push(c);
+            }
+        }
+        sketch.constraints = keep;
+    }, {
+        opType: 'feature.update',
+        payload: { field: 'constraints.remove', ids: Array.from(removeIds) }
+    });
+    if (!removed) {
+        return false;
+    }
+    this.selectedSketchConstraints.clear();
+    this.hoveredSketchConstraintId = null;
+    this.updateSketchInteractionVisuals();
+    return true;
 }
 
 function deleteSelectedSketchEntities() {
@@ -119,6 +208,11 @@ function deleteSelectedSketchEntities() {
             }
         }
         sketch.entities = keep;
+        sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
+        sketch.constraints = sketch.constraints.filter(constraint => {
+            const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
+            return !refs.some(ref => removeIds.has(ref));
+        });
     }, {
         opType: 'feature.update',
         payload: { field: 'entities.remove', ids: Array.from(removeIds) }
@@ -162,6 +256,97 @@ function toggleSelectedConstruction() {
 
     this.updateSketchInteractionVisuals();
     return true;
+}
+
+function applySketchConstraint(type) {
+    const feature = this.getEditingSketchFeature();
+    if (!feature) {
+        return false;
+    }
+    const entities = Array.isArray(feature.entities) ? feature.entities : [];
+    const selected = entities.filter(entity => this.selectedSketchEntities.has(entity.id));
+    if (!selected.length) {
+        return false;
+    }
+
+    const lines = selected.filter(entity => entity.type === 'line');
+    const points = selected.filter(entity => entity.type === 'point');
+    const specs = [];
+
+    if (type === 'horizontal' || type === 'vertical') {
+        for (const line of lines) {
+            specs.push({ type, refs: [line.id] });
+        }
+    } else if (type === 'perpendicular') {
+        if (lines.length !== 2) {
+            return false;
+        }
+        specs.push({ type, refs: [lines[0].id, lines[1].id] });
+    } else if (type === 'coincident') {
+        if (points.length !== 2) {
+            return false;
+        }
+        specs.push({ type, refs: [points[0].id, points[1].id] });
+    } else if (type === 'fixed') {
+        for (const point of points) {
+            specs.push({ type, refs: [point.id] });
+        }
+    } else {
+        return false;
+    }
+
+    if (!specs.length) {
+        return false;
+    }
+
+    let changed = false;
+    api.features.update(feature.id, sketch => {
+        sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
+        for (const spec of specs) {
+            if (this.toggleSketchConstraintInList(sketch.constraints, spec.type, spec.refs)) {
+                changed = true;
+            }
+        }
+    }, {
+        opType: 'feature.update',
+        payload: {
+            field: 'constraints.apply',
+            type,
+            refs: specs.map(spec => spec.refs)
+        }
+    });
+
+    return changed;
+}
+
+function toggleSketchConstraintInList(list, type, refs) {
+    const key = this.makeSketchConstraintKey(type, refs);
+    for (let i = 0; i < list.length; i++) {
+        const existing = list[i];
+        if (this.makeSketchConstraintKey(existing?.type, existing?.refs || []) === key) {
+            list.splice(i, 1);
+            return true;
+        }
+    }
+    list.push({
+        id: this.newSketchEntityId('cst'),
+        type,
+        refs: this.normalizeConstraintRefs(type, refs),
+        created_at: Date.now()
+    });
+    return true;
+}
+
+function normalizeConstraintRefs(type, refs) {
+    const out = Array.from(new Set((refs || []).filter(Boolean)));
+    if (type === 'horizontal' || type === 'vertical' || type === 'fixed') {
+        return out.slice(0, 1);
+    }
+    return out.sort();
+}
+
+function makeSketchConstraintKey(type, refs) {
+    return `${type}:${this.normalizeConstraintRefs(type, refs).join(',')}`;
 }
 
 function handleSketchPointerDown(event, intersections) {
@@ -277,6 +462,9 @@ function handleSketchPointerMove(event) {
 function handleSketchMouseUp(event, intersections) {
     const feature = this.getEditingSketchFeature();
     if (!feature) {
+        return false;
+    }
+    if (!this.isSketchEventInViewport(event)) {
         return false;
     }
     if (this.sketchMarquee) {
@@ -738,6 +926,8 @@ function updateSketchInteractionVisuals() {
     api.sketchRuntime?.setEntityInteraction(feature.id, {
         hoveredId: this.sketchDrag ? null : this.hoveredSketchEntityId,
         selectedIds: Array.from(this.selectedSketchEntities),
+        hoveredConstraintId: this.hoveredSketchConstraintId || null,
+        selectedConstraintIds: Array.from(this.selectedSketchConstraints || []),
         previewLine: this.sketchLinePreview,
         previewStart: this.sketchLineStart
     });
@@ -851,6 +1041,14 @@ function resolveSketchHit(event, intersections, feature) {
         return rayHit;
     }
     return rayHit || screenHit || null;
+}
+
+function isSketchEventInViewport(event) {
+    if (!event) return true;
+    const { container } = space.internals();
+    if (!container) return true;
+    if (!event.target) return true;
+    return container.contains(event.target);
 }
 
 function getSketchHitLocalPoint(feature, hit) {
@@ -1035,7 +1233,13 @@ export {
     getSketchTool,
     cancelSketchLine,
     clearSketchSelection,
+    selectSketchConstraint,
+    setHoveredSketchConstraint,
     handleSketchKeyDown,
+    applySketchConstraint,
+    toggleSketchConstraintInList,
+    normalizeConstraintRefs,
+    makeSketchConstraintKey,
     handleSketchPointerDown,
     handleSketchHover,
     handleSketchPointerMove,
@@ -1048,6 +1252,7 @@ export {
     hitTestSketchEntity,
     getSketchEntityHitFromIntersections,
     resolveSketchHit,
+    isSketchEventInViewport,
     getSketchHitLocalPoint,
     distanceToSegmentPx,
     getEventViewportXY,
@@ -1070,6 +1275,7 @@ export {
     createSketchPoint,
     createSketchLine,
     deleteSelectedSketchEntities,
+    deleteSelectedSketchConstraints,
     findPointByCoord,
     ensureSketchPoint,
     getLineEndpoints

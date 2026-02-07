@@ -25,6 +25,8 @@ const SKETCH_PLANE_MIN_SIZE = 24;
 const SKETCH_POINT_SCREEN_RADIUS_PX = 6;
 const SKETCH_POINT_BASE_RADIUS = 1.8;
 const SKETCH_VIRTUAL_ORIGIN_ID = '__sketch-origin__';
+const CONSTRAINT_GLYPH_SIZE_PX = 18;
+const CONSTRAINT_GLYPH_GAP_PX = 4;
 
 function createSketchRuntimeApi(getApi) {
     return {
@@ -33,6 +35,8 @@ function createSketchRuntimeApi(getApi) {
         hoveredId: null,
         editingId: null,
         selectedIds: new Set(),
+        _glyphLayer: null,
+        _glyphDrag: null,
 
         init(world) {
             if (this.root) return;
@@ -40,11 +44,28 @@ function createSketchRuntimeApi(getApi) {
             this.root.name = 'sketch-runtime';
             world.add(this.root);
             this._tmpPointWorld = new THREE.Vector3();
+            this.ensureConstraintGlyphLayer();
             const viewCtrl = space.view?.ctrl;
             if (viewCtrl && viewCtrl.addEventListener) {
-                viewCtrl.addEventListener('change', () => this.updatePointScreenScales());
+                viewCtrl.addEventListener('change', () => {
+                    this.updatePointScreenScales();
+                    this.updateConstraintGlyphs();
+                });
             }
-            window.addEventListener('resize', () => this.updatePointScreenScales());
+            window.addEventListener('resize', () => {
+                this.updatePointScreenScales();
+                this.updateConstraintGlyphs();
+            });
+            window.addEventListener('mousemove', event => {
+                if (this._glyphDrag) {
+                    this.updateConstraintDrag(event, false);
+                }
+            });
+            window.addEventListener('mouseup', event => {
+                if (this._glyphDrag) {
+                    this.updateConstraintDrag(event, true);
+                }
+            });
         },
 
         sync() {
@@ -73,6 +94,7 @@ function createSketchRuntimeApi(getApi) {
                 this.updateSketchRecord(rec);
             }
             this.updatePointScreenScales();
+            this.updateConstraintGlyphs();
         },
 
         getRecord(featureId) {
@@ -135,6 +157,8 @@ function createSketchRuntimeApi(getApi) {
                 interaction: {
                     hoveredId: null,
                     selectedIds: new Set(),
+                    hoveredConstraintId: null,
+                    selectedConstraintIds: new Set(),
                     previewLine: null,
                     previewStart: null
                 },
@@ -167,6 +191,40 @@ function createSketchRuntimeApi(getApi) {
                 out.size.height = Math.max(SKETCH_PLANE_MIN_SIZE, height * SKETCH_PLANE_SCALE);
             }
             return out;
+        },
+
+        ensureConstraintGlyphLayer() {
+            if (this._glyphLayer?.isConnected) {
+                return this._glyphLayer;
+            }
+            const { container } = space.internals();
+            if (!container) {
+                return null;
+            }
+            const layer = document.createElement('div');
+            layer.className = 'sketch-constraint-layer';
+            container.appendChild(layer);
+            this._glyphLayer = layer;
+            return layer;
+        },
+
+        clearConstraintGlyphs() {
+            if (this._glyphLayer) {
+                this._glyphLayer.innerHTML = '';
+            }
+        },
+
+        constraintGlyphLabel(type) {
+            const labels = {
+                horizontal: 'H',
+                vertical: 'V',
+                perpendicular: '⟂',
+                coincident: '●',
+                fixed: 'F',
+                tangent: 'T',
+                equal: '='
+            };
+            return labels[type] || '?';
         },
 
         makePointRing(radius, color, opacity = 1) {
@@ -505,9 +563,12 @@ function createSketchRuntimeApi(getApi) {
             if (!rec) return;
             rec.interaction.hoveredId = interaction.hoveredId || null;
             rec.interaction.selectedIds = new Set(interaction.selectedIds || []);
+            rec.interaction.hoveredConstraintId = interaction.hoveredConstraintId || null;
+            rec.interaction.selectedConstraintIds = new Set(interaction.selectedConstraintIds || []);
             rec.interaction.previewLine = interaction.previewLine || null;
             rec.interaction.previewStart = interaction.previewStart || null;
             this.applySketchState(rec);
+            this.updateConstraintGlyphs();
         },
 
         clearEntityInteraction(featureId) {
@@ -515,9 +576,12 @@ function createSketchRuntimeApi(getApi) {
             if (!rec) return;
             rec.interaction.hoveredId = null;
             rec.interaction.selectedIds = new Set();
+            rec.interaction.hoveredConstraintId = null;
+            rec.interaction.selectedConstraintIds = new Set();
             rec.interaction.previewLine = null;
             rec.interaction.previewStart = null;
             this.applySketchState(rec);
+            this.updateConstraintGlyphs();
         },
 
         getLineEndpoints(line, pointById) {
@@ -580,10 +644,178 @@ function createSketchRuntimeApi(getApi) {
             }
         },
 
+        getConstraintAnchorLocal(feature, constraint) {
+            const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+            const byId = new Map(entities.map(e => [e?.id, e]));
+            const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
+            const lineTypes = new Set(['horizontal', 'vertical', 'tangent', 'equal']);
+
+            if (lineTypes.has(constraint?.type)) {
+                const line = refs.map(id => byId.get(id)).find(e => e?.type === 'line');
+                if (line) {
+                    const [a, b] = this.getLineEndpoints(line, byId);
+                    if (a && b) {
+                        return { x: ((a.x || 0) + (b.x || 0)) * 0.5, y: ((a.y || 0) + (b.y || 0)) * 0.5 };
+                    }
+                }
+            }
+
+            const points = refs.map(id => byId.get(id)).filter(e => e?.type === 'point');
+            if (points.length >= 2) {
+                return {
+                    x: ((points[0].x || 0) + (points[1].x || 0)) * 0.5,
+                    y: ((points[0].y || 0) + (points[1].y || 0)) * 0.5
+                };
+            }
+            if (points.length === 1) {
+                return { x: points[0].x || 0, y: points[0].y || 0 };
+            }
+            return null;
+        },
+
+        projectConstraintAnchor(rec, local) {
+            if (!rec?.entitiesGroup || !local) {
+                return null;
+            }
+            const world = new THREE.Vector3(local.x || 0, local.y || 0, 0);
+            rec.entitiesGroup.localToWorld(world);
+            const proj = getApi().overlay.project3Dto2D(world);
+            if (!proj?.visible) {
+                return null;
+            }
+            return { x: proj.x, y: proj.y };
+        },
+
+        applyConstraintOffset(constraint, screenPos, slotIndex = 0, slotCount = 1) {
+            const base = constraint?.ui?.offset_px || { x: 0, y: -18 };
+            const rowWidth = slotCount * CONSTRAINT_GLYPH_SIZE_PX + Math.max(0, slotCount - 1) * CONSTRAINT_GLYPH_GAP_PX;
+            const slotX = -rowWidth / 2 + (slotIndex + 0.5) * CONSTRAINT_GLYPH_SIZE_PX + slotIndex * CONSTRAINT_GLYPH_GAP_PX;
+            return {
+                x: screenPos.x + (base.x || 0) + slotX,
+                y: screenPos.y + (base.y || 0)
+            };
+        },
+
+        updateConstraintGlyphs() {
+            const layer = this.ensureConstraintGlyphLayer();
+            if (!layer) return;
+            layer.innerHTML = '';
+
+            const rec = this.getEditingRecord();
+            if (!rec?.feature) {
+                return;
+            }
+
+            const constraints = Array.isArray(rec.feature.constraints) ? rec.feature.constraints : [];
+            if (!constraints.length) {
+                return;
+            }
+
+            const selectedEntityIds = rec.interaction?.selectedIds || new Set();
+            const hoveredEntityId = rec.interaction?.hoveredId || null;
+            const selectedConstraintIds = rec.interaction?.selectedConstraintIds || new Set();
+            const hoveredConstraintId = rec.interaction?.hoveredConstraintId || null;
+
+            const visible = [];
+            for (const constraint of constraints) {
+                const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
+                const byEntity = refs.some(ref => selectedEntityIds.has(ref));
+                const byHover = !!hoveredEntityId && refs.includes(hoveredEntityId);
+                const byConstraint = selectedConstraintIds.has(constraint?.id);
+                if (byEntity || byHover || byConstraint) {
+                    visible.push(constraint);
+                }
+            }
+            if (!visible.length) {
+                return;
+            }
+
+            const clusters = new Map();
+            for (const constraint of visible) {
+                const local = this.getConstraintAnchorLocal(rec.feature, constraint);
+                const screen = this.projectConstraintAnchor(rec, local);
+                if (!screen) continue;
+                const key = `${Math.round(screen.x / 10)}:${Math.round(screen.y / 10)}`;
+                if (!clusters.has(key)) {
+                    clusters.set(key, { screen, items: [] });
+                }
+                clusters.get(key).items.push(constraint);
+            }
+
+            for (const { screen, items } of clusters.values()) {
+                for (let i = 0; i < items.length; i++) {
+                    const c = items[i];
+                    const pos = this.applyConstraintOffset(c, screen, i, items.length);
+                    const glyph = document.createElement('button');
+                    glyph.className = 'sketch-constraint-glyph';
+                    glyph.textContent = this.constraintGlyphLabel(c.type);
+                    glyph.style.left = `${Math.round(pos.x)}px`;
+                    glyph.style.top = `${Math.round(pos.y)}px`;
+                    if (selectedConstraintIds.has(c.id)) {
+                        glyph.classList.add('selected');
+                    } else if (hoveredConstraintId === c.id) {
+                        glyph.classList.add('hover');
+                    }
+                    glyph.title = c.type || 'constraint';
+                    glyph.onmouseenter = () => {
+                        const api = getApi();
+                        api.interact?.setHoveredSketchConstraint?.(c.id);
+                    };
+                    glyph.onmouseleave = () => {
+                        const api = getApi();
+                        api.interact?.setHoveredSketchConstraint?.(null);
+                    };
+                    glyph.onmousedown = event => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        const api = getApi();
+                        api.interact?.selectSketchConstraint?.(c.id, event);
+                        this._glyphDrag = {
+                            featureId: rec.feature.id,
+                            constraintId: c.id,
+                            startX: event.clientX,
+                            startY: event.clientY,
+                            base: c?.ui?.offset_px ? { x: c.ui.offset_px.x || 0, y: c.ui.offset_px.y || 0 } : { x: 0, y: -18 },
+                            moved: false
+                        };
+                    };
+                    layer.appendChild(glyph);
+                }
+            }
+        },
+
+        updateConstraintDrag(event, done = false) {
+            if (!this._glyphDrag) return;
+            const drag = this._glyphDrag;
+            const dx = (event?.clientX || 0) - drag.startX;
+            const dy = (event?.clientY || 0) - drag.startY;
+            const moved = Math.hypot(dx, dy) > 0.5;
+            drag.moved = drag.moved || moved;
+            const next = { x: drag.base.x + dx, y: drag.base.y + dy };
+            const api = getApi();
+            api.features.mutateTransient(drag.featureId, sketch => {
+                sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
+                const c = sketch.constraints.find(cst => cst?.id === drag.constraintId);
+                if (!c) return;
+                c.ui = c.ui || {};
+                c.ui.offset_px = next;
+            });
+            if (done) {
+                if (drag.moved) {
+                    api.features.commit(drag.featureId, {
+                        opType: 'feature.update',
+                        payload: { field: 'constraints.ui.move', id: drag.constraintId }
+                    });
+                }
+                this._glyphDrag = null;
+            }
+        },
+
         refreshStates() {
             for (const rec of this.sketches.values()) {
                 this.applySketchState(rec);
             }
+            this.updateConstraintGlyphs();
         }
     };
 }

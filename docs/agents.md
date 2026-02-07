@@ -224,6 +224,7 @@ src/
   - later: rectangle selection parity with Onshape semantics:
     - right-drag = must fully enclose
     - left-drag = crossing/touch selects
+  - TODO later: bring rectangle/marquee selection parity to non-sketch (global 3D) mode
 - Construction geometry:
   - Required early
   - Toggle selected entity construction state with `q`
