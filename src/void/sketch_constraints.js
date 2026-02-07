@@ -502,6 +502,33 @@ function normalizeAngle(a) {
 }
 
 function enforceArcFromCenter(arc, a, b, cx, cy, fa, fb) {
+    if (arc?.circle) {
+        const ax = a.x || 0;
+        const ay = a.y || 0;
+        const bx = b.x || 0;
+        const by = b.y || 0;
+        let radius = Number(arc?.radius);
+        if (!Number.isFinite(radius) || radius < EPS) {
+            const ra = Math.hypot(ax - cx, ay - cy);
+            const rb = Math.hypot(bx - cx, by - cy);
+            radius = Math.max(ra, rb, 1);
+        }
+        const base = Number.isFinite(arc?.mx) && Number.isFinite(arc?.my)
+            ? Math.atan2((arc.my || 0) - cy, (arc.mx || 0) - cx)
+            : (Math.atan2(ay - cy, ax - cx) || 0);
+
+        let changed = false;
+        const px = cx + Math.cos(base) * radius;
+        const py = cy + Math.sin(base) * radius;
+        if (!fa) changed = setPoint(a, px, py) || changed;
+        if (!fb) changed = setPoint(b, px, py) || changed;
+        const mx = cx + Math.cos(base + Math.PI / 2) * radius;
+        const my = cy + Math.sin(base + Math.PI / 2) * radius;
+        changed = setArcControl(arc, mx, my) || changed;
+        changed = setArcCenterAndMeta(arc, cx, cy, radius, 0, Math.PI * 2, true) || changed;
+        return changed;
+    }
+
     const ax = a.x || 0;
     const ay = a.y || 0;
     const bx = b.x || 0;

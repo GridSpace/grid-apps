@@ -94,10 +94,11 @@ const toolbar = {
         };
         const arcMenu = this.addMenu(container, 'Arc', [
             { key: 'arc', label: 'Arc', onClick: () => {
-                const current = api.interact.getSketchTool?.() || 'select';
-                api.interact.setSketchTool(current === 'arc' ? 'select' : 'arc');
+                api.interact.setSketchTool('arc');
             } },
-            { key: 'circle', label: 'Circle', disabled: true, onClick: () => {} }
+            { key: 'circle', label: 'Circle', onClick: () => {
+                api.interact.setSketchTool('circle');
+            } }
         ]);
         this.sketchToolMenuItems = arcMenu.items;
         this.addPipe(container);
@@ -210,7 +211,8 @@ const toolbar = {
             }
             const circle = this.sketchToolMenuItems.circle;
             if (circle) {
-                circle.disabled = true;
+                circle.disabled = !editing;
+                circle.classList.toggle('active', editing && tool === 'circle');
             }
         }
         if (this.sketchConstraintButtons) {
@@ -334,6 +336,7 @@ const toolbar = {
                     { key: 'V', desc: 'Select tool' },
                     { key: 'L', desc: 'Line tool' },
                     { key: 'A', desc: 'Arc tool' },
+                    { key: 'O', desc: 'Circle tool' },
                     { key: 'Q', desc: 'Toggle construction on selected lines/arcs' },
                     { key: 'Esc', desc: 'Cancel line mode / close dialogs' }
                 ]

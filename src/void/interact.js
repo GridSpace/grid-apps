@@ -49,6 +49,8 @@ const interact = {
     sketchArcEnd: null,
     sketchArcEndRefId: null,
     sketchArcPreview: null,
+    sketchCircleCenter: null,
+    sketchCircleCenterRefId: null,
     sketchPointerSeq: 0,
     sketchMarquee: null,
     sketchMarqueeEl: null,

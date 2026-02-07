@@ -910,7 +910,7 @@ function createSketchRuntimeApi(getApi) {
                 }
                 return;
             }
-            if (preview.mode === 'arc' && Number.isFinite(preview.cx) && Number.isFinite(preview.cy)) {
+            if ((preview.mode === 'arc' || preview.mode === 'circle') && Number.isFinite(preview.cx) && Number.isFinite(preview.cy)) {
                 const pts = this.getArcRenderPoints(preview, preview.a, preview.b, 48);
                 if (pts.length >= 2) {
                     rec.previewArc.geometry.dispose();
@@ -1048,6 +1048,34 @@ function createSketchRuntimeApi(getApi) {
         },
 
         getArcRenderPoints(arc, a, b, segments = 32) {
+            if (arc?.circle) {
+                const cx = Number(arc?.cx);
+                const cy = Number(arc?.cy);
+                let radius = Number(arc?.radius);
+                if (!Number.isFinite(radius) || radius <= 0) {
+                    if (a) {
+                        radius = Math.hypot((a.x || 0) - cx, (a.y || 0) - cy);
+                    }
+                }
+                if (!Number.isFinite(cx) || !Number.isFinite(cy) || !Number.isFinite(radius) || radius <= 0) {
+                    return [];
+                }
+                const count = Math.max(32, segments * 2);
+                let start = 0;
+                if (a) {
+                    start = Math.atan2((a.y || 0) - cy, (a.x || 0) - cx);
+                }
+                const pts = [];
+                for (let i = 0; i <= count; i++) {
+                    const t = i / count;
+                    const ang = start + t * Math.PI * 2;
+                    pts.push({
+                        x: cx + Math.cos(ang) * radius,
+                        y: cy + Math.sin(ang) * radius
+                    });
+                }
+                return pts;
+            }
             let cx = Number(arc?.cx);
             let cy = Number(arc?.cy);
             let radius = Number(arc?.radius);
