@@ -811,15 +811,17 @@ function createSketchRuntimeApi(getApi) {
         },
 
         getLineEndpoints(line, pointById) {
+            const aId = typeof line?.a === 'string' ? line.a : (typeof line?.p1_id === 'string' ? line.p1_id : null);
+            const bId = typeof line?.b === 'string' ? line.b : (typeof line?.p2_id === 'string' ? line.p2_id : null);
             let a = null;
             let b = null;
-            if (typeof line?.a === 'string') {
-                a = pointById?.get(line.a) || null;
+            if (aId) {
+                a = pointById?.get(aId) || null;
             } else if (line?.a && typeof line.a === 'object') {
                 a = line.a;
             }
-            if (typeof line?.b === 'string') {
-                b = pointById?.get(line.b) || null;
+            if (bId) {
+                b = pointById?.get(bId) || null;
             } else if (line?.b && typeof line.b === 'object') {
                 b = line.b;
             }

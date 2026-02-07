@@ -637,7 +637,9 @@ function handleSketchDrag(delta, offset, isDone) {
             this.updateSketchInteractionVisuals();
             return true;
         }
-        const activeIds = this.selectedSketchEntities.has(downId)
+        const dragSelectedLines = this.selectedSketchEntities.has(downId)
+            || this.isPointOnSelectedSketchLine(feature, downId);
+        const activeIds = dragSelectedLines
             ? new Set(this.selectedSketchEntities)
             : new Set([downId]);
         const refs = this.collectCoordinateRefsFromIds(feature, activeIds);
@@ -685,11 +687,31 @@ function handleSketchDrag(delta, offset, isDone) {
     this.sketchDrag.snapMovedPointId = snapMovedPointId;
     this.hoveredSketchEntityId = snapId;
 
-    enforceSketchConstraintsInPlace(feature);
+    enforceSketchConstraintsInPlace(feature, {
+        useFallback: true,
+        iterations: 24
+    });
     this.sketchDrag.moved = this.sketchDrag.moved || Math.hypot(dx, dy) > 0;
     api.sketchRuntime.sync();
     this.updateSketchInteractionVisuals();
     return true;
+}
+
+function isPointOnSelectedSketchLine(feature, pointId) {
+    if (!pointId || !this.selectedSketchEntities?.size) {
+        return false;
+    }
+    const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+    for (const entity of entities) {
+        if (entity?.type !== 'line' || !entity.id) continue;
+        if (!this.selectedSketchEntities.has(entity.id)) continue;
+        const aId = typeof entity?.a === 'string' ? entity.a : (typeof entity?.p1_id === 'string' ? entity.p1_id : null);
+        const bId = typeof entity?.b === 'string' ? entity.b : (typeof entity?.p2_id === 'string' ? entity.p2_id : null);
+        if (aId === pointId || bId === pointId) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function startSketchMarquee(feature, pointerDown, event) {
@@ -1257,15 +1279,17 @@ function ensureSketchPoint(sketch, local) {
 }
 
 function getLineEndpoints(line, pointById) {
+    const aId = typeof line?.a === 'string' ? line.a : (typeof line?.p1_id === 'string' ? line.p1_id : null);
+    const bId = typeof line?.b === 'string' ? line.b : (typeof line?.p2_id === 'string' ? line.p2_id : null);
     let a = null;
     let b = null;
-    if (typeof line?.a === 'string') {
-        a = pointById?.get(line.a) || null;
+    if (aId) {
+        a = pointById?.get(aId) || null;
     } else if (line?.a && typeof line.a === 'object') {
         a = line.a;
     }
-    if (typeof line?.b === 'string') {
-        b = pointById?.get(line.b) || null;
+    if (bId) {
+        b = pointById?.get(bId) || null;
     } else if (line?.b && typeof line.b === 'object') {
         b = line.b;
     }
@@ -1427,6 +1451,7 @@ export {
     segmentsIntersect,
     collectSelectedCoordinateRefs,
     collectCoordinateRefsFromIds,
+    isPointOnSelectedSketchLine,
     createSketchPoint,
     createSketchLine,
     deleteSelectedSketchEntities,
