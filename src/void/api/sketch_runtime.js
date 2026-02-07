@@ -585,10 +585,12 @@ function createSketchRuntimeApi(getApi) {
 
             const hoveredId = rec.interaction?.hoveredId || null;
             const selectedIds = rec.interaction?.selectedIds || new Set();
+            const constraintHighlight = this.getConstraintHoverHighlight(rec);
 
             for (const [id, view] of rec.entityViews.entries()) {
                 const selected = mode === 'edit' && selectedIds.has(id);
-                const hovered = mode === 'edit' && hoveredId === id && !selected;
+                const constrained = mode === 'edit' && constraintHighlight.has(id) && !selected;
+                const hovered = mode === 'edit' && (hoveredId === id || constrained) && !selected;
 
                 if (view.type === 'line') {
                     const color = selected
@@ -620,6 +622,40 @@ function createSketchRuntimeApi(getApi) {
                     }
                 }
             }
+        },
+
+        getConstraintHoverHighlight(rec) {
+            const out = new Set();
+            const hoveredConstraintId = rec?.interaction?.hoveredConstraintId || null;
+            if (!hoveredConstraintId) {
+                return out;
+            }
+            const constraints = Array.isArray(rec?.feature?.constraints) ? rec.feature.constraints : [];
+            const entities = Array.isArray(rec?.feature?.entities) ? rec.feature.entities : [];
+            const byId = new Map(entities.map(e => [e?.id, e]));
+            const c = constraints.find(cst => cst?.id === hoveredConstraintId);
+            if (!c) return out;
+            const refs = Array.isArray(c.refs) ? c.refs : [];
+            const pointRefs = [];
+            for (const ref of refs) {
+                if (!ref) continue;
+                out.add(ref);
+                const ent = byId.get(ref);
+                if (ent?.type === 'point') {
+                    pointRefs.push(ref);
+                }
+            }
+            // When point constraints are hovered (especially coincident), also
+            // highlight incident lines so users can tell which chain segment is constrained.
+            if (pointRefs.length) {
+                for (const ent of entities) {
+                    if (ent?.type !== 'line' || !ent.id) continue;
+                    if (pointRefs.includes(ent.a) || pointRefs.includes(ent.b)) {
+                        out.add(ent.id);
+                    }
+                }
+            }
+            return out;
         },
 
         applyPreviewLine(rec, mode, editing) {
