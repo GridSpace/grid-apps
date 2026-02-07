@@ -925,9 +925,15 @@ function collectCoordinateRefsFromIds(feature, selectedIds) {
             continue;
         }
         if (entity.type === 'line') {
-            const [a, b] = this.getLineEndpoints(entity, pointById);
-            if (a) refs.add(a);
-            if (b) refs.add(b);
+            // Use canonical point entities so drag/solver mutate shared objects.
+            const aId = typeof entity?.a === 'string' ? entity.a : (typeof entity?.p1_id === 'string' ? entity.p1_id : null);
+            const bId = typeof entity?.b === 'string' ? entity.b : (typeof entity?.p2_id === 'string' ? entity.p2_id : null);
+            if (aId && pointById.has(aId)) {
+                refs.add(pointById.get(aId));
+            }
+            if (bId && pointById.has(bId)) {
+                refs.add(pointById.get(bId));
+            }
         }
     }
     return Array.from(refs);
