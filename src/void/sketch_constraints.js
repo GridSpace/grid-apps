@@ -885,6 +885,14 @@ function applyMidpoint(constraint, points, fixed, dragged = new Set()) {
     if (fa && fb) {
         return setPoint(mid, ((a.x || 0) + (b.x || 0)) * 0.5, ((a.y || 0) + (b.y || 0)) * 0.5);
     }
+    // When midpoint is fixed and one endpoint is user-dragged, reflect the opposite
+    // endpoint across the midpoint. This avoids shearing/translation artifacts.
+    if (fm && aDragged && !fb) {
+        return setPoint(b, 2 * (mid.x || 0) - (a.x || 0), 2 * (mid.y || 0) - (a.y || 0));
+    }
+    if (fm && bDragged && !fa) {
+        return setPoint(a, 2 * (mid.x || 0) - (b.x || 0), 2 * (mid.y || 0) - (b.y || 0));
+    }
     const mx = ((a.x || 0) + (b.x || 0)) * 0.5;
     const my = ((a.y || 0) + (b.y || 0)) * 0.5;
     if (midDragged && !fm) {

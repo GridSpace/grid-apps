@@ -1079,6 +1079,8 @@ function handleSketchDrag(delta, offset, isDone) {
         }
         const downId = this.sketchPointerDown.hitId || this.hoveredSketchEntityId || null;
         const downType = this.sketchPointerDown.hitType || null;
+        const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+        const entityById = new Map(entities.filter(e => e?.id).map(e => [e.id, e]));
         if (!downId || downId === SKETCH_VIRTUAL_ORIGIN_ID) {
             this.startSketchMarquee(feature, this.sketchPointerDown, event);
             this.hoveredSketchEntityId = null;
@@ -1093,6 +1095,19 @@ function handleSketchDrag(delta, offset, isDone) {
             : dragSelectedLines
             ? new Set(this.selectedSketchEntities)
             : new Set([downId]);
+        const circleCurveDragIds = new Set();
+        if (!centerDrag) {
+            for (const id of activeIds) {
+                const ent = entityById.get(id);
+                if (ent?.type === 'arc' && ent?.circle) {
+                    circleCurveDragIds.add(id);
+                }
+            }
+            const downEnt = entityById.get(downId);
+            if (downType === 'arc' && downEnt?.type === 'arc' && downEnt?.circle) {
+                circleCurveDragIds.add(downId);
+            }
+        }
         const refs = this.collectCoordinateRefsFromIds(feature, activeIds);
         if (!this.sketchPointerDown.local) {
             return false;
@@ -1104,7 +1119,6 @@ function handleSketchDrag(delta, offset, isDone) {
             }
         }
         const arcControlBaseline = [];
-        const entities = Array.isArray(feature?.entities) ? feature.entities : [];
         const pointById = new Map(entities.filter(e => e?.type === 'point' && e.id).map(e => [e.id, e]));
         for (const entity of entities) {
             if (entity?.type !== 'arc' || !entity.id) continue;
@@ -1128,6 +1142,7 @@ function handleSketchDrag(delta, offset, isDone) {
             baseline,
             arcControlBaseline,
             activeIds,
+            circleCurveDragIds,
             movedPointIds: new Set((centerDrag ? [] : refs).map(ref => ref?.id).filter(Boolean)),
             centerDrag,
             snapPointId: null,
@@ -1159,7 +1174,7 @@ function handleSketchDrag(delta, offset, isDone) {
         ctrl.entity.mx = ctrl.mx + dx;
         ctrl.entity.my = ctrl.my + dy;
     }
-    this.applyCircleDragKinematics(feature, dx, dy);
+    this.applyCircleDragKinematics(feature, dx, dy, local);
 
     const snap = this.sketchDrag.centerDrag ? null : this.getSketchDragSnapTarget(event, feature, this.sketchDrag.movedPointIds);
     const snapId = snap?.targetId || null;
@@ -2246,7 +2261,7 @@ function getArcEndpoints(arc, pointById) {
     return [a, b];
 }
 
-function applyCircleDragKinematics(feature, dx = 0, dy = 0) {
+function applyCircleDragKinematics(feature, dx = 0, dy = 0, local = null) {
     const drag = this.sketchDrag;
     if (!drag) return;
     const entities = Array.isArray(feature?.entities) ? feature.entities : [];
@@ -2295,10 +2310,12 @@ function applyCircleDragKinematics(feature, dx = 0, dy = 0) {
             cy = arc.cy;
         }
 
-        // Radius drag: anchor on moved endpoint (or current A) and keep both endpoints on circle.
-        const anchor = movedA ? a : (movedB ? b : a);
-        const vx = (anchor.x || 0) - cx;
-        const vy = (anchor.y || 0) - cy;
+        const curveDrag = drag.circleCurveDragIds?.has?.(arc.id) && !drag.centerDrag;
+        // Radius drag: use the moved endpoint, or when dragging the circle curve itself,
+        // use the current mouse-projected local point as the radius handle.
+        const anchor = movedA ? a : (movedB ? b : null);
+        const vx = curveDrag && local ? ((local.x || 0) - cx) : ((anchor?.x || a.x || 0) - cx);
+        const vy = curveDrag && local ? ((local.y || 0) - cy) : ((anchor?.y || a.y || 0) - cy);
         let radius = Math.hypot(vx, vy);
         if (!Number.isFinite(radius) || radius < SKETCH_MIN_LINE_LENGTH) {
             radius = Number(arc.radius || 0);
