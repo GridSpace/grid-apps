@@ -27,6 +27,7 @@ const SKETCH_POINT_BASE_RADIUS = 1.8;
 const SKETCH_VIRTUAL_ORIGIN_ID = '__sketch-origin__';
 const CONSTRAINT_GLYPH_SIZE_PX = 18;
 const CONSTRAINT_GLYPH_GAP_PX = 4;
+const PROFILE_MERGE_EPS = 1e-3;
 
 function createSketchRuntimeApi(getApi) {
     return {
@@ -327,6 +328,7 @@ function createSketchRuntimeApi(getApi) {
                     pointById.set(entity.id, entity);
                 }
             }
+            this.addClosedProfileFills(rec, entities, pointById);
             for (const entity of entities) {
                 if (!entity?.id) {
                     continue;
@@ -386,6 +388,158 @@ function createSketchRuntimeApi(getApi) {
                 rec.entitiesGroup.remove(rec.previewStart);
                 rec.entitiesGroup.add(rec.previewStart);
             }
+        },
+
+        addClosedProfileFills(rec, entities, pointById) {
+            const loops = this.findClosedLineLoops(rec.feature, entities, pointById);
+            for (const loop of loops) {
+                if (!Array.isArray(loop) || loop.length < 3) continue;
+                const shape = new THREE.Shape();
+                shape.moveTo(loop[0].x, loop[0].y);
+                for (let i = 1; i < loop.length; i++) {
+                    shape.lineTo(loop[i].x, loop[i].y);
+                }
+                shape.closePath();
+                const geom = new THREE.ShapeGeometry(shape);
+                const mat = new THREE.MeshBasicMaterial({
+                    color: 0x8f8f8f,
+                    transparent: true,
+                    opacity: 0.18,
+                    depthWrite: false,
+                    side: THREE.DoubleSide
+                });
+                const fill = new THREE.Mesh(geom, mat);
+                fill.position.z = -0.005;
+                fill.renderOrder = 6;
+                rec.entitiesGroup.add(fill);
+            }
+        },
+
+        findClosedLineLoops(feature, entities, pointById) {
+            const lines = entities.filter(e => e?.type === 'line' && e.a && e.b);
+            if (!lines.length) return [];
+            const constraints = Array.isArray(feature?.constraints) ? feature.constraints : [];
+
+            const parent = new Map();
+            const find = id => {
+                if (!parent.has(id)) parent.set(id, id);
+                let p = parent.get(id);
+                while (p !== parent.get(p)) {
+                    p = parent.get(p);
+                }
+                let n = id;
+                while (parent.get(n) !== p) {
+                    const next = parent.get(n);
+                    parent.set(n, p);
+                    n = next;
+                }
+                return p;
+            };
+            const union = (a, b) => {
+                const ra = find(a);
+                const rb = find(b);
+                if (ra !== rb) parent.set(rb, ra);
+            };
+
+            for (const [id] of pointById) {
+                find(id);
+            }
+            for (const c of constraints) {
+                if (c?.type !== 'coincident') continue;
+                const refs = Array.isArray(c.refs) ? c.refs : [];
+                if (refs.length >= 2 && pointById.has(refs[0]) && pointById.has(refs[1])) {
+                    union(refs[0], refs[1]);
+                }
+            }
+
+            const byRep = new Map();
+            for (const [id, p] of pointById) {
+                const rep = find(id);
+                if (!byRep.has(rep)) byRep.set(rep, []);
+                byRep.get(rep).push(p);
+            }
+
+            const nodes = new Map();
+            const repToNode = new Map();
+            let nodeSeq = 0;
+            const q = v => Math.round(v / PROFILE_MERGE_EPS) * PROFILE_MERGE_EPS;
+            for (const [rep, pts] of byRep) {
+                const avg = pts.reduce((a, p) => ({ x: a.x + (p.x || 0), y: a.y + (p.y || 0) }), { x: 0, y: 0 });
+                avg.x /= pts.length;
+                avg.y /= pts.length;
+                const key = `${q(avg.x)},${q(avg.y)}`;
+                let nid = nodes.get(key)?.id;
+                if (!nid) {
+                    nid = `n${++nodeSeq}`;
+                    nodes.set(key, { id: nid, x: avg.x, y: avg.y });
+                }
+                repToNode.set(rep, nid);
+            }
+
+            const adj = new Map();
+            const edges = [];
+            const addAdj = (a, b, edgeId) => {
+                if (!adj.has(a)) adj.set(a, []);
+                adj.get(a).push({ other: b, edgeId });
+            };
+            for (const line of lines) {
+                const ra = find(line.a);
+                const rb = find(line.b);
+                const na = repToNode.get(ra);
+                const nb = repToNode.get(rb);
+                if (!na || !nb || na === nb) continue;
+                const edgeId = edges.length;
+                edges.push({ id: edgeId, a: na, b: nb });
+                addAdj(na, nb, edgeId);
+                addAdj(nb, na, edgeId);
+            }
+            if (!edges.length) return [];
+
+            const loops = [];
+            const used = new Set();
+            for (const edge of edges) {
+                if (used.has(edge.id)) continue;
+                let start = edge.a;
+                let curr = edge.b;
+                let prev = start;
+                let currEdgeId = edge.id;
+                const path = [start, curr];
+                used.add(currEdgeId);
+                let ok = true;
+
+                while (curr !== start) {
+                    const opts = (adj.get(curr) || []).filter(e => e.edgeId !== currEdgeId);
+                    if (opts.length !== 1) {
+                        ok = false;
+                        break;
+                    }
+                    const next = opts[0];
+                    currEdgeId = next.edgeId;
+                    if (used.has(currEdgeId)) {
+                        ok = false;
+                        break;
+                    }
+                    used.add(currEdgeId);
+                    prev = curr;
+                    curr = next.other;
+                    path.push(curr);
+                    if (path.length > edges.length + 2) {
+                        ok = false;
+                        break;
+                    }
+                }
+                if (!ok || path.length < 4) continue;
+                const points = path.slice(0, -1).map(nid => {
+                    for (const n of nodes.values()) {
+                        if (n.id === nid) return { x: n.x, y: n.y };
+                    }
+                    return null;
+                }).filter(Boolean);
+                if (points.length >= 3) {
+                    loops.push(points);
+                }
+            }
+            return loops;
         },
 
         applySketchState(rec) {

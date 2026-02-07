@@ -538,8 +538,12 @@ function handleSketchMouseUp(event, intersections) {
 
     if (tool === 'line') {
         const upHit = this.resolveSketchHit(event, intersections, feature);
-        const local = this.getSketchHitLocalPoint(feature, upHit) || this.projectEventToSketchLocal(event, feature);
-        const endRefId = (upHit?.type === 'point' && upHit?.id && upHit.id !== SKETCH_VIRTUAL_ORIGIN_ID) ? upHit.id : null;
+        const fallbackHovered = this.hoveredSketchEntityId && this.hoveredSketchEntityId !== SKETCH_VIRTUAL_ORIGIN_ID
+            ? { id: this.hoveredSketchEntityId, type: 'point' }
+            : null;
+        const resolved = upHit || fallbackHovered;
+        const local = this.getSketchHitLocalPoint(feature, resolved) || this.projectEventToSketchLocal(event, feature);
+        const endRefId = (resolved?.type === 'point' && resolved?.id && resolved.id !== SKETCH_VIRTUAL_ORIGIN_ID) ? resolved.id : null;
         if (!local || !this.sketchLineStart) {
             return true;
         }
@@ -560,7 +564,7 @@ function handleSketchMouseUp(event, intersections) {
             startRefId: this.sketchLineStartRefId || null,
             endRefId
         });
-        if (this.getSketchHitLocalPoint(feature, upHit)) {
+        if (this.getSketchHitLocalPoint(feature, resolved)) {
             // Common polygon workflow: close/attach on existing point and exit line mode.
             this.cancelSketchLine();
             this.setSketchTool('select');
