@@ -1,6 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { THREE } from '../../ext/three.js';
+import { ClipperLib } from '../../ext/clip2.esm.js';
 import { space } from '../../moto/space.js';
 import { Plane } from '../plane.js';
 
@@ -28,6 +29,7 @@ const SKETCH_VIRTUAL_ORIGIN_ID = '__sketch-origin__';
 const CONSTRAINT_GLYPH_SIZE_PX = 18;
 const CONSTRAINT_GLYPH_GAP_PX = 4;
 const PROFILE_MERGE_EPS = 1e-3;
+const CLIPPER_SCALE = 100000;
 
 function createSketchRuntimeApi(getApi) {
     return {
@@ -583,6 +585,38 @@ function createSketchRuntimeApi(getApi) {
             }
         },
 
+        simplifyLoopsWithClipper(loops) {
+            if (!Array.isArray(loops) || !loops.length || !ClipperLib?.Clipper) {
+                return loops || [];
+            }
+            const out = [];
+            const fill = ClipperLib.PolyFillType.pftEvenOdd;
+            for (const loop of loops) {
+                if (!Array.isArray(loop) || loop.length < 3) continue;
+                const path = [];
+                for (const p of loop) {
+                    path.push({
+                        X: Math.round((p.x || 0) * CLIPPER_SCALE),
+                        Y: Math.round((p.y || 0) * CLIPPER_SCALE)
+                    });
+                }
+                if (path.length < 3) continue;
+                const simp = ClipperLib.Clipper.SimplifyPolygon(path, fill) || [];
+                if (!simp.length) {
+                    out.push(loop);
+                    continue;
+                }
+                for (const poly of simp) {
+                    if (!Array.isArray(poly) || poly.length < 3) continue;
+                    out.push(poly.map(pt => ({
+                        x: (pt.X || 0) / CLIPPER_SCALE,
+                        y: (pt.Y || 0) / CLIPPER_SCALE
+                    })));
+                }
+            }
+            return out.length ? out : loops;
+        },
+
         findClosedCurveLoops(feature, entities, pointById) {
             const curves = entities.filter(e => (e?.type === 'line' || e?.type === 'arc') && !e.construction);
             if (!curves.length) return [];
@@ -590,7 +624,7 @@ function createSketchRuntimeApi(getApi) {
             const q = v => Math.round(v / PROFILE_MERGE_EPS) * PROFILE_MERGE_EPS;
             const nodes = new Map(); // key -> { id, x, y }
             const nodeCoord = new Map(); // id -> { x, y }
-            const edges = [];
+            const baseSegments = [];
             let nodeSeq = 0;
 
             const getNodeId = (x, y) => {
@@ -625,9 +659,67 @@ function createSketchRuntimeApi(getApi) {
                 for (let i = 0; i < poly.length - 1; i++) {
                     const p1 = poly[i];
                     const p2 = poly[i + 1];
-                    const aId = getNodeId(p1.x || 0, p1.y || 0);
-                    const bId = getNodeId(p2.x || 0, p2.y || 0);
+                    const x1 = p1.x || 0;
+                    const y1 = p1.y || 0;
+                    const x2 = p2.x || 0;
+                    const y2 = p2.y || 0;
+                    if (Math.hypot(x2 - x1, y2 - y1) < PROFILE_MERGE_EPS) continue;
+                    baseSegments.push({
+                        id: baseSegments.length,
+                        a: { x: x1, y: y1 },
+                        b: { x: x2, y: y2 },
+                        ts: [0, 1]
+                    });
+                }
+            }
+            if (!baseSegments.length) return [];
+
+            const segEps = 1e-9;
+            for (let i = 0; i < baseSegments.length; i++) {
+                const s1 = baseSegments[i];
+                for (let j = i + 1; j < baseSegments.length; j++) {
+                    const s2 = baseSegments[j];
+                    const hit = this.segmentIntersectionParams(s1.a, s1.b, s2.a, s2.b, segEps);
+                    if (!hit) continue;
+                    if (hit.collinear) continue;
+                    const t1 = hit.t;
+                    const t2 = hit.u;
+                    if (Number.isFinite(t1) && t1 >= -segEps && t1 <= 1 + segEps) {
+                        s1.ts.push(Math.max(0, Math.min(1, t1)));
+                    }
+                    if (Number.isFinite(t2) && t2 >= -segEps && t2 <= 1 + segEps) {
+                        s2.ts.push(Math.max(0, Math.min(1, t2)));
+                    }
+                }
+            }
+
+            const edges = [];
+            const edgeKeys = new Set();
+            const uniqueSorted = list => {
+                const out = Array.from(new Set(list.map(v => Number(v.toFixed(12)))));
+                out.sort((a, b) => a - b);
+                return out;
+            };
+            for (const seg of baseSegments) {
+                const ts = uniqueSorted(seg.ts).filter(t => t >= 0 && t <= 1);
+                if (ts.length < 2) continue;
+                const sx = seg.a.x;
+                const sy = seg.a.y;
+                const dx = seg.b.x - seg.a.x;
+                const dy = seg.b.y - seg.a.y;
+                for (let i = 0; i < ts.length - 1; i++) {
+                    const t0 = ts[i];
+                    const t1 = ts[i + 1];
+                    if ((t1 - t0) < 1e-9) continue;
+                    const p0 = { x: sx + dx * t0, y: sy + dy * t0 };
+                    const p1 = { x: sx + dx * t1, y: sy + dy * t1 };
+                    if (Math.hypot(p1.x - p0.x, p1.y - p0.y) < PROFILE_MERGE_EPS) continue;
+                    const aId = getNodeId(p0.x, p0.y);
+                    const bId = getNodeId(p1.x, p1.y);
                     if (!aId || !bId || aId === bId) continue;
+                    const key = aId < bId ? `${aId}|${bId}` : `${bId}|${aId}`;
+                    if (edgeKeys.has(key)) continue;
+                    edgeKeys.add(key);
                     edges.push({ id: edges.length, a: aId, b: bId });
                 }
             }
@@ -714,6 +806,28 @@ function createSketchRuntimeApi(getApi) {
                 }
             }
             return loops;
+        },
+
+        segmentIntersectionParams(a, b, c, d, eps = 1e-9) {
+            const r = { x: (b.x || 0) - (a.x || 0), y: (b.y || 0) - (a.y || 0) };
+            const s = { x: (d.x || 0) - (c.x || 0), y: (d.y || 0) - (c.y || 0) };
+            const cross = (u, v) => u.x * v.y - u.y * v.x;
+            const qmp = { x: (c.x || 0) - (a.x || 0), y: (c.y || 0) - (a.y || 0) };
+            const denom = cross(r, s);
+            const qmpxr = cross(qmp, r);
+
+            if (Math.abs(denom) < eps) {
+                if (Math.abs(qmpxr) < eps) {
+                    return { collinear: true };
+                }
+                return null;
+            }
+            const t = cross(qmp, s) / denom;
+            const u = cross(qmp, r) / denom;
+            if (t < -eps || t > 1 + eps || u < -eps || u > 1 + eps) {
+                return null;
+            }
+            return { t, u, collinear: false };
         },
 
         findClosedLineLoops(feature, entities, pointById) {
