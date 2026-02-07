@@ -136,7 +136,12 @@ function enforceWithPlanegcs(sketch) {
 
     const fixed = captureFixedAnchors(constraints, pointEntityById);
     changed = applyArcCenterCoincidentConstraints(constraints, pointEntityById, lineById, arcById, fixed) || changed;
-    changed = applyTangentConstraints(constraints, pointEntityById, lineById, arcById, fixed) || changed;
+    changed = applyMidpointConstraints(constraints, pointEntityById, fixed) || changed;
+    for (let i = 0; i < 8; i++) {
+        const tChanged = applyTangentConstraints(constraints, pointEntityById, lineById, arcById, fixed);
+        if (!tChanged) break;
+        changed = true;
+    }
 
     return changed;
 }
@@ -165,6 +170,14 @@ function toPlanegcsConstraint(c, pointById, lineById) {
             l_id: String(lId)
         };
     }
+    if (c.type === 'horizontal_points') {
+        if (refs.length < 2 || !pointById.has(refs[0]) || !pointById.has(refs[1])) return null;
+        const lId = `${id}:hl`;
+        return [
+            { id: lId, type: 'line', p1_id: String(refs[0]), p2_id: String(refs[1]) },
+            { id: `${id}:c`, type: 'horizontal_l', l_id: lId }
+        ];
+    }
 
     if (c.type === 'vertical') {
         const lId = refs[0];
@@ -174,6 +187,14 @@ function toPlanegcsConstraint(c, pointById, lineById) {
             type: 'vertical_l',
             l_id: String(lId)
         };
+    }
+    if (c.type === 'vertical_points') {
+        if (refs.length < 2 || !pointById.has(refs[0]) || !pointById.has(refs[1])) return null;
+        const lId = `${id}:vl`;
+        return [
+            { id: lId, type: 'line', p1_id: String(refs[0]), p2_id: String(refs[1]) },
+            { id: `${id}:c`, type: 'vertical_l', l_id: lId }
+        ];
     }
 
     if (c.type === 'perpendicular') {
@@ -282,8 +303,14 @@ function enforceWithFallback(sketch, opts = {}) {
                 case 'horizontal':
                     iterChanged = applyHorizontal(c, points, lines, fixed) || iterChanged;
                     break;
+                case 'horizontal_points':
+                    iterChanged = applyHorizontalPoints(c, points, fixed) || iterChanged;
+                    break;
                 case 'vertical':
                     iterChanged = applyVertical(c, points, lines, fixed) || iterChanged;
+                    break;
+                case 'vertical_points':
+                    iterChanged = applyVerticalPoints(c, points, fixed) || iterChanged;
                     break;
                 case 'perpendicular':
                     iterChanged = applyPerpendicular(c, points, lines, fixed) || iterChanged;
@@ -299,6 +326,9 @@ function enforceWithFallback(sketch, opts = {}) {
                     break;
                 case 'arc_center_coincident':
                     iterChanged = applyArcCenterCoincident(c, points, lines, arcs, fixed) || iterChanged;
+                    break;
+                case 'midpoint':
+                    iterChanged = applyMidpoint(c, points, fixed) || iterChanged;
                     break;
                 default:
                     break;
@@ -405,6 +435,21 @@ function applyHorizontal(constraint, points, lines, fixed) {
     return ca || cb;
 }
 
+function applyHorizontalPoints(constraint, points, fixed) {
+    const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
+    if (refs.length < 2) return false;
+    const a = points.get(refs[0]);
+    const b = points.get(refs[1]);
+    if (!a || !b) return false;
+    const fa = isFixed(refs[0], fixed);
+    const fb = isFixed(refs[1], fixed);
+    if (fa && fb) return false;
+    const y = fa ? (a.y || 0) : (fb ? (b.y || 0) : (((a.y || 0) + (b.y || 0)) * 0.5));
+    if (fa) return setPoint(b, b.x || 0, y);
+    if (fb) return setPoint(a, a.x || 0, y);
+    return setPoint(a, a.x || 0, y) || setPoint(b, b.x || 0, y);
+}
+
 function applyVertical(constraint, points, lines, fixed) {
     const lineId = Array.isArray(constraint?.refs) ? constraint.refs[0] : null;
     const line = lines.get(lineId);
@@ -420,6 +465,21 @@ function applyVertical(constraint, points, lines, fixed) {
     const ca = setPoint(a, x, a.y || 0);
     const cb = setPoint(b, x, b.y || 0);
     return ca || cb;
+}
+
+function applyVerticalPoints(constraint, points, fixed) {
+    const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
+    if (refs.length < 2) return false;
+    const a = points.get(refs[0]);
+    const b = points.get(refs[1]);
+    if (!a || !b) return false;
+    const fa = isFixed(refs[0], fixed);
+    const fb = isFixed(refs[1], fixed);
+    if (fa && fb) return false;
+    const x = fa ? (a.x || 0) : (fb ? (b.x || 0) : (((a.x || 0) + (b.x || 0)) * 0.5));
+    if (fa) return setPoint(b, x, b.y || 0);
+    if (fb) return setPoint(a, x, a.y || 0);
+    return setPoint(a, x, a.y || 0) || setPoint(b, x, b.y || 0);
 }
 
 function applyPerpendicular(constraint, points, lines, fixed) {
@@ -644,6 +704,50 @@ function applyTangentConstraints(constraints, points, lines, arcs, fixed) {
     for (const c of constraints) {
         if (c?.type !== 'tangent') continue;
         changed = applyTangent(c, points, lines, arcs, fixed) || changed;
+    }
+    return changed;
+}
+
+function applyMidpoint(constraint, points, fixed) {
+    const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
+    if (refs.length < 3) return false;
+    const mid = points.get(refs[0]);
+    const a = points.get(refs[1]);
+    const b = points.get(refs[2]);
+    if (!mid || !a || !b) return false;
+    const fm = isFixed(refs[0], fixed);
+    const fa = isFixed(refs[1], fixed);
+    const fb = isFixed(refs[2], fixed);
+    if (fm && fa && fb) return false;
+
+    if (fm && fa) {
+        return setPoint(b, 2 * (mid.x || 0) - (a.x || 0), 2 * (mid.y || 0) - (a.y || 0));
+    }
+    if (fm && fb) {
+        return setPoint(a, 2 * (mid.x || 0) - (b.x || 0), 2 * (mid.y || 0) - (b.y || 0));
+    }
+    if (fa && fb) {
+        return setPoint(mid, ((a.x || 0) + (b.x || 0)) * 0.5, ((a.y || 0) + (b.y || 0)) * 0.5);
+    }
+    const mx = ((a.x || 0) + (b.x || 0)) * 0.5;
+    const my = ((a.y || 0) + (b.y || 0)) * 0.5;
+    if (!fm) {
+        return setPoint(mid, mx, my);
+    }
+    // midpoint fixed: move both endpoints symmetrically to preserve center
+    const tx = (mid.x || 0) - mx;
+    const ty = (mid.y || 0) - my;
+    let changed = false;
+    if (!fa) changed = setPoint(a, (a.x || 0) + tx, (a.y || 0) + ty) || changed;
+    if (!fb) changed = setPoint(b, (b.x || 0) + tx, (b.y || 0) + ty) || changed;
+    return changed;
+}
+
+function applyMidpointConstraints(constraints, points, fixed) {
+    let changed = false;
+    for (const c of constraints) {
+        if (c?.type !== 'midpoint') continue;
+        changed = applyMidpoint(c, points, fixed) || changed;
     }
     return changed;
 }

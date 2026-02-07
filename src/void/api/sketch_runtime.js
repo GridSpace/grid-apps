@@ -273,7 +273,8 @@ function createSketchRuntimeApi(getApi) {
                 arc_center_coincident: 'C',
                 fixed: 'F',
                 tangent: 'T',
-                equal: '='
+                equal: '=',
+                midpoint: 'M'
             };
             return labels[type] || '?';
         },
@@ -1320,7 +1321,7 @@ function createSketchRuntimeApi(getApi) {
             const entities = Array.isArray(feature?.entities) ? feature.entities : [];
             const byId = new Map(entities.map(e => [e?.id, e]));
             const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
-            const lineTypes = new Set(['horizontal', 'vertical', 'tangent', 'equal', 'collinear']);
+            const lineTypes = new Set(['horizontal', 'vertical', 'horizontal_points', 'vertical_points', 'tangent', 'equal', 'collinear']);
 
             if (lineTypes.has(constraint?.type)) {
                 const line = refs.map(id => byId.get(id)).find(e => e?.type === 'line');
@@ -1333,6 +1334,11 @@ function createSketchRuntimeApi(getApi) {
             }
 
             const points = refs.map(id => byId.get(id)).filter(e => e?.type === 'point');
+            if (constraint?.type === 'midpoint' && points.length >= 3) {
+                const a = points[1];
+                const b = points[2];
+                return { x: ((a.x || 0) + (b.x || 0)) * 0.5, y: ((a.y || 0) + (b.y || 0)) * 0.5 };
+            }
             if (points.length >= 2) {
                 return {
                     x: ((points[0].x || 0) + (points[1].x || 0)) * 0.5,

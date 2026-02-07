@@ -375,8 +375,14 @@ function applySketchConstraint(type) {
     const specs = [];
 
     if (type === 'horizontal' || type === 'vertical') {
-        for (const line of lines) {
-            specs.push({ type, refs: [line.id] });
+        if (lines.length) {
+            for (const line of lines) {
+                specs.push({ type, refs: [line.id] });
+            }
+        } else if (points.length === 2) {
+            specs.push({ type: `${type}_points`, refs: [points[0].id, points[1].id] });
+        } else {
+            return false;
         }
     } else if (type === 'perpendicular') {
         if (lines.length !== 2) {
@@ -567,6 +573,12 @@ function normalizeConstraintRefs(type, refs) {
     const out = Array.from(new Set((refs || []).filter(Boolean)));
     if (type === 'horizontal' || type === 'vertical' || type === 'fixed') {
         return out.slice(0, 1);
+    }
+    if (type === 'horizontal_points' || type === 'vertical_points') {
+        return out.slice(0, 2).sort();
+    }
+    if (type === 'midpoint') {
+        return out.slice(0, 3);
     }
     if (type === 'arc_center_coincident') {
         return out.slice(0, 2);
@@ -995,18 +1007,29 @@ function handleSketchDrag(delta, offset, isDone) {
         }
         const moved = !!this.sketchDrag.moved;
         const snapPointId = this.sketchDrag.snapPointId || null;
+        const snapPointType = this.sketchDrag.snapPointType || null;
+        const snapArcId = this.sketchDrag.snapArcId || null;
         const snapMovedPointId = this.sketchDrag.snapMovedPointId || null;
         const movedPointIds = this.sketchDrag.movedPointIds || new Set();
         this.sketchDrag = null;
         if (moved) {
-            if (snapPointId && snapMovedPointId && snapMovedPointId !== snapPointId) {
+            if (snapPointType === 'point' && snapPointId && snapMovedPointId && snapMovedPointId !== snapPointId) {
                 addCoincidentConstraintIfMissing.call(this, feature, snapMovedPointId, snapPointId);
+                enforceSketchConstraintsInPlace(feature);
+            }
+            if (snapPointType === 'arc-center' && snapArcId && snapMovedPointId) {
+                feature.constraints = Array.isArray(feature.constraints) ? feature.constraints : [];
+                this.toggleSketchConstraintInList(feature, feature.constraints, 'arc_center_coincident', [snapArcId, snapMovedPointId]);
                 enforceSketchConstraintsInPlace(feature);
             }
             api.features.commit(feature.id, {
                 opType: 'feature.update',
                 payload: {
-                    field: snapPointId && snapMovedPointId ? 'entities.move+constraints.coincident' : 'entities.move'
+                    field: snapPointType === 'point' && snapPointId && snapMovedPointId
+                        ? 'entities.move+constraints.coincident'
+                        : snapPointType === 'arc-center' && snapArcId && snapMovedPointId
+                            ? 'entities.move+constraints.arc_center_coincident'
+                            : 'entities.move'
                 }
             });
         }
@@ -1111,10 +1134,14 @@ function handleSketchDrag(delta, offset, isDone) {
 
     const snap = this.sketchDrag.centerDrag ? null : this.getSketchDragSnapTarget(event, feature, this.sketchDrag.movedPointIds);
     const snapId = snap?.targetId || null;
+    const snapType = snap?.targetType || null;
+    const snapArcId = snap?.targetArcId || null;
     const snapMovedPointId = snap?.movedId || null;
     this.sketchDrag.snapPointId = snapId;
+    this.sketchDrag.snapPointType = snapType;
+    this.sketchDrag.snapArcId = snapArcId;
     this.sketchDrag.snapMovedPointId = snapMovedPointId;
-    this.hoveredSketchEntityId = snapId;
+    this.hoveredSketchEntityId = snap?.hoveredId || snapId;
 
     if (!this.sketchDrag.centerDrag) {
         enforceSketchConstraintsInPlace(feature, {
@@ -1686,6 +1713,7 @@ function createSketchRectangle(feature, start, end, options = {}) {
         p2: this.newSketchEntityId('point'),
         p3: this.newSketchEntityId('point'),
         p4: this.newSketchEntityId('point'),
+        pc: this.newSketchEntityId('point'),
         l1: this.newSketchEntityId('line'),
         l2: this.newSketchEntityId('line'),
         l3: this.newSketchEntityId('line'),
@@ -1699,7 +1727,14 @@ function createSketchRectangle(feature, start, end, options = {}) {
             { id: ids.p1, type: 'point', x: c1.x, y: c1.y, fixed: false },
             { id: ids.p2, type: 'point', x: c2.x, y: c2.y, fixed: false },
             { id: ids.p3, type: 'point', x: c3.x, y: c3.y, fixed: false },
-            { id: ids.p4, type: 'point', x: c4.x, y: c4.y, fixed: false }
+            { id: ids.p4, type: 'point', x: c4.x, y: c4.y, fixed: false },
+            {
+                id: ids.pc,
+                type: 'point',
+                x: ((c1.x || 0) + (c3.x || 0)) * 0.5,
+                y: ((c1.y || 0) + (c3.y || 0)) * 0.5,
+                fixed: false
+            }
         );
 
         if (options.startRefId) {
@@ -1720,6 +1755,9 @@ function createSketchRectangle(feature, start, end, options = {}) {
         this.toggleSketchConstraintInList(sketch, sketch.constraints, 'horizontal', [ids.l3]);
         this.toggleSketchConstraintInList(sketch, sketch.constraints, 'vertical', [ids.l2]);
         this.toggleSketchConstraintInList(sketch, sketch.constraints, 'vertical', [ids.l4]);
+        if (options.centerMode) {
+            this.toggleSketchConstraintInList(sketch, sketch.constraints, 'midpoint', [ids.pc, ids.p1, ids.p3]);
+        }
         enforceSketchConstraintsInPlace(sketch);
     }, {
         opType: 'feature.update',
@@ -2066,7 +2104,7 @@ function getSketchDragSnapTarget(event, feature, movedPointIds) {
     const points = entities.filter(e => e?.type === 'point' && e.id);
     const moved = points.filter(p => movedPointIds?.has(p.id));
     const others = points.filter(p => !movedPointIds?.has(p.id) && p.id !== SKETCH_VIRTUAL_ORIGIN_ID);
-    if (!others.length || !moved.length) {
+    if (!moved.length) {
         return null;
     }
 
@@ -2078,7 +2116,22 @@ function getSketchDragSnapTarget(event, feature, movedPointIds) {
         const d = Math.hypot(vp.x - proj.x, vp.y - proj.y);
         if (d > SKETCH_HIT_POINT_PX * 1.8) continue;
         if (!target || d < target.dist) {
-            target = { point: p, dist: d };
+            target = { point: p, dist: d, type: 'point', hoveredId: p.id };
+        }
+    }
+    const byId = new Map(points.map(p => [p.id, p]));
+    for (const arc of entities) {
+        if (arc?.type !== 'arc' || !arc.id) continue;
+        const center = this.getArcCenterLocalFromEntity(arc, byId);
+        if (!center) continue;
+        const world = this.sketchLocalToWorld(center, basis);
+        const proj = api.overlay.project3Dto2D(world);
+        if (!proj?.visible) continue;
+        const d = Math.hypot(vp.x - proj.x, vp.y - proj.y);
+        if (d > SKETCH_HIT_POINT_PX * 1.8) continue;
+        const arcCenterId = `arc-center:${arc.id}`;
+        if (!target || d < target.dist) {
+            target = { arc, center, dist: d, type: 'arc-center', hoveredId: arcCenterId };
         }
     }
     if (!target) {
@@ -2086,8 +2139,8 @@ function getSketchDragSnapTarget(event, feature, movedPointIds) {
     }
 
     let nearestMoved = null;
-    const tx = target.point.x || 0;
-    const ty = target.point.y || 0;
+    const tx = target.type === 'arc-center' ? (target.center.x || 0) : (target.point.x || 0);
+    const ty = target.type === 'arc-center' ? (target.center.y || 0) : (target.point.y || 0);
     for (const p of moved) {
         const dx = (p.x || 0) - tx;
         const dy = (p.y || 0) - ty;
@@ -2100,7 +2153,10 @@ function getSketchDragSnapTarget(event, feature, movedPointIds) {
         return null;
     }
     return {
-        targetId: target.point.id,
+        targetType: target.type || 'point',
+        targetId: target.point?.id || null,
+        targetArcId: target.arc?.id || null,
+        hoveredId: target.hoveredId || target.point?.id || null,
         movedId: nearestMoved.point.id
     };
 }
