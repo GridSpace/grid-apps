@@ -383,6 +383,11 @@ html, body {
     border-color: var(--accent);
 }
 
+.toolbar-menu-item.active {
+    background: rgba(90, 159, 212, 0.22);
+    border-color: var(--accent);
+}
+
 .toolbar-menu-item:disabled {
     opacity: 0.5;
     cursor: not-allowed;

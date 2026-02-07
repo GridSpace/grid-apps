@@ -10,6 +10,7 @@ const toolbar = {
     cameraToggleBtn: null,
     sketchBtn: null,
     sketchToolButtons: null,
+    sketchToolMenuItems: null,
     sketchConstraintButtons: null,
     sketchConstraintMenu: null,
     docNameEl: null,
@@ -91,10 +92,14 @@ const toolbar = {
                 api.interact.setSketchTool(current === 'line' ? 'select' : 'line');
             })
         };
-        this.addMenu(container, 'Arc', [
-            { key: 'arc', label: 'Arc', disabled: true, onClick: () => {} },
+        const arcMenu = this.addMenu(container, 'Arc', [
+            { key: 'arc', label: 'Arc', onClick: () => {
+                const current = api.interact.getSketchTool?.() || 'select';
+                api.interact.setSketchTool(current === 'arc' ? 'select' : 'arc');
+            } },
             { key: 'circle', label: 'Circle', disabled: true, onClick: () => {} }
         ]);
+        this.sketchToolMenuItems = arcMenu.items;
         this.addPipe(container);
         this.sketchConstraintMenu = this.addMenu(container, 'Constraints', [
             { key: 'horizontal', label: 'Horizontal', onClick: () => api.interact.applySketchConstraint?.('horizontal') },
@@ -195,6 +200,17 @@ const toolbar = {
                 const enabled = editing;
                 btn.disabled = !enabled;
                 btn.classList.toggle('active', enabled && name === tool);
+            }
+        }
+        if (this.sketchToolMenuItems) {
+            const arc = this.sketchToolMenuItems.arc;
+            if (arc) {
+                arc.disabled = !editing;
+                arc.classList.toggle('active', editing && tool === 'arc');
+            }
+            const circle = this.sketchToolMenuItems.circle;
+            if (circle) {
+                circle.disabled = true;
             }
         }
         if (this.sketchConstraintButtons) {
@@ -317,7 +333,8 @@ const toolbar = {
                 items: [
                     { key: 'V', desc: 'Select tool' },
                     { key: 'L', desc: 'Line tool' },
-                    { key: 'Q', desc: 'Toggle construction on selected lines' },
+                    { key: 'A', desc: 'Arc tool' },
+                    { key: 'Q', desc: 'Toggle construction on selected lines/arcs' },
                     { key: 'Esc', desc: 'Cancel line mode / close dialogs' }
                 ]
             },

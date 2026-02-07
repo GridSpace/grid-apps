@@ -24,12 +24,15 @@ function isSketchEditing() {
 }
 
 function setSketchTool(tool = 'select') {
-    const allowed = new Set(['select', 'point', 'line']);
+    const allowed = new Set(['select', 'point', 'line', 'arc']);
     const next = allowed.has(tool) ? tool : 'select';
     if (this.sketchTool === next) return;
     this.sketchTool = next;
     if (next !== 'line') {
         this.cancelSketchLine();
+    }
+    if (next !== 'arc') {
+        this.cancelSketchArc();
     }
     this.updateSketchInteractionVisuals();
     window.dispatchEvent(new CustomEvent('void-state-change'));
@@ -44,6 +47,14 @@ function cancelSketchLine() {
     this.sketchLineStartRefId = null;
     this.sketchLineStartSeq = null;
     this.sketchLinePreview = null;
+}
+
+function cancelSketchArc() {
+    this.sketchArcStart = null;
+    this.sketchArcStartRefId = null;
+    this.sketchArcEnd = null;
+    this.sketchArcEndRefId = null;
+    this.sketchArcPreview = null;
 }
 
 function clearSketchSelection() {
@@ -73,14 +84,18 @@ function handleSketchKeyDown(event) {
             this.clearSketchMarquee();
         }
         const hadLine = !!this.sketchLineStart;
+        const hadArc = !!this.sketchArcStart || !!this.sketchArcEnd;
         if (hadLine) {
             this.cancelSketchLine();
+        }
+        if (hadArc) {
+            this.cancelSketchArc();
         }
         if (this.getSketchTool() !== 'select') {
             this.setSketchTool('select');
             return true;
         }
-        return hadLine || hadMarquee;
+        return hadLine || hadArc || hadMarquee;
     }
 
     if (event.code === 'KeyV') {
@@ -90,6 +105,10 @@ function handleSketchKeyDown(event) {
 
     if (event.code === 'KeyL') {
         this.setSketchTool('line');
+        return true;
+    }
+    if (event.code === 'KeyA') {
+        this.setSketchTool('arc');
         return true;
     }
 
@@ -202,6 +221,38 @@ function deleteSelectedSketchEntities() {
     let removed = 0;
     api.features.update(feature.id, sketch => {
         sketch.entities = Array.isArray(sketch.entities) ? sketch.entities : [];
+        sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
+
+        const endpointCandidates = new Set();
+        for (const entity of sketch.entities) {
+            if (!removeIds.has(entity?.id)) continue;
+            if (entity?.type !== 'line' && entity?.type !== 'arc') continue;
+            if (typeof entity.a === 'string') endpointCandidates.add(entity.a);
+            if (typeof entity.b === 'string') endpointCandidates.add(entity.b);
+        }
+        if (endpointCandidates.size) {
+            const usedByRemainingCurve = new Set();
+            for (const entity of sketch.entities) {
+                if (removeIds.has(entity?.id)) continue;
+                if (entity?.type !== 'line' && entity?.type !== 'arc') continue;
+                if (typeof entity.a === 'string') usedByRemainingCurve.add(entity.a);
+                if (typeof entity.b === 'string') usedByRemainingCurve.add(entity.b);
+            }
+            const usedByRemainingConstraint = new Set();
+            for (const constraint of sketch.constraints) {
+                const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
+                if (refs.some(ref => removeIds.has(ref))) continue;
+                for (const ref of refs) {
+                    usedByRemainingConstraint.add(ref);
+                }
+            }
+            for (const pointId of endpointCandidates) {
+                if (usedByRemainingCurve.has(pointId)) continue;
+                if (usedByRemainingConstraint.has(pointId)) continue;
+                removeIds.add(pointId);
+            }
+        }
+
         const keep = [];
         for (const entity of sketch.entities) {
             if (removeIds.has(entity.id)) {
@@ -211,7 +262,6 @@ function deleteSelectedSketchEntities() {
             }
         }
         sketch.entities = keep;
-        sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
         sketch.constraints = sketch.constraints.filter(constraint => {
             const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
             return !refs.some(ref => removeIds.has(ref));
@@ -239,7 +289,8 @@ function toggleSelectedConstruction() {
         return false;
     }
 
-    const selected = (feature.entities || []).filter(entity => this.selectedSketchEntities.has(entity.id) && entity.type === 'line');
+    const selected = (feature.entities || []).filter(entity =>
+        this.selectedSketchEntities.has(entity.id) && (entity.type === 'line' || entity.type === 'arc'));
     if (!selected.length) {
         return false;
     }
@@ -248,7 +299,7 @@ function toggleSelectedConstruction() {
     api.features.update(feature.id, sketch => {
         sketch.entities = Array.isArray(sketch.entities) ? sketch.entities : [];
         for (const entity of sketch.entities) {
-            if (!this.selectedSketchEntities.has(entity.id) || entity.type !== 'line') {
+            if (!this.selectedSketchEntities.has(entity.id) || (entity.type !== 'line' && entity.type !== 'arc')) {
                 continue;
             }
             entity.construction = setConstruction;
@@ -385,6 +436,7 @@ function handleSketchPointerDown(event, intersections) {
         seq,
         local,
         hitId: hit?.id || this.hoveredSketchEntityId || null,
+        hitType: hit?.type || null,
         clientX: event?.clientX ?? 0,
         clientY: event?.clientY ?? 0
     };
@@ -400,7 +452,6 @@ function handleSketchPointerDown(event, intersections) {
         this.sketchLinePreview = { a: start, b: start };
         this.updateSketchInteractionVisuals();
     }
-
     return true;
 }
 
@@ -436,6 +487,27 @@ function handleSketchHover(event, intersections) {
             this.sketchLinePreview = null;
             previewChanged = true;
         }
+    }
+    if (tool === 'arc') {
+        const local = event ? this.projectEventToSketchLocal(event, feature) : null;
+        let nextArc = null;
+        if (this.sketchArcStart && !this.sketchArcEnd && local) {
+            nextArc = { mode: 'chord', a: this.sketchArcStart, b: local };
+        } else if (this.sketchArcStart && this.sketchArcEnd && local) {
+            const geom = this.computeArcGeometry(this.sketchArcStart, this.sketchArcEnd, local);
+            if (geom) {
+                nextArc = { mode: 'arc', a: this.sketchArcStart, b: this.sketchArcEnd, ...geom };
+            }
+        }
+        const prevArc = this.sketchArcPreview;
+        const sameArc = JSON.stringify(prevArc || null) === JSON.stringify(nextArc || null);
+        if (!sameArc) {
+            this.sketchArcPreview = nextArc;
+            previewChanged = true;
+        }
+    } else if (this.sketchArcPreview !== null) {
+        this.sketchArcPreview = null;
+        previewChanged = true;
     }
 
     const hit = this.resolveSketchHit(event, intersections, feature);
@@ -576,6 +648,53 @@ function handleSketchMouseUp(event, intersections) {
         this.sketchLineStartSeq = null;
         return true;
     }
+    if (tool === 'arc') {
+        const upHit = this.resolveSketchHit(event, intersections, feature);
+        const fallbackHovered = this.hoveredSketchEntityId && this.hoveredSketchEntityId !== SKETCH_VIRTUAL_ORIGIN_ID
+            ? { id: this.hoveredSketchEntityId, type: 'point' }
+            : null;
+        const resolved = upHit || fallbackHovered;
+        const local = this.getSketchHitLocalPoint(feature, resolved) || this.projectEventToSketchLocal(event, feature);
+        const refId = (resolved?.type === 'point' && resolved?.id && resolved.id !== SKETCH_VIRTUAL_ORIGIN_ID) ? resolved.id : null;
+        if (!local) {
+            return true;
+        }
+        if (!this.sketchArcStart) {
+            const downLocal = pointerDown?.local;
+            const downRefId = (pointerDown?.hitId && pointerDown.hitId !== SKETCH_VIRTUAL_ORIGIN_ID) ? pointerDown.hitId : null;
+            if (downLocal && dist > SKETCH_DRAG_START_PX) {
+                this.sketchArcStart = { x: downLocal.x, y: downLocal.y };
+                this.sketchArcStartRefId = downRefId;
+                this.sketchArcEnd = { x: local.x, y: local.y };
+                this.sketchArcEndRefId = refId;
+                this.sketchArcPreview = null;
+                this.updateSketchInteractionVisuals();
+                return true;
+            }
+            this.sketchArcStart = { x: local.x, y: local.y };
+            this.sketchArcStartRefId = refId;
+            this.sketchArcEnd = null;
+            this.sketchArcEndRefId = null;
+            this.sketchArcPreview = null;
+            this.updateSketchInteractionVisuals();
+            return true;
+        }
+        if (!this.sketchArcEnd) {
+            this.sketchArcEnd = { x: local.x, y: local.y };
+            this.sketchArcEndRefId = refId;
+            this.updateSketchInteractionVisuals();
+            return true;
+        }
+        const created = this.createSketchArc(feature, this.sketchArcStart, this.sketchArcEnd, local, {
+            startRefId: this.sketchArcStartRefId || null,
+            endRefId: this.sketchArcEndRefId || null
+        });
+        if (created) {
+            this.cancelSketchArc();
+            this.setSketchTool('select');
+        }
+        return true;
+    }
 
     return true;
 }
@@ -631,29 +750,49 @@ function handleSketchDrag(delta, offset, isDone) {
             return false;
         }
         const downId = this.sketchPointerDown.hitId || this.hoveredSketchEntityId || null;
+        const downType = this.sketchPointerDown.hitType || null;
         if (!downId || downId === SKETCH_VIRTUAL_ORIGIN_ID) {
             this.startSketchMarquee(feature, this.sketchPointerDown, event);
             this.hoveredSketchEntityId = null;
             this.updateSketchInteractionVisuals();
             return true;
         }
+        const centerDrag = downType === 'arc-center';
         const dragSelectedLines = this.selectedSketchEntities.has(downId)
             || this.isPointOnSelectedSketchLine(feature, downId);
-        const activeIds = dragSelectedLines
+        const activeIds = centerDrag
+            ? new Set([downId])
+            : dragSelectedLines
             ? new Set(this.selectedSketchEntities)
             : new Set([downId]);
         const refs = this.collectCoordinateRefsFromIds(feature, activeIds);
-        if (!refs.length || !this.sketchPointerDown.local) {
+        if (!this.sketchPointerDown.local) {
             return false;
         }
         const baseline = new Map();
-        for (const ref of refs) {
-            baseline.set(ref, { x: ref.x || 0, y: ref.y || 0 });
+        if (!centerDrag) {
+            for (const ref of refs) {
+                baseline.set(ref, { x: ref.x || 0, y: ref.y || 0 });
+            }
+        }
+        const arcControlBaseline = [];
+        const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+        for (const entity of entities) {
+            if (entity?.type !== 'arc' || !entity.id) continue;
+            if (!activeIds.has(entity.id)) continue;
+            if (!Number.isFinite(entity.mx) || !Number.isFinite(entity.my)) continue;
+            arcControlBaseline.push({
+                entity,
+                mx: entity.mx,
+                my: entity.my
+            });
         }
         this.sketchDrag = {
             start: { x: this.sketchPointerDown.local.x, y: this.sketchPointerDown.local.y },
             baseline,
-            movedPointIds: new Set(refs.map(ref => ref?.id).filter(Boolean)),
+            arcControlBaseline,
+            movedPointIds: new Set((centerDrag ? [] : refs).map(ref => ref?.id).filter(Boolean)),
+            centerDrag,
             snapPointId: null,
             snapMovedPointId: null,
             moved: false
@@ -679,18 +818,24 @@ function handleSketchDrag(delta, offset, isDone) {
         ref.x = base.x + dx;
         ref.y = base.y + dy;
     }
+    for (const ctrl of this.sketchDrag.arcControlBaseline || []) {
+        ctrl.entity.mx = ctrl.mx + dx;
+        ctrl.entity.my = ctrl.my + dy;
+    }
 
-    const snap = this.getSketchDragSnapTarget(event, feature, this.sketchDrag.movedPointIds);
+    const snap = this.sketchDrag.centerDrag ? null : this.getSketchDragSnapTarget(event, feature, this.sketchDrag.movedPointIds);
     const snapId = snap?.targetId || null;
     const snapMovedPointId = snap?.movedId || null;
     this.sketchDrag.snapPointId = snapId;
     this.sketchDrag.snapMovedPointId = snapMovedPointId;
     this.hoveredSketchEntityId = snapId;
 
-    enforceSketchConstraintsInPlace(feature, {
-        useFallback: true,
-        iterations: 24
-    });
+    if (!this.sketchDrag.centerDrag) {
+        enforceSketchConstraintsInPlace(feature, {
+            useFallback: true,
+            iterations: 24
+        });
+    }
     this.sketchDrag.moved = this.sketchDrag.moved || Math.hypot(dx, dy) > 0;
     api.sketchRuntime.sync();
     this.updateSketchInteractionVisuals();
@@ -703,7 +848,7 @@ function isPointOnSelectedSketchLine(feature, pointId) {
     }
     const entities = Array.isArray(feature?.entities) ? feature.entities : [];
     for (const entity of entities) {
-        if (entity?.type !== 'line' || !entity.id) continue;
+        if ((entity?.type !== 'line' && entity?.type !== 'arc') || !entity.id) continue;
         if (!this.selectedSketchEntities.has(entity.id)) continue;
         const aId = typeof entity?.a === 'string' ? entity.a : (typeof entity?.p1_id === 'string' ? entity.p1_id : null);
         const bId = typeof entity?.b === 'string' ? entity.b : (typeof entity?.p2_id === 'string' ? entity.p2_id : null);
@@ -846,6 +991,30 @@ function selectSketchEntitiesInMarquee(feature, marquee) {
             if (hit) {
                 out.push(entity.id);
             }
+            continue;
+        }
+        if (entity.type === 'arc') {
+            const [a, b] = this.getArcEndpoints(entity, pointById);
+            if (!a || !b) continue;
+            const sample = this.sampleArcPolyline(entity, a, b, 28);
+            if (!sample.length) continue;
+            const screen = sample
+                .map(local => this.projectSketchLocalToScreen(local, basis))
+                .filter(Boolean);
+            if (screen.length < 2) continue;
+            let hit = false;
+            if (isWindow) {
+                hit = screen.every(p => this.isPointInRect(p.x, p.y, rect));
+            } else {
+                for (let i = 0; i < screen.length - 1 && !hit; i++) {
+                    if (this.segmentTouchesRect(screen[i], screen[i + 1], rect)) {
+                        hit = true;
+                    }
+                }
+            }
+            if (hit) {
+                out.push(entity.id);
+            }
         }
     }
     return out;
@@ -928,6 +1097,16 @@ function collectCoordinateRefsFromIds(feature, selectedIds) {
             // Use canonical point entities so drag/solver mutate shared objects.
             const aId = typeof entity?.a === 'string' ? entity.a : (typeof entity?.p1_id === 'string' ? entity.p1_id : null);
             const bId = typeof entity?.b === 'string' ? entity.b : (typeof entity?.p2_id === 'string' ? entity.p2_id : null);
+            if (aId && pointById.has(aId)) {
+                refs.add(pointById.get(aId));
+            }
+            if (bId && pointById.has(bId)) {
+                refs.add(pointById.get(bId));
+            }
+        }
+        if (entity.type === 'arc') {
+            const aId = typeof entity?.a === 'string' ? entity.a : null;
+            const bId = typeof entity?.b === 'string' ? entity.b : null;
             if (aId && pointById.has(aId)) {
                 refs.add(pointById.get(aId));
             }
@@ -1030,6 +1209,112 @@ function createSketchLine(feature, a, b, options = {}) {
     return { lineId: id, startPointId: createdStartPointId, endPointId: createdEndPointId };
 }
 
+function createSketchArc(feature, start, end, onArc, options = {}) {
+    const geom = this.computeArcGeometry(start, end, onArc);
+    if (!geom) {
+        return null;
+    }
+    const id = this.newSketchEntityId('arc');
+    let createdStartPointId = null;
+    let createdEndPointId = null;
+    api.features.update(feature.id, sketch => {
+        sketch.entities = Array.isArray(sketch.entities) ? sketch.entities : [];
+        sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
+
+        const pa = {
+            id: this.newSketchEntityId('point'),
+            type: 'point',
+            x: start.x,
+            y: start.y,
+            fixed: false
+        };
+        const pb = {
+            id: this.newSketchEntityId('point'),
+            type: 'point',
+            x: end.x,
+            y: end.y,
+            fixed: false
+        };
+        createdStartPointId = pa.id;
+        createdEndPointId = pb.id;
+        sketch.entities.push(pa, pb);
+
+        if (options.startRefId) {
+            addCoincidentConstraintIfMissing.call(this, sketch, pa.id, options.startRefId);
+        }
+        if (options.endRefId) {
+            addCoincidentConstraintIfMissing.call(this, sketch, pb.id, options.endRefId);
+        }
+
+        sketch.entities.push({
+            id,
+            type: 'arc',
+            construction: false,
+            a: pa.id,
+            b: pb.id,
+            mx: onArc.x,
+            my: onArc.y,
+            cx: geom.cx,
+            cy: geom.cy,
+            radius: geom.radius,
+            startAngle: geom.startAngle,
+            endAngle: geom.endAngle,
+            ccw: geom.ccw
+        });
+        enforceSketchConstraintsInPlace(sketch);
+    }, {
+        opType: 'feature.update',
+        payload: { field: 'entities.add', entity: 'arc' }
+    });
+
+    this.selectedSketchEntities.clear();
+    this.selectedSketchEntities.add(id);
+    this.hoveredSketchEntityId = null;
+    this.sketchArcPreview = null;
+    this.updateSketchInteractionVisuals();
+    return { arcId: id, startPointId: createdStartPointId, endPointId: createdEndPointId };
+}
+
+function computeArcGeometry(start, end, onArc) {
+    if (!start || !end || !onArc) {
+        return null;
+    }
+    const x1 = start.x || 0;
+    const y1 = start.y || 0;
+    const x2 = end.x || 0;
+    const y2 = end.y || 0;
+    const x3 = onArc.x || 0;
+    const y3 = onArc.y || 0;
+    const d = 2 * (x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2));
+    if (Math.abs(d) < 1e-8) {
+        return null;
+    }
+    const x1sq = x1 * x1 + y1 * y1;
+    const x2sq = x2 * x2 + y2 * y2;
+    const x3sq = x3 * x3 + y3 * y3;
+    const cx = (x1sq * (y2 - y3) + x2sq * (y3 - y1) + x3sq * (y1 - y2)) / d;
+    const cy = (x1sq * (x3 - x2) + x2sq * (x1 - x3) + x3sq * (x2 - x1)) / d;
+    const radius = Math.hypot(x1 - cx, y1 - cy);
+    if (!Number.isFinite(radius) || radius < SKETCH_MIN_LINE_LENGTH) {
+        return null;
+    }
+    const startAngle = Math.atan2(y1 - cy, x1 - cx);
+    const endAngle = Math.atan2(y2 - cy, x2 - cx);
+    const midAngle = Math.atan2(y3 - cy, x3 - cx);
+    const normalize = a => {
+        let out = a % (Math.PI * 2);
+        if (out < 0) out += Math.PI * 2;
+        return out;
+    };
+    const sa = normalize(startAngle);
+    const ea = normalize(endAngle);
+    const ma = normalize(midAngle);
+    const ccwSpan = (ea - sa + Math.PI * 2) % (Math.PI * 2);
+    const ccwMid = (ma - sa + Math.PI * 2) % (Math.PI * 2);
+    const ccw = ccwMid <= ccwSpan;
+    return { cx, cy, radius, startAngle, endAngle, ccw };
+}
+
 function addCoincidentConstraintIfMissing(sketch, aId, bId) {
     if (!aId || !bId || aId === bId) return;
     sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
@@ -1061,7 +1346,9 @@ function updateSketchInteractionVisuals() {
         hoveredConstraintId: this.hoveredSketchConstraintId || null,
         selectedConstraintIds: Array.from(this.selectedSketchConstraints || []),
         previewLine: this.sketchLinePreview,
-        previewStart: this.sketchLineStart
+        previewStart: this.sketchLineStart || this.sketchArcStart,
+        previewEnd: this.sketchArcEnd || null,
+        previewArc: this.sketchArcPreview
     });
     window.dispatchEvent(new CustomEvent('void-state-change'));
 }
@@ -1125,6 +1412,35 @@ function hitTestSketchEntity(event, feature) {
                 bestLine = { id: entity.id, type: 'line', dist };
             }
         }
+        if (entity.type === 'arc') {
+            const center = this.getArcCenterLocalFromEntity(entity, pointById);
+            if (center) {
+                const wc = this.sketchLocalToWorld(center, basis);
+                const pc = api.overlay.project3Dto2D(wc);
+                if (pc?.visible) {
+                    const cd = Math.hypot(screenPoint.x - pc.x, screenPoint.y - pc.y);
+                    if (cd <= SKETCH_HIT_POINT_PX && (!bestPoint || cd < bestPoint.dist)) {
+                        bestPoint = { id: entity.id, type: 'arc-center', dist: cd };
+                    }
+                }
+            }
+            const [a, b] = this.getArcEndpoints(entity, pointById);
+            if (!a || !b) continue;
+            const sample = this.sampleArcPolyline(entity, a, b, 32);
+            let minDist = Infinity;
+            for (let i = 0; i < sample.length - 1; i++) {
+                const wa = this.sketchLocalToWorld(sample[i], basis);
+                const wb = this.sketchLocalToWorld(sample[i + 1], basis);
+                const pa = api.overlay.project3Dto2D(wa);
+                const pb = api.overlay.project3Dto2D(wb);
+                if (!pa?.visible || !pb?.visible) continue;
+                const dist = this.distanceToSegmentPx(screenPoint.x, screenPoint.y, pa.x, pa.y, pb.x, pb.y);
+                minDist = Math.min(minDist, dist);
+            }
+            if (minDist <= SKETCH_HIT_LINE_PX && (!bestLine || minDist < bestLine.dist)) {
+                bestLine = { id: entity.id, type: 'arc', dist: minDist };
+            }
+        }
     }
 
     const originProj = api.overlay.project3Dto2D(basis.origin);
@@ -1136,6 +1452,25 @@ function hitTestSketchEntity(event, feature) {
     }
 
     return bestPoint || bestLine;
+}
+
+function getArcCenterLocalFromEntity(arc, pointById) {
+    const [a, b] = this.getArcEndpoints(arc, pointById);
+    if (!a || !b) return null;
+    if (Number.isFinite(arc?.mx) && Number.isFinite(arc?.my)) {
+        const geom = this.computeArcGeometry(
+            { x: a.x || 0, y: a.y || 0 },
+            { x: b.x || 0, y: b.y || 0 },
+            { x: arc.mx, y: arc.my }
+        );
+        if (geom) {
+            return { x: geom.cx, y: geom.cy };
+        }
+    }
+    if (Number.isFinite(arc?.cx) && Number.isFinite(arc?.cy)) {
+        return { x: arc.cx, y: arc.cy };
+    }
+    return null;
 }
 
 function getSketchEntityHitFromIntersections(intersections, feature) {
@@ -1151,7 +1486,8 @@ function getSketchEntityHitFromIntersections(intersections, feature) {
         if (!id) continue;
         if (allowed && !allowed.has(id)) continue;
         const type = hit.object.userData?.sketchEntityType || null;
-        const cand = { id, type, distance: hit.distance ?? Infinity };
+        const refId = hit.object.userData?.sketchEntityRefId || id;
+        const cand = { id: refId, type, distance: hit.distance ?? Infinity };
         if (type === 'point') {
             if (!bestPoint || cand.distance < bestPoint.distance) {
                 bestPoint = cand;
@@ -1302,6 +1638,77 @@ function getLineEndpoints(line, pointById) {
     return [a, b];
 }
 
+function getArcEndpoints(arc, pointById) {
+    const aId = typeof arc?.a === 'string' ? arc.a : null;
+    const bId = typeof arc?.b === 'string' ? arc.b : null;
+    const a = aId ? (pointById?.get(aId) || null) : null;
+    const b = bId ? (pointById?.get(bId) || null) : null;
+    return [a, b];
+}
+
+function sampleArcPolyline(arc, a, b, segments = 24) {
+    let cx = Number(arc?.cx);
+    let cy = Number(arc?.cy);
+    let radius = Number(arc?.radius);
+    let startAngle = Number(arc?.startAngle);
+    let endAngle = Number(arc?.endAngle);
+    let ccw = arc?.ccw !== false;
+    if (Number.isFinite(arc?.mx) && Number.isFinite(arc?.my) && a && b) {
+        const geomFromThree = this.computeArcGeometry(
+            { x: a.x || 0, y: a.y || 0 },
+            { x: b.x || 0, y: b.y || 0 },
+            { x: arc.mx, y: arc.my }
+        );
+        if (geomFromThree) {
+            cx = geomFromThree.cx;
+            cy = geomFromThree.cy;
+            radius = geomFromThree.radius;
+            startAngle = geomFromThree.startAngle;
+            endAngle = geomFromThree.endAngle;
+            ccw = geomFromThree.ccw;
+        }
+    }
+    if (!Number.isFinite(cx) || !Number.isFinite(cy) || !Number.isFinite(startAngle) || !Number.isFinite(endAngle)) {
+        if (!a || !b) return [];
+        const geom = this.computeArcGeometry(a, b, { x: ((a.x || 0) + (b.x || 0)) * 0.5, y: ((a.y || 0) + (b.y || 0)) * 0.5 + 1e-3 });
+        if (!geom) return [{ x: a.x || 0, y: a.y || 0 }, { x: b.x || 0, y: b.y || 0 }];
+        startAngle = geom.startAngle;
+        endAngle = geom.endAngle;
+        cx = geom.cx;
+        cy = geom.cy;
+        radius = geom.radius;
+        ccw = geom.ccw;
+    }
+    if (!Number.isFinite(radius) || radius <= 0) {
+        radius = a ? Math.hypot((a.x || 0) - cx, (a.y || 0) - cy) : 0;
+    }
+    if (radius <= 0) return [];
+    const tau = Math.PI * 2;
+    let sweep;
+    if (ccw) {
+        sweep = (endAngle - startAngle) % tau;
+        if (sweep < 0) sweep += tau;
+    } else {
+        sweep = (startAngle - endAngle) % tau;
+        if (sweep < 0) sweep += tau;
+        sweep = -sweep;
+    }
+    const count = Math.max(6, segments);
+    const pts = [];
+    for (let i = 0; i <= count; i++) {
+        const t = i / count;
+        const angle = startAngle + sweep * t;
+        pts.push({ x: cx + Math.cos(angle) * radius, y: cy + Math.sin(angle) * radius });
+    }
+    if (a) {
+        pts[0] = { x: a.x || 0, y: a.y || 0 };
+    }
+    if (b) {
+        pts[pts.length - 1] = { x: b.x || 0, y: b.y || 0 };
+    }
+    return pts;
+}
+
 function distanceToSegmentPx(px, py, ax, ay, bx, by) {
     const abx = bx - ax;
     const aby = by - ay;
@@ -1416,6 +1823,7 @@ export {
     setSketchTool,
     getSketchTool,
     cancelSketchLine,
+    cancelSketchArc,
     clearSketchSelection,
     selectSketchConstraint,
     setHoveredSketchConstraint,
@@ -1458,6 +1866,11 @@ export {
     collectSelectedCoordinateRefs,
     collectCoordinateRefsFromIds,
     isPointOnSelectedSketchLine,
+    createSketchArc,
+    computeArcGeometry,
+    getArcEndpoints,
+    getArcCenterLocalFromEntity,
+    sampleArcPolyline,
     createSketchPoint,
     createSketchLine,
     deleteSelectedSketchEntities,

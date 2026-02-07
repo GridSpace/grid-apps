@@ -139,10 +139,33 @@ function createSketchRuntimeApi(getApi) {
             previewLine.visible = false;
             previewLine.renderOrder = 9;
             entitiesGroup.add(previewLine);
+            const previewArc = new THREE.Line(
+                new THREE.BufferGeometry().setFromPoints([
+                    new THREE.Vector3(0, 0, 0),
+                    new THREE.Vector3(0, 0, 0)
+                ]),
+                new THREE.LineBasicMaterial({
+                    color: SKETCH_COLORS.linesHover,
+                    transparent: true,
+                    opacity: 0.9,
+                    depthWrite: false
+                })
+            );
+            previewArc.visible = false;
+            previewArc.renderOrder = 9;
+            entitiesGroup.add(previewArc);
             const previewStart = this.createSketchPointMarker(0, 0, { virtualOrigin: true });
             previewStart.visible = false;
             previewStart.renderOrder = 11;
             entitiesGroup.add(previewStart);
+            const previewEnd = this.createSketchPointMarker(0, 0, { virtualOrigin: true });
+            previewEnd.visible = false;
+            previewEnd.renderOrder = 11;
+            entitiesGroup.add(previewEnd);
+            const previewArcCenter = this.createArcCenterMarker(0, 0);
+            previewArcCenter.visible = false;
+            previewArcCenter.renderOrder = 11;
+            entitiesGroup.add(previewArcCenter);
 
             group.add(planeGroup);
             group.add(entitiesGroup);
@@ -153,7 +176,10 @@ function createSketchRuntimeApi(getApi) {
                 plane,
                 entitiesGroup,
                 previewLine,
+                previewArc,
                 previewStart,
+                previewEnd,
+                previewArcCenter,
                 entityViews: new Map(),
                 interaction: {
                     hoveredId: null,
@@ -161,7 +187,9 @@ function createSketchRuntimeApi(getApi) {
                     hoveredConstraintId: null,
                     selectedConstraintIds: new Set(),
                     previewLine: null,
-                    previewStart: null
+                    previewArc: null,
+                    previewStart: null,
+                    previewEnd: null
                 },
                 labelId: `sketch-label-${feature.id}`
             };
@@ -289,10 +317,46 @@ function createSketchRuntimeApi(getApi) {
             return marker;
         },
 
+        createArcCenterMarker(x = 0, y = 0) {
+            const marker = new THREE.Group();
+            marker.position.set(x, y, 0);
+            marker.renderOrder = 8;
+
+            const core = new THREE.Mesh(
+                new THREE.CircleGeometry(0.58, 20),
+                new THREE.MeshBasicMaterial({
+                    color: 0x8f8f8f,
+                    transparent: true,
+                    opacity: 0.95,
+                    depthWrite: false,
+                    side: THREE.DoubleSide
+                })
+            );
+            core.renderOrder = 8;
+            marker.add(core);
+
+            const ring = this.makePointRing(0.9, 0xffffff, 0.9);
+            ring.renderOrder = 9;
+            marker.add(ring);
+
+            const ringHighlight = this.makePointRing(1.15, SKETCH_COLORS.pointsHover, 0.95);
+            ringHighlight.renderOrder = 10;
+            ringHighlight.visible = false;
+            marker.add(ringHighlight);
+
+            marker.userData._markerParts = {
+                core,
+                ringWhite: ring,
+                ringHighlight
+            };
+            marker.userData._isArcCenter = true;
+            return marker;
+        },
+
         rebuildEntities(rec) {
             while (rec.entitiesGroup.children.length) {
                 const child = rec.entitiesGroup.children[0];
-                if (child === rec.previewLine || child === rec.previewStart) {
+                if (child === rec.previewLine || child === rec.previewArc || child === rec.previewStart || child === rec.previewEnd || child === rec.previewArcCenter) {
                     rec.entitiesGroup.remove(child);
                     continue;
                 }
@@ -366,6 +430,49 @@ function createSketchRuntimeApi(getApi) {
                     rec.entityViews.set(entity.id, { entity, object: line, type: 'line' });
                     continue;
                 }
+                if (entity.type === 'arc' && entity.a && entity.b) {
+                    const [a, b] = this.getArcEndpoints(entity, pointById);
+                    if (!a || !b) continue;
+                    const points = this.getArcRenderPoints(entity, a, b, 48);
+                    if (points.length < 2) continue;
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points.map(p => new THREE.Vector3(p.x, p.y, 0)));
+                    const material = entity.construction
+                        ? new THREE.LineDashedMaterial({
+                            color: SKETCH_COLORS.linesGray,
+                            transparent: true,
+                            opacity: 1,
+                            dashSize: 3,
+                            gapSize: 2,
+                            depthWrite: false
+                        })
+                        : new THREE.LineBasicMaterial({
+                            color: SKETCH_COLORS.linesGray,
+                            transparent: true,
+                            opacity: 1,
+                            depthWrite: false
+                        });
+                    const arc = new THREE.Line(geometry, material);
+                    if (arc.computeLineDistances && entity.construction) {
+                        arc.computeLineDistances();
+                    }
+                    arc.renderOrder = 7;
+                    arc.userData.sketchEntityId = entity.id;
+                    arc.userData.sketchEntityType = 'arc';
+                    rec.entitiesGroup.add(arc);
+                    rec.entityViews.set(entity.id, { entity, object: arc, type: 'arc' });
+
+                    const center = this.getArcCenterLocal(entity, a, b);
+                    if (center) {
+                        const centerKey = `arc-center:${entity.id}`;
+                        const centerMarker = this.createArcCenterMarker(center.x, center.y);
+                        centerMarker.userData.sketchEntityId = centerKey;
+                        centerMarker.userData.sketchEntityType = 'arc-center';
+                        centerMarker.userData.sketchEntityRefId = entity.id;
+                        rec.entitiesGroup.add(centerMarker);
+                        rec.entityViews.set(centerKey, { entity, object: centerMarker, type: 'arc-center' });
+                    }
+                    continue;
+                }
 
                 if (entity.type === 'point') {
                     const point = this.createSketchPointMarker(entity.x || 0, entity.y || 0);
@@ -387,6 +494,24 @@ function createSketchRuntimeApi(getApi) {
             } else if (rec.previewStart) {
                 rec.entitiesGroup.remove(rec.previewStart);
                 rec.entitiesGroup.add(rec.previewStart);
+            }
+            if (rec.previewArc && rec.previewArc.parent !== rec.entitiesGroup) {
+                rec.entitiesGroup.add(rec.previewArc);
+            } else if (rec.previewArc) {
+                rec.entitiesGroup.remove(rec.previewArc);
+                rec.entitiesGroup.add(rec.previewArc);
+            }
+            if (rec.previewEnd && rec.previewEnd.parent !== rec.entitiesGroup) {
+                rec.entitiesGroup.add(rec.previewEnd);
+            } else if (rec.previewEnd) {
+                rec.entitiesGroup.remove(rec.previewEnd);
+                rec.entitiesGroup.add(rec.previewEnd);
+            }
+            if (rec.previewArcCenter && rec.previewArcCenter.parent !== rec.entitiesGroup) {
+                rec.entitiesGroup.add(rec.previewArcCenter);
+            } else if (rec.previewArcCenter) {
+                rec.entitiesGroup.remove(rec.previewArcCenter);
+                rec.entitiesGroup.add(rec.previewArcCenter);
             }
         },
 
@@ -592,7 +717,9 @@ function createSketchRuntimeApi(getApi) {
             this.applyPlaneStyle(rec.plane, mode);
             this.applyEntityStyle(rec, mode);
             this.applyPreviewLine(rec, mode, editing);
+            this.applyPreviewArc(rec, mode, editing);
             this.applyPreviewStart(rec, mode, editing);
+            this.applyPreviewEnd(rec, mode, editing);
             this.applyLabelState(rec, mode, showPlane);
         },
 
@@ -625,13 +752,25 @@ function createSketchRuntimeApi(getApi) {
                 const constrained = mode === 'edit' && constraintHighlight.has(id) && !selected;
                 const hovered = mode === 'edit' && (hoveredId === id || constrained) && !selected;
 
-                if (view.type === 'line') {
+                if (view.type === 'line' || view.type === 'arc') {
                     const color = selected
                         ? SKETCH_COLORS.linesHover
                         : hovered
                             ? SKETCH_COLORS.linesHover
                             : baseLineColor;
                     view.object.material.color.setHex(color);
+                    continue;
+                }
+                if (view.type === 'arc-center') {
+                    const parts = view.object.userData?._markerParts || {};
+                    const active = mode === 'edit' && (hoveredId === view.entity?.id || selectedIds.has(view.entity?.id));
+                    view.object.visible = true;
+                    if (parts.core?.material?.color) {
+                        parts.core.material.color.setHex(active ? SKETCH_COLORS.pointsHover : basePointColor);
+                    }
+                    if (parts.ringHighlight) {
+                        parts.ringHighlight.visible = !!active;
+                    }
                     continue;
                 }
 
@@ -679,10 +818,10 @@ function createSketchRuntimeApi(getApi) {
                 }
             }
             // When point constraints are hovered (especially coincident), also
-            // highlight incident lines so users can tell which chain segment is constrained.
+            // highlight incident curves so users can tell which chain segment is constrained.
             if (pointRefs.length) {
                 for (const ent of entities) {
-                    if (ent?.type !== 'line' || !ent.id) continue;
+                    if ((ent?.type !== 'line' && ent?.type !== 'arc') || !ent.id) continue;
                     if (pointRefs.includes(ent.a) || pointRefs.includes(ent.b)) {
                         out.add(ent.id);
                     }
@@ -725,6 +864,73 @@ function createSketchRuntimeApi(getApi) {
                 }
             }
             rec.previewStart.visible = true;
+        },
+
+        applyPreviewEnd(rec, mode, editing) {
+            if (!rec.previewEnd) return;
+            const end = rec.interaction?.previewEnd;
+            if (!editing || !end) {
+                rec.previewEnd.visible = false;
+                return;
+            }
+            rec.previewEnd.position.set(end.x || 0, end.y || 0, 0);
+            const parts = rec.previewEnd.userData?._markerParts || {};
+            if (parts.core?.material?.color) {
+                parts.core.material.color.setHex(SKETCH_COLORS.pointsGray);
+            }
+            if (parts.ringHighlight) {
+                parts.ringHighlight.visible = true;
+                if (parts.ringHighlight.material?.color) {
+                    parts.ringHighlight.material.color.setHex(SKETCH_COLORS.pointsHover);
+                }
+            }
+            rec.previewEnd.visible = true;
+        },
+
+        applyPreviewArc(rec, mode, editing) {
+            if (!rec.previewArc) return;
+            const preview = rec.interaction?.previewArc;
+            if (!editing || !preview) {
+                rec.previewArc.visible = false;
+                if (rec.previewArcCenter) {
+                    rec.previewArcCenter.visible = false;
+                }
+                return;
+            }
+            if (preview.mode === 'chord' && preview.a && preview.b) {
+                const a = new THREE.Vector3(preview.a.x || 0, preview.a.y || 0, 0);
+                const b = new THREE.Vector3(preview.b.x || 0, preview.b.y || 0, 0);
+                rec.previewArc.geometry.dispose();
+                rec.previewArc.geometry = new THREE.BufferGeometry().setFromPoints([a, b]);
+                rec.previewArc.material.color.setHex(mode === 'edit' ? SKETCH_COLORS.linesEdit : SKETCH_COLORS.linesHover);
+                rec.previewArc.visible = true;
+                if (rec.previewArcCenter) {
+                    rec.previewArcCenter.visible = false;
+                }
+                return;
+            }
+            if (preview.mode === 'arc' && Number.isFinite(preview.cx) && Number.isFinite(preview.cy)) {
+                const pts = this.getArcRenderPoints(preview, preview.a, preview.b, 48);
+                if (pts.length >= 2) {
+                    rec.previewArc.geometry.dispose();
+                    rec.previewArc.geometry = new THREE.BufferGeometry().setFromPoints(pts.map(p => new THREE.Vector3(p.x, p.y, 0)));
+                    rec.previewArc.material.color.setHex(mode === 'edit' ? SKETCH_COLORS.linesEdit : SKETCH_COLORS.linesHover);
+                    rec.previewArc.visible = true;
+                    if (rec.previewArcCenter) {
+                        rec.previewArcCenter.position.set(preview.cx || 0, preview.cy || 0, 0);
+                        const parts = rec.previewArcCenter.userData?._markerParts || {};
+                        if (parts.ringHighlight) {
+                            parts.ringHighlight.visible = true;
+                        }
+                        rec.previewArcCenter.visible = true;
+                    }
+                    return;
+                }
+            }
+            rec.previewArc.visible = false;
+            if (rec.previewArcCenter) {
+                rec.previewArcCenter.visible = false;
+            }
         },
 
         applyLabelState(rec, mode, showPlane) {
@@ -792,7 +998,9 @@ function createSketchRuntimeApi(getApi) {
             rec.interaction.hoveredConstraintId = interaction.hoveredConstraintId || null;
             rec.interaction.selectedConstraintIds = new Set(interaction.selectedConstraintIds || []);
             rec.interaction.previewLine = interaction.previewLine || null;
+            rec.interaction.previewArc = interaction.previewArc || null;
             rec.interaction.previewStart = interaction.previewStart || null;
+            rec.interaction.previewEnd = interaction.previewEnd || null;
             this.applySketchState(rec);
             this.updateConstraintGlyphs();
         },
@@ -805,7 +1013,9 @@ function createSketchRuntimeApi(getApi) {
             rec.interaction.hoveredConstraintId = null;
             rec.interaction.selectedConstraintIds = new Set();
             rec.interaction.previewLine = null;
+            rec.interaction.previewArc = null;
             rec.interaction.previewStart = null;
+            rec.interaction.previewEnd = null;
             this.applySketchState(rec);
             this.updateConstraintGlyphs();
         },
@@ -828,6 +1038,128 @@ function createSketchRuntimeApi(getApi) {
             return [a, b];
         },
 
+        getArcEndpoints(arc, pointById) {
+            const aId = typeof arc?.a === 'string' ? arc.a : null;
+            const bId = typeof arc?.b === 'string' ? arc.b : null;
+            const a = aId ? (pointById?.get(aId) || null) : null;
+            const b = bId ? (pointById?.get(bId) || null) : null;
+            return [a, b];
+        },
+
+        getArcRenderPoints(arc, a, b, segments = 32) {
+            let cx = Number(arc?.cx);
+            let cy = Number(arc?.cy);
+            let radius = Number(arc?.radius);
+            let startAngle = Number(arc?.startAngle);
+            let endAngle = Number(arc?.endAngle);
+            let ccw = arc?.ccw !== false;
+            if (Number.isFinite(arc?.mx) && Number.isFinite(arc?.my) && a && b) {
+                const geom = this.computeArcFromThreePoints(
+                    { x: a.x || 0, y: a.y || 0 },
+                    { x: b.x || 0, y: b.y || 0 },
+                    { x: arc.mx, y: arc.my }
+                );
+                if (geom) {
+                    cx = geom.cx;
+                    cy = geom.cy;
+                    radius = geom.radius;
+                    startAngle = geom.startAngle;
+                    endAngle = geom.endAngle;
+                    ccw = geom.ccw;
+                }
+            }
+            if (!Number.isFinite(cx) || !Number.isFinite(cy) || !Number.isFinite(startAngle) || !Number.isFinite(endAngle)) {
+                return [];
+            }
+            if (!Number.isFinite(radius) || radius <= 0) {
+                if (a) {
+                    radius = Math.hypot((a.x || 0) - cx, (a.y || 0) - cy);
+                }
+            }
+            if (!Number.isFinite(radius) || radius <= 0) {
+                return [];
+            }
+            const tau = Math.PI * 2;
+            let sweep;
+            if (ccw) {
+                sweep = (endAngle - startAngle) % tau;
+                if (sweep < 0) sweep += tau;
+            } else {
+                sweep = (startAngle - endAngle) % tau;
+                if (sweep < 0) sweep += tau;
+                sweep = -sweep;
+            }
+            const count = Math.max(8, segments);
+            const pts = [];
+            for (let i = 0; i <= count; i++) {
+                const t = i / count;
+                const ang = startAngle + sweep * t;
+                pts.push({
+                    x: cx + Math.cos(ang) * radius,
+                    y: cy + Math.sin(ang) * radius
+                });
+            }
+            if (a) pts[0] = { x: a.x || 0, y: a.y || 0 };
+            if (b) pts[pts.length - 1] = { x: b.x || 0, y: b.y || 0 };
+            return pts;
+        },
+
+        getArcCenterLocal(arc, a, b) {
+            if (Number.isFinite(arc?.mx) && Number.isFinite(arc?.my) && a && b) {
+                const geom = this.computeArcFromThreePoints(
+                    { x: a.x || 0, y: a.y || 0 },
+                    { x: b.x || 0, y: b.y || 0 },
+                    { x: arc.mx, y: arc.my }
+                );
+                if (geom) {
+                    return { x: geom.cx, y: geom.cy };
+                }
+            }
+            const cx = Number(arc?.cx);
+            const cy = Number(arc?.cy);
+            if (Number.isFinite(cx) && Number.isFinite(cy)) {
+                return { x: cx, y: cy };
+            }
+            return null;
+        },
+
+        computeArcFromThreePoints(start, end, onArc) {
+            const x1 = start.x || 0;
+            const y1 = start.y || 0;
+            const x2 = end.x || 0;
+            const y2 = end.y || 0;
+            const x3 = onArc.x || 0;
+            const y3 = onArc.y || 0;
+            const d = 2 * (x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2));
+            if (Math.abs(d) < 1e-8) {
+                return null;
+            }
+            const x1sq = x1 * x1 + y1 * y1;
+            const x2sq = x2 * x2 + y2 * y2;
+            const x3sq = x3 * x3 + y3 * y3;
+            const cx = (x1sq * (y2 - y3) + x2sq * (y3 - y1) + x3sq * (y1 - y2)) / d;
+            const cy = (x1sq * (x3 - x2) + x2sq * (x1 - x3) + x3sq * (x2 - x1)) / d;
+            const radius = Math.hypot(x1 - cx, y1 - cy);
+            if (!Number.isFinite(radius) || radius < 1e-6) {
+                return null;
+            }
+            const startAngle = Math.atan2(y1 - cy, x1 - cx);
+            const endAngle = Math.atan2(y2 - cy, x2 - cx);
+            const midAngle = Math.atan2(y3 - cy, x3 - cx);
+            const normalize = a => {
+                let out = a % (Math.PI * 2);
+                if (out < 0) out += Math.PI * 2;
+                return out;
+            };
+            const sa = normalize(startAngle);
+            const ea = normalize(endAngle);
+            const ma = normalize(midAngle);
+            const ccwSpan = (ea - sa + Math.PI * 2) % (Math.PI * 2);
+            const ccwMid = (ma - sa + Math.PI * 2) % (Math.PI * 2);
+            const ccw = ccwMid <= ccwSpan;
+            return { cx, cy, radius, startAngle, endAngle, ccw };
+        },
+
         updatePointScreenScales() {
             const { camera, renderer } = space.internals();
             if (!camera || !renderer) return;
@@ -837,7 +1169,7 @@ function createSketchRuntimeApi(getApi) {
 
             for (const rec of this.sketches.values()) {
                 for (const view of rec.entityViews.values()) {
-                    if (view.type !== 'point' || !view.object) continue;
+                    if ((view.type !== 'point' && view.type !== 'arc-center') || !view.object) continue;
                     view.object.getWorldPosition(tmp);
                     let worldPerPixel;
                     if (camera.isPerspectiveCamera) {
@@ -868,6 +1200,38 @@ function createSketchRuntimeApi(getApi) {
                     const desiredWorldRadius = SKETCH_POINT_SCREEN_RADIUS_PX * worldPerPixel;
                     const scale = Math.max(0.0001, desiredWorldRadius / SKETCH_POINT_BASE_RADIUS);
                     rec.previewStart.scale.setScalar(scale);
+                }
+                if (rec.previewEnd) {
+                    rec.previewEnd.getWorldPosition(tmp);
+                    let worldPerPixel;
+                    if (camera.isPerspectiveCamera) {
+                        const distance = camera.position.distanceTo(tmp);
+                        const fovRad = camera.fov * Math.PI / 180;
+                        worldPerPixel = (2 * Math.tan(fovRad / 2) * distance) / viewHeightPx;
+                    } else if (camera.isOrthographicCamera) {
+                        worldPerPixel = ((camera.top - camera.bottom) / camera.zoom) / viewHeightPx;
+                    } else {
+                        continue;
+                    }
+                    const desiredWorldRadius = SKETCH_POINT_SCREEN_RADIUS_PX * worldPerPixel;
+                    const scale = Math.max(0.0001, desiredWorldRadius / SKETCH_POINT_BASE_RADIUS);
+                    rec.previewEnd.scale.setScalar(scale);
+                }
+                if (rec.previewArcCenter) {
+                    rec.previewArcCenter.getWorldPosition(tmp);
+                    let worldPerPixel;
+                    if (camera.isPerspectiveCamera) {
+                        const distance = camera.position.distanceTo(tmp);
+                        const fovRad = camera.fov * Math.PI / 180;
+                        worldPerPixel = (2 * Math.tan(fovRad / 2) * distance) / viewHeightPx;
+                    } else if (camera.isOrthographicCamera) {
+                        worldPerPixel = ((camera.top - camera.bottom) / camera.zoom) / viewHeightPx;
+                    } else {
+                        continue;
+                    }
+                    const desiredWorldRadius = SKETCH_POINT_SCREEN_RADIUS_PX * worldPerPixel;
+                    const scale = Math.max(0.0001, desiredWorldRadius / SKETCH_POINT_BASE_RADIUS);
+                    rec.previewArcCenter.scale.setScalar(scale);
                 }
             }
         },
