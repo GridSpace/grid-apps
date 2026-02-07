@@ -599,13 +599,23 @@ function handleSketchDrag(delta, offset, isDone) {
             return false;
         }
         const moved = !!this.sketchDrag.moved;
+        const snapPointId = this.sketchDrag.snapPointId || null;
+        const movedPointIds = this.sketchDrag.movedPointIds || new Set();
         this.sketchDrag = null;
         if (moved) {
+            if (snapPointId && movedPointIds.size === 1) {
+                const movedPointId = movedPointIds.values().next().value;
+                addCoincidentConstraintIfMissing.call(this, feature, movedPointId, snapPointId);
+                enforceSketchConstraintsInPlace(feature);
+            }
             api.features.commit(feature.id, {
                 opType: 'feature.update',
-                payload: { field: 'entities.move' }
+                payload: {
+                    field: snapPointId && movedPointIds.size === 1 ? 'entities.move+constraints.coincident' : 'entities.move'
+                }
             });
         }
+        this.hoveredSketchEntityId = null;
         this.updateSketchInteractionVisuals();
         return true;
     }
@@ -641,6 +651,8 @@ function handleSketchDrag(delta, offset, isDone) {
         this.sketchDrag = {
             start: { x: this.sketchPointerDown.local.x, y: this.sketchPointerDown.local.y },
             baseline,
+            movedPointIds: new Set(refs.map(ref => ref?.id).filter(Boolean)),
+            snapPointId: null,
             moved: false
         };
         this.hoveredSketchEntityId = null;
@@ -664,6 +676,15 @@ function handleSketchDrag(delta, offset, isDone) {
         ref.x = base.x + dx;
         ref.y = base.y + dy;
     }
+
+    const hit = this.resolveSketchHit(event, null, feature);
+    const snapId = (hit?.type === 'point'
+        && hit.id !== SKETCH_VIRTUAL_ORIGIN_ID
+        && !this.sketchDrag.movedPointIds.has(hit.id))
+        ? hit.id
+        : null;
+    this.sketchDrag.snapPointId = snapId;
+    this.hoveredSketchEntityId = snapId;
 
     enforceSketchConstraintsInPlace(feature);
     this.sketchDrag.moved = this.sketchDrag.moved || Math.hypot(dx, dy) > 0;
