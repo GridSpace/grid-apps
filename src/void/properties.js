@@ -243,11 +243,6 @@ const properties = {
     renderSketchFields(feature) {
         const target = feature.target || {};
 
-        const attachLabel = document.createElement('div');
-        attachLabel.className = 'props-field';
-        attachLabel.innerHTML = `<label>Attachment</label><div class="props-readonly">${target.kind || 'plane'}</div>`;
-        this.body.appendChild(attachLabel);
-
         const planeSelect = this.createSelectField(
             'Plane',
             this.getPlaneOptionId(feature),

@@ -11,6 +11,7 @@ const toolbar = {
     sketchBtn: null,
     sketchToolButtons: null,
     sketchConstraintButtons: null,
+    sketchConstraintMenu: null,
     docNameEl: null,
     openDialogEl: null,
     openDialogListEl: null,
@@ -90,13 +91,19 @@ const toolbar = {
                 api.interact.setSketchTool(current === 'line' ? 'select' : 'line');
             })
         };
-        this.sketchConstraintButtons = {
-            horizontal: this.addButton(container, 'Horizontal', () => api.interact.applySketchConstraint?.('horizontal')),
-            vertical: this.addButton(container, 'Vertical', () => api.interact.applySketchConstraint?.('vertical')),
-            perpendicular: this.addButton(container, 'Perp', () => api.interact.applySketchConstraint?.('perpendicular')),
-            coincident: this.addButton(container, 'Coincident', () => api.interact.applySketchConstraint?.('coincident')),
-            fixed: this.addButton(container, 'Fixed', () => api.interact.applySketchConstraint?.('fixed'))
-        };
+        this.addMenu(container, 'Arc', [
+            { key: 'arc', label: 'Arc', disabled: true, onClick: () => {} },
+            { key: 'circle', label: 'Circle', disabled: true, onClick: () => {} }
+        ]);
+        this.addPipe(container);
+        this.sketchConstraintMenu = this.addMenu(container, 'Constraints', [
+            { key: 'horizontal', label: 'Horizontal', onClick: () => api.interact.applySketchConstraint?.('horizontal') },
+            { key: 'vertical', label: 'Vertical', onClick: () => api.interact.applySketchConstraint?.('vertical') },
+            { key: 'perpendicular', label: 'Perpendicular', onClick: () => api.interact.applySketchConstraint?.('perpendicular') },
+            { key: 'coincident', label: 'Coincident', onClick: () => api.interact.applySketchConstraint?.('coincident') },
+            { key: 'fixed', label: 'Fixed', onClick: () => api.interact.applySketchConstraint?.('fixed') }
+        ]);
+        this.sketchConstraintButtons = this.sketchConstraintMenu.items;
 
         this.addButton(container, 'Extrude', () => {
             console.log('Extrude');
@@ -106,21 +113,12 @@ const toolbar = {
         container.appendChild(this.separator());
 
         // View tools
-        this.addButton(container, 'Fit', () => {
-            space.view.fit(null, { tween: true });
-        });
-
-        this.addButton(container, 'Top', () => {
-            space.view.top();
-        });
-
-        this.addButton(container, 'Front', () => {
-            space.view.front();
-        });
-
-        this.addButton(container, 'Right', () => {
-            space.view.right();
-        });
+        this.addMenu(container, 'View', [
+            { key: 'fit', label: 'Fit', onClick: () => space.view.fit(null, { tween: true }) },
+            { key: 'top', label: 'Top', onClick: () => space.view.top() },
+            { key: 'front', label: 'Front', onClick: () => space.view.front() },
+            { key: 'right', label: 'Right', onClick: () => space.view.right() }
+        ]);
 
         container.appendChild(this.separator());
 
@@ -203,6 +201,9 @@ const toolbar = {
             for (const btn of Object.values(this.sketchConstraintButtons)) {
                 btn.disabled = !editing;
             }
+        }
+        if (this.sketchConstraintMenu?.trigger) {
+            this.sketchConstraintMenu.trigger.disabled = !editing;
         }
     },
 
@@ -488,6 +489,56 @@ const toolbar = {
         container.appendChild(btn);
         this.buttons.push(btn);
         return btn;
+    },
+
+    addPipe(container) {
+        const pipe = document.createElement('div');
+        pipe.className = 'toolbar-pipe';
+        pipe.textContent = '|';
+        container.appendChild(pipe);
+        return pipe;
+    },
+
+    addMenu(container, label, entries = []) {
+        const menu = document.createElement('div');
+        menu.className = 'toolbar-menu';
+
+        const trigger = document.createElement('button');
+        trigger.className = 'toolbar-btn toolbar-menu-trigger';
+        trigger.type = 'button';
+        trigger.textContent = label;
+        trigger.title = label;
+
+        const pop = document.createElement('div');
+        pop.className = 'toolbar-menu-pop';
+        const panel = document.createElement('div');
+        panel.className = 'toolbar-menu-panel';
+        const items = {};
+
+        for (const entry of entries) {
+            const item = document.createElement('button');
+            item.className = 'toolbar-menu-item';
+            item.type = 'button';
+            item.textContent = entry.label;
+            if (entry.disabled) {
+                item.disabled = true;
+            }
+            item.onclick = () => {
+                if (item.disabled) return;
+                entry.onClick?.();
+            };
+            panel.appendChild(item);
+            if (entry.key) {
+                items[entry.key] = item;
+            }
+        }
+
+        pop.appendChild(panel);
+        menu.appendChild(trigger);
+        menu.appendChild(pop);
+        container.appendChild(menu);
+        this.buttons.push(trigger);
+        return { menu, trigger, pop, panel, items };
     },
 
     separator() {

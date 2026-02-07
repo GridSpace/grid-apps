@@ -323,6 +323,71 @@ html, body {
     margin: 0 4px;
 }
 
+.toolbar-pipe {
+    color: var(--text-secondary);
+    opacity: 0.75;
+    padding: 0 4px;
+    user-select: none;
+}
+
+.toolbar-menu {
+    position: relative;
+}
+
+.toolbar-menu-trigger::after {
+    content: "▾";
+    font-size: 10px;
+    opacity: 0.85;
+}
+
+.toolbar-menu-pop {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    padding-top: 6px;
+    display: none;
+    z-index: 10015;
+}
+
+.toolbar-menu-panel {
+    min-width: 140px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
+    padding: 4px;
+    flex-direction: column;
+    display: flex;
+    gap: 2px;
+}
+
+.toolbar-menu:hover .toolbar-menu-pop,
+.toolbar-menu:focus-within .toolbar-menu-pop {
+    display: block;
+}
+
+.toolbar-menu-item {
+    height: 30px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-primary);
+    text-align: left;
+    padding: 0 10px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.toolbar-menu-item:hover {
+    background: var(--bg-primary);
+    border-color: var(--accent);
+}
+
+.toolbar-menu-item:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .doc-dialog-backdrop {
     position: fixed;
     inset: 0;
