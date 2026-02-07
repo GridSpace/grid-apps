@@ -600,18 +600,18 @@ function handleSketchDrag(delta, offset, isDone) {
         }
         const moved = !!this.sketchDrag.moved;
         const snapPointId = this.sketchDrag.snapPointId || null;
+        const snapMovedPointId = this.sketchDrag.snapMovedPointId || null;
         const movedPointIds = this.sketchDrag.movedPointIds || new Set();
         this.sketchDrag = null;
         if (moved) {
-            if (snapPointId && movedPointIds.size === 1) {
-                const movedPointId = movedPointIds.values().next().value;
-                addCoincidentConstraintIfMissing.call(this, feature, movedPointId, snapPointId);
+            if (snapPointId && snapMovedPointId && snapMovedPointId !== snapPointId) {
+                addCoincidentConstraintIfMissing.call(this, feature, snapMovedPointId, snapPointId);
                 enforceSketchConstraintsInPlace(feature);
             }
             api.features.commit(feature.id, {
                 opType: 'feature.update',
                 payload: {
-                    field: snapPointId && movedPointIds.size === 1 ? 'entities.move+constraints.coincident' : 'entities.move'
+                    field: snapPointId && snapMovedPointId ? 'entities.move+constraints.coincident' : 'entities.move'
                 }
             });
         }
@@ -653,6 +653,7 @@ function handleSketchDrag(delta, offset, isDone) {
             baseline,
             movedPointIds: new Set(refs.map(ref => ref?.id).filter(Boolean)),
             snapPointId: null,
+            snapMovedPointId: null,
             moved: false
         };
         this.hoveredSketchEntityId = null;
@@ -677,13 +678,11 @@ function handleSketchDrag(delta, offset, isDone) {
         ref.y = base.y + dy;
     }
 
-    const hit = this.resolveSketchHit(event, null, feature);
-    const snapId = (hit?.type === 'point'
-        && hit.id !== SKETCH_VIRTUAL_ORIGIN_ID
-        && !this.sketchDrag.movedPointIds.has(hit.id))
-        ? hit.id
-        : null;
+    const snap = this.getSketchDragSnapTarget(event, feature, this.sketchDrag.movedPointIds);
+    const snapId = snap?.targetId || null;
+    const snapMovedPointId = snap?.movedId || null;
     this.sketchDrag.snapPointId = snapId;
+    this.sketchDrag.snapMovedPointId = snapMovedPointId;
     this.hoveredSketchEntityId = snapId;
 
     enforceSketchConstraintsInPlace(feature);
@@ -1027,8 +1026,9 @@ function updateSketchInteractionVisuals() {
     if (!feature) {
         return;
     }
+    const dragHoverId = this.sketchDrag?.snapPointId || null;
     api.sketchRuntime?.setEntityInteraction(feature.id, {
-        hoveredId: this.sketchDrag ? null : this.hoveredSketchEntityId,
+        hoveredId: this.sketchDrag ? dragHoverId : this.hoveredSketchEntityId,
         selectedIds: Array.from(this.selectedSketchEntities),
         hoveredConstraintId: this.hoveredSketchConstraintId || null,
         selectedConstraintIds: Array.from(this.selectedSketchConstraints || []),
@@ -1176,6 +1176,56 @@ function getSketchHitLocalPoint(feature, hit) {
         return { x: view.entity.x || 0, y: view.entity.y || 0 };
     }
     return null;
+}
+
+function getSketchDragSnapTarget(event, feature, movedPointIds) {
+    const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+    const basis = this.getSketchBasis(feature);
+    const vp = this.getEventViewportXY(event);
+    if (!basis || !vp) {
+        return null;
+    }
+
+    const points = entities.filter(e => e?.type === 'point' && e.id);
+    const moved = points.filter(p => movedPointIds?.has(p.id));
+    const others = points.filter(p => !movedPointIds?.has(p.id) && p.id !== SKETCH_VIRTUAL_ORIGIN_ID);
+    if (!others.length || !moved.length) {
+        return null;
+    }
+
+    let target = null;
+    for (const p of others) {
+        const world = this.sketchLocalToWorld(p, basis);
+        const proj = api.overlay.project3Dto2D(world);
+        if (!proj?.visible) continue;
+        const d = Math.hypot(vp.x - proj.x, vp.y - proj.y);
+        if (d > SKETCH_HIT_POINT_PX * 1.8) continue;
+        if (!target || d < target.dist) {
+            target = { point: p, dist: d };
+        }
+    }
+    if (!target) {
+        return null;
+    }
+
+    let nearestMoved = null;
+    const tx = target.point.x || 0;
+    const ty = target.point.y || 0;
+    for (const p of moved) {
+        const dx = (p.x || 0) - tx;
+        const dy = (p.y || 0) - ty;
+        const d = Math.hypot(dx, dy);
+        if (!nearestMoved || d < nearestMoved.dist) {
+            nearestMoved = { point: p, dist: d };
+        }
+    }
+    if (!nearestMoved) {
+        return null;
+    }
+    return {
+        targetId: target.point.id,
+        movedId: nearestMoved.point.id
+    };
 }
 
 function findPointByCoord(feature, local, eps = SKETCH_POINT_MERGE_EPS) {
@@ -1358,6 +1408,7 @@ export {
     resolveSketchHit,
     isSketchEventInViewport,
     getSketchHitLocalPoint,
+    getSketchDragSnapTarget,
     distanceToSegmentPx,
     getEventViewportXY,
     getSketchBasis,
