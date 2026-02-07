@@ -97,9 +97,6 @@ const toolbar = {
             coincident: this.addButton(container, 'Coincident', () => api.interact.applySketchConstraint?.('coincident')),
             fixed: this.addButton(container, 'Fixed', () => api.interact.applySketchConstraint?.('fixed'))
         };
-        for (const btn of Object.values(this.sketchConstraintButtons)) {
-            btn.classList.add('compact');
-        }
 
         this.addButton(container, 'Extrude', () => {
             console.log('Extrude');
