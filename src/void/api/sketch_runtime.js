@@ -416,7 +416,7 @@ function createSketchRuntimeApi(getApi) {
         },
 
         findClosedLineLoops(feature, entities, pointById) {
-            const lines = entities.filter(e => e?.type === 'line' && e.a && e.b);
+            const lines = entities.filter(e => e?.type === 'line' && e.a && e.b && !e.construction);
             if (!lines.length) return [];
             const constraints = Array.isArray(feature?.constraints) ? feature.constraints : [];
 
@@ -476,12 +476,8 @@ function createSketchRuntimeApi(getApi) {
                 repToNode.set(rep, nid);
             }
 
-            const adj = new Map();
+            const nodeCoord = new Map(Array.from(nodes.values()).map(n => [n.id, { x: n.x, y: n.y }]));
             const edges = [];
-            const addAdj = (a, b, edgeId) => {
-                if (!adj.has(a)) adj.set(a, []);
-                adj.get(a).push({ other: b, edgeId });
-            };
             for (const line of lines) {
                 const ra = find(line.a);
                 const rb = find(line.b);
@@ -490,53 +486,90 @@ function createSketchRuntimeApi(getApi) {
                 if (!na || !nb || na === nb) continue;
                 const edgeId = edges.length;
                 edges.push({ id: edgeId, a: na, b: nb });
-                addAdj(na, nb, edgeId);
-                addAdj(nb, na, edgeId);
             }
             if (!edges.length) return [];
 
-            const loops = [];
-            const used = new Set();
+            // Build directed half-edges and face-walk the planar graph.
+            const halfEdges = [];
+            const outgoing = new Map();
+            const addOutgoing = (nid, heId) => {
+                if (!outgoing.has(nid)) outgoing.set(nid, []);
+                outgoing.get(nid).push(heId);
+            };
             for (const edge of edges) {
-                if (used.has(edge.id)) continue;
-                let start = edge.a;
-                let curr = edge.b;
-                let prev = start;
-                let currEdgeId = edge.id;
-                const path = [start, curr];
-                used.add(currEdgeId);
-                let ok = true;
+                const a = nodeCoord.get(edge.a);
+                const b = nodeCoord.get(edge.b);
+                if (!a || !b) continue;
+                const heAB = {
+                    id: halfEdges.length,
+                    edgeId: edge.id,
+                    from: edge.a,
+                    to: edge.b,
+                    angle: Math.atan2(b.y - a.y, b.x - a.x),
+                    twin: -1
+                };
+                halfEdges.push(heAB);
+                const heBA = {
+                    id: halfEdges.length,
+                    edgeId: edge.id,
+                    from: edge.b,
+                    to: edge.a,
+                    angle: Math.atan2(a.y - b.y, a.x - b.x),
+                    twin: heAB.id
+                };
+                halfEdges.push(heBA);
+                heAB.twin = heBA.id;
+                addOutgoing(heAB.from, heAB.id);
+                addOutgoing(heBA.from, heBA.id);
+            }
+            for (const [nid, list] of outgoing.entries()) {
+                list.sort((ha, hb) => halfEdges[ha].angle - halfEdges[hb].angle);
+                outgoing.set(nid, list);
+            }
 
-                while (curr !== start) {
-                    const opts = (adj.get(curr) || []).filter(e => e.edgeId !== currEdgeId);
-                    if (opts.length !== 1) {
-                        ok = false;
-                        break;
-                    }
-                    const next = opts[0];
-                    currEdgeId = next.edgeId;
-                    if (used.has(currEdgeId)) {
-                        ok = false;
-                        break;
-                    }
-                    used.add(currEdgeId);
-                    prev = curr;
-                    curr = next.other;
-                    path.push(curr);
-                    if (path.length > edges.length + 2) {
-                        ok = false;
+            const visited = new Set();
+            const loops = [];
+            const minArea = 1e-5;
+            for (const start of halfEdges) {
+                if (visited.has(start.id)) continue;
+                const cycleHes = [];
+                let curr = start;
+                let guard = 0;
+                while (curr && !visited.has(curr.id) && guard++ < halfEdges.length * 4) {
+                    visited.add(curr.id);
+                    cycleHes.push(curr.id);
+                    const outAtTo = outgoing.get(curr.to) || [];
+                    if (!outAtTo.length) break;
+                    const twinIndex = outAtTo.indexOf(curr.twin);
+                    if (twinIndex < 0) break;
+                    // predecessor in CCW sorted list keeps interior face on left.
+                    const nextIndex = (twinIndex - 1 + outAtTo.length) % outAtTo.length;
+                    const nextId = outAtTo[nextIndex];
+                    curr = halfEdges[nextId];
+                    if (curr.id === start.id) {
+                        cycleHes.push(curr.id);
                         break;
                     }
                 }
-                if (!ok || path.length < 4) continue;
-                const points = path.slice(0, -1).map(nid => {
-                    for (const n of nodes.values()) {
-                        if (n.id === nid) return { x: n.x, y: n.y };
-                    }
-                    return null;
-                }).filter(Boolean);
-                if (points.length >= 3) {
-                    loops.push(points);
+                if (!cycleHes.length) continue;
+                if (cycleHes[cycleHes.length - 1] !== start.id) continue;
+                const nodeIds = [];
+                for (let i = 0; i < cycleHes.length - 1; i++) {
+                    nodeIds.push(halfEdges[cycleHes[i]].from);
+                }
+                if (nodeIds.length < 3) continue;
+                const pts = nodeIds.map(nid => nodeCoord.get(nid)).filter(Boolean);
+                if (pts.length < 3) continue;
+                let area2 = 0;
+                for (let i = 0; i < pts.length; i++) {
+                    const p = pts[i];
+                    const q2 = pts[(i + 1) % pts.length];
+                    area2 += p.x * q2.y - q2.x * p.y;
+                }
+                const area = area2 * 0.5;
+                // Keep only interior faces (CCW), discard outer/inverted traces.
+                if (area > minArea) {
+                    loops.push(pts.map(p => ({ x: p.x, y: p.y })));
                 }
             }
             return loops;
