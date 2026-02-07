@@ -249,6 +249,7 @@ function createSketchRuntimeApi(getApi) {
                 vertical: 'V',
                 perpendicular: 'P',
                 coincident: 'C',
+                arc_center_coincident: 'C',
                 fixed: 'F',
                 tangent: 'T',
                 equal: '='

@@ -58,6 +58,7 @@ function enforceWithPlanegcs(sketch) {
     const primitives = [];
     const pointById = new Map();
     const lineById = new Map();
+    const arcById = new Map();
 
     for (const entity of entities) {
         if (entity?.type === 'point' && entity.id) {
@@ -85,6 +86,9 @@ function enforceWithPlanegcs(sketch) {
             };
             lineById.set(entity.id, l);
             primitives.push(l);
+        }
+        if (entity?.type === 'arc' && entity.id && pointById.has(aId) && pointById.has(bId)) {
+            arcById.set(entity.id, entity);
         }
     }
 
@@ -129,6 +133,9 @@ function enforceWithPlanegcs(sketch) {
             changed = true;
         }
     }
+
+    const fixed = captureFixedAnchors(constraints, pointEntityById);
+    changed = applyArcCenterCoincidentConstraints(constraints, pointEntityById, lineById, arcById, fixed) || changed;
 
     return changed;
 }
@@ -216,11 +223,14 @@ function enforceWithFallback(sketch, opts = {}) {
 
     const points = new Map();
     const lines = new Map();
+    const arcs = new Map();
     for (const entity of entities) {
         if (entity?.type === 'point' && entity.id) {
             points.set(entity.id, entity);
         } else if (entity?.type === 'line' && entity.id) {
             lines.set(entity.id, entity);
+        } else if (entity?.type === 'arc' && entity.id) {
+            arcs.set(entity.id, entity);
         }
     }
 
@@ -247,6 +257,9 @@ function enforceWithFallback(sketch, opts = {}) {
                     break;
                 case 'perpendicular':
                     iterChanged = applyPerpendicular(c, points, lines, fixed) || iterChanged;
+                    break;
+                case 'arc_center_coincident':
+                    iterChanged = applyArcCenterCoincident(c, points, lines, arcs, fixed) || iterChanged;
                     break;
                 default:
                     break;
@@ -407,6 +420,188 @@ function applyPerpendicular(constraint, points, lines, fixed) {
     const cc = setPoint(c, mx - hx, my - hy);
     const cd = setPoint(d, mx + hx, my + hy);
     return cc || cd;
+}
+
+function applyArcCenterCoincident(constraint, points, lines, arcs, fixed) {
+    const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
+    if (refs.length < 2) return false;
+    const arc = arcs.get(refs[0]);
+    const target = points.get(refs[1]);
+    if (!arc || !target) return false;
+
+    const [a, b] = getLineEndpoints(arc, points);
+    if (!a || !b) return false;
+    const aId = getLineEndpointId(arc, 'a');
+    const bId = getLineEndpointId(arc, 'b');
+
+    const center = getArcCenter(arc, a, b);
+    if (!center) return false;
+    const tx = target.x || 0;
+    const ty = target.y || 0;
+    const fa = !!(aId && fixed.has(aId));
+    const fb = !!(bId && fixed.has(bId));
+    return enforceArcFromCenter(arc, a, b, tx, ty, fa, fb);
+}
+
+function applyArcCenterCoincidentConstraints(constraints, points, lines, arcs, fixed) {
+    let changed = false;
+    for (const c of constraints) {
+        if (c?.type !== 'arc_center_coincident') continue;
+        changed = applyArcCenterCoincident(c, points, lines, arcs, fixed) || changed;
+    }
+    return changed;
+}
+
+function setArcControl(arc, x, y) {
+    const nx = Number.isFinite(x) ? x : (arc.mx || 0);
+    const ny = Number.isFinite(y) ? y : (arc.my || 0);
+    const dx = nx - (arc.mx || 0);
+    const dy = ny - (arc.my || 0);
+    if (Math.abs(dx) < EPS && Math.abs(dy) < EPS) return false;
+    arc.mx = nx;
+    arc.my = ny;
+    return true;
+}
+
+function setArcCenterAndMeta(arc, cx, cy, radius, startAngle, endAngle, ccw) {
+    let changed = false;
+    if (!Number.isFinite(cx) || !Number.isFinite(cy) || !Number.isFinite(radius)) {
+        return false;
+    }
+    if (Math.abs((arc.cx || 0) - cx) > EPS) {
+        arc.cx = cx;
+        changed = true;
+    }
+    if (Math.abs((arc.cy || 0) - cy) > EPS) {
+        arc.cy = cy;
+        changed = true;
+    }
+    if (Math.abs((arc.radius || 0) - radius) > EPS) {
+        arc.radius = radius;
+        changed = true;
+    }
+    if (Number.isFinite(startAngle) && Math.abs((arc.startAngle || 0) - startAngle) > EPS) {
+        arc.startAngle = startAngle;
+        changed = true;
+    }
+    if (Number.isFinite(endAngle) && Math.abs((arc.endAngle || 0) - endAngle) > EPS) {
+        arc.endAngle = endAngle;
+        changed = true;
+    }
+    if (typeof ccw === 'boolean' && arc.ccw !== ccw) {
+        arc.ccw = ccw;
+        changed = true;
+    }
+    return changed;
+}
+
+function normalizeAngle(a) {
+    let out = a % (Math.PI * 2);
+    if (out < 0) out += Math.PI * 2;
+    return out;
+}
+
+function enforceArcFromCenter(arc, a, b, cx, cy, fa, fb) {
+    const ax = a.x || 0;
+    const ay = a.y || 0;
+    const bx = b.x || 0;
+    const by = b.y || 0;
+    let ra = Math.hypot(ax - cx, ay - cy);
+    let rb = Math.hypot(bx - cx, by - cy);
+    if (ra < EPS && rb < EPS) {
+        return false;
+    }
+
+    const aa = Math.atan2(ay - cy, ax - cx);
+    const ab = Math.atan2(by - cy, bx - cx);
+
+    let radius;
+    if (fa && fb) {
+        radius = ra;
+    } else if (fa) {
+        radius = ra;
+    } else if (fb) {
+        radius = rb;
+    } else {
+        radius = (ra + rb) * 0.5;
+    }
+    if (!Number.isFinite(radius) || radius < EPS) {
+        radius = Math.max(ra, rb, 1);
+    }
+
+    let changed = false;
+    if (!fa) {
+        changed = setPoint(a, cx + Math.cos(aa) * radius, cy + Math.sin(aa) * radius) || changed;
+    }
+    if (!fb) {
+        changed = setPoint(b, cx + Math.cos(ab) * radius, cy + Math.sin(ab) * radius) || changed;
+    }
+
+    const startAngle = Math.atan2((a.y || 0) - cy, (a.x || 0) - cx);
+    const endAngle = Math.atan2((b.y || 0) - cy, (b.x || 0) - cx);
+
+    let ccw = arc?.ccw !== false;
+    if (Number.isFinite(arc?.mx) && Number.isFinite(arc?.my)) {
+        const g = computeArcGeometry(
+            { x: a.x || 0, y: a.y || 0 },
+            { x: b.x || 0, y: b.y || 0 },
+            { x: arc.mx, y: arc.my }
+        );
+        if (g) {
+            ccw = g.ccw;
+        }
+    }
+
+    const sa = normalizeAngle(startAngle);
+    const ea = normalizeAngle(endAngle);
+    let mid;
+    if (ccw) {
+        const sweep = (ea - sa + Math.PI * 2) % (Math.PI * 2);
+        mid = sa + sweep * 0.5;
+    } else {
+        const sweep = (sa - ea + Math.PI * 2) % (Math.PI * 2);
+        mid = sa - sweep * 0.5;
+    }
+    const mx = cx + Math.cos(mid) * radius;
+    const my = cy + Math.sin(mid) * radius;
+    changed = setArcControl(arc, mx, my) || changed;
+    changed = setArcCenterAndMeta(arc, cx, cy, radius, startAngle, endAngle, ccw) || changed;
+    return changed;
+}
+
+function getArcCenter(arc, a, b) {
+    if (Number.isFinite(arc?.mx) && Number.isFinite(arc?.my)) {
+        const g = computeArcGeometry(
+            { x: a.x || 0, y: a.y || 0 },
+            { x: b.x || 0, y: b.y || 0 },
+            { x: arc.mx, y: arc.my }
+        );
+        if (g) return { x: g.cx, y: g.cy };
+    }
+    const cx = Number(arc?.cx);
+    const cy = Number(arc?.cy);
+    if (Number.isFinite(cx) && Number.isFinite(cy)) {
+        return { x: cx, y: cy };
+    }
+    return null;
+}
+
+function computeArcGeometry(start, end, onArc) {
+    if (!start || !end || !onArc) return null;
+    const x1 = start.x || 0;
+    const y1 = start.y || 0;
+    const x2 = end.x || 0;
+    const y2 = end.y || 0;
+    const x3 = onArc.x || 0;
+    const y3 = onArc.y || 0;
+    const d = 2 * (x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2));
+    if (Math.abs(d) < 1e-8) return null;
+    const x1sq = x1 * x1 + y1 * y1;
+    const x2sq = x2 * x2 + y2 * y2;
+    const x3sq = x3 * x3 + y3 * y3;
+    const cx = (x1sq * (y2 - y3) + x2sq * (y3 - y1) + x3sq * (y1 - y2)) / d;
+    const cy = (x1sq * (x3 - x2) + x2sq * (x1 - x3) + x3sq * (x2 - x1)) / d;
+    return { cx, cy };
 }
 
 export { initSketchConstraintsSolver, enforceSketchConstraintsInPlace };

@@ -35,6 +35,7 @@ const interact = {
     _tmpWorldPos: new THREE.Vector3(),
     sketchTool: 'select',
     selectedSketchEntities: new Set(),
+    selectedSketchArcCenters: new Set(),
     selectedSketchConstraints: new Set(),
     hoveredSketchEntityId: null,
     hoveredSketchConstraintId: null,

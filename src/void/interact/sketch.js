@@ -59,6 +59,7 @@ function cancelSketchArc() {
 
 function clearSketchSelection() {
     this.selectedSketchEntities.clear();
+    this.selectedSketchArcCenters?.clear?.();
     this.selectedSketchConstraints.clear();
     this.hoveredSketchEntityId = null;
     this.hoveredSketchConstraintId = null;
@@ -277,6 +278,7 @@ function deleteSelectedSketchEntities() {
     }
 
     this.selectedSketchEntities.clear();
+    this.selectedSketchArcCenters?.clear?.();
     this.hoveredSketchEntityId = null;
     this.setSketchTool('select');
     this.updateSketchInteractionVisuals();
@@ -326,6 +328,7 @@ function applySketchConstraint(type) {
 
     const lines = selected.filter(entity => entity.type === 'line');
     const points = selected.filter(entity => entity.type === 'point');
+    const arcCenters = selected.filter(entity => entity.type === 'arc' && this.selectedSketchArcCenters?.has?.(entity.id));
     const specs = [];
 
     if (type === 'horizontal' || type === 'vertical') {
@@ -338,10 +341,13 @@ function applySketchConstraint(type) {
         }
         specs.push({ type, refs: [lines[0].id, lines[1].id] });
     } else if (type === 'coincident') {
-        if (points.length !== 2) {
+        if (points.length === 2) {
+            specs.push({ type, refs: [points[0].id, points[1].id] });
+        } else if (points.length === 1 && arcCenters.length === 1) {
+            specs.push({ type: 'arc_center_coincident', refs: [arcCenters[0].id, points[0].id] });
+        } else {
             return false;
         }
-        specs.push({ type, refs: [points[0].id, points[1].id] });
     } else if (type === 'fixed') {
         for (const point of points) {
             specs.push({ type, refs: [point.id] });
@@ -412,6 +418,9 @@ function normalizeConstraintRefs(type, refs) {
     const out = Array.from(new Set((refs || []).filter(Boolean)));
     if (type === 'horizontal' || type === 'vertical' || type === 'fixed') {
         return out.slice(0, 1);
+    }
+    if (type === 'arc_center_coincident') {
+        return out.slice(0, 2);
     }
     return out.sort();
 }
@@ -584,13 +593,21 @@ function handleSketchMouseUp(event, intersections) {
                 this.updateSketchInteractionVisuals();
                 return true;
             }
+            const isArcCenter = hit.type === 'arc-center';
             if (this.selectedSketchEntities.has(hit.id)) {
                 this.selectedSketchEntities.delete(hit.id);
+                this.selectedSketchArcCenters?.delete?.(hit.id);
             } else {
                 this.selectedSketchEntities.add(hit.id);
+                if (isArcCenter) {
+                    this.selectedSketchArcCenters?.add?.(hit.id);
+                } else {
+                    this.selectedSketchArcCenters?.delete?.(hit.id);
+                }
             }
         } else {
             this.selectedSketchEntities.clear();
+            this.selectedSketchArcCenters?.clear?.();
         }
         this.updateSketchInteractionVisuals();
         return true;
@@ -898,6 +915,7 @@ function finishSketchMarquee(feature) {
     this.clearSketchMarquee();
     const selectIds = this.selectSketchEntitiesInMarquee(feature, marquee);
     this.selectedSketchEntities = new Set(selectIds);
+    this.selectedSketchArcCenters?.clear?.();
     this.hoveredSketchEntityId = null;
     this.updateSketchInteractionVisuals();
 }
@@ -1122,6 +1140,7 @@ function createSketchPoint(feature, local) {
     const existing = this.findPointByCoord(feature, local, SKETCH_POINT_MERGE_EPS);
     if (existing) {
         this.selectedSketchEntities.clear();
+        this.selectedSketchArcCenters?.clear?.();
         this.selectedSketchEntities.add(existing.id);
         this.hoveredSketchEntityId = null;
         this.updateSketchInteractionVisuals();
@@ -1144,6 +1163,7 @@ function createSketchPoint(feature, local) {
     });
 
     this.selectedSketchEntities.clear();
+    this.selectedSketchArcCenters?.clear?.();
     this.selectedSketchEntities.add(id);
     this.hoveredSketchEntityId = null;
     this.updateSketchInteractionVisuals();
@@ -1202,6 +1222,7 @@ function createSketchLine(feature, a, b, options = {}) {
     });
 
     this.selectedSketchEntities.clear();
+    this.selectedSketchArcCenters?.clear?.();
     this.selectedSketchEntities.add(id);
     this.hoveredSketchEntityId = null;
     this.sketchLinePreview = null;
@@ -1268,6 +1289,7 @@ function createSketchArc(feature, start, end, onArc, options = {}) {
     });
 
     this.selectedSketchEntities.clear();
+    this.selectedSketchArcCenters?.clear?.();
     this.selectedSketchEntities.add(id);
     this.hoveredSketchEntityId = null;
     this.sketchArcPreview = null;
