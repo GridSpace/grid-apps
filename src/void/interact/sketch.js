@@ -943,20 +943,29 @@ function handleSketchDrag(delta, offset, isDone) {
         }
         const arcControlBaseline = [];
         const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+        const pointById = new Map(entities.filter(e => e?.type === 'point' && e.id).map(e => [e.id, e]));
         for (const entity of entities) {
             if (entity?.type !== 'arc' || !entity.id) continue;
             if (!activeIds.has(entity.id)) continue;
             if (!Number.isFinite(entity.mx) || !Number.isFinite(entity.my)) continue;
+            const pa = pointById.get(entity.a) || null;
+            const pb = pointById.get(entity.b) || null;
             arcControlBaseline.push({
                 entity,
                 mx: entity.mx,
-                my: entity.my
+                my: entity.my,
+                cx: Number(entity.cx || 0),
+                cy: Number(entity.cy || 0),
+                radius: Number(entity.radius || 0),
+                a: pa ? { x: pa.x || 0, y: pa.y || 0 } : null,
+                b: pb ? { x: pb.x || 0, y: pb.y || 0 } : null
             });
         }
         this.sketchDrag = {
             start: { x: this.sketchPointerDown.local.x, y: this.sketchPointerDown.local.y },
             baseline,
             arcControlBaseline,
+            activeIds,
             movedPointIds: new Set((centerDrag ? [] : refs).map(ref => ref?.id).filter(Boolean)),
             centerDrag,
             snapPointId: null,
@@ -988,6 +997,7 @@ function handleSketchDrag(delta, offset, isDone) {
         ctrl.entity.mx = ctrl.mx + dx;
         ctrl.entity.my = ctrl.my + dy;
     }
+    this.applyCircleDragKinematics(feature, dx, dy);
 
     const snap = this.sketchDrag.centerDrag ? null : this.getSketchDragSnapTarget(event, feature, this.sketchDrag.movedPointIds);
     const snapId = snap?.targetId || null;
@@ -1939,6 +1949,82 @@ function getArcEndpoints(arc, pointById) {
     return [a, b];
 }
 
+function applyCircleDragKinematics(feature, dx = 0, dy = 0) {
+    const drag = this.sketchDrag;
+    if (!drag) return;
+    const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+    const byId = new Map(entities.filter(e => e?.id).map(e => [e.id, e]));
+    const ctrlByArcId = new Map((drag.arcControlBaseline || []).map(rec => [rec.entity?.id, rec]));
+
+    for (const arc of entities) {
+        if (arc?.type !== 'arc' || !arc?.circle || !arc.id) continue;
+        const touchesCircle = drag.activeIds?.has?.(arc.id)
+            || drag.movedPointIds?.has?.(arc.a)
+            || drag.movedPointIds?.has?.(arc.b);
+        if (!touchesCircle) continue;
+        const a = byId.get(arc.a);
+        const b = byId.get(arc.b);
+        if (!a || !b) continue;
+        let cx = Number(arc.cx || 0);
+        let cy = Number(arc.cy || 0);
+
+        const movedA = drag.movedPointIds?.has?.(a.id);
+        const movedB = drag.movedPointIds?.has?.(b.id);
+
+        if (drag.centerDrag) {
+            const cbase = ctrlByArcId.get(arc.id);
+            if (cbase) {
+                arc.cx = (cbase.cx || 0) + dx;
+                arc.cy = (cbase.cy || 0) + dy;
+                if (cbase.a) {
+                    a.x = (cbase.a.x || 0) + dx;
+                    a.y = (cbase.a.y || 0) + dy;
+                }
+                if (cbase.b) {
+                    b.x = (cbase.b.x || 0) + dx;
+                    b.y = (cbase.b.y || 0) + dy;
+                }
+                arc.mx = (cbase.mx || 0) + dx;
+                arc.my = (cbase.my || 0) + dy;
+                arc.radius = Number.isFinite(cbase.radius) ? cbase.radius : (arc.radius || 0);
+                arc.startAngle = 0;
+                arc.endAngle = Math.PI * 2;
+                arc.ccw = true;
+                continue;
+            }
+        } else {
+            // Keep center fixed for radius/curve drags.
+            cx = arc.cx;
+            cy = arc.cy;
+        }
+
+        // Radius drag: anchor on moved endpoint (or current A) and keep both endpoints on circle.
+        const anchor = movedA ? a : (movedB ? b : a);
+        const vx = (anchor.x || 0) - cx;
+        const vy = (anchor.y || 0) - cy;
+        let radius = Math.hypot(vx, vy);
+        if (!Number.isFinite(radius) || radius < SKETCH_MIN_LINE_LENGTH) {
+            radius = Number(arc.radius || 0);
+        }
+        if (!Number.isFinite(radius) || radius < SKETCH_MIN_LINE_LENGTH) {
+            continue;
+        }
+        const angle = Math.atan2(vy, vx);
+        const px = cx + Math.cos(angle) * radius;
+        const py = cy + Math.sin(angle) * radius;
+        a.x = px;
+        a.y = py;
+        b.x = px;
+        b.y = py;
+        arc.radius = radius;
+        arc.mx = cx + Math.cos(angle + Math.PI / 2) * radius;
+        arc.my = cy + Math.sin(angle + Math.PI / 2) * radius;
+        arc.startAngle = 0;
+        arc.endAngle = Math.PI * 2;
+        arc.ccw = true;
+    }
+}
+
 function sampleArcPolyline(arc, a, b, segments = 24) {
     if (arc?.circle) {
         const cx = Number(arc?.cx);
@@ -2190,6 +2276,7 @@ export {
     convertArcToCircleInSketch,
     computeArcGeometry,
     getArcEndpoints,
+    applyCircleDragKinematics,
     getArcCenterLocalFromEntity,
     sampleArcPolyline,
     createSketchPoint,
