@@ -548,7 +548,7 @@ function createSketchRuntimeApi(getApi) {
         },
 
         addClosedProfileFills(rec, entities, pointById) {
-            const loops = this.findClosedLineLoops(rec.feature, entities, pointById);
+            const loops = this.findClosedCurveLoops(rec.feature, entities, pointById);
             for (const loop of loops) {
                 if (!Array.isArray(loop) || loop.length < 3) continue;
                 const shape = new THREE.Shape();
@@ -570,6 +570,139 @@ function createSketchRuntimeApi(getApi) {
                 fill.renderOrder = 6;
                 rec.entitiesGroup.add(fill);
             }
+        },
+
+        findClosedCurveLoops(feature, entities, pointById) {
+            const curves = entities.filter(e => (e?.type === 'line' || e?.type === 'arc') && !e.construction);
+            if (!curves.length) return [];
+
+            const q = v => Math.round(v / PROFILE_MERGE_EPS) * PROFILE_MERGE_EPS;
+            const nodes = new Map(); // key -> { id, x, y }
+            const nodeCoord = new Map(); // id -> { x, y }
+            const edges = [];
+            let nodeSeq = 0;
+
+            const getNodeId = (x, y) => {
+                const key = `${q(x)},${q(y)}`;
+                let node = nodes.get(key);
+                if (!node) {
+                    node = { id: `n${++nodeSeq}`, x, y };
+                    nodes.set(key, node);
+                    nodeCoord.set(node.id, { x, y });
+                }
+                return node.id;
+            };
+
+            for (const curve of curves) {
+                let poly = null;
+                if (curve.type === 'line') {
+                    const [a, b] = this.getLineEndpoints(curve, pointById);
+                    if (a && b) {
+                        poly = [
+                            { x: a.x || 0, y: a.y || 0 },
+                            { x: b.x || 0, y: b.y || 0 }
+                        ];
+                    }
+                } else if (curve.type === 'arc') {
+                    const [a, b] = this.getArcEndpoints(curve, pointById);
+                    if (a && b) {
+                        poly = this.getArcRenderPoints(curve, a, b, 64);
+                    }
+                }
+                if (!poly || poly.length < 2) continue;
+
+                for (let i = 0; i < poly.length - 1; i++) {
+                    const p1 = poly[i];
+                    const p2 = poly[i + 1];
+                    const aId = getNodeId(p1.x || 0, p1.y || 0);
+                    const bId = getNodeId(p2.x || 0, p2.y || 0);
+                    if (!aId || !bId || aId === bId) continue;
+                    edges.push({ id: edges.length, a: aId, b: bId });
+                }
+            }
+            if (!edges.length) return [];
+
+            const halfEdges = [];
+            const outgoing = new Map();
+            const addOutgoing = (nid, heId) => {
+                if (!outgoing.has(nid)) outgoing.set(nid, []);
+                outgoing.get(nid).push(heId);
+            };
+            for (const edge of edges) {
+                const a = nodeCoord.get(edge.a);
+                const b = nodeCoord.get(edge.b);
+                if (!a || !b) continue;
+                const heAB = {
+                    id: halfEdges.length,
+                    edgeId: edge.id,
+                    from: edge.a,
+                    to: edge.b,
+                    angle: Math.atan2(b.y - a.y, b.x - a.x),
+                    twin: -1
+                };
+                halfEdges.push(heAB);
+                const heBA = {
+                    id: halfEdges.length,
+                    edgeId: edge.id,
+                    from: edge.b,
+                    to: edge.a,
+                    angle: Math.atan2(a.y - b.y, a.x - b.x),
+                    twin: heAB.id
+                };
+                halfEdges.push(heBA);
+                heAB.twin = heBA.id;
+                addOutgoing(heAB.from, heAB.id);
+                addOutgoing(heBA.from, heBA.id);
+            }
+            for (const [nid, list] of outgoing.entries()) {
+                list.sort((ha, hb) => halfEdges[ha].angle - halfEdges[hb].angle);
+                outgoing.set(nid, list);
+            }
+
+            const visited = new Set();
+            const loops = [];
+            const minArea = 1e-5;
+            for (const start of halfEdges) {
+                if (visited.has(start.id)) continue;
+                const cycleHes = [];
+                let curr = start;
+                let guard = 0;
+                while (curr && !visited.has(curr.id) && guard++ < halfEdges.length * 4) {
+                    visited.add(curr.id);
+                    cycleHes.push(curr.id);
+                    const outAtTo = outgoing.get(curr.to) || [];
+                    if (!outAtTo.length) break;
+                    const twinIndex = outAtTo.indexOf(curr.twin);
+                    if (twinIndex < 0) break;
+                    const nextIndex = (twinIndex - 1 + outAtTo.length) % outAtTo.length;
+                    const nextId = outAtTo[nextIndex];
+                    curr = halfEdges[nextId];
+                    if (curr.id === start.id) {
+                        cycleHes.push(curr.id);
+                        break;
+                    }
+                }
+                if (!cycleHes.length) continue;
+                if (cycleHes[cycleHes.length - 1] !== start.id) continue;
+                const nodeIds = [];
+                for (let i = 0; i < cycleHes.length - 1; i++) {
+                    nodeIds.push(halfEdges[cycleHes[i]].from);
+                }
+                if (nodeIds.length < 3) continue;
+                const pts = nodeIds.map(nid => nodeCoord.get(nid)).filter(Boolean);
+                if (pts.length < 3) continue;
+                let area2 = 0;
+                for (let i = 0; i < pts.length; i++) {
+                    const p = pts[i];
+                    const q2 = pts[(i + 1) % pts.length];
+                    area2 += p.x * q2.y - q2.x * p.y;
+                }
+                const area = area2 * 0.5;
+                if (area > minArea) {
+                    loops.push(pts.map(p => ({ x: p.x, y: p.y })));
+                }
+            }
+            return loops;
         },
 
         findClosedLineLoops(feature, entities, pointById) {

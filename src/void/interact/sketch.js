@@ -411,10 +411,19 @@ function applySketchConstraint(type) {
         }
         specs.push({ type, refs: [lines[0].id, arcs[0].id] });
     } else if (type === 'midpoint') {
-        if (points.length !== 3) {
+        if (points.length === 3) {
+            specs.push({ type, refs: [points[0].id, points[1].id, points[2].id] });
+        } else if (points.length === 1 && lines.length === 1) {
+            const line = lines[0];
+            const aId = typeof line?.a === 'string' ? line.a : (typeof line?.p1_id === 'string' ? line.p1_id : null);
+            const bId = typeof line?.b === 'string' ? line.b : (typeof line?.p2_id === 'string' ? line.p2_id : null);
+            if (!aId || !bId) {
+                return false;
+            }
+            specs.push({ type, refs: [points[0].id, aId, bId] });
+        } else {
             return false;
         }
-        specs.push({ type, refs: [points[0].id, points[1].id, points[2].id] });
     } else if (type === 'coincident') {
         if (points.length === 2) {
             const circleArc = this.findArcWithEndpoints(feature, points[0].id, points[1].id);
@@ -1156,13 +1165,11 @@ function handleSketchDrag(delta, offset, isDone) {
     this.sketchDrag.snapMovedPointId = snapMovedPointId;
     this.hoveredSketchEntityId = snap?.hoveredId || snapId;
 
-    if (!this.sketchDrag.centerDrag) {
-        enforceSketchConstraintsInPlace(feature, {
-            useFallback: true,
-            iterations: 24,
-            draggedPointIds: Array.from(this.sketchDrag.movedPointIds || [])
-        });
-    }
+    enforceSketchConstraintsInPlace(feature, {
+        useFallback: true,
+        iterations: 24,
+        draggedPointIds: Array.from(this.sketchDrag.movedPointIds || [])
+    });
     this.sketchDrag.moved = this.sketchDrag.moved || Math.hypot(dx, dy) > 0;
     api.sketchRuntime.sync();
     this.updateSketchInteractionVisuals();
