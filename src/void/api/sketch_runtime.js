@@ -267,6 +267,8 @@ function createSketchRuntimeApi(getApi) {
             const labels = {
                 horizontal: 'H',
                 vertical: 'V',
+                horizontal_points: 'H',
+                vertical_points: 'V',
                 perpendicular: 'P',
                 collinear: 'L',
                 coincident: 'C',

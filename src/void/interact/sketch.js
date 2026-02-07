@@ -99,6 +99,9 @@ function handleSketchKeyDown(event) {
     if (editingInput) {
         return false;
     }
+    if (event.metaKey || event.ctrlKey || event.altKey) {
+        return false;
+    }
 
     if (event.code === 'Escape') {
         const hadMarquee = !!this.sketchMarquee;
@@ -585,7 +588,7 @@ function normalizeConstraintRefs(type, refs) {
         return out.slice(0, 2).sort();
     }
     if (type === 'point_on_line') {
-        return out.slice(0, 2);
+        return out.slice(0, 2).sort();
     }
     if (type === 'midpoint') {
         return out.slice(0, 3);

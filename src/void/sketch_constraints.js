@@ -138,7 +138,7 @@ function enforceWithPlanegcs(sketch, opts = {}) {
     changed = applyArcCenterCoincidentConstraints(constraints, pointEntityById, lineById, arcById, fixed) || changed;
     const dragged = new Set(Array.isArray(opts?.draggedPointIds) ? opts.draggedPointIds : []);
     changed = applyMidpointConstraints(constraints, pointEntityById, fixed, dragged) || changed;
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 4; i++) {
         const tChanged = applyTangentConstraints(constraints, pointEntityById, lineById, arcById, fixed);
         if (!tChanged) break;
         changed = true;
@@ -162,12 +162,15 @@ function toPlanegcsConstraint(c, pointById, lineById) {
         };
     }
     if (c.type === 'point_on_line') {
-        if (refs.length < 2 || !pointById.has(refs[0]) || !lineById.has(refs[1])) return null;
+        if (refs.length < 2) return null;
+        const pId = pointById.has(refs[0]) ? refs[0] : (pointById.has(refs[1]) ? refs[1] : null);
+        const lId = lineById.has(refs[0]) ? refs[0] : (lineById.has(refs[1]) ? refs[1] : null);
+        if (!pId || !lId) return null;
         return {
             id,
             type: 'point_on_line_pl',
-            p_id: String(refs[0]),
-            l_id: String(refs[1])
+            p_id: String(pId),
+            l_id: String(lId)
         };
     }
 
@@ -643,8 +646,9 @@ function projectPointToLine(pointId, line, points, fixed) {
 function applyPointOnLine(constraint, points, lines, fixed) {
     const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
     if (refs.length < 2) return false;
-    const pointId = refs[0];
-    const line = lines.get(refs[1]);
+    const pointId = points.has(refs[0]) ? refs[0] : (points.has(refs[1]) ? refs[1] : null);
+    const line = lines.get(lines.has(refs[0]) ? refs[0] : (lines.has(refs[1]) ? refs[1] : null));
+    if (!pointId) return false;
     if (!line) return false;
     return projectPointToLine(pointId, line, points, fixed);
 }
@@ -682,8 +686,8 @@ function applyArcCenterCoincidentConstraints(constraints, points, lines, arcs, f
 function applyTangent(constraint, points, lines, arcs, fixed) {
     const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
     if (refs.length < 2) return false;
-    const line = lines.get(refs[0]);
-    const arc = arcs.get(refs[1]);
+    const line = lines.get(lines.has(refs[0]) ? refs[0] : (lines.has(refs[1]) ? refs[1] : null));
+    const arc = arcs.get(arcs.has(refs[0]) ? refs[0] : (arcs.has(refs[1]) ? refs[1] : null));
     if (!line || !arc) return false;
     const [a, b] = getLineEndpoints(line, points);
     if (!a || !b) return false;
@@ -705,6 +709,10 @@ function applyTangent(constraint, points, lines, arcs, fixed) {
     const target = sign * circ.radius;
     const err = dist - target;
     if (Math.abs(err) < 1e-5) return false;
+    // Relax tangent correction to avoid violent line displacement in coupled sketches.
+    const relax = 0.35;
+    const maxStep = Math.max(0.25, len * 0.2);
+    const corr = Math.max(-maxStep, Math.min(maxStep, err * relax));
 
     const aId = getLineEndpointId(line, 'a');
     const bId = getLineEndpointId(line, 'b');
@@ -712,14 +720,17 @@ function applyTangent(constraint, points, lines, arcs, fixed) {
     const fb = isFixed(bId, fixed);
     if (fa && fb) return false;
     if (!fa && !fb) {
-        const mx = -err * nx;
-        const my = -err * ny;
-        return setPoint(a, x1 + mx, y1 + my) || setPoint(b, x2 + mx, y2 + my);
+        const mx = corr * nx;
+        const my = corr * ny;
+        let changed = false;
+        changed = setPoint(a, x1 + mx, y1 + my) || changed;
+        changed = setPoint(b, x2 + mx, y2 + my) || changed;
+        return changed;
     }
     if (!fa) {
-        return setPoint(a, x1 - err * nx, y1 - err * ny);
+        return setPoint(a, x1 + corr * nx, y1 + corr * ny);
     }
-    return setPoint(b, x2 - err * nx, y2 - err * ny);
+    return setPoint(b, x2 + corr * nx, y2 + corr * ny);
 }
 
 function applyTangentConstraints(constraints, points, lines, arcs, fixed) {
