@@ -67,6 +67,7 @@ function cancelSketchArc() {
 function cancelSketchCircle() {
     this.sketchCircleCenter = null;
     this.sketchCircleCenterRefId = null;
+    this.sketchCircleStartSeq = null;
 }
 
 function cancelSketchRect() {
@@ -277,6 +278,7 @@ function deleteSelectedSketchEntities() {
             if (typeof entity.b === 'string') endpointCandidates.add(entity.b);
         }
         if (endpointCandidates.size) {
+            const prospectiveRemove = new Set([...removeIds, ...endpointCandidates]);
             const usedByRemainingCurve = new Set();
             for (const entity of sketch.entities) {
                 if (removeIds.has(entity?.id)) continue;
@@ -287,7 +289,8 @@ function deleteSelectedSketchEntities() {
             const usedByRemainingConstraint = new Set();
             for (const constraint of sketch.constraints) {
                 const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
-                if (refs.some(ref => removeIds.has(ref))) continue;
+                // Ignore constraints that will be removed with candidate endpoints.
+                if (refs.some(ref => prospectiveRemove.has(ref))) continue;
                 for (const ref of refs) {
                     usedByRemainingConstraint.add(ref);
                 }
@@ -660,6 +663,17 @@ function handleSketchPointerDown(event, intersections) {
         this.sketchRectPreview = this.makeSketchRectPreview(start, start, this.getSketchTool() === 'rect-center');
         this.updateSketchInteractionVisuals();
     }
+    if (this.getSketchTool() === 'circle' && !this.sketchCircleCenter) {
+        const start = hitLocal || local;
+        if (!start) {
+            return true;
+        }
+        this.sketchCircleCenter = start;
+        // Do not auto-bind center to hovered point; users can add explicit constraints later.
+        this.sketchCircleCenterRefId = null;
+        this.sketchCircleStartSeq = seq;
+        this.updateSketchInteractionVisuals();
+    }
     return true;
 }
 
@@ -961,9 +975,17 @@ function handleSketchMouseUp(event, intersections) {
             return true;
         }
         if (!this.sketchCircleCenter) {
-            this.sketchCircleCenter = { x: local.x, y: local.y };
-            this.sketchCircleCenterRefId = refId;
-            this.updateSketchInteractionVisuals();
+            return true;
+        }
+        if (this.sketchCircleStartSeq === pointerDown?.seq) {
+            // Same gesture (click+drag+release): always attempt completion.
+            const created = this.createSketchCircle(feature, this.sketchCircleCenter, local, {
+                centerRefId: this.sketchCircleCenterRefId || null
+            });
+            if (created) {
+                this.cancelSketchCircle();
+                this.setSketchTool('select');
+            }
             return true;
         }
         const created = this.createSketchCircle(feature, this.sketchCircleCenter, local, {
@@ -1826,6 +1848,110 @@ function createSketchRectangle(feature, start, end, options = {}) {
     return ids;
 }
 
+function createSketchPolygonFromSelectedCircle(mode = 'inscribed') {
+    const feature = this.getEditingSketchFeature();
+    if (!feature) return false;
+    const circle = this.getSelectedSketchCircle(feature);
+    if (!circle) return false;
+
+    const raw = window.prompt('Number of sides', '6');
+    if (raw === null) return false;
+    const sides = Math.max(3, Math.min(64, Math.round(Number(raw))));
+    if (!Number.isFinite(sides) || sides < 3) return false;
+
+    const data = this.getCircleData(feature, circle);
+    if (!data) return false;
+    const { cx, cy, radius, startAngle } = data;
+    const isCircumscribed = mode === 'circumscribed';
+    const step = (Math.PI * 2) / sides;
+    const base = isCircumscribed ? startAngle + (Math.PI / sides) : startAngle;
+    const polyRadius = isCircumscribed ? (radius / Math.cos(Math.PI / sides)) : radius;
+    if (!Number.isFinite(polyRadius) || polyRadius <= SKETCH_MIN_LINE_LENGTH) return false;
+
+    const pointIds = [];
+    const lineIds = [];
+    api.features.update(feature.id, sketch => {
+        sketch.entities = Array.isArray(sketch.entities) ? sketch.entities : [];
+        sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
+
+        for (let i = 0; i < sides; i++) {
+            const ang = base + i * step;
+            const pid = this.newSketchEntityId('point');
+            pointIds.push(pid);
+            sketch.entities.push({
+                id: pid,
+                type: 'point',
+                x: cx + Math.cos(ang) * polyRadius,
+                y: cy + Math.sin(ang) * polyRadius,
+                fixed: false
+            });
+        }
+        for (let i = 0; i < sides; i++) {
+            const lid = this.newSketchEntityId('line');
+            lineIds.push(lid);
+            sketch.entities.push({
+                id: lid,
+                type: 'line',
+                construction: false,
+                a: pointIds[i],
+                b: pointIds[(i + 1) % sides]
+            });
+        }
+
+        for (let i = 1; i < lineIds.length; i++) {
+            this.toggleSketchConstraintInList(sketch, sketch.constraints, 'equal', [lineIds[0], lineIds[i]]);
+        }
+        if (isCircumscribed) {
+            for (const lineId of lineIds) {
+                this.toggleSketchConstraintInList(sketch, sketch.constraints, 'tangent', [lineId, circle.id]);
+            }
+        } else {
+            for (const pointId of pointIds) {
+                this.toggleSketchConstraintInList(sketch, sketch.constraints, 'point_on_arc', [pointId, circle.id]);
+            }
+        }
+        enforceSketchConstraintsInPlace(sketch, {
+            useFallback: true,
+            iterations: 96
+        });
+    }, {
+        opType: 'feature.update',
+        payload: { field: 'entities.add', entity: isCircumscribed ? 'polygon-circumscribed' : 'polygon-inscribed' }
+    });
+
+    this.selectedSketchEntities.clear();
+    this.selectedSketchArcCenters?.clear?.();
+    for (const id of lineIds) this.selectedSketchEntities.add(id);
+    this.hoveredSketchEntityId = null;
+    this.updateSketchInteractionVisuals();
+    return true;
+}
+
+function getSelectedSketchCircle(feature) {
+    const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+    const selected = entities.filter(entity => this.selectedSketchEntities.has(entity.id));
+    const circles = selected.filter(entity => entity?.type === 'arc' && entity?.circle);
+    if (circles.length !== 1) return null;
+    return circles[0];
+}
+
+function getCircleData(feature, circle) {
+    if (!circle || circle.type !== 'arc' || !circle.circle) return null;
+    const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+    const byId = new Map(entities.filter(e => e?.id).map(e => [e.id, e]));
+    const [a] = this.getArcEndpoints(circle, byId);
+    const cx = Number(circle.cx);
+    const cy = Number(circle.cy);
+    const radius = Number(circle.radius);
+    if (!Number.isFinite(cx) || !Number.isFinite(cy) || !Number.isFinite(radius) || radius <= SKETCH_MIN_LINE_LENGTH) {
+        return null;
+    }
+    const startAngle = a
+        ? Math.atan2((a.y || 0) - cy, (a.x || 0) - cx)
+        : 0;
+    return { cx, cy, radius, startAngle };
+}
+
 function computeArcGeometry(start, end, onArc) {
     if (!start || !end || !onArc) {
         return null;
@@ -2602,9 +2728,12 @@ export {
     sampleArcPolyline,
     createSketchPoint,
     createSketchLine,
+    createSketchPolygonFromSelectedCircle,
     deleteSelectedSketchEntities,
     deleteSelectedSketchConstraints,
     findPointByCoord,
     ensureSketchPoint,
-    getLineEndpoints
+    getLineEndpoints,
+    getSelectedSketchCircle,
+    getCircleData
 };

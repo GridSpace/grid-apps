@@ -108,9 +108,18 @@ const toolbar = {
                 api.interact.setSketchTool('rect-center');
             } }
         ]);
+        const polyMenu = this.addMenu(container, 'Polygon', [
+            { key: 'inscribed', label: 'Inscribed', onClick: () => {
+                api.interact.createSketchPolygonFromSelectedCircle?.('inscribed');
+            } },
+            { key: 'circumscribed', label: 'Circumscribed', onClick: () => {
+                api.interact.createSketchPolygonFromSelectedCircle?.('circumscribed');
+            } }
+        ]);
         this.sketchToolMenuItems = {
             ...arcMenu.items,
-            ...rectMenu.items
+            ...rectMenu.items,
+            ...polyMenu.items
         };
         this.addPipe(container);
         this.sketchConstraintMenu = this.addMenu(container, 'Constraints', [
@@ -238,6 +247,16 @@ const toolbar = {
             if (rectCenter) {
                 rectCenter.disabled = !editing;
                 rectCenter.classList.toggle('active', editing && tool === 'rect-center');
+            }
+            const inscribed = this.sketchToolMenuItems.inscribed;
+            if (inscribed) {
+                inscribed.disabled = !editing;
+                inscribed.classList.remove('active');
+            }
+            const circumscribed = this.sketchToolMenuItems.circumscribed;
+            if (circumscribed) {
+                circumscribed.disabled = !editing;
+                circumscribed.classList.remove('active');
             }
         }
         if (this.sketchConstraintButtons) {

@@ -355,6 +355,11 @@ function enforceWithFallback(sketch, opts = {}) {
                     break;
             }
         }
+        // Keep on-curve constraints "hard" at the end of each iteration so
+        // subsequent line-length adjustments do not leave vertices drifting
+        // off circles/arcs during drag.
+        iterChanged = applyPointOnArcConstraints(constraints, points, arcs, fixed) || iterChanged;
+        iterChanged = applyEqualConstraintGroups(constraints, points, lines, fixed) || iterChanged;
         changed = changed || iterChanged;
         if (!iterChanged) break;
     }
@@ -575,7 +580,10 @@ function applyEqual(constraint, points, lines, fixed) {
         const my = ((a.y || 0) + (b.y || 0)) * 0.5;
         const hx = ux1 * len2 * 0.5;
         const hy = uy1 * len2 * 0.5;
-        return setPoint(a, mx - hx, my - hy) || setPoint(b, mx + hx, my + hy);
+        let changed = false;
+        changed = setPoint(a, mx - hx, my - hy) || changed;
+        changed = setPoint(b, mx + hx, my + hy) || changed;
+        return changed;
     }
 
     const ux = ((d.x || 0) - (c.x || 0)) / len2;
@@ -586,7 +594,99 @@ function applyEqual(constraint, points, lines, fixed) {
     const my = ((c.y || 0) + (d.y || 0)) * 0.5;
     const hx = ux * target * 0.5;
     const hy = uy * target * 0.5;
-    return setPoint(c, mx - hx, my - hy) || setPoint(d, mx + hx, my + hy);
+    let changed = false;
+    changed = setPoint(c, mx - hx, my - hy) || changed;
+    changed = setPoint(d, mx + hx, my + hy) || changed;
+    return changed;
+}
+
+function applyEqualConstraintGroups(constraints, points, lines, fixed) {
+    const equalPairs = [];
+    for (const c of constraints) {
+        if (c?.type !== 'equal') continue;
+        const refs = Array.isArray(c.refs) ? c.refs : [];
+        if (refs.length < 2) continue;
+        if (!lines.has(refs[0]) || !lines.has(refs[1])) continue;
+        equalPairs.push([refs[0], refs[1]]);
+    }
+    if (!equalPairs.length) return false;
+
+    const parent = new Map();
+    const find = id => {
+        if (!parent.has(id)) parent.set(id, id);
+        let p = parent.get(id);
+        while (p !== parent.get(p)) p = parent.get(p);
+        let n = id;
+        while (parent.get(n) !== p) {
+            const next = parent.get(n);
+            parent.set(n, p);
+            n = next;
+        }
+        return p;
+    };
+    const union = (a, b) => {
+        const ra = find(a);
+        const rb = find(b);
+        if (ra !== rb) parent.set(rb, ra);
+    };
+    for (const [a, b] of equalPairs) union(a, b);
+
+    const groups = new Map();
+    for (const [a, b] of equalPairs) {
+        const ids = [a, b];
+        for (const id of ids) {
+            const r = find(id);
+            if (!groups.has(r)) groups.set(r, new Set());
+            groups.get(r).add(id);
+        }
+    }
+
+    let changed = false;
+    for (const ids of groups.values()) {
+        const linesInGroup = Array.from(ids).map(id => lines.get(id)).filter(Boolean);
+        if (linesInGroup.length < 2) continue;
+        let sum = 0;
+        let count = 0;
+        for (const line of linesInGroup) {
+            const [a, b] = getLineEndpoints(line, points);
+            if (!a || !b) continue;
+            const len = Math.hypot((b.x || 0) - (a.x || 0), (b.y || 0) - (a.y || 0));
+            if (len > EPS) {
+                sum += len;
+                count++;
+            }
+        }
+        if (!count) continue;
+        const target = sum / count;
+        for (const line of linesInGroup) {
+            const [a, b] = getLineEndpoints(line, points);
+            if (!a || !b) continue;
+            const aId = getLineEndpointId(line, 'a');
+            const bId = getLineEndpointId(line, 'b');
+            const fa = isFixed(aId, fixed);
+            const fb = isFixed(bId, fixed);
+            if (fa && fb) continue;
+            const vx = (b.x || 0) - (a.x || 0);
+            const vy = (b.y || 0) - (a.y || 0);
+            const len = Math.hypot(vx, vy);
+            if (len < EPS) continue;
+            const ux = vx / len;
+            const uy = vy / len;
+            if (fa) {
+                changed = setPoint(b, (a.x || 0) + ux * target, (a.y || 0) + uy * target) || changed;
+            } else if (fb) {
+                changed = setPoint(a, (b.x || 0) - ux * target, (b.y || 0) - uy * target) || changed;
+            } else {
+                const mx = ((a.x || 0) + (b.x || 0)) * 0.5;
+                const my = ((a.y || 0) + (b.y || 0)) * 0.5;
+                const hx = ux * target * 0.5;
+                const hy = uy * target * 0.5;
+                changed = setPoint(a, mx - hx, my - hy) || changed;
+                changed = setPoint(b, mx + hx, my + hy) || changed;
+            }
+        }
+    }
+    return changed;
 }
 
 function applyCollinear(constraint, points, lines, fixed) {
