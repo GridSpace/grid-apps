@@ -326,7 +326,7 @@ html, body {
 .doc-dialog-backdrop {
     position: fixed;
     inset: 0;
-    z-index: 10001;
+    z-index: 10030;
     background: rgba(0, 0, 0, 0.45);
     display: flex;
     align-items: center;
@@ -409,6 +409,49 @@ html, body {
     padding: 16px;
     color: var(--text-secondary);
     font-style: italic;
+}
+
+.hotkeys-dialog {
+    width: min(840px, calc(100vw - 40px));
+}
+
+.hotkeys-row {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 10px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+}
+
+.hotkeys-row + .hotkeys-row {
+    margin-top: 4px;
+}
+
+.hotkeys-row:hover {
+    border-color: rgba(90, 159, 212, 0.4);
+    background: rgba(90, 159, 212, 0.08);
+}
+
+.hotkeys-section {
+    margin: 10px 0 6px;
+    padding: 0 4px;
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.hotkeys-key {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+}
+
+.hotkeys-desc {
+    color: var(--text-secondary);
 }
 
 /* Tree items */

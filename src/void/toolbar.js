@@ -14,6 +14,7 @@ const toolbar = {
     docNameEl: null,
     openDialogEl: null,
     openDialogListEl: null,
+    hotkeysDialogEl: null,
 
     build() {
         const container = $('top-bar');
@@ -145,6 +146,9 @@ const toolbar = {
             }
             this.updateProjectionLabel();
         }, { id: 'btn-camera-toggle' });
+        this.addButton(container, '?', () => {
+            this.toggleHotkeysDialog();
+        }, { id: 'btn-hotkeys' }).classList.add('compact');
 
         const spacer = document.createElement('div');
         spacer.className = 'toolbar-spacer';
@@ -163,9 +167,21 @@ const toolbar = {
         container.appendChild(this.docNameEl);
 
         this.buildOpenDialog();
+        this.buildHotkeysDialog();
         this.updateDocumentTitle();
         this.updateSketchControls();
         window.addEventListener('void-state-change', () => this.updateSketchControls());
+        window.addEventListener('keydown', event => {
+            const activeTag = document.activeElement?.tagName;
+            const editingInput = activeTag === 'INPUT' || activeTag === 'TEXTAREA' || document.activeElement?.isContentEditable;
+            if (editingInput) return;
+            if (event.code === 'Slash' && event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey) {
+                this.toggleHotkeysDialog();
+                event.preventDefault();
+            } else if (event.code === 'Escape' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+                this.hideHotkeysDialog();
+            }
+        });
 
         console.log({ toolbar_built: true });
     },
@@ -272,6 +288,126 @@ const toolbar = {
     hideOpenDialog() {
         if (this.openDialogEl) {
             this.openDialogEl.classList.add('hidden');
+        }
+    },
+
+    hotkeys() {
+        return [
+            {
+                title: 'General',
+                items: [
+                    { key: 'Shift+/', desc: 'Toggle this hotkeys dialog' },
+                    { key: 'Space', desc: 'Clear selection' },
+                    { key: 'N', desc: 'View normal to hovered/selected face or plane' },
+                    { key: 'P', desc: 'Toggle datum plane visibility' },
+                    { key: 'Ctrl/Cmd+Z', desc: 'Undo' },
+                    { key: 'Ctrl/Cmd+Y', desc: 'Redo' },
+                    { key: 'Shift+Ctrl/Cmd+Z', desc: 'Redo' }
+                ]
+            },
+            {
+                title: 'Viewport',
+                items: [
+                    { key: 'H', desc: 'Camera home' },
+                    { key: 'T', desc: 'Camera top' },
+                    { key: 'F', desc: 'Camera front' },
+                    { key: 'Shift+F', desc: 'Fit view' }
+                ]
+            },
+            {
+                title: 'Sketch Tools',
+                items: [
+                    { key: 'V', desc: 'Select tool' },
+                    { key: 'L', desc: 'Line tool' },
+                    { key: 'Q', desc: 'Toggle construction on selected lines' },
+                    { key: 'Esc', desc: 'Cancel line mode / close dialogs' }
+                ]
+            },
+            {
+                title: 'Sketch Constraints',
+                items: [
+                    { key: 'H', desc: 'Horizontal constraint (selected line(s))' },
+                    { key: 'I', desc: 'Vertical constraint (selected line(s))' },
+                    { key: 'K', desc: 'Perpendicular (exactly 2 selected lines)' },
+                    { key: 'C', desc: 'Coincident (exactly 2 selected points)' },
+                    { key: 'F', desc: 'Fixed (selected point(s))' }
+                ]
+            },
+            {
+                title: 'Sketch Selection',
+                items: [
+                    { key: 'Delete/Backspace', desc: 'Delete selected sketch entities/constraints' }
+                ]
+            }
+        ];
+    },
+
+    buildHotkeysDialog() {
+        if (this.hotkeysDialogEl) return;
+        const backdrop = document.createElement('div');
+        backdrop.className = 'doc-dialog-backdrop hidden';
+
+        const dialog = document.createElement('div');
+        dialog.className = 'doc-dialog hotkeys-dialog';
+
+        const header = document.createElement('div');
+        header.className = 'doc-dialog-header';
+        header.textContent = 'Hotkeys';
+
+        const list = document.createElement('div');
+        list.className = 'doc-dialog-list';
+        for (const section of this.hotkeys()) {
+            const title = document.createElement('div');
+            title.className = 'hotkeys-section';
+            title.textContent = section.title;
+            list.appendChild(title);
+            for (const item of section.items) {
+                const row = document.createElement('div');
+                row.className = 'hotkeys-row';
+                const key = document.createElement('div');
+                key.className = 'hotkeys-key';
+                key.textContent = item.key;
+                const desc = document.createElement('div');
+                desc.className = 'hotkeys-desc';
+                desc.textContent = item.desc;
+                row.appendChild(key);
+                row.appendChild(desc);
+                list.appendChild(row);
+            }
+        }
+
+        const actions = document.createElement('div');
+        actions.className = 'doc-dialog-actions';
+        const closeBtn = this.addButton(actions, 'Close', () => {
+            this.hideHotkeysDialog();
+        });
+        closeBtn.classList.add('compact');
+
+        dialog.appendChild(header);
+        dialog.appendChild(list);
+        dialog.appendChild(actions);
+        backdrop.appendChild(dialog);
+        document.body.appendChild(backdrop);
+
+        backdrop.addEventListener('click', event => {
+            if (event.target === backdrop) {
+                this.hideHotkeysDialog();
+            }
+        });
+
+        this.hotkeysDialogEl = backdrop;
+    },
+
+    toggleHotkeysDialog() {
+        if (!this.hotkeysDialogEl) {
+            this.buildHotkeysDialog();
+        }
+        this.hotkeysDialogEl.classList.toggle('hidden');
+    },
+
+    hideHotkeysDialog() {
+        if (this.hotkeysDialogEl) {
+            this.hotkeysDialogEl.classList.add('hidden');
         }
     },
 

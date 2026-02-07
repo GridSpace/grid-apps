@@ -28,7 +28,12 @@ function getInteractiveObjects() {
             for (const view of rec.entityViews.values()) {
                 if (view?.object) {
                     if (view.type === 'point') {
-                        points.push(view.object);
+                        const parts = view.object.userData?._markerParts || {};
+                        if (parts.core) {
+                            points.push(parts.core);
+                        } else {
+                            points.push(view.object);
+                        }
                     } else {
                         lines.push(view.object);
                     }

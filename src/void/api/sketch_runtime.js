@@ -261,6 +261,7 @@ function createSketchRuntimeApi(getApi) {
                 })
             );
             core.renderOrder = 8;
+            core.userData.sketchPointPick = true;
             marker.add(core);
 
             const ringBlack = this.makePointRing(0.94, 0x101010, 0.95);
@@ -310,6 +311,7 @@ function createSketchRuntimeApi(getApi) {
             const originPoint = this.createSketchPointMarker(0, 0, { virtualOrigin: true });
             originPoint.userData.sketchEntityId = SKETCH_VIRTUAL_ORIGIN_ID;
             originPoint.userData.sketchEntityType = 'point';
+            this.tagPointMarker(originPoint, SKETCH_VIRTUAL_ORIGIN_ID);
             rec.entitiesGroup.add(originPoint);
             rec.entityViews.set(SKETCH_VIRTUAL_ORIGIN_ID, {
                 entity: { id: SKETCH_VIRTUAL_ORIGIN_ID, type: 'point', x: 0, y: 0, virtual: true },
@@ -367,6 +369,7 @@ function createSketchRuntimeApi(getApi) {
                     const point = this.createSketchPointMarker(entity.x || 0, entity.y || 0);
                     point.userData.sketchEntityId = entity.id;
                     point.userData.sketchEntityType = 'point';
+                    this.tagPointMarker(point, entity.id);
                     rec.entitiesGroup.add(point);
                     rec.entityViews.set(entity.id, { entity, object: point, type: 'point' });
                 }
@@ -684,6 +687,15 @@ function createSketchRuntimeApi(getApi) {
                 return null;
             }
             return { x: proj.x, y: proj.y };
+        },
+
+        tagPointMarker(marker, id) {
+            if (!marker) return;
+            marker.traverse(obj => {
+                obj.userData = obj.userData || {};
+                obj.userData.sketchEntityId = id;
+                obj.userData.sketchEntityType = 'point';
+            });
         },
 
         applyConstraintOffset(constraint, screenPos, slotIndex = 0, slotCount = 1) {
