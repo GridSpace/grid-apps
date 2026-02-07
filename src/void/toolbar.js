@@ -120,6 +120,7 @@ const toolbar = {
             { key: 'equal', label: 'Equal', onClick: () => api.interact.applySketchConstraint?.('equal') },
             { key: 'collinear', label: 'Collinear', onClick: () => api.interact.applySketchConstraint?.('collinear') },
             { key: 'tangent', label: 'Tangent', onClick: () => api.interact.applySketchConstraint?.('tangent') },
+            { key: 'midpoint', label: 'Midpoint', onClick: () => api.interact.applySketchConstraint?.('midpoint') },
             { key: 'coincident', label: 'Coincident', onClick: () => api.interact.applySketchConstraint?.('coincident') },
             { key: 'fixed', label: 'Fixed', onClick: () => api.interact.applySketchConstraint?.('fixed') }
         ]);

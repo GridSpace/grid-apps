@@ -407,6 +407,11 @@ function applySketchConstraint(type) {
             return false;
         }
         specs.push({ type, refs: [lines[0].id, arcs[0].id] });
+    } else if (type === 'midpoint') {
+        if (points.length !== 3) {
+            return false;
+        }
+        specs.push({ type, refs: [points[0].id, points[1].id, points[2].id] });
     } else if (type === 'coincident') {
         if (points.length === 2) {
             const circleArc = this.findArcWithEndpoints(feature, points[0].id, points[1].id);
@@ -414,6 +419,8 @@ function applySketchConstraint(type) {
                 return this.convertArcToCircle(feature, circleArc.id, points[0].id, points[1].id);
             }
             specs.push({ type, refs: [points[0].id, points[1].id] });
+        } else if (points.length === 1 && lines.length === 1) {
+            specs.push({ type: 'point_on_line', refs: [points[0].id, lines[0].id] });
         } else if (points.length === 1 && arcCenters.length === 1) {
             specs.push({ type: 'arc_center_coincident', refs: [arcCenters[0].id, points[0].id] });
         } else {
@@ -576,6 +583,9 @@ function normalizeConstraintRefs(type, refs) {
     }
     if (type === 'horizontal_points' || type === 'vertical_points') {
         return out.slice(0, 2).sort();
+    }
+    if (type === 'point_on_line') {
+        return out.slice(0, 2);
     }
     if (type === 'midpoint') {
         return out.slice(0, 3);
@@ -1146,7 +1156,8 @@ function handleSketchDrag(delta, offset, isDone) {
     if (!this.sketchDrag.centerDrag) {
         enforceSketchConstraintsInPlace(feature, {
             useFallback: true,
-            iterations: 24
+            iterations: 24,
+            draggedPointIds: Array.from(this.sketchDrag.movedPointIds || [])
         });
     }
     this.sketchDrag.moved = this.sketchDrag.moved || Math.hypot(dx, dy) > 0;
@@ -1713,7 +1724,7 @@ function createSketchRectangle(feature, start, end, options = {}) {
         p2: this.newSketchEntityId('point'),
         p3: this.newSketchEntityId('point'),
         p4: this.newSketchEntityId('point'),
-        pc: this.newSketchEntityId('point'),
+        pc: options.centerMode ? this.newSketchEntityId('point') : null,
         l1: this.newSketchEntityId('line'),
         l2: this.newSketchEntityId('line'),
         l3: this.newSketchEntityId('line'),
@@ -1723,19 +1734,22 @@ function createSketchRectangle(feature, start, end, options = {}) {
         sketch.entities = Array.isArray(sketch.entities) ? sketch.entities : [];
         sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
 
-        sketch.entities.push(
+        const pts = [
             { id: ids.p1, type: 'point', x: c1.x, y: c1.y, fixed: false },
             { id: ids.p2, type: 'point', x: c2.x, y: c2.y, fixed: false },
             { id: ids.p3, type: 'point', x: c3.x, y: c3.y, fixed: false },
-            { id: ids.p4, type: 'point', x: c4.x, y: c4.y, fixed: false },
-            {
+            { id: ids.p4, type: 'point', x: c4.x, y: c4.y, fixed: false }
+        ];
+        if (ids.pc) {
+            pts.push({
                 id: ids.pc,
                 type: 'point',
                 x: ((c1.x || 0) + (c3.x || 0)) * 0.5,
                 y: ((c1.y || 0) + (c3.y || 0)) * 0.5,
                 fixed: false
-            }
-        );
+            });
+        }
+        sketch.entities.push(...pts);
 
         if (options.startRefId) {
             addCoincidentConstraintIfMissing.call(this, sketch, ids.p1, options.startRefId);
@@ -1755,7 +1769,7 @@ function createSketchRectangle(feature, start, end, options = {}) {
         this.toggleSketchConstraintInList(sketch, sketch.constraints, 'horizontal', [ids.l3]);
         this.toggleSketchConstraintInList(sketch, sketch.constraints, 'vertical', [ids.l2]);
         this.toggleSketchConstraintInList(sketch, sketch.constraints, 'vertical', [ids.l4]);
-        if (options.centerMode) {
+        if (options.centerMode && ids.pc) {
             this.toggleSketchConstraintInList(sketch, sketch.constraints, 'midpoint', [ids.pc, ids.p1, ids.p3]);
         }
         enforceSketchConstraintsInPlace(sketch);

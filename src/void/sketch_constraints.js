@@ -48,7 +48,7 @@ function enforceSketchConstraintsInPlace(sketch, opts = {}) {
     return enforceWithFallback(sketch, opts);
 }
 
-function enforceWithPlanegcs(sketch) {
+function enforceWithPlanegcs(sketch, opts = {}) {
     const entities = Array.isArray(sketch?.entities) ? sketch.entities : [];
     const constraints = Array.isArray(sketch?.constraints) ? sketch.constraints : [];
     if (!entities.length || !constraints.length) {
@@ -136,7 +136,8 @@ function enforceWithPlanegcs(sketch) {
 
     const fixed = captureFixedAnchors(constraints, pointEntityById);
     changed = applyArcCenterCoincidentConstraints(constraints, pointEntityById, lineById, arcById, fixed) || changed;
-    changed = applyMidpointConstraints(constraints, pointEntityById, fixed) || changed;
+    const dragged = new Set(Array.isArray(opts?.draggedPointIds) ? opts.draggedPointIds : []);
+    changed = applyMidpointConstraints(constraints, pointEntityById, fixed, dragged) || changed;
     for (let i = 0; i < 8; i++) {
         const tChanged = applyTangentConstraints(constraints, pointEntityById, lineById, arcById, fixed);
         if (!tChanged) break;
@@ -158,6 +159,15 @@ function toPlanegcsConstraint(c, pointById, lineById) {
             type: 'p2p_coincident',
             p1_id: String(refs[0]),
             p2_id: String(refs[1])
+        };
+    }
+    if (c.type === 'point_on_line') {
+        if (refs.length < 2 || !pointById.has(refs[0]) || !lineById.has(refs[1])) return null;
+        return {
+            id,
+            type: 'point_on_line_pl',
+            p_id: String(refs[0]),
+            l_id: String(refs[1])
         };
     }
 
@@ -286,6 +296,7 @@ function enforceWithFallback(sketch, opts = {}) {
     }
 
     const fixed = captureFixedAnchors(constraints, points);
+    const dragged = new Set(Array.isArray(opts?.draggedPointIds) ? opts.draggedPointIds : []);
     const iterations = Math.max(1, Math.min(64, opts.iterations || 12));
     let changed = false;
 
@@ -299,6 +310,9 @@ function enforceWithFallback(sketch, opts = {}) {
                     break;
                 case 'coincident':
                     iterChanged = applyCoincident(c, points, fixed) || iterChanged;
+                    break;
+                case 'point_on_line':
+                    iterChanged = applyPointOnLine(c, points, lines, fixed) || iterChanged;
                     break;
                 case 'horizontal':
                     iterChanged = applyHorizontal(c, points, lines, fixed) || iterChanged;
@@ -328,7 +342,7 @@ function enforceWithFallback(sketch, opts = {}) {
                     iterChanged = applyArcCenterCoincident(c, points, lines, arcs, fixed) || iterChanged;
                     break;
                 case 'midpoint':
-                    iterChanged = applyMidpoint(c, points, fixed) || iterChanged;
+                    iterChanged = applyMidpoint(c, points, fixed, dragged) || iterChanged;
                     break;
                 default:
                     break;
@@ -626,6 +640,15 @@ function projectPointToLine(pointId, line, points, fixed) {
     return setPoint(p, (a.x || 0) + abx * t, (a.y || 0) + aby * t);
 }
 
+function applyPointOnLine(constraint, points, lines, fixed) {
+    const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
+    if (refs.length < 2) return false;
+    const pointId = refs[0];
+    const line = lines.get(refs[1]);
+    if (!line) return false;
+    return projectPointToLine(pointId, line, points, fixed);
+}
+
 function applyArcCenterCoincident(constraint, points, lines, arcs, fixed) {
     const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
     if (refs.length < 2) return false;
@@ -708,7 +731,7 @@ function applyTangentConstraints(constraints, points, lines, arcs, fixed) {
     return changed;
 }
 
-function applyMidpoint(constraint, points, fixed) {
+function applyMidpoint(constraint, points, fixed, dragged = new Set()) {
     const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
     if (refs.length < 3) return false;
     const mid = points.get(refs[0]);
@@ -718,6 +741,9 @@ function applyMidpoint(constraint, points, fixed) {
     const fm = isFixed(refs[0], fixed);
     const fa = isFixed(refs[1], fixed);
     const fb = isFixed(refs[2], fixed);
+    const midDragged = !!dragged?.has?.(refs[0]);
+    const aDragged = !!dragged?.has?.(refs[1]);
+    const bDragged = !!dragged?.has?.(refs[2]);
     if (fm && fa && fb) return false;
 
     if (fm && fa) {
@@ -731,6 +757,20 @@ function applyMidpoint(constraint, points, fixed) {
     }
     const mx = ((a.x || 0) + (b.x || 0)) * 0.5;
     const my = ((a.y || 0) + (b.y || 0)) * 0.5;
+    if (midDragged && !fm) {
+        if (fa && fb) {
+            return setPoint(mid, mx, my);
+        }
+        const tx = (mid.x || 0) - mx;
+        const ty = (mid.y || 0) - my;
+        let moved = false;
+        if (!fa) moved = setPoint(a, (a.x || 0) + tx, (a.y || 0) + ty) || moved;
+        if (!fb) moved = setPoint(b, (b.x || 0) + tx, (b.y || 0) + ty) || moved;
+        return moved;
+    }
+    if ((aDragged || bDragged) && !fm) {
+        return setPoint(mid, mx, my);
+    }
     if (!fm) {
         return setPoint(mid, mx, my);
     }
@@ -743,11 +783,11 @@ function applyMidpoint(constraint, points, fixed) {
     return changed;
 }
 
-function applyMidpointConstraints(constraints, points, fixed) {
+function applyMidpointConstraints(constraints, points, fixed, dragged = new Set()) {
     let changed = false;
     for (const c of constraints) {
         if (c?.type !== 'midpoint') continue;
-        changed = applyMidpoint(c, points, fixed) || changed;
+        changed = applyMidpoint(c, points, fixed, dragged) || changed;
     }
     return changed;
 }
