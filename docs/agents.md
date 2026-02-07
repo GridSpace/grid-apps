@@ -164,7 +164,7 @@ src/
 ### Key Features
 - **Feature tree scaffold**: Sidebar structure is present; full history dependency/update graph is not wired yet
 - **Datum planes**: XY, XZ, YZ reference planes
-- **Constraint sketching**: planned (`@salusoft89/planegcs`), not integrated yet
+- **Constraint sketching**: integrated (`@salusoft89/planegcs` + fallback solver path)
 - **Manifold BREP**: planned feature path (extrude/cut/revolve), early stubs today
 - **Onshape camera**: Left=select, Middle=pan/zoom, Right=rotate
 - **ViewCube**: 3D navigation widget (top-right corner)
@@ -188,17 +188,18 @@ src/
 - `Origin` in void is an overlay point (not `space.platform` origin)
 - IndexedDB revision store name is `versions` (older notes may still mention `features`)
 
-**Phase 2: Sketch System (Next)**
-- planegcs constraint solver integration
-- 2D sketch canvas overlay
-- Geometric primitives (line, circle, arc)
-- Constraints (distance, angle, parallel, perpendicular)
+**Phase 2: Sketch System (Current Workstream)**
+- planegcs constraint solver integration is active
+- sketch runtime supports line/arc/circle workflows
+- constraints currently wired: coincident, fixed, horizontal, vertical, perpendicular, arc-center coincident
+- next constraints in-progress order: equal, collinear, tangent
+- next tools after constraints: corner rectangle, center rectangle (as constrained line sets)
 
 **Sketch MVP Contract (checkpointed, 2026-02-06)**
 - Primitive rollout:
   - v1: `point` + `line`
-  - v2 next: `arc`
-  - `circle` treated as specialized arc family later
+  - `arc` implemented
+  - `circle` implemented (internal circle-mode arc representation)
   - Rectangle is not a primitive; model as constrained lines (corner/center patterns)
 - Input behavior:
   - Click+drag creation for points and lines
@@ -211,12 +212,14 @@ src/
   - Store sketch geometry in sketch-local 2D coordinates
   - Plane/frame transform maps sketch-local geometry into 3D scene
   - This is required for future derived geometry from non-datum faces/parts
-- Constraint rollout:
-  - Implement annotation first (record/apply metadata), enforcement deferred
-  - Initial constraint set:
+- Constraint rollout (checkpoint):
+  - Solver-backed enforcement is active (planegcs + fallback)
+  - Implemented:
     - Lines: `horizontal`, `vertical`, `perpendicular`
     - Points: `coincident`, `fixed`
-  - Solver integration comes after editing mechanics are stable
+    - Arc/Circle: `arc_center_coincident`
+  - Next target set:
+    - `equal` (line length), `collinear`, `tangent`
 - Dimensions:
   - Support both driven and derived dimensions (for later variable system)
 - Selection roadmap:
@@ -246,7 +249,7 @@ src/
 - `/Users/stewart/Code/gs-apps/VOID-FORM.md` - Full implementation notes
 
 ### Dependencies (Unique to void:form)
-- **@salusoft89/planegcs** ^1.1.7 - 2D constraint solver (planned use)
+- **@salusoft89/planegcs** ^1.1.7 - 2D constraint solver (active)
 
 ---
 

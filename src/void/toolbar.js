@@ -106,6 +106,8 @@ const toolbar = {
             { key: 'horizontal', label: 'Horizontal', onClick: () => api.interact.applySketchConstraint?.('horizontal') },
             { key: 'vertical', label: 'Vertical', onClick: () => api.interact.applySketchConstraint?.('vertical') },
             { key: 'perpendicular', label: 'Perpendicular', onClick: () => api.interact.applySketchConstraint?.('perpendicular') },
+            { key: 'equal', label: 'Equal', onClick: () => api.interact.applySketchConstraint?.('equal') },
+            { key: 'collinear', label: 'Collinear', onClick: () => api.interact.applySketchConstraint?.('collinear') },
             { key: 'coincident', label: 'Coincident', onClick: () => api.interact.applySketchConstraint?.('coincident') },
             { key: 'fixed', label: 'Fixed', onClick: () => api.interact.applySketchConstraint?.('fixed') }
         ]);
@@ -347,6 +349,8 @@ const toolbar = {
                     { key: 'H', desc: 'Horizontal constraint (selected line(s))' },
                     { key: 'I', desc: 'Vertical constraint (selected line(s))' },
                     { key: 'K', desc: 'Perpendicular (exactly 2 selected lines)' },
+                    { key: 'E', desc: 'Equal length (selected line pair/group)' },
+                    { key: 'G', desc: 'Collinear (exactly 2 selected lines)' },
                     { key: 'C', desc: 'Coincident (exactly 2 selected points)' },
                     { key: 'F', desc: 'Fixed (selected point(s))' }
                 ]
