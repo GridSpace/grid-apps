@@ -376,7 +376,7 @@ const toolbar = {
                     { key: 'K', desc: 'Perpendicular (exactly 2 selected lines)' },
                     { key: 'E', desc: 'Equal length (selected line pair/group)' },
                     { key: 'G', desc: 'Collinear (exactly 2 selected lines)' },
-                    { key: 'T', desc: 'Tangent (one selected line + one selected arc/circle)' },
+                    { key: 'T', desc: 'Tangent (line+arc/circle or arc/circle pair)' },
                     { key: 'C', desc: 'Coincident (exactly 2 selected points)' },
                     { key: 'F', desc: 'Fixed (selected point(s))' }
                 ]

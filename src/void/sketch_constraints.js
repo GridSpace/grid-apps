@@ -807,6 +807,13 @@ function applyTangent(constraint, points, lines, arcs, fixed) {
     if (refs.length < 2) return false;
     const line = lines.get(lines.has(refs[0]) ? refs[0] : (lines.has(refs[1]) ? refs[1] : null));
     const arc = arcs.get(arcs.has(refs[0]) ? refs[0] : (arcs.has(refs[1]) ? refs[1] : null));
+    if (!line && !arc) return false;
+    if (!line && arc) {
+        const a1 = arcs.get(refs[0]);
+        const a2 = arcs.get(refs[1]);
+        if (!a1 || !a2) return false;
+        return applyArcArcTangent(a1, a2, points, fixed);
+    }
     if (!line || !arc) return false;
     const [a, b] = getLineEndpoints(line, points);
     if (!a || !b) return false;
@@ -850,6 +857,63 @@ function applyTangent(constraint, points, lines, arcs, fixed) {
         return setPoint(a, x1 + corr * nx, y1 + corr * ny);
     }
     return setPoint(b, x2 + corr * nx, y2 + corr * ny);
+}
+
+function applyArcArcTangent(arc1, arc2, points, fixed) {
+    const c1 = getArcCircleData(arc1, points);
+    const c2 = getArcCircleData(arc2, points);
+    if (!c1 || !c2) return false;
+
+    let dx = c2.cx - c1.cx;
+    let dy = c2.cy - c1.cy;
+    let dist = Math.hypot(dx, dy);
+    if (!Number.isFinite(dist) || dist < EPS) {
+        dx = 1;
+        dy = 0;
+        dist = 1;
+    }
+    const ux = dx / dist;
+    const uy = dy / dist;
+
+    const ext = c1.radius + c2.radius;
+    const intl = Math.abs(c1.radius - c2.radius);
+    const target = Math.abs(dist - ext) <= Math.abs(dist - intl) ? ext : intl;
+    const err = dist - target;
+    if (Math.abs(err) < 1e-5) return false;
+
+    const relax = 0.35;
+    const maxStep = Math.max(0.25, Math.max(c1.radius, c2.radius) * 0.25);
+    const corr = Math.max(-maxStep, Math.min(maxStep, err * relax));
+
+    // Prefer moving arc2 unless both its endpoints are fixed.
+    const a2id = getLineEndpointId(arc2, 'a');
+    const b2id = getLineEndpointId(arc2, 'b');
+    const a2f = isFixed(a2id, fixed);
+    const b2f = isFixed(b2id, fixed);
+    const a1id = getLineEndpointId(arc1, 'a');
+    const b1id = getLineEndpointId(arc1, 'b');
+    const a1f = isFixed(a1id, fixed);
+    const b1f = isFixed(b1id, fixed);
+
+    if (!(a2f && b2f)) {
+        return moveArcCenterBy(arc2, points, fixed, -corr * ux, -corr * uy);
+    }
+    if (!(a1f && b1f)) {
+        return moveArcCenterBy(arc1, points, fixed, corr * ux, corr * uy);
+    }
+    return false;
+}
+
+function moveArcCenterBy(arc, points, fixed, dx, dy) {
+    const [a, b] = getLineEndpoints(arc, points);
+    if (!a || !b) return false;
+    const center = getArcCenter(arc, a, b);
+    if (!center) return false;
+    const aId = getLineEndpointId(arc, 'a');
+    const bId = getLineEndpointId(arc, 'b');
+    const fa = !!(aId && fixed.has(aId));
+    const fb = !!(bId && fixed.has(bId));
+    return enforceArcFromCenter(arc, a, b, center.x + dx, center.y + dy, fa, fb);
 }
 
 function applyTangentConstraints(constraints, points, lines, arcs, fixed) {

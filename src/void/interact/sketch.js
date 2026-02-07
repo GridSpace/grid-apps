@@ -406,10 +406,13 @@ function applySketchConstraint(type) {
         }
         specs.push({ type, refs: [lines[0].id, lines[1].id] });
     } else if (type === 'tangent') {
-        if (lines.length !== 1 || arcs.length !== 1) {
+        if (lines.length === 1 && arcs.length === 1) {
+            specs.push({ type, refs: [lines[0].id, arcs[0].id] });
+        } else if (lines.length === 0 && arcs.length === 2) {
+            specs.push({ type, refs: [arcs[0].id, arcs[1].id] });
+        } else {
             return false;
         }
-        specs.push({ type, refs: [lines[0].id, arcs[0].id] });
     } else if (type === 'midpoint') {
         if (points.length === 3) {
             specs.push({ type, refs: [points[0].id, points[1].id, points[2].id] });

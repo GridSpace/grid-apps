@@ -1478,6 +1478,20 @@ function createSketchRuntimeApi(getApi) {
                         return { x: ((a.x || 0) + (b.x || 0)) * 0.5, y: ((a.y || 0) + (b.y || 0)) * 0.5 };
                     }
                 }
+                if (constraint?.type === 'tangent') {
+                    const arcRefs = refs.map(id => byId.get(id)).filter(e => e?.type === 'arc');
+                    if (arcRefs.length >= 2) {
+                        const a1 = arcRefs[0];
+                        const a2 = arcRefs[1];
+                        const [p1a, p1b] = this.getArcEndpoints(a1, byId);
+                        const [p2a, p2b] = this.getArcEndpoints(a2, byId);
+                        const c1 = this.getArcCenterLocal(a1, p1a, p1b);
+                        const c2 = this.getArcCenterLocal(a2, p2a, p2b);
+                        if (c1 && c2) {
+                            return { x: (c1.x + c2.x) * 0.5, y: (c1.y + c2.y) * 0.5 };
+                        }
+                    }
+                }
             }
 
             const points = refs.map(id => byId.get(id)).filter(e => e?.type === 'point');
