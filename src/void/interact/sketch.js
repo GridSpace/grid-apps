@@ -433,6 +433,8 @@ function applySketchConstraint(type) {
             specs.push({ type, refs: [points[0].id, points[1].id] });
         } else if (points.length === 1 && lines.length === 1) {
             specs.push({ type: 'point_on_line', refs: [points[0].id, lines[0].id] });
+        } else if (points.length === 1 && arcs.length === 1) {
+            specs.push({ type: 'point_on_arc', refs: [points[0].id, arcs[0].id] });
         } else if (points.length === 1 && arcCenters.length === 1) {
             specs.push({ type: 'arc_center_coincident', refs: [arcCenters[0].id, points[0].id] });
         } else {
@@ -596,7 +598,7 @@ function normalizeConstraintRefs(type, refs) {
     if (type === 'horizontal_points' || type === 'vertical_points') {
         return out.slice(0, 2).sort();
     }
-    if (type === 'point_on_line') {
+    if (type === 'point_on_line' || type === 'point_on_arc') {
         return out.slice(0, 2).sort();
     }
     if (type === 'midpoint') {
@@ -1172,7 +1174,7 @@ function handleSketchDrag(delta, offset, isDone) {
 
     enforceSketchConstraintsInPlace(feature, {
         useFallback: true,
-        iterations: 24,
+        iterations: 48,
         draggedPointIds: Array.from(this.sketchDrag.movedPointIds || [])
     });
     this.sketchDrag.moved = this.sketchDrag.moved || Math.hypot(dx, dy) > 0;

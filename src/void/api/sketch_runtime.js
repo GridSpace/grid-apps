@@ -273,6 +273,7 @@ function createSketchRuntimeApi(getApi) {
                 collinear: 'L',
                 coincident: 'C',
                 point_on_line: 'PL',
+                point_on_arc: 'PA',
                 arc_center_coincident: 'C',
                 fixed: 'F',
                 tangent: 'T',

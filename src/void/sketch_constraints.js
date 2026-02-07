@@ -135,6 +135,7 @@ function enforceWithPlanegcs(sketch, opts = {}) {
     }
 
     const fixed = captureFixedAnchors(constraints, pointEntityById);
+    changed = applyPointOnArcConstraints(constraints, pointEntityById, arcById, fixed) || changed;
     changed = applyArcCenterCoincidentConstraints(constraints, pointEntityById, lineById, arcById, fixed) || changed;
     const dragged = new Set(Array.isArray(opts?.draggedPointIds) ? opts.draggedPointIds : []);
     changed = applyMidpointConstraints(constraints, pointEntityById, fixed, dragged) || changed;
@@ -316,6 +317,9 @@ function enforceWithFallback(sketch, opts = {}) {
                     break;
                 case 'point_on_line':
                     iterChanged = applyPointOnLine(c, points, lines, fixed) || iterChanged;
+                    break;
+                case 'point_on_arc':
+                    iterChanged = applyPointOnArc(c, points, arcs, fixed) || iterChanged;
                     break;
                 case 'horizontal':
                     iterChanged = applyHorizontal(c, points, lines, fixed) || iterChanged;
@@ -651,6 +655,121 @@ function applyPointOnLine(constraint, points, lines, fixed) {
     if (!pointId) return false;
     if (!line) return false;
     return projectPointToLine(pointId, line, points, fixed);
+}
+
+function applyPointOnArc(constraint, points, arcs, fixed) {
+    const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
+    if (refs.length < 2) return false;
+    const pointId = points.has(refs[0]) ? refs[0] : (points.has(refs[1]) ? refs[1] : null);
+    const arc = arcs.get(arcs.has(refs[0]) ? refs[0] : (arcs.has(refs[1]) ? refs[1] : null));
+    if (!pointId || !arc || isFixed(pointId, fixed)) return false;
+    const p = points.get(pointId);
+    if (!p) return false;
+
+    const circ = getArcCircleData(arc, points);
+    if (!circ) return false;
+    const px = p.x || 0;
+    const py = p.y || 0;
+    const vx = px - circ.cx;
+    const vy = py - circ.cy;
+    const vlen = Math.hypot(vx, vy);
+    if (!Number.isFinite(vlen) || vlen < EPS) return false;
+
+    if (arc?.circle) {
+        return setPoint(p, circ.cx + (vx / vlen) * circ.radius, circ.cy + (vy / vlen) * circ.radius);
+    }
+
+    // For arc segments, project onto sampled arc polyline.
+    const [a, b] = getLineEndpoints(arc, points);
+    if (!a || !b) return false;
+    const samples = sampleArcPolylineForConstraint(arc, a, b, 64);
+    if (samples.length < 2) return false;
+    let best = null;
+    for (let i = 0; i < samples.length - 1; i++) {
+        const p1 = samples[i];
+        const p2 = samples[i + 1];
+        const cand = nearestPointOnSegment(px, py, p1.x, p1.y, p2.x, p2.y);
+        if (!best || cand.d2 < best.d2) {
+            best = cand;
+        }
+    }
+    if (!best) return false;
+    return setPoint(p, best.x, best.y);
+}
+
+function applyPointOnArcConstraints(constraints, points, arcs, fixed) {
+    let changed = false;
+    for (const c of constraints) {
+        if (c?.type !== 'point_on_arc') continue;
+        changed = applyPointOnArc(c, points, arcs, fixed) || changed;
+    }
+    return changed;
+}
+
+function nearestPointOnSegment(px, py, ax, ay, bx, by) {
+    const abx = bx - ax;
+    const aby = by - ay;
+    const abLenSq = abx * abx + aby * aby;
+    if (abLenSq < EPS) {
+        const dx = px - ax;
+        const dy = py - ay;
+        return { x: ax, y: ay, d2: dx * dx + dy * dy };
+    }
+    const apx = px - ax;
+    const apy = py - ay;
+    const t = Math.max(0, Math.min(1, (apx * abx + apy * aby) / abLenSq));
+    const x = ax + abx * t;
+    const y = ay + aby * t;
+    const dx = px - x;
+    const dy = py - y;
+    return { x, y, d2: dx * dx + dy * dy };
+}
+
+function sampleArcPolylineForConstraint(arc, a, b, segments = 48) {
+    if (arc?.circle && Number.isFinite(arc?.cx) && Number.isFinite(arc?.cy) && Number.isFinite(arc?.radius)) {
+        const count = Math.max(24, segments);
+        const pts = [];
+        const start = Math.atan2((a.y || 0) - (arc.cy || 0), (a.x || 0) - (arc.cx || 0));
+        for (let i = 0; i <= count; i++) {
+            const t = i / count;
+            const ang = start + t * Math.PI * 2;
+            pts.push({
+                x: (arc.cx || 0) + Math.cos(ang) * (arc.radius || 0),
+                y: (arc.cy || 0) + Math.sin(ang) * (arc.radius || 0)
+            });
+        }
+        return pts;
+    }
+    const center = getArcCenter(arc, a, b);
+    if (!center) return [];
+    const radius = Math.hypot((a.x || 0) - center.x, (a.y || 0) - center.y);
+    if (radius < EPS) return [];
+    const startAngle = Number.isFinite(arc?.startAngle) ? arc.startAngle : Math.atan2((a.y || 0) - center.y, (a.x || 0) - center.x);
+    const endAngle = Number.isFinite(arc?.endAngle) ? arc.endAngle : Math.atan2((b.y || 0) - center.y, (b.x || 0) - center.x);
+    const ccw = arc?.ccw !== false;
+    const tau = Math.PI * 2;
+    let sweep;
+    if (ccw) {
+        sweep = (endAngle - startAngle) % tau;
+        if (sweep < 0) sweep += tau;
+    } else {
+        sweep = (startAngle - endAngle) % tau;
+        if (sweep < 0) sweep += tau;
+        sweep = -sweep;
+    }
+    const count = Math.max(8, segments);
+    const pts = [];
+    for (let i = 0; i <= count; i++) {
+        const t = i / count;
+        const ang = startAngle + sweep * t;
+        pts.push({
+            x: center.x + Math.cos(ang) * radius,
+            y: center.y + Math.sin(ang) * radius
+        });
+    }
+    pts[0] = { x: a.x || 0, y: a.y || 0 };
+    pts[pts.length - 1] = { x: b.x || 0, y: b.y || 0 };
+    return pts;
 }
 
 function applyArcCenterCoincident(constraint, points, lines, arcs, fixed) {
