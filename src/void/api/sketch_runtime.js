@@ -952,16 +952,23 @@ function createSketchRuntimeApi(getApi) {
             const hoveredEntityId = rec.interaction?.hoveredId || null;
             const selectedConstraintIds = rec.interaction?.selectedConstraintIds || new Set();
             const hoveredConstraintId = rec.interaction?.hoveredConstraintId || null;
+            const draggingConstraintId = this._glyphDrag?.constraintId || null;
 
             const visible = [];
             for (const constraint of constraints) {
                 const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
                 const byEntity = refs.some(ref => selectedEntityIds.has(ref));
                 const byHover = !!hoveredEntityId && refs.includes(hoveredEntityId);
-                const byConstraint = selectedConstraintIds.has(constraint?.id);
-                if (byEntity || byHover || byConstraint) {
+                const byDrag = draggingConstraintId === constraint?.id;
+                if (byEntity || byHover || byDrag) {
                     visible.push(constraint);
                 }
+            }
+            // If the currently hovered constraint is no longer visible as a glyph,
+            // clear hover state so constrained-entity highlight does not stick.
+            if (hoveredConstraintId && !visible.some(c => c?.id === hoveredConstraintId)) {
+                const api = getApi();
+                api.interact?.setHoveredSketchConstraint?.(null);
             }
             if (!visible.length) {
                 return;
