@@ -109,7 +109,7 @@ function enforceWithPlanegcs(sketch, opts = {}) {
     gcsWrapper.push_primitives_and_params(primitives);
     const status = gcsWrapper.solve(Algorithm.DogLeg);
     if (!(status === SolveStatus.Success || status === SolveStatus.Converged)) {
-        return false;
+        throw new Error(`planegcs solve status=${status}`);
     }
 
     gcsWrapper.apply_solution();

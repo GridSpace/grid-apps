@@ -1044,6 +1044,11 @@ function handleSketchDrag(delta, offset, isDone) {
                 this.toggleSketchConstraintInList(feature, feature.constraints, 'arc_center_coincident', [snapArcId, snapMovedPointId]);
                 enforceSketchConstraintsInPlace(feature);
             }
+            // Always run one final full solve at gesture end to settle coupled constraints.
+            enforceSketchConstraintsInPlace(feature, {
+                useFallback: true,
+                iterations: 48
+            });
             api.features.commit(feature.id, {
                 opType: 'feature.update',
                 payload: {
