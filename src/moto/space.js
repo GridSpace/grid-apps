@@ -186,7 +186,7 @@ function tweenit() {
 
 tweenit();
 
-function tweenCamPan(x,y,z,left,up) {
+function tweenCamPan(x,y,z,left,up,time) {
     updateLastAction();
     let pos = viewControl.getPosition();
     pos.panX = x;
@@ -194,6 +194,7 @@ function tweenCamPan(x,y,z,left,up) {
     pos.panZ = z;
     if (left !== undefined) pos.left = left;
     if (up !== undefined) pos.up = up;
+    if (time !== undefined) pos.time = time;
     tweenCam(pos);
 }
 
@@ -1084,18 +1085,22 @@ function onMouseMove(event) {
 
     if (viewControl.enabled) {
         event.preventDefault();
-        let selection = mouseHover ? mouseHover() : null;
-        if (selection && selection.length > 0) {
-            int = intersect(selection, selectRecurse);
-            if (int.length > 0) mouseHover(int[0], event, int);
-            else if (mouseHoverNull) mouseHoverNull();
-        }
-        if ((!int || int.length == 0) && platformHover) {
-            vis = platform.visible;
-            platform.visible = true;
-            int = intersect([platform], false);
-            platform.visible = vis;
-            if (int && int.length > 0) platformHover(int[0].point);
+        if (!event.buttons) {
+            let selection = mouseHover ? mouseHover() : null;
+            if (selection && selection.length > 0) {
+                int = intersect(selection, selectRecurse);
+                if (int.length > 0) mouseHover(int[0], event, int);
+                else if (mouseHoverNull) mouseHoverNull();
+            }
+            if ((!int || int.length == 0) && platformHover) {
+                vis = platform.visible;
+                platform.visible = true;
+                int = intersect([platform], false);
+                platform.visible = vis;
+                if (int && int.length > 0) platformHover(int[0].point);
+            }
+        } else if (mouseHoverNull) {
+            mouseHoverNull();
         }
     } else if (mouseDragPoint && mouseDrag && (dragTrack = mouseDrag())) {
         event.preventDefault();
@@ -1363,7 +1368,7 @@ let Space = {
         reset:  ()     => { viewControl.reset(); requestRefresh() },
         load:   (cam)  => { viewControl.setPosition(cam); requestRefresh() },
         save:   ()     => { return viewControl.getPosition(true) },
-        panTo:  (x,y,z,l,u) => { tweenCamPan(x,y,z,l,u) },
+        panTo:  (x,y,z,l,u,t) => { tweenCamPan(x,y,z,l,u,t) },
         setZoom: (r,v) => { viewControl.setZoom(r,v) },
         fit:    (then, opts = {}) => {
             // Calculate bounding box of all objects in the workspace

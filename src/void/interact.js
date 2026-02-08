@@ -68,6 +68,38 @@ const interact = {
     _lastSketchUpStamp: null,
     _skipNextWindowSketchDown: false,
     _skipNextWindowSketchUp: false,
+    _focusRaycaster: new THREE.Raycaster(),
+    _focusNDC: new THREE.Vector2(),
+    focusTweenMs: 120,
+
+    optionFocusOnDown(event) {
+        if (!event || event.button !== 2 || !event.altKey) {
+            return false;
+        }
+        const { camera, container } = space.internals();
+        if (!camera || !container) {
+            return false;
+        }
+        const rect = container.getBoundingClientRect();
+        if (!rect.width || !rect.height) {
+            return false;
+        }
+        const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        this._focusNDC.set(x, y);
+        this._focusRaycaster.setFromCamera(this._focusNDC, camera);
+        const hits = this._focusRaycaster.intersectObjects(space.objects(), true);
+        if (!hits?.length) {
+            return false;
+        }
+        const hit = hits.find(rec => rec?.object?.visible !== false) || hits[0];
+        const point = hit?.point;
+        if (!point) {
+            return false;
+        }
+        space.view.panTo(point.x, point.y, point.z, undefined, undefined, this.focusTweenMs);
+        return true;
+    },
 
     init() {
         this.planes = datum.getPlanes();
@@ -101,6 +133,10 @@ const interact = {
                 this.handleSketchPointerMove?.(event);
                 this.handleSketchHover(event);
             }
+        });
+
+        space.mouse.down((event) => {
+            this.optionFocusOnDown(event);
         });
 
         space.mouse.downSelect((int, event, ints) => {
