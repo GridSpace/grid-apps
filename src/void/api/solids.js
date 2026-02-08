@@ -97,21 +97,19 @@ function createSolidsApi(getApi) {
                     group.add(mesh);
                     group.add(edges);
                     this._root.add(group);
-                    view = { group, mesh, edges, hash: '' };
+                    view = { group, mesh, edges };
                     this._meshViews.set(id, view);
                 } else {
-                    const hash = `${meshData.positions.length}:${meshData.indices.length}`;
-                    if (view.hash !== hash) {
-                        view.mesh.geometry?.dispose?.();
-                        view.edges.geometry?.dispose?.();
-                        const geometry = new THREE.BufferGeometry();
-                        geometry.setAttribute('position', new THREE.Float32BufferAttribute(meshData.positions, 3));
-                        geometry.setIndex(new THREE.BufferAttribute(meshData.indices, 1));
-                        geometry.computeVertexNormals();
-                        view.mesh.geometry = geometry;
-                        view.edges.geometry = new THREE.EdgesGeometry(geometry, 30);
-                        view.hash = hash;
-                    }
+                    // Always replace geometry on rebuild. Topology counts can stay
+                    // constant while positions change (depth/direction/symmetric).
+                    view.mesh.geometry?.dispose?.();
+                    view.edges.geometry?.dispose?.();
+                    const geometry = new THREE.BufferGeometry();
+                    geometry.setAttribute('position', new THREE.Float32BufferAttribute(meshData.positions, 3));
+                    geometry.setIndex(new THREE.BufferAttribute(meshData.indices, 1));
+                    geometry.computeVertexNormals();
+                    view.mesh.geometry = geometry;
+                    view.edges.geometry = new THREE.EdgesGeometry(geometry, 30);
                 }
                 const selected = this._selectedIds.has(id);
                 if (view.mesh.material?.color) {

@@ -4,6 +4,7 @@ import { $ } from '../moto/webui.js';
 import { api } from './api.js';
 import { tree } from './tree.js';
 import { space } from '../moto/space.js';
+import { properties } from './properties.js';
 
 const toolbar = {
     buttons: [],
@@ -149,7 +150,7 @@ const toolbar = {
         this.sketchConstraintButtons = this.sketchConstraintMenu.items;
 
         this.extrudeBtn = this.addButton(container, 'Extrude', () => {
-            this.createExtrudeFeatureFromSelection();
+            this.onExtrudeButton();
         }, { id: 'btn-extrude', disabled: true });
 
         container.appendChild(this.separator());
@@ -226,7 +227,7 @@ const toolbar = {
     updateSketchControls() {
         const editing = !!api.sketchRuntime?.editingId;
         const canCreate = !editing && !!api.interact.resolveSketchTargetFromSelection();
-        const canExtrude = !editing && this.getSelectedExtrudeTargets().length > 0;
+        const canExtrude = !editing && (this.getSelectedExtrudeTargets().length > 0 || !!this.getSelectedSolidSourceExtrudeFeature());
 
         if (this.sketchBtn) {
             this.sketchBtn.disabled = !canCreate;
@@ -299,7 +300,10 @@ const toolbar = {
                 profiles: targets
             },
             params: {
+                depth: 10,
                 distance: 10,
+                direction: 'normal',
+                symmetric: false,
                 operation: 'new'
             },
             result: null
@@ -310,6 +314,34 @@ const toolbar = {
         tree.render();
         window.dispatchEvent(new CustomEvent('void-state-change'));
         return feature;
+    },
+
+    getSelectedSolidSourceExtrudeFeature() {
+        const solidIds = Array.from(tree.selectedSolidIds || []);
+        if (solidIds.length !== 1) return null;
+        const solidId = solidIds[0];
+        const solid = (api.solids?.list?.() || []).find(item => item?.id === solidId);
+        const sourceFeatureId = solid?.source?.feature_id || null;
+        if (!sourceFeatureId) return null;
+        const feature = api.features.findById(sourceFeatureId);
+        if (!feature || feature.type !== 'extrude') return null;
+        return feature;
+    },
+
+    onExtrudeButton() {
+        const existing = this.getSelectedSolidSourceExtrudeFeature();
+        if (existing) {
+            tree.selectedSolidIds = new Set();
+            tree.selectedFeatureIds = new Set([existing.id]);
+            tree.selectedFeatureId = existing.id;
+            properties.showFeature(existing, {
+                onChange: () => tree.render()
+            });
+            tree.render();
+            window.dispatchEvent(new CustomEvent('void-state-change'));
+            return;
+        }
+        this.createExtrudeFeatureFromSelection();
     },
 
     getProjectionLabel() {

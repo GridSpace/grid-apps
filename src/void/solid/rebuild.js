@@ -54,7 +54,7 @@ function basisFromPlaneFrame(frame) {
     return { origin, xAxis, yAxis, normal };
 }
 
-function transformMeshToWorld(mesh, basis) {
+function transformMeshToWorld(mesh, basis, zShift = 0) {
     const numProp = Math.max(3, Number(mesh?.numProp || 3));
     const verts = mesh?.vertProperties;
     const triVerts = mesh?.triVerts;
@@ -66,7 +66,7 @@ function transformMeshToWorld(mesh, basis) {
         const o = i * numProp;
         const lx = Number(verts[o] || 0);
         const ly = Number(verts[o + 1] || 0);
-        const lz = Number(verts[o + 2] || 0);
+        const lz = Number(verts[o + 2] || 0) + (Number(zShift) || 0);
         const wx = origin.x + xAxis.x * lx + yAxis.x * ly + normal.x * lz;
         const wy = origin.y + xAxis.y * lx + yAxis.y * ly + normal.y * lz;
         const wz = origin.z + xAxis.z * lx + yAxis.z * ly + normal.z * lz;
@@ -94,7 +94,11 @@ async function rebuildGeneratedSolids(api, options = {}) {
         if (feature?.type !== 'extrude') continue;
         const profiles = Array.isArray(feature?.input?.profiles) ? feature.input.profiles : [];
         if (!profiles.length) continue;
-        const distance = Number(feature?.params?.distance || 1);
+        const params = feature?.params || {};
+        const depth = Math.max(0.0001, Math.abs(Number(params.depth ?? params.distance ?? 1)));
+        const symmetric = params.symmetric === true;
+        const direction = params.direction === 'reverse' ? 'reverse' : 'normal';
+        const localZShift = symmetric ? (-depth / 2) : (direction === 'reverse' ? -depth : 0);
 
         for (const profileTarget of profiles) {
             const sketchId = profileTarget?.sketchId || null;
@@ -121,13 +125,18 @@ async function rebuildGeneratedSolids(api, options = {}) {
 
             if (loop) {
                 // Initial direct-manifold path. Full boolean/replay topology comes next.
-                const result = await extrudePolygons([loop.map(p => [p.x || 0, p.y || 0])], distance);
+                const result = await extrudePolygons([loop.map(p => [p.x || 0, p.y || 0])], depth);
                 if (result?.mesh) {
-                    const meshWorld = transformMeshToWorld(result.mesh, basis);
+                    const meshWorld = transformMeshToWorld(result.mesh, basis, localZShift);
                     body.status = 'manifold_mesh_ready';
                     body.mesh = {
                         tri_count: (result.mesh?.triVerts?.length || 0) / 3,
                         vert_count: (result.mesh?.vertProperties?.length || 0) / Math.max(1, result.mesh?.numProp || 3)
+                    };
+                    body.extrude = {
+                        depth,
+                        direction,
+                        symmetric
                     };
                     if (meshWorld) {
                         meshCache.set(id, meshWorld);

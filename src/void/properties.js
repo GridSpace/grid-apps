@@ -237,6 +237,8 @@ const properties = {
 
         if (feature.type === 'sketch') {
             this.renderSketchFields(feature);
+        } else if (feature.type === 'extrude') {
+            this.renderExtrudeFields(feature);
         }
     },
 
@@ -277,6 +279,50 @@ const properties = {
             }, {
                 opType: 'feature.update',
                 payload: { field: 'offset', value }
+            });
+            if (updated) this.onChanged();
+        }));
+    },
+
+    renderExtrudeFields(feature) {
+        const params = feature?.params || {};
+        const depthValue = Number(params.depth ?? params.distance ?? 10);
+        this.body.appendChild(this.createNumberField('Depth', depthValue, value => {
+            const next = Math.max(0.0001, Math.abs(value));
+            const updated = api.features.update(feature.id, item => {
+                item.params = item.params || {};
+                item.params.depth = next;
+                item.params.distance = next;
+            }, {
+                opType: 'feature.update',
+                payload: { field: 'depth', value: next }
+            });
+            if (updated) this.onChanged();
+        }));
+
+        const direction = String(params.direction || 'normal');
+        this.body.appendChild(this.createSelectField('Direction', direction, [
+            { value: 'normal', label: 'Normal' },
+            { value: 'reverse', label: 'Reverse' }
+        ], value => {
+            const updated = api.features.update(feature.id, item => {
+                item.params = item.params || {};
+                item.params.direction = value === 'reverse' ? 'reverse' : 'normal';
+            }, {
+                opType: 'feature.update',
+                payload: { field: 'direction', value }
+            });
+            if (updated) this.onChanged();
+        }));
+
+        const symmetric = params.symmetric === true;
+        this.body.appendChild(this.createCheckboxField('Symmetric', symmetric, checked => {
+            const updated = api.features.update(feature.id, item => {
+                item.params = item.params || {};
+                item.params.symmetric = !!checked;
+            }, {
+                opType: 'feature.update',
+                payload: { field: 'symmetric', value: !!checked }
             });
             if (updated) this.onChanged();
         }));
@@ -349,6 +395,20 @@ const properties = {
         select.onchange = () => onChange(select.value);
         wrap.appendChild(l);
         wrap.appendChild(select);
+        return wrap;
+    },
+
+    createCheckboxField(label, checked, onChange) {
+        const wrap = document.createElement('div');
+        wrap.className = 'props-field';
+        const l = document.createElement('label');
+        l.textContent = label;
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.checked = !!checked;
+        input.onchange = () => onChange(!!input.checked);
+        wrap.appendChild(l);
+        wrap.appendChild(input);
         return wrap;
     },
 

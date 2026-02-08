@@ -841,6 +841,13 @@ html, body {
     font-size: 13px;
 }
 
+.props-field input[type='checkbox'] {
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    align-self: flex-start;
+}
+
 .props-field input:focus,
 .props-field select:focus {
     outline: none;
