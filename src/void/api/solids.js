@@ -1,10 +1,24 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { THREE } from '../../ext/three.js';
+import { THREE, BufferGeometryUtils } from '../../ext/three.js';
 import { ensureKernel } from '../solid/kernel.js';
 import { rebuildGeneratedSolids } from '../solid/rebuild.js';
 
 function createSolidsApi(getApi) {
+    function buildSolidGeometry(meshData) {
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(meshData.positions, 3));
+        geometry.setIndex(new THREE.BufferAttribute(meshData.indices, 1));
+        if (BufferGeometryUtils?.toCreasedNormals) {
+            // Keep hard CAD-like edges while preserving smooth shading where faces are near-coplanar.
+            const creased = BufferGeometryUtils.toCreasedNormals(geometry, Math.PI / 3);
+            geometry.dispose();
+            return creased;
+        }
+        geometry.computeVertexNormals();
+        return geometry;
+    }
+
     return {
         _rebuildTimer: null,
         _rebuilding: false,
@@ -82,10 +96,7 @@ function createSolidsApi(getApi) {
                 }
                 let view = this._meshViews.get(id);
                 if (!view) {
-                    const geometry = new THREE.BufferGeometry();
-                    geometry.setAttribute('position', new THREE.Float32BufferAttribute(meshData.positions, 3));
-                    geometry.setIndex(new THREE.BufferAttribute(meshData.indices, 1));
-                    geometry.computeVertexNormals();
+                    const geometry = buildSolidGeometry(meshData);
                     const mesh = new THREE.Mesh(geometry, this._material.clone());
                     mesh.userData.solidId = id;
                     mesh.userData.solid = true;
@@ -104,10 +115,7 @@ function createSolidsApi(getApi) {
                     // constant while positions change (depth/direction/symmetric).
                     view.mesh.geometry?.dispose?.();
                     view.edges.geometry?.dispose?.();
-                    const geometry = new THREE.BufferGeometry();
-                    geometry.setAttribute('position', new THREE.Float32BufferAttribute(meshData.positions, 3));
-                    geometry.setIndex(new THREE.BufferAttribute(meshData.indices, 1));
-                    geometry.computeVertexNormals();
+                    const geometry = buildSolidGeometry(meshData);
                     view.mesh.geometry = geometry;
                     view.edges.geometry = new THREE.EdgesGeometry(geometry, 30);
                 }
