@@ -334,8 +334,7 @@ function applyCircleDragKinematics(feature, dx = 0, dy = 0, local = null) {
     const ctrlByArcId = new Map((drag.arcControlBaseline || []).map(rec => [rec.entity?.id, rec]));
 
     for (const arc of entities) {
-        if (arc?.type !== 'arc' || !isCircleCurve(arc) || !arc.id) continue;
-        if (!isCenterPointCircle(arc)) continue;
+        if (arc?.type !== 'arc' || !arc.id) continue;
         const touchesCircle = drag.activeIds?.has?.(arc.id)
             || drag.movedPointIds?.has?.(arc.a)
             || drag.movedPointIds?.has?.(arc.b);
@@ -343,17 +342,14 @@ function applyCircleDragKinematics(feature, dx = 0, dy = 0, local = null) {
         const a = byId.get(arc.a);
         const b = byId.get(arc.b);
         if (!a || !b) continue;
-        let cx = Number(arc.cx || 0);
-        let cy = Number(arc.cy || 0);
 
-        const movedA = drag.movedPointIds?.has?.(a.id);
-        const movedB = drag.movedPointIds?.has?.(b.id);
-
+        // Arc-center drag should move the whole arc rigidly, regardless of
+        // arc/circle definition, so the dragged center tracks the pointer.
         if (drag.centerDrag) {
             const cbase = ctrlByArcId.get(arc.id);
             if (cbase) {
-                arc.cx = (cbase.cx || 0) + dx;
-                arc.cy = (cbase.cy || 0) + dy;
+                if (Number.isFinite(cbase.cx)) arc.cx = (cbase.cx || 0) + dx;
+                if (Number.isFinite(cbase.cy)) arc.cy = (cbase.cy || 0) + dy;
                 if (cbase.a) {
                     a.x = (cbase.a.x || 0) + dx;
                     a.y = (cbase.a.y || 0) + dy;
@@ -364,16 +360,24 @@ function applyCircleDragKinematics(feature, dx = 0, dy = 0, local = null) {
                 }
                 arc.mx = (cbase.mx || 0) + dx;
                 arc.my = (cbase.my || 0) + dy;
-                arc.radius = Number.isFinite(cbase.radius) ? cbase.radius : (arc.radius || 0);
-                arc.startAngle = 0;
-                arc.endAngle = Math.PI * 2;
-                arc.ccw = true;
+                if (isCircleCurve(arc)) {
+                    arc.radius = Number.isFinite(cbase.radius) ? cbase.radius : (arc.radius || 0);
+                    arc.startAngle = 0;
+                    arc.endAngle = Math.PI * 2;
+                    arc.ccw = true;
+                }
                 continue;
             }
-        } else {
-            cx = arc.cx;
-            cy = arc.cy;
         }
+
+        if (!isCircleCurve(arc) || !isCenterPointCircle(arc)) continue;
+        let cx = Number(arc.cx || 0);
+        let cy = Number(arc.cy || 0);
+
+        const movedA = drag.movedPointIds?.has?.(a.id);
+        const movedB = drag.movedPointIds?.has?.(b.id);
+        cx = arc.cx;
+        cy = arc.cy;
 
         const curveDrag = drag.circleCurveDragIds?.has?.(arc.id) && !drag.centerDrag;
         const anchor = movedA ? a : (movedB ? b : null);
