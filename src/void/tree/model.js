@@ -89,6 +89,7 @@ function onFeatureSelected(feature) {
         this.selectedFeatureIds.add(id);
     }
     this.selectedSolidIds?.clear?.();
+    api.solids?.setSelected?.([]);
     this.selectedFeatureId = this.selectedFeatureIds.values().next().value || null;
     api.sketchRuntime?.setEditing(null);
     api.interact?.selectedSketchProfiles?.clear?.();
@@ -112,6 +113,7 @@ function onFeatureEdit(feature) {
         this.selectedFeatureIds.add(feature.id);
     }
     this.selectedSolidIds?.clear?.();
+    api.solids?.setSelected?.([]);
     const selectedSketchIds = feature?.type === 'sketch' ? [feature.id] : [];
     api.interact?.selectedSketchProfiles?.clear?.();
     api.interact.hoveredSketchProfileKey = null;
@@ -533,6 +535,7 @@ function renderSolidsSection() {
                     undoable: false,
                     payload: { id: target.id, field: 'visible', value: !!target.visible }
                 });
+                api.solids?.syncRuntime?.();
                 this.render();
                 window.dispatchEvent(new CustomEvent('void-state-change'));
             },
@@ -545,6 +548,7 @@ function renderSolidsSection() {
                 } else {
                     this.selectedSolidIds.add(id);
                 }
+                api.solids?.setSelected?.(Array.from(this.selectedSolidIds));
                 this.render();
                 window.dispatchEvent(new CustomEvent('void-state-change'));
             }

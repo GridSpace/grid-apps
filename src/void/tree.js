@@ -26,6 +26,7 @@ const tree = {
             this.selectedFeatureId = null;
             this.selectedFeatureIds.clear();
             this.selectedSolidIds.clear();
+            api.solids?.setSelected?.([]);
             api.sketchRuntime?.setSelected([]);
             this.render();
         });

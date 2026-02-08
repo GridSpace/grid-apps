@@ -49,6 +49,7 @@ async function init() {
     space.useDefaultKeys(true);
     space.init($('container'), delta => {}, false);
     api.sketchRuntime.init(space.world);
+    api.solids.attach(space.world);
 
     // Initialize 2D overlay system
     overlay.init();
