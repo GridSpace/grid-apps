@@ -92,6 +92,7 @@ function getSketchIdsForSolid(solid) {
 function getHoverContext() {
     const hoveredSolidIds = new Set();
     const hoveredSketchIds = new Set();
+    const hoveredFeatureIds = new Set();
     const hoveredProfileKey = api.interact?.hoveredSketchProfileKey || null;
     if (hoveredProfileKey) {
         const sketchId = String(hoveredProfileKey).split(':')[0];
@@ -110,12 +111,37 @@ function getHoverContext() {
         for (const solidId of hoveredSolidIds) {
             const solid = solids.find(s => s?.id === solidId);
             if (!solid) continue;
+            const sourceFeatureId = solid?.source?.feature_id || null;
+            if (sourceFeatureId) hoveredFeatureIds.add(sourceFeatureId);
             for (const sketchId of getSketchIdsForSolid(solid)) {
                 hoveredSketchIds.add(sketchId);
             }
         }
     }
-    return { hoveredSolidIds, hoveredSketchIds };
+    return { hoveredSolidIds, hoveredSketchIds, hoveredFeatureIds };
+}
+
+function getFaceSelectionContext() {
+    const faceKeys = api.solids?.getSelectedFaceKeys?.() || [];
+    const selectedSolidIds = new Set();
+    const selectedFeatureIds = new Set();
+    for (const key of faceKeys) {
+        const raw = String(key || '');
+        const split = raw.lastIndexOf(':');
+        if (split <= 0) continue;
+        const solidId = raw.substring(0, split);
+        if (!solidId) continue;
+        selectedSolidIds.add(solidId);
+    }
+    if (selectedSolidIds.size) {
+        const solids = api.solids?.list?.() || [];
+        for (const solidId of selectedSolidIds) {
+            const solid = solids.find(s => s?.id === solidId);
+            const featureId = solid?.source?.feature_id || null;
+            if (featureId) selectedFeatureIds.add(featureId);
+        }
+    }
+    return { selectedSolidIds, selectedFeatureIds };
 }
 
 function render() {
@@ -276,6 +302,7 @@ function renderDefaultGeometrySection() {
 
 function renderFeaturesSection() {
     const hover = getHoverContext();
+    const faceSelection = getFaceSelectionContext();
     const row = this.createRow({
         label: 'Features',
         depth: 0,
@@ -396,8 +423,8 @@ function renderFeaturesSection() {
             const blockedByEditing = activeEditIndex >= 0 && index > activeEditIndex;
             this.container.appendChild(this.createItemRow(label, feature, 1, {
                 featureIndex: index,
-                selected: this.selectedFeatureIds?.has?.(feature?.id),
-                hovered: !!(isSketch && hover.hoveredSketchIds.has(feature?.id)),
+                selected: this.selectedFeatureIds?.has?.(feature?.id) || faceSelection.selectedFeatureIds.has(feature?.id),
+                hovered: !!(hover.hoveredFeatureIds.has(feature?.id) || (isSketch && hover.hoveredSketchIds.has(feature?.id))),
                 eyeVisible: visible,
                 suppressed,
                 beyondTimeline,
@@ -504,8 +531,8 @@ function renderFeaturesSection() {
                 const blockedByEditing = activeEditIndex >= 0 && index > activeEditIndex;
                 this.container.appendChild(this.createItemRow(label, feature, 2, {
                     featureIndex: index,
-                    selected: this.selectedFeatureIds?.has?.(feature?.id),
-                    hovered: !!(isSketch && hover.hoveredSketchIds.has(feature?.id)),
+                    selected: this.selectedFeatureIds?.has?.(feature?.id) || faceSelection.selectedFeatureIds.has(feature?.id),
+                    hovered: !!(hover.hoveredFeatureIds.has(feature?.id) || (isSketch && hover.hoveredSketchIds.has(feature?.id))),
                     eyeVisible: visible,
                     suppressed,
                     beyondTimeline,
@@ -567,6 +594,7 @@ function renderFeaturesSection() {
 
 function renderSolidsSection() {
     const hover = getHoverContext();
+    const faceSelection = getFaceSelectionContext();
     const row = this.createRow({
         label: 'Solids',
         depth: 0,
@@ -599,7 +627,7 @@ function renderSolidsSection() {
             : -1;
         const blockedByEditing = activeEditIndex >= 0 && featureIndex > activeEditIndex;
         this.container.appendChild(this.createItemRow(label, solid, 1, {
-            selected: this.selectedSolidIds?.has?.(solid?.id),
+            selected: this.selectedSolidIds?.has?.(solid?.id) || faceSelection.selectedSolidIds.has(solid?.id),
             hovered: hover.hoveredSolidIds.has(solid?.id),
             eyeVisible: visible,
             disabled: blockedByEditing,

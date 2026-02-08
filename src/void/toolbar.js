@@ -342,7 +342,16 @@ const toolbar = {
     },
 
     getSelectedBooleanTargets() {
-        const solidIds = Array.from(tree.selectedSolidIds || []);
+        const faceKeys = api.solids?.getSelectedFaceKeys?.() || [];
+        const faceSolidIds = new Set();
+        for (const key of faceKeys) {
+            const raw = String(key || '');
+            const split = raw.lastIndexOf(':');
+            if (split <= 0) continue;
+            const solidId = raw.substring(0, split);
+            if (solidId) faceSolidIds.add(solidId);
+        }
+        const solidIds = faceSolidIds.size ? Array.from(faceSolidIds) : Array.from(tree.selectedSolidIds || []);
         const solids = api.solids?.list?.() || [];
         return solidIds.filter(id => solids.some(solid => solid?.id === id));
     },

@@ -147,6 +147,7 @@ function handleHover(intersection, event, allIntersections) {
         if (this.hoveredSolidFaceKey) {
             this.hoveredSolidFaceKey = null;
             api.solids?.setHoveredFace?.(null);
+            window.dispatchEvent(new CustomEvent('void-state-change'));
         }
         const profileHit = this.getSketchProfileHitFromIntersections(allIntersections || (intersection ? [intersection] : []));
         if (profileHit) {
