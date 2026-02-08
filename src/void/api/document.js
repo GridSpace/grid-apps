@@ -22,6 +22,7 @@ function createDocumentApi(getApi, cfg) {
         _originHandler: null,
         _runtimeFlushBound: false,
         _redoStack: [],
+        _atomicEdit: null,
 
         create() {
             const api = getApi();
@@ -386,6 +387,7 @@ function createDocumentApi(getApi, cfg) {
             if (!revision || !revision.snapshot) {
                 return Promise.resolve(null);
             }
+            this._atomicEdit = null;
             const preserved = this.current ? {
                 name: this.current.name,
                 tree: JSON.parse(JSON.stringify(this.current.tree || { folders: [] }))
@@ -482,6 +484,68 @@ function createDocumentApi(getApi, cfg) {
                     });
                 });
             });
+        },
+
+        isAtomicEditActive() {
+            return !!this._atomicEdit;
+        },
+
+        beginAtomicEdit(meta = {}) {
+            this._atomicEdit = {
+                feature_id: meta.feature_id || null,
+                feature_type: meta.feature_type || null,
+                start_rev: this.current?.head_rev || null
+            };
+        },
+
+        endAtomicEdit(options = {}) {
+            const api = getApi();
+            const session = this._atomicEdit;
+            this._atomicEdit = null;
+            if (!session) {
+                return Promise.resolve(false);
+            }
+            if (options.commit !== true) {
+                return Promise.resolve(false);
+            }
+            const startRev = session.start_rev || null;
+            const currentHead = this.current?.head_rev || null;
+            if (startRev === currentHead) {
+                return Promise.resolve(false);
+            }
+            if (!this.current) return Promise.resolve(false);
+
+            const now = Date.now();
+            const next = this.nextRevision('micro');
+            const revId = this.revisionKey(this.current.id, next);
+            const snapshot = this.toSnapshot();
+            const revision = {
+                doc_id: this.current.id,
+                rev: next,
+                rev_id: revId,
+                parent_rev: startRev,
+                schema_version: DOC_SCHEMA_VERSION,
+                op_type: options.opType || 'feature.atomic.edit',
+                payload: options.payload || {
+                    feature_id: session.feature_id,
+                    feature_type: session.feature_type
+                },
+                snapshot,
+                created_at: now
+            };
+
+            this.current.version = next;
+            this.current.head_rev = revId;
+            this.current.scene = snapshot.scene;
+            this.current.modified_at = now;
+            this._redoStack = [];
+
+            return Promise.all([
+                api.db.versions.put(revId, revision),
+                api.db.documents.put(this.current.id, this.current),
+                api.db.admin.put(ADMIN_CURRENT_DOC_KEY, this.current.id),
+                api.db.admin.put(ADMIN_CURRENT_REV_KEY, revId)
+            ]).then(() => true);
         },
 
         getTimelineCount() {

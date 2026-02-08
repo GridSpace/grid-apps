@@ -22,6 +22,7 @@ const properties = {
     _loadingPos: false,
     _sessionStartRev: null,
     _sessionFeatureId: null,
+    _sessionFeatureType: null,
 
     init() {
         if (this.panel) return;
@@ -207,7 +208,12 @@ const properties = {
         if (!feature || !this.panel || !this.body) return;
         this.currentFeatureId = feature.id;
         this._sessionFeatureId = feature.id;
+        this._sessionFeatureType = feature.type || null;
         this._sessionStartRev = api.document.current?.head_rev || null;
+        api.document.beginAtomicEdit({
+            feature_id: this._sessionFeatureId,
+            feature_type: this._sessionFeatureType
+        });
         this._onChange = opts.onChange || null;
         api.sketchRuntime?.setEditing(feature.type === 'sketch' ? feature.id : null);
         if (feature.type !== 'sketch') {
@@ -242,6 +248,19 @@ const properties = {
                     }
                 }
             }
+            await api.document.endAtomicEdit({ commit: false });
+        } else {
+            await api.document.endAtomicEdit({
+                commit: true,
+                opType: 'feature.atomic.edit',
+                payload: {
+                    feature_id: this._sessionFeatureId,
+                    feature_type: this._sessionFeatureType
+                }
+            });
+            if (typeof this._onChange === 'function') {
+                this._onChange();
+            }
         }
         this.panel.classList.add('hidden');
         api.sketchRuntime?.setEditing(null);
@@ -249,6 +268,7 @@ const properties = {
         this.syncExtrudeProfileSelection(null);
         this.currentFeatureId = null;
         this._sessionFeatureId = null;
+        this._sessionFeatureType = null;
         this._sessionStartRev = null;
         this._onChange = null;
         window.dispatchEvent(new CustomEvent('void-state-change'));

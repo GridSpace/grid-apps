@@ -25,6 +25,7 @@ const UNDOABLE_OP_TYPES = new Set([
     'feature.rename',
     'feature.update',
     'feature.suppress',
+    'feature.atomic.edit',
     'timeline.set'
 ]);
 
