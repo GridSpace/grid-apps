@@ -1227,7 +1227,9 @@ function handleSketchDrag(delta, offset, isDone) {
             activeIds,
             circleCurveDragIds,
             movedPointIds: new Set((centerDrag ? [] : refs).map(ref => ref?.id).filter(Boolean)),
-            centerLocks: this.collectDragLockedArcCenters(feature, activeIds, refs),
+            centerLocks: this.collectDragLockedArcCenters(feature, activeIds, refs, {
+                includePointOnArc: !centerDrag && !circleCurveDown
+            }),
             centerDrag,
             snapPointId: null,
             snapMovedPointId: null,
@@ -1293,7 +1295,7 @@ function handleSketchDrag(delta, offset, isDone) {
     return true;
 }
 
-function collectDragLockedArcCenters(feature, activeIds, refs = []) {
+function collectDragLockedArcCenters(feature, activeIds, refs = [], options = {}) {
     const entities = Array.isArray(feature?.entities) ? feature.entities : [];
     const constraints = Array.isArray(feature?.constraints) ? feature.constraints : [];
     const arcById = new Map(entities.filter(e => e?.type === 'arc' && e?.id).map(e => [e.id, e]));
@@ -1303,10 +1305,12 @@ function collectDragLockedArcCenters(feature, activeIds, refs = []) {
             selected.add(ref.id);
         }
     }
-    // Lock centers only for constraints that can otherwise satisfy by drifting
-    // the circle center during drag. Do not lock for point_on_arc (inscribed),
-    // which caused heavy damping and poor interaction feel.
+    // Lock centers for constraints that can satisfy by drifting circle center.
+    // point_on_arc is opt-in and should be disabled when dragging the circle itself.
     const lockTypes = new Set(['tangent', 'arc_center_coincident']);
+    if (options?.includePointOnArc) {
+        lockTypes.add('point_on_arc');
+    }
     const out = new Map();
     for (const c of constraints) {
         if (!lockTypes.has(c?.type)) continue;
@@ -2298,6 +2302,13 @@ function hitTestSketchEntity(event, feature) {
 function getArcCenterLocalFromEntity(arc, pointById) {
     const [a, b] = this.getArcEndpoints(arc, pointById);
     if (!a || !b) return null;
+    if (arc?.circle) {
+        const cx = Number(arc?.cx);
+        const cy = Number(arc?.cy);
+        if (Number.isFinite(cx) && Number.isFinite(cy)) {
+            return { x: cx, y: cy };
+        }
+    }
     if (Number.isFinite(arc?.mx) && Number.isFinite(arc?.my)) {
         const geom = this.computeArcGeometry(
             { x: a.x || 0, y: a.y || 0 },

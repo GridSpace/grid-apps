@@ -1460,6 +1460,13 @@ function createSketchRuntimeApi(getApi) {
         },
 
         getArcCenterLocal(arc, a, b) {
+            if (arc?.circle) {
+                const cx = Number(arc?.cx);
+                const cy = Number(arc?.cy);
+                if (Number.isFinite(cx) && Number.isFinite(cy)) {
+                    return { x: cx, y: cy };
+                }
+            }
             if (Number.isFinite(arc?.mx) && Number.isFinite(arc?.my) && a && b) {
                 const geom = this.computeArcFromThreePoints(
                     { x: a.x || 0, y: a.y || 0 },
