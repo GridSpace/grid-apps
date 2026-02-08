@@ -75,20 +75,44 @@ function createRow({ label, depth = 0, expanded, onToggle, eyeVisible, onEye, on
     return row;
 }
 
-function createTimelineMarkerRow({ active = false, onSelect }) {
+function createTimelineMarkerRow({ active = false, onSelect, onDragStart, onDragEnd }) {
     const row = document.createElement('div');
     row.className = `tree-timeline-marker ${active ? 'active' : ''}`;
     row.onclick = () => onSelect?.();
+    row.draggable = true;
+    row.onmousedown = event => {
+        if (event.button !== 0) return;
+        createTimelineMarkerRow._dragActive = true;
+        onSelect?.();
+        event.preventDefault();
+    };
+    row.ondragstart = event => {
+        createTimelineMarkerRow._dragActive = true;
+        event.dataTransfer?.setData('text/x-void-timeline', '1');
+        event.dataTransfer.effectAllowed = 'move';
+        onDragStart?.(event);
+    };
+    row.ondragend = event => {
+        createTimelineMarkerRow._dragActive = false;
+        onDragEnd?.(event);
+    };
+    row.onmouseenter = event => {
+        if (!createTimelineMarkerRow._dragActive) return;
+        if (!(event.buttons & 1)) return;
+        onSelect?.();
+    };
     row.title = 'Move history marker';
 
     const line = document.createElement('div');
     line.className = 'tree-timeline-line';
     row.appendChild(line);
 
-    const knob = document.createElement('div');
-    knob.className = 'tree-timeline-knob';
-    knob.textContent = '⟷';
-    row.appendChild(knob);
+    if (!createTimelineMarkerRow._boundMouseUp) {
+        createTimelineMarkerRow._boundMouseUp = true;
+        window.addEventListener('mouseup', () => {
+            createTimelineMarkerRow._dragActive = false;
+        });
+    }
     return row;
 }
 
@@ -108,6 +132,9 @@ function createItemRow(label, feature, depth = 0, opts = {}) {
         row.classList.add('is-future');
     }
     row.style.paddingLeft = `${8 + depth * 16}px`;
+    if (opts.draggable) {
+        row.draggable = true;
+    }
 
     const left = document.createElement('div');
     left.className = 'tree-row-left';
@@ -176,6 +203,59 @@ function createItemRow(label, feature, depth = 0, opts = {}) {
             opts.onEye(feature);
         };
         row.appendChild(eye);
+    }
+
+    if (opts.draggable && typeof opts.onDragStart === 'function') {
+        row.ondragstart = event => {
+            row.classList.add('is-dragging');
+            event.dataTransfer?.setData('text/x-void-feature', String(feature?.id || ''));
+            event.dataTransfer.effectAllowed = 'move';
+            opts.onDragStart(feature, event);
+        };
+    }
+    if (opts.draggable) {
+        row.ondragend = () => {
+            row.classList.remove('is-dragging');
+            row.classList.remove('drag-over-before');
+            row.classList.remove('drag-over-after');
+            if (typeof opts.onDragEnd === 'function') {
+                opts.onDragEnd(feature);
+            }
+        };
+    }
+    if (opts.draggable && typeof opts.onDragOver === 'function') {
+        row.ondragover = event => {
+            event.preventDefault();
+            const timelineDrag = !!opts.isTimelineDragging?.();
+            const before = (event.offsetY || 0) < (row.clientHeight / 2);
+            row.classList.toggle('drag-over-before', before);
+            row.classList.toggle('drag-over-after', !before);
+            if (timelineDrag && typeof opts.onTimelineDragOver === 'function') {
+                opts.onTimelineDragOver(feature, event, { before });
+            } else {
+                opts.onDragOver(feature, event, { before });
+            }
+        };
+    }
+    if (opts.draggable) {
+        row.ondragleave = () => {
+            row.classList.remove('drag-over-before');
+            row.classList.remove('drag-over-after');
+        };
+    }
+    if (opts.draggable && typeof opts.onDrop === 'function') {
+        row.ondrop = event => {
+            event.preventDefault();
+            const timelineDrag = !!opts.isTimelineDragging?.();
+            const before = (event.offsetY || 0) < (row.clientHeight / 2);
+            row.classList.remove('drag-over-before');
+            row.classList.remove('drag-over-after');
+            if (timelineDrag && typeof opts.onTimelineDrop === 'function') {
+                opts.onTimelineDrop(feature, event, { before });
+            } else {
+                opts.onDrop(feature, event, { before });
+            }
+        };
     }
 
     return row;

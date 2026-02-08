@@ -60,6 +60,8 @@ function render() {
     this.renderDefaultGeometrySection();
     this.container.appendChild(this.createDivider());
     this.renderFeaturesSection();
+    this.container.appendChild(this.createDivider());
+    this.renderSolidsSection();
 }
 
 function onFeatureSelected(feature) {
@@ -230,6 +232,23 @@ function renderFeaturesSection() {
         this.render();
         window.dispatchEvent(new CustomEvent('void-state-change'));
     };
+    const dropMove = (targetFeature, before = true) => {
+        const dragId = this.dragFeatureId || null;
+        const targetId = targetFeature?.id || null;
+        if (!dragId || !targetId || dragId === targetId) return;
+        const list = api.features.list();
+        const fromIndex = list.findIndex(f => f?.id === dragId);
+        const targetIndex = list.findIndex(f => f?.id === targetId);
+        if (fromIndex < 0 || targetIndex < 0) return;
+        let toIndex = targetIndex + (before ? 0 : 1);
+        if (fromIndex < toIndex) {
+            toIndex -= 1;
+        }
+        if (api.features.move(dragId, toIndex)) {
+            this.render();
+            window.dispatchEvent(new CustomEvent('void-state-change'));
+        }
+    };
 
     if (hasOnlyDefaultFolder) {
         if (!features.length) {
@@ -238,10 +257,18 @@ function renderFeaturesSection() {
         }
         for (let index = 0; index < features.length; index++) {
             const feature = features[index];
-            this.container.appendChild(this.createTimelineMarkerRow({
-                active: timelineCount === index,
-                onSelect: () => setTimeline(index)
-            }));
+            if (timelineCount === index) {
+                this.container.appendChild(this.createTimelineMarkerRow({
+                    active: true,
+                    onSelect: () => setTimeline(index),
+                    onDragStart: () => {
+                        this.dragTimelineActive = true;
+                    },
+                    onDragEnd: () => {
+                        this.dragTimelineActive = false;
+                    }
+                }));
+            }
             const label = feature?.name || feature?.type || 'Feature';
             const isSketch = feature?.type === 'sketch';
             const visible = feature?.visible !== false;
@@ -267,40 +294,52 @@ function renderFeaturesSection() {
                             this.render();
                             window.dispatchEvent(new CustomEvent('void-state-change'));
                         }
-                    },
-                    {
-                        label: '↑',
-                        title: 'Move feature earlier',
-                        disabled: index <= 0,
-                        onClick: f => {
-                            if (api.features.move(f.id, index - 1)) {
-                                this.render();
-                                window.dispatchEvent(new CustomEvent('void-state-change'));
-                            }
-                        }
-                    },
-                    {
-                        label: '↓',
-                        title: 'Move feature later',
-                        disabled: index >= features.length - 1,
-                        onClick: f => {
-                            if (api.features.move(f.id, index + 1)) {
-                                this.render();
-                                window.dispatchEvent(new CustomEvent('void-state-change'));
-                            }
-                        }
                     }
                 ],
+                draggable: true,
+                isTimelineDragging: () => !!this.dragTimelineActive,
+                onDragStart: f => {
+                    this.dragFeatureId = f?.id || null;
+                },
+                onDragOver: (_f, event) => {
+                    if (this.dragTimelineActive) return;
+                    event.preventDefault();
+                },
+                onDrop: (f, event, info) => {
+                    if (this.dragTimelineActive) return;
+                    event.preventDefault();
+                    dropMove(f, info?.before !== false);
+                    this.dragFeatureId = null;
+                },
+                onTimelineDragOver: (_f, event) => {
+                    event.preventDefault();
+                },
+                onTimelineDrop: (_f, event, info) => {
+                    event.preventDefault();
+                    setTimeline(info?.before !== false ? index : index + 1);
+                    this.dragTimelineActive = false;
+                },
+                onDragEnd: () => {
+                    this.dragFeatureId = null;
+                },
                 onSelect: f => this.onFeatureSelected(f),
                 onEdit: f => this.onFeatureEdit(f),
                 onHoverEnter: isSketch ? f => api.sketchRuntime?.setHovered(f.id) : null,
                 onHoverLeave: isSketch ? () => api.sketchRuntime?.setHovered(null) : null
             }));
         }
-        this.container.appendChild(this.createTimelineMarkerRow({
-            active: timelineCount === features.length,
-            onSelect: () => setTimeline(features.length)
-        }));
+        if (timelineCount === features.length) {
+            this.container.appendChild(this.createTimelineMarkerRow({
+                active: true,
+                onSelect: () => setTimeline(features.length),
+                onDragStart: () => {
+                    this.dragTimelineActive = true;
+                },
+                onDragEnd: () => {
+                    this.dragTimelineActive = false;
+                }
+            }));
+        }
         return;
     }
 
@@ -334,10 +373,16 @@ function renderFeaturesSection() {
         for (let localIndex = 0; localIndex < items.length; localIndex++) {
             const feature = items[localIndex];
             const index = features.indexOf(feature);
-            if (i === 0) {
+            if (i === 0 && timelineCount === index) {
                 this.container.appendChild(this.createTimelineMarkerRow({
-                    active: timelineCount === index,
-                    onSelect: () => setTimeline(index)
+                    active: true,
+                    onSelect: () => setTimeline(index),
+                    onDragStart: () => {
+                        this.dragTimelineActive = true;
+                    },
+                    onDragEnd: () => {
+                        this.dragTimelineActive = false;
+                    }
                 }));
             }
             const label = feature?.name || feature?.type || 'Feature';
@@ -365,42 +410,94 @@ function renderFeaturesSection() {
                             this.render();
                             window.dispatchEvent(new CustomEvent('void-state-change'));
                         }
-                    },
-                    {
-                        label: '↑',
-                        title: 'Move feature earlier',
-                        disabled: index <= 0,
-                        onClick: f => {
-                            if (api.features.move(f.id, index - 1)) {
-                                this.render();
-                                window.dispatchEvent(new CustomEvent('void-state-change'));
-                            }
-                        }
-                    },
-                    {
-                        label: '↓',
-                        title: 'Move feature later',
-                        disabled: index >= features.length - 1,
-                        onClick: f => {
-                            if (api.features.move(f.id, index + 1)) {
-                                this.render();
-                                window.dispatchEvent(new CustomEvent('void-state-change'));
-                            }
-                        }
                     }
                 ],
+                draggable: true,
+                isTimelineDragging: () => !!this.dragTimelineActive,
+                onDragStart: f => {
+                    this.dragFeatureId = f?.id || null;
+                },
+                onDragOver: (_f, event) => {
+                    if (this.dragTimelineActive) return;
+                    event.preventDefault();
+                },
+                onDrop: (f, event, info) => {
+                    if (this.dragTimelineActive) return;
+                    event.preventDefault();
+                    dropMove(f, info?.before !== false);
+                    this.dragFeatureId = null;
+                },
+                onTimelineDragOver: (_f, event) => {
+                    event.preventDefault();
+                },
+                onTimelineDrop: (_f, event, info) => {
+                    event.preventDefault();
+                    setTimeline(info?.before !== false ? index : index + 1);
+                    this.dragTimelineActive = false;
+                },
+                onDragEnd: () => {
+                    this.dragFeatureId = null;
+                },
                 onSelect: f => this.onFeatureSelected(f),
                 onEdit: f => this.onFeatureEdit(f),
                 onHoverEnter: isSketch ? f => api.sketchRuntime?.setHovered(f.id) : null,
                 onHoverLeave: isSketch ? () => api.sketchRuntime?.setHovered(null) : null
             }));
         }
-        if (i === 0 && items.length) {
+        if (i === 0 && items.length && timelineCount === features.length) {
             this.container.appendChild(this.createTimelineMarkerRow({
-                active: timelineCount === features.length,
-                onSelect: () => setTimeline(features.length)
+                active: true,
+                onSelect: () => setTimeline(features.length),
+                onDragStart: () => {
+                    this.dragTimelineActive = true;
+                },
+                onDragEnd: () => {
+                    this.dragTimelineActive = false;
+                }
             }));
         }
+    }
+}
+
+function renderSolidsSection() {
+    const row = this.createRow({
+        label: 'Solids',
+        depth: 0,
+        expanded: this.solidsExpanded,
+        onToggle: () => {
+            this.solidsExpanded = !this.solidsExpanded;
+            this.render();
+        }
+    });
+    this.container.appendChild(row);
+
+    if (!this.solidsExpanded) {
+        return;
+    }
+
+    const solids = api.features
+        .listBuilt()
+        .filter(feature => feature?.type === 'extrude');
+
+    if (!solids.length) {
+        this.container.appendChild(this.createEmptyRow('No solids yet', 1));
+        return;
+    }
+
+    for (const solid of solids) {
+        const label = solid?.name || 'Solid';
+        const visible = solid?.visible !== false;
+        this.container.appendChild(this.createItemRow(label, solid, 1, {
+            selected: this.selectedFeatureIds?.has?.(solid?.id),
+            eyeVisible: visible,
+            onEye: feature => {
+                api.features.setVisible(feature.id, feature.visible === false);
+                this.render();
+                window.dispatchEvent(new CustomEvent('void-state-change'));
+            },
+            onSelect: feature => this.onFeatureSelected(feature),
+            onEdit: feature => this.onFeatureEdit(feature)
+        }));
     }
 }
 
@@ -421,6 +518,7 @@ export {
     render,
     renderDefaultGeometrySection,
     renderFeaturesSection,
+    renderSolidsSection,
     getFolders,
     onFeatureSelected,
     onFeatureEdit

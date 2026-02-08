@@ -10,6 +10,7 @@ const tree = {
     container: null,
     defaultGeometryExpanded: true,
     featuresExpanded: true,
+    solidsExpanded: true,
     selectedFeatureId: null,
     selectedFeatureIds: new Set(),
     _boundRuntimeChanges: false,
