@@ -969,17 +969,25 @@ function handleSketchMouseUp(event, intersections) {
             ? { id: this.hoveredSketchEntityId, type: 'point' }
             : null;
         const resolved = upHit || fallbackHovered;
-        const local = this.getSketchHitLocalPoint(feature, resolved) || this.projectEventToSketchLocal(event, feature);
-        const refId = (resolved?.type === 'point' && resolved?.id && resolved.id !== SKETCH_VIRTUAL_ORIGIN_ID) ? resolved.id : null;
-        if (!local) {
+        const unsnappedLocal = this.projectEventToSketchLocal(event, feature);
+        const snappedLocal = this.getSketchHitLocalPoint(feature, resolved) || unsnappedLocal;
+        if (!unsnappedLocal && !snappedLocal) {
             return true;
         }
         if (!this.sketchCircleCenter) {
             return true;
         }
         if (this.sketchCircleStartSeq === pointerDown?.seq) {
-            // Same gesture (click+drag+release): always attempt completion.
-            const created = this.createSketchCircle(feature, this.sketchCircleCenter, local, {
+            // Same gesture: decide click-vs-drag in sketch-local space.
+            // This avoids unreliable client pixel deltas from upstream events.
+            const gesture = Math.hypot(
+                (unsnappedLocal?.x ?? snappedLocal?.x ?? 0) - (pointerDown?.local?.x ?? this.sketchCircleCenter.x ?? 0),
+                (unsnappedLocal?.y ?? snappedLocal?.y ?? 0) - (pointerDown?.local?.y ?? this.sketchCircleCenter.y ?? 0)
+            );
+            if (!Number.isFinite(gesture) || gesture <= SKETCH_MIN_LINE_LENGTH) {
+                return true;
+            }
+            const created = this.createSketchCircle(feature, this.sketchCircleCenter, unsnappedLocal || snappedLocal, {
                 centerRefId: this.sketchCircleCenterRefId || null
             });
             if (created) {
@@ -988,7 +996,7 @@ function handleSketchMouseUp(event, intersections) {
             }
             return true;
         }
-        const created = this.createSketchCircle(feature, this.sketchCircleCenter, local, {
+        const created = this.createSketchCircle(feature, this.sketchCircleCenter, snappedLocal || unsnappedLocal, {
             centerRefId: this.sketchCircleCenterRefId || null
         });
         if (created) {
@@ -1113,9 +1121,13 @@ function handleSketchDrag(delta, offset, isDone) {
             return true;
         }
         const centerDrag = downType === 'arc-center';
+        const downEntity = entityById.get(downId) || null;
+        const circleCurveDown = downType === 'arc' && downEntity?.type === 'arc' && downEntity?.circle;
         const dragSelectedLines = this.selectedSketchEntities.has(downId)
             || this.isPointOnSelectedSketchLine(feature, downId);
         const activeIds = centerDrag
+            ? new Set([downId])
+            : circleCurveDown
             ? new Set([downId])
             : dragSelectedLines
             ? new Set(this.selectedSketchEntities)
@@ -1201,7 +1213,10 @@ function handleSketchDrag(delta, offset, isDone) {
     }
     this.applyCircleDragKinematics(feature, dx, dy, local);
 
-    const snap = this.sketchDrag.centerDrag ? null : this.getSketchDragSnapTarget(event, feature, this.sketchDrag.movedPointIds);
+    const activeCircleDrag = !!(this.sketchDrag.circleCurveDragIds?.size);
+    const snap = (this.sketchDrag.centerDrag || activeCircleDrag)
+        ? null
+        : this.getSketchDragSnapTarget(event, feature, this.sketchDrag.movedPointIds);
     const snapId = snap?.targetId || null;
     const snapType = snap?.targetType || null;
     const snapArcId = snap?.targetArcId || null;
@@ -1212,11 +1227,17 @@ function handleSketchDrag(delta, offset, isDone) {
     this.sketchDrag.snapMovedPointId = snapMovedPointId;
     this.hoveredSketchEntityId = snap?.hoveredId || snapId;
 
-    enforceSketchConstraintsInPlace(feature, {
-        useFallback: true,
-        iterations: 48,
-        draggedPointIds: Array.from(this.sketchDrag.movedPointIds || [])
-    });
+    if (activeCircleDrag && !this.sketchDrag.centerDrag) {
+        // Keep circle-attached points stable during live radius drags; do one full solve on mouse-up.
+        this.projectPointOnArcConstraintsForArcs(feature, this.sketchDrag.circleCurveDragIds);
+    } else {
+        enforceSketchConstraintsInPlace(feature, {
+            useFallback: true,
+            iterations: 48,
+            draggedPointIds: Array.from(this.sketchDrag.movedPointIds || [])
+        });
+    }
+    this.rebaseSketchDragState(feature, local);
     this.sketchDrag.moved = this.sketchDrag.moved || Math.hypot(dx, dy) > 0;
     api.sketchRuntime.sync();
     this.updateSketchInteractionVisuals();
@@ -2468,6 +2489,70 @@ function applyCircleDragKinematics(feature, dx = 0, dy = 0, local = null) {
     }
 }
 
+function projectPointOnArcConstraintsForArcs(feature, arcIds) {
+    const idSet = arcIds instanceof Set ? arcIds : new Set(Array.isArray(arcIds) ? arcIds : []);
+    if (!idSet.size) return;
+    const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+    const constraints = Array.isArray(feature?.constraints) ? feature.constraints : [];
+    const pointById = new Map(entities.filter(e => e?.type === 'point' && e?.id).map(e => [e.id, e]));
+    const arcById = new Map(entities.filter(e => e?.type === 'arc' && e?.id).map(e => [e.id, e]));
+    for (const c of constraints) {
+        if (c?.type !== 'point_on_arc') continue;
+        const refs = Array.isArray(c.refs) ? c.refs : [];
+        if (refs.length < 2) continue;
+        const arcId = arcById.has(refs[0]) ? refs[0] : (arcById.has(refs[1]) ? refs[1] : null);
+        const pointId = pointById.has(refs[0]) ? refs[0] : (pointById.has(refs[1]) ? refs[1] : null);
+        if (!arcId || !pointId || !idSet.has(arcId)) continue;
+        const arc = arcById.get(arcId);
+        const point = pointById.get(pointId);
+        if (!arc?.circle || !point) continue;
+        const cx = Number(arc.cx || 0);
+        const cy = Number(arc.cy || 0);
+        const radius = Number(arc.radius || 0);
+        if (!Number.isFinite(radius) || radius <= SKETCH_MIN_LINE_LENGTH) continue;
+        const vx = (point.x || 0) - cx;
+        const vy = (point.y || 0) - cy;
+        const len = Math.hypot(vx, vy);
+        if (!Number.isFinite(len) || len <= 1e-9) continue;
+        point.x = cx + (vx / len) * radius;
+        point.y = cy + (vy / len) * radius;
+    }
+}
+
+function rebaseSketchDragState(feature, local) {
+    const drag = this.sketchDrag;
+    if (!drag || !local) return;
+    drag.start = { x: local.x || 0, y: local.y || 0 };
+
+    if (drag.baseline instanceof Map) {
+        for (const ref of drag.baseline.keys()) {
+            drag.baseline.set(ref, { x: ref.x || 0, y: ref.y || 0 });
+        }
+    }
+
+    const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+    const entityById = new Map(entities.filter(e => e?.id).map(e => [e.id, e]));
+    const pointById = new Map(entities.filter(e => e?.type === 'point' && e?.id).map(e => [e.id, e]));
+    drag.arcControlBaseline = [];
+    for (const id of (drag.activeIds || [])) {
+        const entity = entityById.get(id);
+        if (entity?.type !== 'arc' || !entity.id) continue;
+        if (!Number.isFinite(entity.mx) || !Number.isFinite(entity.my)) continue;
+        const pa = pointById.get(entity.a) || null;
+        const pb = pointById.get(entity.b) || null;
+        drag.arcControlBaseline.push({
+            entity,
+            mx: entity.mx,
+            my: entity.my,
+            cx: Number(entity.cx || 0),
+            cy: Number(entity.cy || 0),
+            radius: Number(entity.radius || 0),
+            a: pa ? { x: pa.x || 0, y: pa.y || 0 } : null,
+            b: pb ? { x: pb.x || 0, y: pb.y || 0 } : null
+        });
+    }
+}
+
 function sampleArcPolyline(arc, a, b, segments = 24) {
     if (arc?.circle) {
         const cx = Number(arc?.cx);
@@ -2724,6 +2809,8 @@ export {
     computeArcGeometry,
     getArcEndpoints,
     applyCircleDragKinematics,
+    projectPointOnArcConstraintsForArcs,
+    rebaseSketchDragState,
     getArcCenterLocalFromEntity,
     sampleArcPolyline,
     createSketchPoint,
