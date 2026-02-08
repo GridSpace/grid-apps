@@ -150,7 +150,7 @@ function applyPolygonPattern(constraint, constraints, points, lines, arcs, fixed
     if (!Number.isFinite(polyRadius) || polyRadius < EPS) return false;
 
     let base = derivePatternBaseFromPoints(pointIds, points, circ.cx, circ.cy, step);
-    const oriented = derivePatternBaseFromLineOrientation(lineIds, constraints, step);
+    const oriented = derivePatternBaseFromLineOrientation(lineIds, constraints, step, base);
     if (Number.isFinite(oriented)) {
         base = oriented;
     }
@@ -193,7 +193,7 @@ function derivePatternBaseFromPoints(pointIds, points, cx, cy, step) {
     return Math.atan2(sy, sx);
 }
 
-function derivePatternBaseFromLineOrientation(lineIds, constraints, step) {
+function derivePatternBaseFromLineOrientation(lineIds, constraints, step, preferredBase = 0) {
     const orientationByLine = new Map();
     for (const c of constraints || []) {
         if (!c?.type) continue;
@@ -207,9 +207,31 @@ function derivePatternBaseFromLineOrientation(lineIds, constraints, step) {
         if (!type) continue;
         const target = type === 'vertical' ? (Math.PI * 0.5) : 0;
         // Regular polygon edge i direction = base + i*step + step/2 + pi/2.
-        return target - (i * step) - (step * 0.5) - (Math.PI * 0.5);
+        const base0 = target - (i * step) - (step * 0.5) - (Math.PI * 0.5);
+        // Horizontal/vertical do not constrain edge direction sign; avoid
+        // branch flips by choosing the orientation nearest to current pose.
+        const base1 = base0 + Math.PI;
+        return nearestAngle(preferredBase, base0, base1);
     }
     return NaN;
+}
+
+function normAngle(a) {
+    let out = a % (Math.PI * 2);
+    if (out < 0) out += Math.PI * 2;
+    return out;
+}
+
+function angleDist(a, b) {
+    const aa = normAngle(a);
+    const bb = normAngle(b);
+    let d = Math.abs(aa - bb);
+    if (d > Math.PI) d = (Math.PI * 2) - d;
+    return d;
+}
+
+function nearestAngle(ref, a, b) {
+    return angleDist(ref, a) <= angleDist(ref, b) ? a : b;
 }
 
 function applyThreePointCircleDefinitions(arcs, points, fixed) {
