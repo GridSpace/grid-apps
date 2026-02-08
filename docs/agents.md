@@ -161,6 +161,8 @@ src/
     ├── interact/
     │   ├── sketch.js     # Sketch interaction orchestrator (event flow + mutations)
     │   ├── sketch_constraints_actions.js # Constraint apply/toggle/delete actions
+    │   ├── sketch_marquee.js # Marquee selection + geometry hit rules
+    │   ├── sketch_pointer.js # Pointer/hover/drag gesture handlers
     │   ├── sketch_tools.js # Sketch tool mode + keybinding behavior
     │   ├── sketch_geometry.js # Sketch hit-test/projection/drag geometry helpers
     │   ├── sketch_constants.js # Shared sketch interaction constants
