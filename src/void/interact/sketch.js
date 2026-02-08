@@ -1227,9 +1227,11 @@ function handleSketchDrag(delta, offset, isDone) {
             activeIds,
             circleCurveDragIds,
             movedPointIds: new Set((centerDrag ? [] : refs).map(ref => ref?.id).filter(Boolean)),
-            centerLocks: this.collectDragLockedArcCenters(feature, activeIds, refs, {
-                includePointOnArc: !centerDrag && !circleCurveDown
-            }),
+            centerLocks: (!centerDrag && !circleCurveDown)
+                ? this.collectDragLockedArcCenters(feature, activeIds, refs, {
+                    includePointOnArc: true
+                })
+                : new Map(),
             centerDrag,
             snapPointId: null,
             snapMovedPointId: null,
