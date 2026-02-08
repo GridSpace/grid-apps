@@ -3,6 +3,7 @@
 import { api } from '../api.js';
 import { enforceSketchConstraintsInPlace } from '../sketch_constraints.js';
 import * as sketchCreate from './sketch_create.js';
+import { isCircleCurve } from '../sketch_curve.js';
 import {
     SKETCH_DRAG_START_PX,
     SKETCH_MIN_LINE_LENGTH,
@@ -360,8 +361,81 @@ function handleSketchDrag(delta, offset, isDone) {
     if (!feature) return false;
     const tool = this.getSketchTool();
 
+    if (tool === 'line') {
+        if (!isDone) {
+            const local = this.projectEventToSketchLocal(delta?.event, feature);
+            if (this.sketchLineStart && local) {
+                this.sketchLinePreview = { a: this.sketchLineStart, b: local };
+                this.updateSketchInteractionVisuals();
+            }
+            return true;
+        }
+        if (!this.sketchLineStart || this.sketchLineStartSeq !== this.sketchPointerDown?.seq) {
+            return true;
+        }
+        const local = this.sketchLinePreview?.b || null;
+        if (!local) return true;
+        this.createSketchLine(feature, this.sketchLineStart, local, {
+            startRefId: this.sketchLineStartRefId || null,
+            endRefId: null
+        });
+        this.cancelSketchLine();
+        this.setSketchTool('select');
+        return true;
+    }
+
+    if (tool === 'rect' || tool === 'rect-center') {
+        const centerMode = tool === 'rect-center';
+        if (!isDone) {
+            const local = this.projectEventToSketchLocal(delta?.event, feature);
+            if (this.sketchRectStart && local) {
+                this.sketchRectPreview = this.makeSketchRectPreview(this.sketchRectStart, local, centerMode);
+                this.updateSketchInteractionVisuals();
+            }
+            return true;
+        }
+        if (!this.sketchRectStart || this.sketchRectStartSeq !== this.sketchPointerDown?.seq) {
+            return true;
+        }
+        const end = this.sketchRectPreview?.corners?.[2]
+            ? { x: this.sketchRectPreview.corners[2].x, y: this.sketchRectPreview.corners[2].y }
+            : null;
+        if (!end) return true;
+        const created = this.createSketchRectangle(feature, this.sketchRectStart, end, {
+            centerMode,
+            startRefId: this.sketchRectStartRefId || null,
+            endRefId: null
+        });
+        if (created) {
+            this.cancelSketchRect();
+            this.setSketchTool('select');
+        }
+        return true;
+    }
+
     if (tool === 'circle') {
-        if (!isDone) return true;
+        if (!isDone) {
+            if (!this.sketchCircleCenter) return true;
+            const local = this.projectEventToSketchLocal(delta?.event, feature);
+            if (!local) return true;
+            const radius = Math.hypot(
+                (local.x || 0) - (this.sketchCircleCenter.x || 0),
+                (local.y || 0) - (this.sketchCircleCenter.y || 0)
+            );
+            if (Number.isFinite(radius) && radius > SKETCH_MIN_LINE_LENGTH) {
+                this.sketchArcPreview = {
+                    mode: 'circle',
+                    circle: true,
+                    cx: this.sketchCircleCenter.x || 0,
+                    cy: this.sketchCircleCenter.y || 0,
+                    radius
+                };
+            } else {
+                this.sketchArcPreview = null;
+            }
+            this.updateSketchInteractionVisuals();
+            return true;
+        }
         if (!this.sketchCircleCenter) return false;
         const preview = this.sketchArcPreview;
         let end = null;
@@ -448,17 +522,17 @@ function handleSketchDrag(delta, offset, isDone) {
         }
         const centerDrag = downType === 'arc-center';
         const downEntity = entityById.get(downId) || null;
-        const circleCurveDown = downType === 'arc' && downEntity?.type === 'arc' && downEntity?.circle;
+        const circleCurveDown = downType === 'arc' && downEntity?.type === 'arc' && isCircleCurve(downEntity);
         const dragSelectedLines = this.selectedSketchEntities.has(downId) || this.isPointOnSelectedSketchLine(feature, downId);
         const activeIds = centerDrag ? new Set([downId]) : circleCurveDown ? new Set([downId]) : dragSelectedLines ? new Set(this.selectedSketchEntities) : new Set([downId]);
         const circleCurveDragIds = new Set();
         if (!centerDrag) {
             for (const id of activeIds) {
                 const ent = entityById.get(id);
-                if (ent?.type === 'arc' && ent?.circle) circleCurveDragIds.add(id);
+                if (ent?.type === 'arc' && isCircleCurve(ent)) circleCurveDragIds.add(id);
             }
             const downEnt = entityById.get(downId);
-            if (downType === 'arc' && downEnt?.type === 'arc' && downEnt?.circle) circleCurveDragIds.add(downId);
+            if (downType === 'arc' && downEnt?.type === 'arc' && isCircleCurve(downEnt)) circleCurveDragIds.add(downId);
         }
         const refs = this.collectCoordinateRefsFromIds(feature, activeIds);
         if (!this.sketchPointerDown.local) return false;
@@ -586,7 +660,7 @@ function collectDragLockedArcCenters(feature, activeIds, refs = [], options = {}
         const arcId = crefs.find(id => arcById.has(id));
         if (!arcId) continue;
         const arc = arcById.get(arcId);
-        if (!arc?.circle) continue;
+        if (!isCircleCurve(arc)) continue;
         const cx = Number(arc.cx);
         const cy = Number(arc.cy);
         if (!Number.isFinite(cx) || !Number.isFinite(cy)) continue;

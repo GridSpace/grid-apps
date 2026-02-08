@@ -1,6 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { applyTangentConstraint } from './sketch_constraints_tangent.js';
+import { isCircleCurve } from './sketch_curve.js';
 
 const EPS = 1e-9;
 
@@ -502,7 +503,7 @@ function applyPointOnArc(constraint, points, arcs, fixed) {
     const vlen = Math.hypot(vx, vy);
     if (!Number.isFinite(vlen) || vlen < EPS) return false;
 
-    if (arc?.circle) {
+    if (isCircleCurve(arc)) {
         return setPoint(p, circ.cx + (vx / vlen) * circ.radius, circ.cy + (vy / vlen) * circ.radius);
     }
 
@@ -553,7 +554,7 @@ function nearestPointOnSegment(px, py, ax, ay, bx, by) {
 }
 
 function sampleArcPolylineForConstraint(arc, a, b, segments = 48) {
-    if (arc?.circle && Number.isFinite(arc?.cx) && Number.isFinite(arc?.cy) && Number.isFinite(arc?.radius)) {
+    if (isCircleCurve(arc) && Number.isFinite(arc?.cx) && Number.isFinite(arc?.cy) && Number.isFinite(arc?.radius)) {
         const count = Math.max(24, segments);
         const pts = [];
         const start = Math.atan2((a.y || 0) - (arc.cy || 0), (a.x || 0) - (arc.cx || 0));
@@ -789,7 +790,7 @@ function normalizeAngle(a) {
 }
 
 function enforceArcFromCenter(arc, a, b, cx, cy, fa, fb) {
-    if (arc?.circle) {
+    if (isCircleCurve(arc)) {
         const ax = a.x || 0;
         const ay = a.y || 0;
         const bx = b.x || 0;
@@ -903,7 +904,7 @@ function getArcCenter(arc, a, b) {
 function getArcCircleData(arc, points) {
     const [a, b] = getLineEndpoints(arc, points);
     if (!a || !b) return null;
-    if (arc?.circle && Number.isFinite(arc?.cx) && Number.isFinite(arc?.cy)) {
+    if (isCircleCurve(arc) && Number.isFinite(arc?.cx) && Number.isFinite(arc?.cy)) {
         let r = Number(arc?.radius);
         if (!Number.isFinite(r) || r < EPS) {
             r = Math.hypot((a.x || 0) - (arc.cx || 0), (a.y || 0) - (arc.cy || 0));

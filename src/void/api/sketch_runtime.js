@@ -7,6 +7,7 @@ import * as markerOps from './sketch_runtime_markers.js';
 import * as profileOps from './sketch_runtime_profiles.js';
 import * as arcOps from './sketch_runtime_arc.js';
 import * as uiOps from './sketch_runtime_ui.js';
+import { isCircleCurve } from '../sketch_curve.js';
 
 const SKETCH_COLORS = {
     planeDefault: { fill: 0x5a9fd4, fillOpacity: 0.1, outline: 0x5a9fd4, outlineOpacity: 0.65 },
@@ -325,7 +326,7 @@ function createSketchRuntimeApi(getApi) {
             // Circle endpoint points are implementation details; hide their markers.
             const hiddenPointIds = new Set();
             for (const entity of entities) {
-                if (entity?.type !== 'arc' || !entity?.circle) continue;
+                if (entity?.type !== 'arc' || !isCircleCurve(entity)) continue;
                 if (typeof entity.a === 'string') hiddenPointIds.add(entity.a);
                 if (typeof entity.b === 'string') hiddenPointIds.add(entity.b);
             }

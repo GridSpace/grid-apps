@@ -3,6 +3,7 @@
 import { THREE } from '../../ext/three.js';
 import { space } from '../../moto/space.js';
 import { api } from '../api.js';
+import { isCircleCurve } from '../sketch_curve.js';
 import {
     SKETCH_HIT_POINT_PX,
     SKETCH_HIT_LINE_PX,
@@ -110,7 +111,7 @@ function hitTestSketchEntity(event, feature) {
 function getArcCenterLocalFromEntity(arc, pointById) {
     const [a, b] = this.getArcEndpoints(arc, pointById);
     if (!a || !b) return null;
-    if (arc?.circle) {
+    if (isCircleCurve(arc)) {
         const cx = Number(arc?.cx);
         const cy = Number(arc?.cy);
         if (Number.isFinite(cx) && Number.isFinite(cy)) {
@@ -332,7 +333,7 @@ function applyCircleDragKinematics(feature, dx = 0, dy = 0, local = null) {
     const ctrlByArcId = new Map((drag.arcControlBaseline || []).map(rec => [rec.entity?.id, rec]));
 
     for (const arc of entities) {
-        if (arc?.type !== 'arc' || !arc?.circle || !arc.id) continue;
+        if (arc?.type !== 'arc' || !isCircleCurve(arc) || !arc.id) continue;
         const touchesCircle = drag.activeIds?.has?.(arc.id)
             || drag.movedPointIds?.has?.(arc.a)
             || drag.movedPointIds?.has?.(arc.b);
@@ -415,7 +416,7 @@ function projectPointOnArcConstraintsForArcs(feature, arcIds) {
         if (!arcId || !pointId || !idSet.has(arcId)) continue;
         const arc = arcById.get(arcId);
         const point = pointById.get(pointId);
-        if (!arc?.circle || !point) continue;
+        if (!isCircleCurve(arc) || !point) continue;
         const cx = Number(arc.cx || 0);
         const cy = Number(arc.cy || 0);
         const radius = Number(arc.radius || 0);
@@ -464,7 +465,7 @@ function rebaseSketchDragState(feature, local) {
 }
 
 function sampleArcPolyline(arc, a, b, segments = 24) {
-    if (arc?.circle) {
+    if (isCircleCurve(arc)) {
         const cx = Number(arc?.cx);
         const cy = Number(arc?.cy);
         let radius = Number(arc?.radius);

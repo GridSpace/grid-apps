@@ -1,5 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
+import { isCircleCurve } from '../sketch_curve.js';
+
 function getLineEndpoints(line, pointById) {
     const aId = typeof line?.a === 'string' ? line.a : (typeof line?.p1_id === 'string' ? line.p1_id : null);
     const bId = typeof line?.b === 'string' ? line.b : (typeof line?.p2_id === 'string' ? line.p2_id : null);
@@ -27,7 +29,7 @@ function getArcEndpoints(arc, pointById) {
 }
 
 function getArcRenderPoints(arc, a, b, segments = 32) {
-    if (arc?.circle) {
+    if (isCircleCurve(arc)) {
         const cx = Number(arc?.cx);
         const cy = Number(arc?.cy);
         let radius = Number(arc?.radius);
@@ -113,7 +115,7 @@ function getArcRenderPoints(arc, a, b, segments = 32) {
 }
 
 function getArcCenterLocal(arc, a, b) {
-    if (arc?.circle) {
+    if (isCircleCurve(arc)) {
         const cx = Number(arc?.cx);
         const cy = Number(arc?.cy);
         if (Number.isFinite(cx) && Number.isFinite(cy)) {

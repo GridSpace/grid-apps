@@ -3,6 +3,12 @@
 import { api } from '../api.js';
 import { enforceSketchConstraintsInPlace } from '../sketch_constraints.js';
 import {
+    isCircleCurve,
+    markArcThreePoint,
+    markCircleCenterPoint,
+    markCircleThreePoint
+} from '../sketch_curve.js';
+import {
     SKETCH_MIN_LINE_LENGTH,
     SKETCH_POINT_MERGE_EPS
 } from './sketch_constants.js';
@@ -48,10 +54,7 @@ function convertArcToCircle(feature, arcId, p1Id, p2Id) {
             return;
         }
 
-        if (!arc.circle) {
-            arc.circle = true;
-            changed = true;
-        }
+        changed = markCircleThreePoint(arc) || changed;
         if (Math.abs((arc.cx || 0) - center.x) > 1e-9) {
             arc.cx = center.x;
             changed = true;
@@ -225,7 +228,7 @@ function createSketchArc(feature, start, end, onArc, options = {}) {
             addCoincidentConstraintIfMissing.call(this, sketch, pb.id, options.endRefId);
         }
 
-        sketch.entities.push({
+        const arcEntity = {
             id,
             type: 'arc',
             construction: false,
@@ -239,7 +242,9 @@ function createSketchArc(feature, start, end, onArc, options = {}) {
             startAngle: geom.startAngle,
             endAngle: geom.endAngle,
             ccw: geom.ccw
-        });
+        };
+        markArcThreePoint(arcEntity);
+        sketch.entities.push(arcEntity);
         enforceSketchConstraintsInPlace(sketch);
     }, {
         opType: 'feature.update',
@@ -297,10 +302,9 @@ function createSketchCircle(feature, center, edge, options = {}) {
                 created_at: Date.now()
             });
         }
-        sketch.entities.push({
+        const circleEntity = {
             id,
             type: 'arc',
-            circle: true,
             construction: false,
             a: p1.id,
             b: p2.id,
@@ -312,7 +316,9 @@ function createSketchCircle(feature, center, edge, options = {}) {
             startAngle: 0,
             endAngle: Math.PI * 2,
             ccw: true
-        });
+        };
+        markCircleCenterPoint(circleEntity);
+        sketch.entities.push(circleEntity);
         addCoincidentConstraintIfMissing.call(this, sketch, p1.id, p2.id);
         enforceSketchConstraintsInPlace(sketch);
     }, {
@@ -524,13 +530,13 @@ function createSketchPolygonFromSelectedCircle(mode = 'inscribed') {
 function getSelectedSketchCircle(feature) {
     const entities = Array.isArray(feature?.entities) ? feature.entities : [];
     const selected = entities.filter(entity => this.selectedSketchEntities.has(entity.id));
-    const circles = selected.filter(entity => entity?.type === 'arc' && entity?.circle);
+    const circles = selected.filter(entity => entity?.type === 'arc' && isCircleCurve(entity));
     if (circles.length !== 1) return null;
     return circles[0];
 }
 
 function getCircleData(feature, circle) {
-    if (!circle || circle.type !== 'arc' || !circle.circle) return null;
+    if (!circle || circle.type !== 'arc' || !isCircleCurve(circle)) return null;
     const entities = Array.isArray(feature?.entities) ? feature.entities : [];
     const byId = new Map(entities.filter(e => e?.id).map(e => [e.id, e]));
     const [a] = this.getArcEndpoints(circle, byId);
@@ -639,7 +645,7 @@ function convertArcToCircleInSketch(sketch, p1Id, p2Id) {
             changed = true;
         }
         const angle = Math.atan2(ry, rx);
-        arc.circle = true;
+        markCircleThreePoint(arc);
         arc.cx = center.x;
         arc.cy = center.y;
         arc.radius = radius;
