@@ -370,7 +370,7 @@ function applyCircleDragKinematics(feature, dx = 0, dy = 0, local = null) {
             }
         }
 
-        if (!isCircleCurve(arc) || !isCenterPointCircle(arc)) continue;
+        if (!isDragResizableCircleArc(arc, byId)) continue;
         let cx = Number(arc.cx || 0);
         let cy = Number(arc.cy || 0);
 
@@ -404,6 +404,20 @@ function applyCircleDragKinematics(feature, dx = 0, dy = 0, local = null) {
         arc.endAngle = Math.PI * 2;
         arc.ccw = true;
     }
+}
+
+function isDragResizableCircleArc(entity, pointById) {
+    if (entity?.type !== 'arc') return false;
+    if (isCenterPointCircle(entity)) return true;
+    if (!Number.isFinite(entity?.cx) || !Number.isFinite(entity?.cy) || !Number.isFinite(entity?.radius)) return false;
+    const start = Number(entity?.startAngle);
+    const end = Number(entity?.endAngle);
+    const full = Number.isFinite(start) && Number.isFinite(end) && Math.abs(start) < 1e-6 && Math.abs(end - Math.PI * 2) < 1e-6;
+    if (!full) return false;
+    const a = typeof entity?.a === 'string' ? pointById?.get?.(entity.a) : null;
+    const b = typeof entity?.b === 'string' ? pointById?.get?.(entity.b) : null;
+    if (!a || !b) return !!isCircleCurve(entity);
+    return Math.hypot((a.x || 0) - (b.x || 0), (a.y || 0) - (b.y || 0)) < 1e-6;
 }
 
 function projectPointOnArcConstraintsForArcs(feature, arcIds) {

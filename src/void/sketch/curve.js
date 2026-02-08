@@ -88,7 +88,10 @@ function isCenterPointCircle(entity) {
 }
 
 function isThreePointCircle(entity) {
-    return isCircleCurve(entity) && getCurveDefinition(entity) === CURVE_DEF.CIRCLE_THREE_POINT;
+    if (!isCircleCurve(entity)) return false;
+    if (getCurveDefinition(entity) !== CURVE_DEF.CIRCLE_THREE_POINT) return false;
+    const ids = Array.isArray(entity?.data?.threePointIds) ? entity.data.threePointIds.filter(Boolean) : [];
+    return ids.length >= 3;
 }
 
 export {

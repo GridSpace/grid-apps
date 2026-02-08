@@ -600,6 +600,7 @@ function handleSketchDrag(delta, offset, isDone) {
         const snapMovedPointId = drag.snapMovedPointId || null;
         const movedPointIds = drag.movedPointIds || new Set();
         const draggedArcIds = drag.draggedArcIds || new Set();
+        const pointDrag = !!drag.pointDrag;
         this.sketchDrag = null;
         api.sketchRuntime?.setMutating?.(feature.id, false);
         if (moved) {
@@ -613,7 +614,7 @@ function handleSketchDrag(delta, offset, isDone) {
                 enforceSketchConstraintsInPlace(feature);
             }
             enforceSketchConstraintsInPlace(feature, {
-                useFallback: true,
+                useFallback: !pointDrag,
                 iterations: 64,
                 draggedPointIds: Array.from(movedPointIds || []),
                 draggedArcIds: Array.from(draggedArcIds || []),
@@ -644,6 +645,7 @@ function handleSketchDrag(delta, offset, isDone) {
         const downType = this.sketchPointerDown.hitType || null;
         const entities = Array.isArray(feature?.entities) ? feature.entities : [];
         const entityById = new Map(entities.filter(e => e?.id).map(e => [e.id, e]));
+        const pointById = new Map(entities.filter(e => e?.type === 'point' && e.id).map(e => [e.id, e]));
         if (!downId || downId === SKETCH_VIRTUAL_ORIGIN_ID) {
             this.startSketchMarquee(feature, this.sketchPointerDown, event);
             this.hoveredSketchEntityId = null;
@@ -652,17 +654,17 @@ function handleSketchDrag(delta, offset, isDone) {
         }
         const centerDrag = downType === 'arc-center';
         const downEntity = entityById.get(downId) || null;
-        const circleCurveDown = downType === 'arc' && downEntity?.type === 'arc' && isCenterPointCircle(downEntity);
+        const circleCurveDown = downType === 'arc' && isDragResizableCircleArc(downEntity, pointById);
         const dragSelectedLines = this.selectedSketchEntities.has(downId) || this.isPointOnSelectedSketchLine(feature, downId);
         const activeIds = centerDrag ? new Set([downId]) : circleCurveDown ? new Set([downId]) : dragSelectedLines ? new Set(this.selectedSketchEntities) : new Set([downId]);
         const circleCurveDragIds = new Set();
         if (!centerDrag) {
             for (const id of activeIds) {
                 const ent = entityById.get(id);
-                if (ent?.type === 'arc' && isCenterPointCircle(ent)) circleCurveDragIds.add(id);
+                if (isDragResizableCircleArc(ent, pointById)) circleCurveDragIds.add(id);
             }
             const downEnt = entityById.get(downId);
-            if (downType === 'arc' && downEnt?.type === 'arc' && isCenterPointCircle(downEnt)) circleCurveDragIds.add(downId);
+            if (downType === 'arc' && isDragResizableCircleArc(downEnt, pointById)) circleCurveDragIds.add(downId);
         }
         const refs = this.collectCoordinateRefsFromIds(feature, activeIds);
         if (!this.sketchPointerDown.local) return false;
@@ -671,7 +673,6 @@ function handleSketchDrag(delta, offset, isDone) {
             for (const ref of refs) baseline.set(ref, { x: ref.x || 0, y: ref.y || 0 });
         }
         const arcControlBaseline = [];
-        const pointById = new Map(entities.filter(e => e?.type === 'point' && e.id).map(e => [e.id, e]));
         for (const entity of entities) {
             if (entity?.type !== 'arc' || !entity.id) continue;
             if (!activeIds.has(entity.id)) continue;
@@ -773,6 +774,22 @@ function handleSketchDrag(delta, offset, isDone) {
     api.sketchRuntime.sync();
     this.updateSketchInteractionVisuals();
     return true;
+}
+
+function isDragResizableCircleArc(entity, pointById) {
+    if (entity?.type !== 'arc') return false;
+    if (isCenterPointCircle(entity)) return true;
+    // Compatibility path: treat full-circle arc records with coincident endpoints
+    // as center-point circles for drag-resize interactions.
+    if (!Number.isFinite(entity?.cx) || !Number.isFinite(entity?.cy) || !Number.isFinite(entity?.radius)) return false;
+    const start = Number(entity?.startAngle);
+    const end = Number(entity?.endAngle);
+    const full = Number.isFinite(start) && Number.isFinite(end) && Math.abs(start) < 1e-6 && Math.abs(end - Math.PI * 2) < 1e-6;
+    if (!full) return false;
+    const a = typeof entity?.a === 'string' ? pointById?.get?.(entity.a) : null;
+    const b = typeof entity?.b === 'string' ? pointById?.get?.(entity.b) : null;
+    if (!a || !b) return !!isCircleCurve(entity);
+    return Math.hypot((a.x || 0) - (b.x || 0), (a.y || 0) - (b.y || 0)) < 1e-6;
 }
 
 function refreshThreePointCirclesFromDefinitions(feature) {
