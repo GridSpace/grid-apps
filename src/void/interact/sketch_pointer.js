@@ -2,6 +2,7 @@
 
 import { api } from '../api.js';
 import { enforceSketchConstraintsInPlace } from '../sketch_constraints.js';
+import * as sketchCreate from './sketch_create.js';
 import {
     SKETCH_DRAG_START_PX,
     SKETCH_MIN_LINE_LENGTH,
@@ -399,7 +400,7 @@ function handleSketchDrag(delta, offset, isDone) {
         api.sketchRuntime?.setMutating?.(feature.id, false);
         if (moved) {
             if (snapPointType === 'point' && snapPointId && snapMovedPointId && snapMovedPointId !== snapPointId) {
-                this.addCoincidentConstraintIfMissing(feature, snapMovedPointId, snapPointId);
+                sketchCreate.addCoincidentConstraintIfMissing.call(this, feature, snapMovedPointId, snapPointId);
                 enforceSketchConstraintsInPlace(feature);
             }
             if (snapPointType === 'arc-center' && snapArcId && snapMovedPointId) {
