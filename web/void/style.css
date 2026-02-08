@@ -848,6 +848,61 @@ html, body {
     align-self: flex-start;
 }
 
+.props-extrude-profiles {
+    max-height: 140px;
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg-primary);
+}
+
+.props-extrude-profile-row {
+    min-height: 28px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.props-extrude-profile-row:last-child {
+    border-bottom: none;
+}
+
+.props-extrude-profile-text {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.props-extrude-profile-remove {
+    width: 20px;
+    height: 20px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+}
+
+.props-extrude-profile-remove:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+.props-extrude-profile-empty {
+    padding: 8px;
+    color: var(--text-secondary);
+    font-style: italic;
+    font-size: 12px;
+}
+
 .props-field input:focus,
 .props-field select:focus {
     outline: none;

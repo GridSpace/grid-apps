@@ -3,6 +3,7 @@
 import { THREE } from '../../ext/three.js';
 import { space } from '../../moto/space.js';
 import { api } from '../api.js';
+import { properties } from '../properties.js';
 
 function getInteractiveObjects() {
     const objects = [];
@@ -285,6 +286,28 @@ function getSketchProfileHitFromIntersections(intersections) {
 }
 
 function selectSketchProfile(hit, event) {
+    const currentFeatureId = properties.currentFeatureId || null;
+    const currentFeature = currentFeatureId ? api.features.findById(currentFeatureId) : null;
+    if (currentFeature?.type === 'extrude') {
+        const profile = { sketchId: hit.featureId, profileId: hit.profileId };
+        const updated = api.features.update(currentFeature.id, feature => {
+            feature.input = feature.input || {};
+            const current = Array.isArray(feature.input.profiles) ? feature.input.profiles : [];
+            const key = `${profile.sketchId}:${profile.profileId}`;
+            const has = current.some(p => `${p?.sketchId}:${p?.profileId}` === key);
+            feature.input.profiles = has
+                ? current.filter(p => `${p?.sketchId}:${p?.profileId}` !== key)
+                : [...current, profile];
+        }, {
+            opType: 'feature.update',
+            payload: { field: 'profiles.toggle', profile }
+        });
+        if (updated) {
+            properties.onChanged?.();
+        }
+        return;
+    }
+
     const key = `${hit.featureId}:${hit.profileId}`;
     const multi = !!(event?.ctrlKey || event?.metaKey);
     if (!multi) {

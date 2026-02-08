@@ -209,6 +209,7 @@ const properties = {
         }
         this.panel.classList.remove('hidden');
         this.renderFeature(feature);
+        this.syncExtrudeProfileSelection(feature);
         window.dispatchEvent(new CustomEvent('void-state-change'));
     },
 
@@ -217,6 +218,7 @@ const properties = {
         this.panel.classList.add('hidden');
         api.sketchRuntime?.setEditing(null);
         api.interact?.clearSketchSelection?.();
+        this.syncExtrudeProfileSelection(null);
         this.currentFeatureId = null;
         this._onChange = null;
         window.dispatchEvent(new CustomEvent('void-state-change'));
@@ -240,6 +242,7 @@ const properties = {
         } else if (feature.type === 'extrude') {
             this.renderExtrudeFields(feature);
         }
+        this.syncExtrudeProfileSelection(feature);
     },
 
     renderSketchFields(feature) {
@@ -326,6 +329,69 @@ const properties = {
             });
             if (updated) this.onChanged();
         }));
+
+        const wrap = document.createElement('div');
+        wrap.className = 'props-field';
+        const label = document.createElement('label');
+        label.textContent = 'Profiles';
+        wrap.appendChild(label);
+        const list = document.createElement('div');
+        list.className = 'props-extrude-profiles';
+        const profiles = Array.isArray(feature?.input?.profiles) ? feature.input.profiles : [];
+        if (!profiles.length) {
+            const empty = document.createElement('div');
+            empty.className = 'props-extrude-profile-empty';
+            empty.textContent = 'No profiles selected';
+            list.appendChild(empty);
+        } else {
+            for (const profile of profiles) {
+                const sketch = api.features.findById(profile?.sketchId);
+                const row = document.createElement('div');
+                row.className = 'props-extrude-profile-row';
+                const text = document.createElement('div');
+                text.className = 'props-extrude-profile-text';
+                text.textContent = `${sketch?.name || profile?.sketchId || 'Sketch'} / ${profile?.profileId || 'region'}`;
+                const remove = document.createElement('button');
+                remove.className = 'props-extrude-profile-remove';
+                remove.textContent = '×';
+                remove.title = 'Remove profile';
+                remove.onclick = () => {
+                    const updated = api.features.update(feature.id, item => {
+                        item.input = item.input || {};
+                        const current = Array.isArray(item.input.profiles) ? item.input.profiles : [];
+                        item.input.profiles = current.filter(p => {
+                            return !(p?.sketchId === profile?.sketchId && p?.profileId === profile?.profileId);
+                        });
+                    }, {
+                        opType: 'feature.update',
+                        payload: { field: 'profiles.remove', profile }
+                    });
+                    if (updated) this.onChanged();
+                };
+                row.appendChild(text);
+                row.appendChild(remove);
+                list.appendChild(row);
+            }
+        }
+        wrap.appendChild(list);
+        this.body.appendChild(wrap);
+    },
+
+    syncExtrudeProfileSelection(feature) {
+        const isExtrude = feature?.type === 'extrude' && this.currentFeatureId === feature?.id;
+        if (!isExtrude) {
+            api.interact.selectedSketchProfiles?.clear?.();
+            api.interact.hoveredSketchProfileKey = null;
+            api.sketchRuntime?.setSelectedProfiles?.([]);
+            api.sketchRuntime?.setHoveredProfile?.(null);
+            return;
+        }
+        const profiles = Array.isArray(feature?.input?.profiles) ? feature.input.profiles : [];
+        const keys = profiles
+            .map(p => (p?.sketchId && p?.profileId) ? `${p.sketchId}:${p.profileId}` : null)
+            .filter(Boolean);
+        api.interact.selectedSketchProfiles = new Set(keys);
+        api.sketchRuntime?.setSelectedProfiles?.(keys);
     },
 
     getPlaneOptionId(feature) {
