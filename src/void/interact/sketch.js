@@ -1069,16 +1069,21 @@ function handleSketchDrag(delta, offset, isDone) {
             return false;
         }
         const preview = this.sketchArcPreview;
-        if (!preview || preview.mode !== 'circle' || !Number.isFinite(preview.radius)) {
+        let end = null;
+        if (preview && preview.mode === 'circle' && Number.isFinite(preview.radius) && preview.radius > SKETCH_MIN_LINE_LENGTH) {
+            end = {
+                x: Number(preview.cx || 0) + Number(preview.radius || 0),
+                y: Number(preview.cy || 0)
+            };
+        } else {
+            const local = this.projectEventToSketchLocal(delta?.event, feature);
+            if (local) {
+                end = local;
+            }
+        }
+        if (!end) {
             return true;
         }
-        if (preview.radius <= SKETCH_MIN_LINE_LENGTH) {
-            return true;
-        }
-        const end = {
-            x: Number(preview.cx || 0) + Number(preview.radius || 0),
-            y: Number(preview.cy || 0)
-        };
         const created = this.createSketchCircle(feature, this.sketchCircleCenter, end, {
             centerRefId: this.sketchCircleCenterRefId || null
         });
@@ -1112,6 +1117,7 @@ function handleSketchDrag(delta, offset, isDone) {
         const snapMovedPointId = this.sketchDrag.snapMovedPointId || null;
         const movedPointIds = this.sketchDrag.movedPointIds || new Set();
         this.sketchDrag = null;
+        api.sketchRuntime?.setMutating?.(feature.id, false);
         if (moved) {
             if (snapPointType === 'point' && snapPointId && snapMovedPointId && snapMovedPointId !== snapPointId) {
                 addCoincidentConstraintIfMissing.call(this, feature, snapMovedPointId, snapPointId);
@@ -1221,11 +1227,13 @@ function handleSketchDrag(delta, offset, isDone) {
             activeIds,
             circleCurveDragIds,
             movedPointIds: new Set((centerDrag ? [] : refs).map(ref => ref?.id).filter(Boolean)),
+            centerLocks: this.collectDragLockedArcCenters(feature, activeIds, refs),
             centerDrag,
             snapPointId: null,
             snapMovedPointId: null,
             moved: false
         };
+        api.sketchRuntime?.setMutating?.(feature.id, true);
         this.hoveredSketchEntityId = null;
         this.updateSketchInteractionVisuals();
     }
@@ -1271,18 +1279,63 @@ function handleSketchDrag(delta, offset, isDone) {
         // Keep circle-attached points stable during live radius drags; do one full solve on mouse-up.
         this.projectPointOnArcConstraintsForArcs(feature, this.sketchDrag.circleCurveDragIds);
     } else {
+        this.applyDragLockedArcCenters(feature, this.sketchDrag.centerLocks);
         enforceSketchConstraintsInPlace(feature, {
             useFallback: true,
             iterations: 48,
             draggedPointIds: Array.from(this.sketchDrag.movedPointIds || [])
         });
+        this.applyDragLockedArcCenters(feature, this.sketchDrag.centerLocks);
     }
-    // Rebase to current solved state to keep long drags stable.
-    this.rebaseSketchDragState(feature, local);
     this.sketchDrag.moved = this.sketchDrag.moved || Math.hypot(dx, dy) > 0;
     api.sketchRuntime.sync();
     this.updateSketchInteractionVisuals();
     return true;
+}
+
+function collectDragLockedArcCenters(feature, activeIds, refs = []) {
+    const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+    const constraints = Array.isArray(feature?.constraints) ? feature.constraints : [];
+    const arcById = new Map(entities.filter(e => e?.type === 'arc' && e?.id).map(e => [e.id, e]));
+    const selected = new Set([...(activeIds || [])]);
+    for (const ref of refs || []) {
+        if (ref?.id) {
+            selected.add(ref.id);
+        }
+    }
+    // Lock centers only for constraints that can otherwise satisfy by drifting
+    // the circle center during drag. Do not lock for point_on_arc (inscribed),
+    // which caused heavy damping and poor interaction feel.
+    const lockTypes = new Set(['tangent', 'arc_center_coincident']);
+    const out = new Map();
+    for (const c of constraints) {
+        if (!lockTypes.has(c?.type)) continue;
+        const crefs = Array.isArray(c.refs) ? c.refs : [];
+        if (!crefs.some(id => selected.has(id))) continue;
+        const arcId = crefs.find(id => arcById.has(id));
+        if (!arcId) continue;
+        const arc = arcById.get(arcId);
+        if (!arc?.circle) continue;
+        const cx = Number(arc.cx);
+        const cy = Number(arc.cy);
+        if (!Number.isFinite(cx) || !Number.isFinite(cy)) continue;
+        out.set(arcId, { cx, cy });
+    }
+    return out;
+}
+
+function applyDragLockedArcCenters(feature, centerLocks) {
+    if (!(centerLocks instanceof Map) || !centerLocks.size) {
+        return;
+    }
+    const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+    const arcById = new Map(entities.filter(e => e?.type === 'arc' && e?.id).map(e => [e.id, e]));
+    for (const [arcId, lock] of centerLocks.entries()) {
+        const arc = arcById.get(arcId);
+        if (!arc) continue;
+        arc.cx = lock.cx;
+        arc.cy = lock.cy;
+    }
 }
 
 function isPointOnSelectedSketchLine(feature, pointId) {
@@ -2851,6 +2904,8 @@ export {
     getArcEndpoints,
     applyCircleDragKinematics,
     projectPointOnArcConstraintsForArcs,
+    collectDragLockedArcCenters,
+    applyDragLockedArcCenters,
     rebaseSketchDragState,
     getArcCenterLocalFromEntity,
     sampleArcPolyline,

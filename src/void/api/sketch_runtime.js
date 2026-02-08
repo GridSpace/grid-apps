@@ -38,6 +38,7 @@ function createSketchRuntimeApi(getApi) {
         hoveredId: null,
         editingId: null,
         selectedIds: new Set(),
+        mutatingIds: new Set(),
         _glyphLayer: null,
         _glyphDrag: null,
 
@@ -428,7 +429,9 @@ function createSketchRuntimeApi(getApi) {
                 if (typeof entity.a === 'string') hiddenPointIds.add(entity.a);
                 if (typeof entity.b === 'string') hiddenPointIds.add(entity.b);
             }
-            this.addClosedProfileFills(rec, entities, pointById);
+            if (!this.mutatingIds.has(rec.feature?.id)) {
+                this.addClosedProfileFills(rec, entities, pointById);
+            }
             for (const entity of entities) {
                 if (!entity?.id) {
                     continue;
@@ -1300,6 +1303,16 @@ function createSketchRuntimeApi(getApi) {
         setSelected(featureIds) {
             this.selectedIds = new Set(featureIds || []);
             this.refreshStates();
+        },
+
+        setMutating(featureId, active = false) {
+            if (!featureId) return;
+            if (active) {
+                this.mutatingIds.add(featureId);
+            } else {
+                this.mutatingIds.delete(featureId);
+            }
+            this.sync();
         },
 
         setEntityInteraction(featureId, interaction = {}) {
