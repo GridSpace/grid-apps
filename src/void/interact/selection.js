@@ -1,6 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { space } from '../../moto/space.js';
+import { api } from '../api.js';
 
 function selectPlane(plane, event) {
     const multiSelect = event && (event.ctrlKey || event.metaKey);
@@ -26,6 +27,9 @@ function selectPlane(plane, event) {
         }
         this.selectedPlanes.clear();
         this.clearSelectedPoints();
+        this.selectedSketchProfiles?.clear?.();
+        api.sketchRuntime?.setSelectedProfiles?.([]);
+        api.sketchRuntime?.setHoveredProfile?.(null);
 
         // Select the new plane
         plane.setSelected(true);
@@ -57,6 +61,10 @@ function deselectAll() {
     }
     this.setHoveredPoint(null);
     this.clearSelectedPoints();
+    this.selectedSketchProfiles?.clear?.();
+    this.hoveredSketchProfileKey = null;
+    api.sketchRuntime?.setSelectedProfiles?.([]);
+    api.sketchRuntime?.setHoveredProfile?.(null);
     this.clearSketchSelection?.();
     this.cancelSketchLine?.();
     this.setSketchTool?.('select');

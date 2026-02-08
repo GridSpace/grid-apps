@@ -202,6 +202,12 @@ src/
 - `src/main/void.js` currently enables overlay test primitives with a hardcoded `if (true)` block (debug scaffolding)
 - `Origin` in void is an overlay point (not `space.platform` origin)
 - IndexedDB revision store name is `versions` (older notes may still mention `features`)
+- Feature tree now includes early history controls:
+  - per-feature `suppress/unsuppress`
+  - feature reorder (up/down)
+  - timeline slider (`0..N`) controlling active rebuild prefix
+  - all above are revisioned + undo/redoable
+- Sketch runtime currently renders from the active rebuild set (`features.listBuilt()`), not raw full feature list
 
 **Phase 2: Sketch System (Current Workstream)**
 - planegcs constraint solver integration is active
@@ -211,6 +217,11 @@ src/
 - rectangle tools are implemented as constrained line sets:
   - corner rectangle
   - center rectangle
+
+**Phase 3: Feature History Scaffold (in progress)**
+- `extrude` can now be created as a history feature from a selected sketch (tree + document/history plumbing)
+- 3D solid generation/rebuild for extrude is still pending (Manifold integration next)
+- timeline/reorder/suppress semantics are active at the feature-history layer before full BREP ops
 
 **Sketch MVP Contract (checkpointed, 2026-02-06)**
 - Primitive rollout:

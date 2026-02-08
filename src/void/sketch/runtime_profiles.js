@@ -8,7 +8,8 @@ const CLIPPER_SCALE = 100000;
 
 function addClosedProfileFills(rec, entities, pointById) {
     const loops = this.findClosedCurveLoops(rec.feature, entities, pointById);
-    for (const loop of loops) {
+    for (let index = 0; index < loops.length; index++) {
+        const loop = loops[index];
         if (!Array.isArray(loop) || loop.length < 3) continue;
         const shape = new THREE.Shape();
         shape.moveTo(loop[0].x, loop[0].y);
@@ -27,7 +28,18 @@ function addClosedProfileFills(rec, entities, pointById) {
         const fill = new THREE.Mesh(geom, mat);
         fill.position.z = -0.005;
         fill.renderOrder = 6;
+        const profileId = `profile-${index}`;
+        fill.userData.sketchEntityId = profileId;
+        fill.userData.sketchEntityType = 'profile';
+        fill.userData.sketchProfileId = profileId;
+        fill.userData.sketchFeatureId = rec.feature?.id || null;
+        fill.userData.sketchProfileLoop = loop.map(p => ({ x: p.x || 0, y: p.y || 0 }));
         rec.entitiesGroup.add(fill);
+        rec.entityViews.set(profileId, {
+            entity: { id: profileId, type: 'profile', loop: fill.userData.sketchProfileLoop },
+            object: fill,
+            type: 'profile'
+        });
     }
 }
 

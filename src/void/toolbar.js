@@ -9,6 +9,7 @@ const toolbar = {
     buttons: [],
     cameraToggleBtn: null,
     sketchBtn: null,
+    extrudeBtn: null,
     sketchToolButtons: null,
     sketchToolMenuItems: null,
     sketchConstraintButtons: null,
@@ -147,9 +148,8 @@ const toolbar = {
         ]);
         this.sketchConstraintButtons = this.sketchConstraintMenu.items;
 
-        this.addButton(container, 'Extrude', () => {
-            console.log('Extrude');
-            // TODO: implement extrude
+        this.extrudeBtn = this.addButton(container, 'Extrude', () => {
+            this.createExtrudeFeatureFromSelection();
         }, { id: 'btn-extrude', disabled: true });
 
         container.appendChild(this.separator());
@@ -226,9 +226,13 @@ const toolbar = {
     updateSketchControls() {
         const editing = !!api.sketchRuntime?.editingId;
         const canCreate = !editing && !!api.interact.resolveSketchTargetFromSelection();
+        const canExtrude = !editing && this.getSelectedExtrudeTargets().length > 0;
 
         if (this.sketchBtn) {
             this.sketchBtn.disabled = !canCreate;
+        }
+        if (this.extrudeBtn) {
+            this.extrudeBtn.disabled = !canExtrude;
         }
 
         const rawTool = api.interact.getSketchTool ? api.interact.getSketchTool() : 'select';
@@ -260,6 +264,52 @@ const toolbar = {
         if (this.sketchConstraintMenu?.trigger) {
             this.sketchConstraintMenu.trigger.disabled = !editing;
         }
+    },
+
+    getSelectedExtrudeTargets() {
+        const profiles = Array.from(api.interact?.selectedSketchProfiles || []);
+        const out = [];
+        for (const key of profiles) {
+            const [sketchId, profileId] = String(key || '').split(':');
+            if (!sketchId || !profileId) continue;
+            const sketch = api.features.findById(sketchId);
+            if (!sketch || sketch.type !== 'sketch') continue;
+            out.push({ sketchId, profileId });
+        }
+        return out;
+    },
+
+    createExtrudeFeatureFromSelection() {
+        const targets = this.getSelectedExtrudeTargets();
+        if (!targets.length) return null;
+        const doc = api.document.current;
+        if (!doc) return null;
+        const extrudeCount = (doc.features || []).filter(f => f?.type === 'extrude').length;
+        const id = (typeof crypto !== 'undefined' && crypto.randomUUID)
+            ? crypto.randomUUID().replace(/-/g, '').slice(0, 12)
+            : `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+        const feature = {
+            id,
+            type: 'extrude',
+            name: `Extrude ${extrudeCount + 1}`,
+            created_at: Date.now(),
+            suppressed: false,
+            visible: true,
+            input: {
+                profiles: targets
+            },
+            params: {
+                distance: 10,
+                operation: 'new'
+            },
+            result: null
+        };
+        api.features.add(feature);
+        tree.selectedFeatureId = feature.id;
+        tree.selectedFeatureIds = new Set([feature.id]);
+        tree.render();
+        window.dispatchEvent(new CustomEvent('void-state-change'));
+        return feature;
     },
 
     getProjectionLabel() {

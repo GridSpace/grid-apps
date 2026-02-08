@@ -75,6 +75,23 @@ function createRow({ label, depth = 0, expanded, onToggle, eyeVisible, onEye, on
     return row;
 }
 
+function createTimelineMarkerRow({ active = false, onSelect }) {
+    const row = document.createElement('div');
+    row.className = `tree-timeline-marker ${active ? 'active' : ''}`;
+    row.onclick = () => onSelect?.();
+    row.title = 'Move history marker';
+
+    const line = document.createElement('div');
+    line.className = 'tree-timeline-line';
+    row.appendChild(line);
+
+    const knob = document.createElement('div');
+    knob.className = 'tree-timeline-knob';
+    knob.textContent = '⟷';
+    row.appendChild(knob);
+    return row;
+}
+
 function createItemRow(label, feature, depth = 0, opts = {}) {
     const row = document.createElement('div');
     row.className = 'tree-item-row';
@@ -83,6 +100,12 @@ function createItemRow(label, feature, depth = 0, opts = {}) {
     }
     if (opts.eyeVisible === false) {
         row.classList.add('is-off');
+    }
+    if (opts.suppressed) {
+        row.classList.add('is-suppressed');
+    }
+    if (opts.beyondTimeline) {
+        row.classList.add('is-future');
     }
     row.style.paddingLeft = `${8 + depth * 16}px`;
 
@@ -100,6 +123,29 @@ function createItemRow(label, feature, depth = 0, opts = {}) {
     left.appendChild(icon);
     left.appendChild(text);
     row.appendChild(left);
+
+    const actions = Array.isArray(opts.actions) ? opts.actions : [];
+    if (actions.length) {
+        const actionWrap = document.createElement('div');
+        actionWrap.className = 'tree-item-actions';
+        for (const action of actions) {
+            if (!action || typeof action.onClick !== 'function') continue;
+            const btn = document.createElement('button');
+            btn.className = 'tree-item-action';
+            if (action.className) {
+                btn.classList.add(action.className);
+            }
+            btn.textContent = action.label || '•';
+            btn.title = action.title || '';
+            btn.disabled = !!action.disabled;
+            btn.onclick = event => {
+                event.stopPropagation();
+                action.onClick(feature);
+            };
+            actionWrap.appendChild(btn);
+        }
+        row.appendChild(actionWrap);
+    }
 
     row.onclick = () => {
         if (typeof opts.onSelect === 'function') {
@@ -158,6 +204,7 @@ export {
     createHeader,
     createDivider,
     createRow,
+    createTimelineMarkerRow,
     createItemRow,
     createEmptyRow,
     getIcon

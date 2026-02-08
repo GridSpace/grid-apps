@@ -70,6 +70,8 @@ function applyEntityStyle(rec, mode, colors) {
 
     const hoveredId = rec.interaction?.hoveredId || null;
     const selectedIds = rec.interaction?.selectedIds || new Set();
+    const hoveredProfileId = rec.interaction?.hoveredProfileId || null;
+    const selectedProfileIds = rec.interaction?.selectedProfileIds || new Set();
     const constraintHighlight = this.getConstraintHoverHighlight(rec);
 
     for (const [id, view] of rec.entityViews.entries()) {
@@ -84,6 +86,24 @@ function applyEntityStyle(rec, mode, colors) {
                     ? colors.linesHover
                     : baseLineColor;
             view.object.material.color.setHex(color);
+            continue;
+        }
+        if (view.type === 'profile') {
+            const activeSelected = selectedProfileIds.has(id);
+            const activeHovered = hoveredProfileId === id && !activeSelected;
+            const fill = view.object;
+            if (fill?.material?.color) {
+                if (activeSelected) {
+                    fill.material.color.setHex(0x5a9fd4);
+                    fill.material.opacity = 0.28;
+                } else if (activeHovered) {
+                    fill.material.color.setHex(0xff9933);
+                    fill.material.opacity = 0.24;
+                } else {
+                    fill.material.color.setHex(0x8f8f8f);
+                    fill.material.opacity = 0.18;
+                }
+            }
             continue;
         }
         if (view.type === 'arc-center') {

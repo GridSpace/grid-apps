@@ -39,6 +39,9 @@ function createDocumentApi(getApi, cfg) {
                         { id: 'features', name: 'Features', collapsed: false }
                     ]
                 },
+                timeline: {
+                    index: null
+                },
                 scene: {
                     datum: api.datum.defaultState(),
                     origin: api.origin.defaultState()
@@ -88,6 +91,14 @@ function createDocumentApi(getApi, cfg) {
                         { id: 'features', name: 'Features', collapsed: false }
                     ]
                 };
+                changed = true;
+            }
+            if (!doc.timeline || typeof doc.timeline !== 'object') {
+                doc.timeline = { index: null };
+                changed = true;
+            }
+            if (doc.timeline.index !== null && !Number.isFinite(doc.timeline.index)) {
+                doc.timeline.index = null;
                 changed = true;
             }
             if (!doc.scene) {
@@ -458,6 +469,39 @@ function createDocumentApi(getApi, cfg) {
                         return this.createAndSelect();
                     });
                 });
+            });
+        },
+
+        getTimelineCount() {
+            const features = Array.isArray(this.current?.features) ? this.current.features : [];
+            if (!features.length) return 0;
+            const rawIndex = this.current?.timeline?.index;
+            if (rawIndex === null || rawIndex === undefined) {
+                return features.length;
+            }
+            const index = Math.max(-1, Math.min(features.length - 1, Math.floor(rawIndex)));
+            return index + 1;
+        },
+
+        setTimelineCount(count) {
+            const api = getApi();
+            if (!this.current) return Promise.resolve(false);
+            const features = Array.isArray(this.current.features) ? this.current.features : [];
+            const maxCount = features.length;
+            const nextCount = Math.max(0, Math.min(maxCount, Math.floor(Number(count) || 0)));
+            const prevCount = this.getTimelineCount();
+            if (nextCount === prevCount) {
+                return Promise.resolve(false);
+            }
+            this.current.timeline = this.current.timeline || { index: null };
+            this.current.timeline.index = nextCount >= maxCount ? null : (nextCount - 1);
+            return this.save({
+                kind: 'micro',
+                opType: 'timeline.set',
+                payload: { previous: prevCount, next: nextCount }
+            }).then(() => {
+                api.sketchRuntime?.sync();
+                return true;
             });
         }
     };

@@ -41,6 +41,8 @@ function createSketchRuntimeApi(getApi) {
         editingId: null,
         selectedIds: new Set(),
         mutatingIds: new Set(),
+        hoveredProfileKey: null,
+        selectedProfileKeys: new Set(),
         _glyphLayer: null,
         _glyphDrag: null,
 
@@ -76,7 +78,7 @@ function createSketchRuntimeApi(getApi) {
 
         sync() {
             const api = getApi();
-            const features = api.features.list().filter(f => f?.type === 'sketch');
+            const features = api.features.listBuilt().filter(f => f?.type === 'sketch');
             const present = new Set(features.map(f => f.id));
 
             for (const [id, rec] of this.sketches.entries()) {
@@ -208,6 +210,8 @@ function createSketchRuntimeApi(getApi) {
                 interaction: {
                     hoveredId: null,
                     selectedIds: new Set(),
+                    hoveredProfileId: null,
+                    selectedProfileIds: new Set(),
                     hoveredConstraintId: null,
                     selectedConstraintIds: new Set(),
                     previewLine: null,
@@ -562,6 +566,12 @@ function createSketchRuntimeApi(getApi) {
             if (!rec) return;
             rec.interaction.hoveredId = interaction.hoveredId || null;
             rec.interaction.selectedIds = new Set(interaction.selectedIds || []);
+            if (Object.prototype.hasOwnProperty.call(interaction, 'hoveredProfileId')) {
+                rec.interaction.hoveredProfileId = interaction.hoveredProfileId || null;
+            }
+            if (Object.prototype.hasOwnProperty.call(interaction, 'selectedProfileIds')) {
+                rec.interaction.selectedProfileIds = new Set(interaction.selectedProfileIds || []);
+            }
             rec.interaction.hoveredConstraintId = interaction.hoveredConstraintId || null;
             rec.interaction.selectedConstraintIds = new Set(interaction.selectedConstraintIds || []);
             rec.interaction.previewLine = interaction.previewLine || null;
@@ -578,6 +588,8 @@ function createSketchRuntimeApi(getApi) {
             if (!rec) return;
             rec.interaction.hoveredId = null;
             rec.interaction.selectedIds = new Set();
+            rec.interaction.hoveredProfileId = null;
+            rec.interaction.selectedProfileIds = new Set();
             rec.interaction.hoveredConstraintId = null;
             rec.interaction.selectedConstraintIds = new Set();
             rec.interaction.previewLine = null;
@@ -647,10 +659,31 @@ function createSketchRuntimeApi(getApi) {
         },
 
         refreshStates() {
+            const profileByFeature = new Map();
+            for (const key of this.selectedProfileKeys) {
+                const [featureId, profileId] = String(key || '').split(':');
+                if (!featureId || !profileId) continue;
+                if (!profileByFeature.has(featureId)) profileByFeature.set(featureId, new Set());
+                profileByFeature.get(featureId).add(profileId);
+            }
+            const hovered = this.hoveredProfileKey ? String(this.hoveredProfileKey).split(':') : null;
             for (const rec of this.sketches.values()) {
+                const featureId = rec.feature?.id;
+                rec.interaction.hoveredProfileId = hovered && hovered[0] === featureId ? hovered[1] : null;
+                rec.interaction.selectedProfileIds = profileByFeature.get(featureId) || new Set();
                 this.applySketchState(rec);
             }
             this.updateConstraintGlyphs();
+        },
+
+        setHoveredProfile(profileKey) {
+            this.hoveredProfileKey = profileKey || null;
+            this.refreshStates();
+        },
+
+        setSelectedProfiles(profileKeys) {
+            this.selectedProfileKeys = new Set(profileKeys || []);
+            this.refreshStates();
         }
     };
 }

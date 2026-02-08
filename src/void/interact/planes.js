@@ -19,6 +19,15 @@ function getInteractiveObjects() {
         }
     }
 
+    for (const rec of api.sketchRuntime?.sketches?.values?.() || []) {
+        if (!rec?.entitiesGroup?.visible) continue;
+        for (const view of rec.entityViews?.values?.() || []) {
+            if (view?.type === 'profile' && view.object?.visible !== false) {
+                objects.push(view.object);
+            }
+        }
+    }
+
     if (this.isSketchEditing && this.isSketchEditing()) {
         const sketch = this.getEditingSketchFeature && this.getEditingSketchFeature();
         const rec = sketch?.id ? api.sketchRuntime?.getRecord?.(sketch.id) : null;
@@ -111,6 +120,28 @@ function updateHandleScreenScales() {
 }
 
 function handleHover(intersection, event, allIntersections) {
+    if (!(this.isSketchEditing && this.isSketchEditing())) {
+        const profileHit = this.getSketchProfileHitFromIntersections(allIntersections || (intersection ? [intersection] : []));
+        if (profileHit) {
+            const key = `${profileHit.featureId}:${profileHit.profileId}`;
+            this.hoveredSketchProfileKey = key;
+            api.sketchRuntime?.setHoveredProfile(key);
+            this.hoverIntersection = intersection || null;
+            this.setHoveredPoint(null);
+            if (this.hoveredPlane && !this.hoveredPlane.isSelected()) {
+                this.hoveredPlane.setHovered(false);
+                this.hoveredPlane = null;
+            }
+            window.dispatchEvent(new CustomEvent('void-state-change'));
+            return;
+        }
+        if (this.hoveredSketchProfileKey) {
+            this.hoveredSketchProfileKey = null;
+            api.sketchRuntime?.setHoveredProfile(null);
+            window.dispatchEvent(new CustomEvent('void-state-change'));
+        }
+    }
+
     const pointHit = this.getPointHitFromEvent(event);
     if (pointHit) {
         this.hoverIntersection = null;
@@ -206,6 +237,14 @@ function handleMouseUp(intersection, event, allIntersections) {
         return;
     }
 
+    if (!(this.isSketchEditing && this.isSketchEditing())) {
+        const profileHit = this.getSketchProfileHitFromIntersections(allIntersections || (intersection ? [intersection] : []));
+        if (profileHit) {
+            this.selectSketchProfile(profileHit, event);
+            return;
+        }
+    }
+
     const pointHit = this.getPointHitFromEvent(event);
     if (pointHit) {
         this.selectPoint(pointHit.id, event);
@@ -230,6 +269,34 @@ function handleMouseUp(intersection, event, allIntersections) {
     } else if (!event.ctrlKey && !event.metaKey) {
         this.deselectAll();
     }
+}
+
+function getSketchProfileHitFromIntersections(intersections) {
+    if (!Array.isArray(intersections)) return null;
+    for (const hit of intersections) {
+        const obj = hit?.object;
+        const profileId = obj?.userData?.sketchProfileId || null;
+        const featureId = obj?.userData?.sketchFeatureId || null;
+        if (profileId && featureId) {
+            return { featureId, profileId, object: obj };
+        }
+    }
+    return null;
+}
+
+function selectSketchProfile(hit, event) {
+    const key = `${hit.featureId}:${hit.profileId}`;
+    const multi = !!(event?.ctrlKey || event?.metaKey);
+    if (!multi) {
+        this.selectedSketchProfiles.clear();
+    }
+    if (this.selectedSketchProfiles.has(key)) {
+        this.selectedSketchProfiles.delete(key);
+    } else {
+        this.selectedSketchProfiles.add(key);
+    }
+    api.sketchRuntime?.setSelectedProfiles(Array.from(this.selectedSketchProfiles));
+    window.dispatchEvent(new CustomEvent('void-state-change'));
 }
 
 function startHandleDrag(handle, intersection, event) {
@@ -535,6 +602,8 @@ export {
     getPlaneFromIntersection,
     getBestPlaneFromIntersections,
     handleMouseUp,
+    getSketchProfileHitFromIntersections,
+    selectSketchProfile,
     startHandleDrag,
     getOppositeCorner,
     handleDrag,

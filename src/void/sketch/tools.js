@@ -97,6 +97,10 @@ function clearSketchSelection() {
     this.selectedSketchEntities.clear();
     this.selectedSketchArcCenters?.clear?.();
     this.selectedSketchConstraints.clear();
+    this.selectedSketchProfiles?.clear?.();
+    this.hoveredSketchProfileKey = null;
+    api.sketchRuntime?.setSelectedProfiles?.([]);
+    api.sketchRuntime?.setHoveredProfile?.(null);
     this.hoveredSketchEntityId = null;
     this.hoveredSketchConstraintId = null;
     this.sketchLinePreview = null;

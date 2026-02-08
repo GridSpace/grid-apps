@@ -543,6 +543,48 @@ html, body {
     color: var(--text-primary);
 }
 
+.tree-timeline-marker {
+    position: relative;
+    height: 10px;
+    margin: 1px 0;
+    cursor: pointer;
+}
+
+.tree-timeline-line {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    top: 50%;
+    height: 1px;
+    background: #4a4a4a;
+    transform: translateY(-0.5px);
+}
+
+.tree-timeline-knob {
+    position: absolute;
+    top: 50%;
+    left: 8px;
+    transform: translateY(-50%);
+    font-size: 9px;
+    line-height: 1;
+    color: #646464;
+    opacity: 0;
+    transition: opacity 0.12s, color 0.12s;
+}
+
+.tree-timeline-marker:hover .tree-timeline-knob,
+.tree-timeline-marker.active .tree-timeline-knob {
+    opacity: 1;
+}
+
+.tree-timeline-marker.active .tree-timeline-line {
+    background: var(--accent);
+}
+
+.tree-timeline-marker.active .tree-timeline-knob {
+    color: var(--accent);
+}
+
 .tree-row,
 .tree-item-row {
     cursor: pointer;
@@ -560,6 +602,11 @@ html, body {
 .tree-item-row.active {
     background: rgba(90, 159, 212, 0.2);
     border: 1px solid rgba(90, 159, 212, 0.55);
+}
+
+.tree-item-row.is-suppressed,
+.tree-item-row.is-future {
+    opacity: 0.55;
 }
 
 .tree-row-left {
@@ -625,6 +672,10 @@ html, body {
     opacity: 1;
     pointer-events: auto;
 }
+.tree-item-row.active .tree-eye {
+    opacity: 1;
+    pointer-events: auto;
+}
 
 .tree-eye.visible {
     color: var(--text-primary);
@@ -651,6 +702,50 @@ html, body {
     text-align: center;
     color: var(--text-secondary);
     margin-right: 6px;
+}
+
+.tree-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-right: 4px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s;
+}
+
+.tree-item-row:hover .tree-item-actions,
+.tree-item-row.active .tree-item-actions {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.tree-item-action {
+    width: 20px;
+    height: 20px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 11px;
+    line-height: 1;
+    padding: 0;
+}
+
+.tree-item-action:hover {
+    border-color: var(--accent);
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.tree-item-action:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.tree-item-action.is-suppressed {
+    color: var(--warning);
 }
 
 .tree-empty-row {

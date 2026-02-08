@@ -42,6 +42,16 @@ function bindRuntimeChanges() {
     api.origin.onChange(() => this.render());
 }
 
+function ensureEditingSketchIsRenderable() {
+    const editingId = api.sketchRuntime?.editingId;
+    if (!editingId) return;
+    const feature = api.features.findById(editingId);
+    if (!feature || feature.type !== 'sketch' || feature.suppressed === true || !api.features.isBuilt(editingId)) {
+        api.sketchRuntime?.setEditing(null);
+        api.interact?.clearSketchSelection?.();
+    }
+}
+
 function render() {
     if (!this.container) return;
     this.container.innerHTML = '';
@@ -65,6 +75,10 @@ function onFeatureSelected(feature) {
     }
     this.selectedFeatureId = this.selectedFeatureIds.values().next().value || null;
     api.sketchRuntime?.setEditing(null);
+    api.interact?.selectedSketchProfiles?.clear?.();
+    api.interact.hoveredSketchProfileKey = null;
+    api.sketchRuntime?.setSelectedProfiles?.([]);
+    api.sketchRuntime?.setHoveredProfile?.(null);
     const selectedSketchIds = Array.from(this.selectedFeatureIds).filter(fid => api.features.findById(fid)?.type === 'sketch');
     api.sketchRuntime?.setSelected(selectedSketchIds);
     api.interact?.clearSketchSelection?.();
@@ -82,6 +96,10 @@ function onFeatureEdit(feature) {
         this.selectedFeatureIds.add(feature.id);
     }
     const selectedSketchIds = feature?.type === 'sketch' ? [feature.id] : [];
+    api.interact?.selectedSketchProfiles?.clear?.();
+    api.interact.hoveredSketchProfileKey = null;
+    api.sketchRuntime?.setSelectedProfiles?.([]);
+    api.sketchRuntime?.setHoveredProfile?.(null);
     api.sketchRuntime?.setSelected(selectedSketchIds);
     if (feature?.type === 'sketch') {
         api.sketchRuntime?.setEditing(feature.id);
@@ -197,30 +215,92 @@ function renderFeaturesSection() {
     const doc = api.document.current;
     const folders = this.getFolders(doc);
     const features = api.features.list();
+    const featureIds = new Set(features.map(f => f?.id).filter(Boolean));
+    for (const id of Array.from(this.selectedFeatureIds || [])) {
+        if (!featureIds.has(id)) {
+            this.selectedFeatureIds.delete(id);
+        }
+    }
     const hasOnlyDefaultFolder = folders.length === 1 && folders[0]?.id === 'features';
+    const timelineCount = api.document.getTimelineCount();
+    const setTimeline = async next => {
+        const changed = await api.document.setTimelineCount(next);
+        if (!changed) return;
+        ensureEditingSketchIsRenderable();
+        this.render();
+        window.dispatchEvent(new CustomEvent('void-state-change'));
+    };
 
     if (hasOnlyDefaultFolder) {
         if (!features.length) {
             this.container.appendChild(this.createEmptyRow('No features yet', 1));
             return;
         }
-        for (const feature of features) {
+        for (let index = 0; index < features.length; index++) {
+            const feature = features[index];
+            this.container.appendChild(this.createTimelineMarkerRow({
+                active: timelineCount === index,
+                onSelect: () => setTimeline(index)
+            }));
             const label = feature?.name || feature?.type || 'Feature';
             const isSketch = feature?.type === 'sketch';
             const visible = feature?.visible !== false;
+            const suppressed = feature?.suppressed === true;
+            const beyondTimeline = !api.features.isIndexBuilt(index);
             this.container.appendChild(this.createItemRow(label, feature, 1, {
                 selected: this.selectedFeatureIds?.has?.(feature?.id),
                 eyeVisible: visible,
+                suppressed,
+                beyondTimeline,
                 onEye: isSketch ? f => {
                     api.features.setVisible(f.id, f.visible === false);
                     this.render();
                 } : null,
+                actions: [
+                    {
+                        label: suppressed ? '▶' : '⏸',
+                        title: suppressed ? 'Unsuppress feature' : 'Suppress feature',
+                        className: suppressed ? 'is-suppressed' : '',
+                        onClick: f => {
+                            api.features.setSuppressed(f.id, f.suppressed !== true);
+                            ensureEditingSketchIsRenderable();
+                            this.render();
+                            window.dispatchEvent(new CustomEvent('void-state-change'));
+                        }
+                    },
+                    {
+                        label: '↑',
+                        title: 'Move feature earlier',
+                        disabled: index <= 0,
+                        onClick: f => {
+                            if (api.features.move(f.id, index - 1)) {
+                                this.render();
+                                window.dispatchEvent(new CustomEvent('void-state-change'));
+                            }
+                        }
+                    },
+                    {
+                        label: '↓',
+                        title: 'Move feature later',
+                        disabled: index >= features.length - 1,
+                        onClick: f => {
+                            if (api.features.move(f.id, index + 1)) {
+                                this.render();
+                                window.dispatchEvent(new CustomEvent('void-state-change'));
+                            }
+                        }
+                    }
+                ],
                 onSelect: f => this.onFeatureSelected(f),
                 onEdit: f => this.onFeatureEdit(f),
                 onHoverEnter: isSketch ? f => api.sketchRuntime?.setHovered(f.id) : null,
                 onHoverLeave: isSketch ? () => api.sketchRuntime?.setHovered(null) : null
             }));
         }
+        this.container.appendChild(this.createTimelineMarkerRow({
+            active: timelineCount === features.length,
+            onSelect: () => setTimeline(features.length)
+        }));
         return;
     }
 
@@ -251,21 +331,74 @@ function renderFeaturesSection() {
             this.container.appendChild(this.createEmptyRow('No features yet', 2));
         }
 
-        for (const feature of items) {
+        for (let localIndex = 0; localIndex < items.length; localIndex++) {
+            const feature = items[localIndex];
+            const index = features.indexOf(feature);
+            if (i === 0) {
+                this.container.appendChild(this.createTimelineMarkerRow({
+                    active: timelineCount === index,
+                    onSelect: () => setTimeline(index)
+                }));
+            }
             const label = feature?.name || feature?.type || 'Feature';
             const isSketch = feature?.type === 'sketch';
             const visible = feature?.visible !== false;
+            const suppressed = feature?.suppressed === true;
+            const beyondTimeline = !api.features.isIndexBuilt(index);
             this.container.appendChild(this.createItemRow(label, feature, 2, {
                 selected: this.selectedFeatureIds?.has?.(feature?.id),
                 eyeVisible: visible,
+                suppressed,
+                beyondTimeline,
                 onEye: isSketch ? f => {
                     api.features.setVisible(f.id, f.visible === false);
                     this.render();
                 } : null,
+                actions: [
+                    {
+                        label: suppressed ? '▶' : '⏸',
+                        title: suppressed ? 'Unsuppress feature' : 'Suppress feature',
+                        className: suppressed ? 'is-suppressed' : '',
+                        onClick: f => {
+                            api.features.setSuppressed(f.id, f.suppressed !== true);
+                            ensureEditingSketchIsRenderable();
+                            this.render();
+                            window.dispatchEvent(new CustomEvent('void-state-change'));
+                        }
+                    },
+                    {
+                        label: '↑',
+                        title: 'Move feature earlier',
+                        disabled: index <= 0,
+                        onClick: f => {
+                            if (api.features.move(f.id, index - 1)) {
+                                this.render();
+                                window.dispatchEvent(new CustomEvent('void-state-change'));
+                            }
+                        }
+                    },
+                    {
+                        label: '↓',
+                        title: 'Move feature later',
+                        disabled: index >= features.length - 1,
+                        onClick: f => {
+                            if (api.features.move(f.id, index + 1)) {
+                                this.render();
+                                window.dispatchEvent(new CustomEvent('void-state-change'));
+                            }
+                        }
+                    }
+                ],
                 onSelect: f => this.onFeatureSelected(f),
                 onEdit: f => this.onFeatureEdit(f),
                 onHoverEnter: isSketch ? f => api.sketchRuntime?.setHovered(f.id) : null,
                 onHoverLeave: isSketch ? () => api.sketchRuntime?.setHovered(null) : null
+            }));
+        }
+        if (i === 0 && items.length) {
+            this.container.appendChild(this.createTimelineMarkerRow({
+                active: timelineCount === features.length,
+                onSelect: () => setTimeline(features.length)
             }));
         }
     }

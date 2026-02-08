@@ -1,11 +1,48 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 function createFeaturesApi(getApi) {
+    function getEffectiveTimelineCount(doc) {
+        const features = Array.isArray(doc?.features) ? doc.features : [];
+        if (!features.length) return 0;
+        const raw = doc?.timeline?.index;
+        if (raw === null || raw === undefined) {
+            return features.length;
+        }
+        const index = Math.max(-1, Math.min(features.length - 1, Math.floor(raw)));
+        return index + 1;
+    }
+
     return {
         list() {
             const api = getApi();
             const doc = api.document.current;
             return doc ? doc.features : [];
+        },
+
+        listBuilt() {
+            const api = getApi();
+            const doc = api.document.current;
+            if (!doc) return [];
+            const features = Array.isArray(doc.features) ? doc.features : [];
+            const timelineCount = getEffectiveTimelineCount(doc);
+            return features.filter((feature, index) => index < timelineCount && feature?.suppressed !== true);
+        },
+
+        isIndexBuilt(index) {
+            const api = getApi();
+            const doc = api.document.current;
+            if (!doc || !Array.isArray(doc.features)) return false;
+            const timelineCount = getEffectiveTimelineCount(doc);
+            return index >= 0 && index < timelineCount;
+        },
+
+        isBuilt(featureId) {
+            const api = getApi();
+            const doc = api.document.current;
+            if (!doc || !Array.isArray(doc.features)) return false;
+            const index = doc.features.findIndex(f => f?.id === featureId);
+            if (index < 0) return false;
+            return this.isIndexBuilt(index);
         },
 
         add(feature) {
@@ -14,6 +51,9 @@ function createFeaturesApi(getApi) {
             if (doc) {
                 if (feature?.visible === undefined) {
                     feature.visible = true;
+                }
+                if (feature?.suppressed === undefined) {
+                    feature.suppressed = false;
                 }
                 doc.features.push(feature);
                 api.document.save({
@@ -24,6 +64,9 @@ function createFeaturesApi(getApi) {
                         id: feature?.id || null
                     }
                 });
+                if (doc.timeline?.index !== null && doc.timeline?.index !== undefined) {
+                    doc.timeline.index = doc.features.length - 1;
+                }
                 api.sketchRuntime?.sync();
             }
         },
@@ -35,6 +78,12 @@ function createFeaturesApi(getApi) {
                 const index = doc.features.indexOf(feature);
                 if (index >= 0) {
                     doc.features.splice(index, 1);
+                    if (doc.timeline && doc.timeline.index !== null && doc.timeline.index !== undefined) {
+                        const timelineIndex = Math.floor(doc.timeline.index);
+                        if (timelineIndex >= doc.features.length) {
+                            doc.timeline.index = doc.features.length ? doc.features.length - 1 : null;
+                        }
+                    }
                     api.document.save({
                         kind: 'micro',
                         opType: 'feature.remove',
@@ -130,6 +179,34 @@ function createFeaturesApi(getApi) {
                 opType: 'feature.update',
                 payload: { field: 'visible', value: !!visible }
             });
+        },
+
+        setSuppressed(featureId, suppressed) {
+            return this.update(featureId, feature => {
+                feature.suppressed = !!suppressed;
+            }, {
+                opType: 'feature.suppress',
+                payload: { field: 'suppressed', value: !!suppressed }
+            });
+        },
+
+        move(featureId, toIndex) {
+            const api = getApi();
+            const doc = api.document.current;
+            if (!doc || !featureId || !Array.isArray(doc.features)) return false;
+            const fromIndex = doc.features.findIndex(f => f?.id === featureId);
+            if (fromIndex < 0) return false;
+            const clamped = Math.max(0, Math.min(doc.features.length - 1, Math.floor(Number(toIndex))));
+            if (clamped === fromIndex) return false;
+            const [feature] = doc.features.splice(fromIndex, 1);
+            doc.features.splice(clamped, 0, feature);
+            api.document.save({
+                kind: 'micro',
+                opType: 'feature.move',
+                payload: { id: featureId, from: fromIndex, to: clamped }
+            });
+            api.sketchRuntime?.sync();
+            return true;
         }
     };
 }

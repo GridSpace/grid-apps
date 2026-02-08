@@ -20,8 +20,11 @@ const UNDOABLE_OP_TYPES = new Set([
     'origin.update',
     'feature.add',
     'feature.remove',
+    'feature.move',
     'feature.rename',
-    'feature.update'
+    'feature.update',
+    'feature.suppress',
+    'timeline.set'
 ]);
 
 function shortId() {
