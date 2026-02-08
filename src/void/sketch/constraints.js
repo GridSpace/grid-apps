@@ -155,7 +155,15 @@ function enforceWithPlanegcs(sketch, opts = {}) {
         changed = true;
     }
 
-    return changed;
+    // Final polish: reconcile constraints that are handled outside planegcs
+    // (for example point_on_arc groups used by inscribed/circumscribed polygons)
+    // so the sketch settles immediately after constraint application.
+    const fallbackChanged = enforceWithFallback(sketch, {
+        ...opts,
+        useFallback: true,
+        iterations: Math.max(16, opts?.iterations || 24)
+    });
+    return fallbackChanged || changed;
 }
 
 function toPlanegcsConstraint(c, pointById, lineById) {

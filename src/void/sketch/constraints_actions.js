@@ -250,7 +250,13 @@ function applySketchConstraint(type) {
             }
         }
         if (changed) {
-            enforceSketchConstraintsInPlace(sketch);
+            // Apply-path should settle quickly without over-driving fallback.
+            enforceSketchConstraintsInPlace(sketch, { iterations: 48 });
+            enforceSketchConstraintsInPlace(sketch, {
+                useFallback: true,
+                iterations: 48,
+                tangentAggressive: false
+            });
         }
     }, {
         opType: 'feature.update',

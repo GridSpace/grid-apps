@@ -700,6 +700,7 @@ function handleSketchDrag(delta, offset, isDone) {
             centerLocks: (!centerDrag && !circleCurveDown)
                 ? this.collectDragLockedArcCenters(feature, activeIds, refs, { includePointOnArc: true })
                 : new Map(),
+            pointDrag: downType === 'point',
             centerDrag,
             snapPointId: null,
             snapMovedPointId: null,
@@ -748,7 +749,7 @@ function handleSketchDrag(delta, offset, isDone) {
         if (this.draggedArcsHaveTangent(feature, this.sketchDrag.draggedArcIds)) {
             this.applyDragLockedArcCenters(feature, this.sketchDrag.centerLocks);
             enforceSketchConstraintsInPlace(feature, {
-                useFallback: true,
+                useFallback: !this.sketchDrag.pointDrag,
                 iterations: 24,
                 draggedPointIds: Array.from(this.sketchDrag.movedPointIds || []),
                 draggedArcIds: Array.from(this.sketchDrag.draggedArcIds || []),
@@ -759,7 +760,7 @@ function handleSketchDrag(delta, offset, isDone) {
     } else {
         this.applyDragLockedArcCenters(feature, this.sketchDrag.centerLocks);
         enforceSketchConstraintsInPlace(feature, {
-            useFallback: true,
+            useFallback: !this.sketchDrag.pointDrag,
             iterations: 48,
             draggedPointIds: Array.from(this.sketchDrag.movedPointIds || []),
             draggedArcIds: Array.from(this.sketchDrag.draggedArcIds || []),
