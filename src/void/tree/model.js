@@ -225,12 +225,56 @@ function renderFeaturesSection() {
     }
     const hasOnlyDefaultFolder = folders.length === 1 && folders[0]?.id === 'features';
     const timelineCount = api.document.getTimelineCount();
+    const markerCount = this.timelinePointerDrag ? this.timelineDragTargetCount : timelineCount;
     const setTimeline = async next => {
         const changed = await api.document.setTimelineCount(next);
         if (!changed) return;
         ensureEditingSketchIsRenderable();
         this.render();
         window.dispatchEvent(new CustomEvent('void-state-change'));
+    };
+    const timelineCountFromPointer = event => {
+        const featuresAll = api.features.list();
+        if (!featuresAll.length) return 0;
+        const el = document.elementFromPoint(event.clientX, event.clientY);
+        const row = el?.closest?.('.tree-item-row');
+        if (row?.dataset?.featureIndex !== undefined) {
+            const index = Number(row.dataset.featureIndex);
+            if (Number.isFinite(index)) {
+                const rect = row.getBoundingClientRect();
+                const before = event.clientY < (rect.top + rect.height / 2);
+                return before ? index : index + 1;
+            }
+        }
+        const rows = Array.from(this.container.querySelectorAll('.tree-item-row[data-feature-index]'));
+        if (!rows.length) return 0;
+        const firstRect = rows[0].getBoundingClientRect();
+        const lastRect = rows[rows.length - 1].getBoundingClientRect();
+        if (event.clientY < firstRect.top) return 0;
+        if (event.clientY > lastRect.bottom) return featuresAll.length;
+        return this.timelineDragTargetCount ?? timelineCount;
+    };
+    const beginTimelinePointerDrag = event => {
+        this.timelinePointerDrag = true;
+        this.timelineDragTargetCount = timelineCountFromPointer(event);
+        const onMove = moveEvent => {
+            if (!this.timelinePointerDrag) return;
+            const next = timelineCountFromPointer(moveEvent);
+            if (next !== this.timelineDragTargetCount) {
+                this.timelineDragTargetCount = next;
+                this.render();
+            }
+        };
+        const onUp = async upEvent => {
+            window.removeEventListener('mousemove', onMove);
+            window.removeEventListener('mouseup', onUp);
+            const finalCount = timelineCountFromPointer(upEvent);
+            this.timelinePointerDrag = false;
+            this.timelineDragTargetCount = null;
+            await setTimeline(finalCount);
+        };
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onUp);
     };
     const dropMove = (targetFeature, before = true) => {
         const dragId = this.dragFeatureId || null;
@@ -257,16 +301,11 @@ function renderFeaturesSection() {
         }
         for (let index = 0; index < features.length; index++) {
             const feature = features[index];
-            if (timelineCount === index) {
+            if (markerCount === index) {
                 this.container.appendChild(this.createTimelineMarkerRow({
                     active: true,
                     onSelect: () => setTimeline(index),
-                    onDragStart: () => {
-                        this.dragTimelineActive = true;
-                    },
-                    onDragEnd: () => {
-                        this.dragTimelineActive = false;
-                    }
+                    onPointerStart: beginTimelinePointerDrag
                 }));
             }
             const label = feature?.name || feature?.type || 'Feature';
@@ -274,7 +313,8 @@ function renderFeaturesSection() {
             const visible = feature?.visible !== false;
             const suppressed = feature?.suppressed === true;
             const beyondTimeline = !api.features.isIndexBuilt(index);
-            this.container.appendChild(this.createItemRow(label, feature, 1, {
+                this.container.appendChild(this.createItemRow(label, feature, 1, {
+                featureIndex: index,
                 selected: this.selectedFeatureIds?.has?.(feature?.id),
                 eyeVisible: visible,
                 suppressed,
@@ -297,27 +337,17 @@ function renderFeaturesSection() {
                     }
                 ],
                 draggable: true,
-                isTimelineDragging: () => !!this.dragTimelineActive,
+                isTimelineDragging: () => false,
                 onDragStart: f => {
                     this.dragFeatureId = f?.id || null;
                 },
                 onDragOver: (_f, event) => {
-                    if (this.dragTimelineActive) return;
                     event.preventDefault();
                 },
                 onDrop: (f, event, info) => {
-                    if (this.dragTimelineActive) return;
                     event.preventDefault();
                     dropMove(f, info?.before !== false);
                     this.dragFeatureId = null;
-                },
-                onTimelineDragOver: (_f, event) => {
-                    event.preventDefault();
-                },
-                onTimelineDrop: (_f, event, info) => {
-                    event.preventDefault();
-                    setTimeline(info?.before !== false ? index : index + 1);
-                    this.dragTimelineActive = false;
                 },
                 onDragEnd: () => {
                     this.dragFeatureId = null;
@@ -328,16 +358,11 @@ function renderFeaturesSection() {
                 onHoverLeave: isSketch ? () => api.sketchRuntime?.setHovered(null) : null
             }));
         }
-        if (timelineCount === features.length) {
+        if (markerCount === features.length) {
             this.container.appendChild(this.createTimelineMarkerRow({
                 active: true,
                 onSelect: () => setTimeline(features.length),
-                onDragStart: () => {
-                    this.dragTimelineActive = true;
-                },
-                onDragEnd: () => {
-                    this.dragTimelineActive = false;
-                }
+                onPointerStart: beginTimelinePointerDrag
             }));
         }
         return;
@@ -373,16 +398,11 @@ function renderFeaturesSection() {
         for (let localIndex = 0; localIndex < items.length; localIndex++) {
             const feature = items[localIndex];
             const index = features.indexOf(feature);
-            if (i === 0 && timelineCount === index) {
+            if (i === 0 && markerCount === index) {
                 this.container.appendChild(this.createTimelineMarkerRow({
                     active: true,
                     onSelect: () => setTimeline(index),
-                    onDragStart: () => {
-                        this.dragTimelineActive = true;
-                    },
-                    onDragEnd: () => {
-                        this.dragTimelineActive = false;
-                    }
+                    onPointerStart: beginTimelinePointerDrag
                 }));
             }
             const label = feature?.name || feature?.type || 'Feature';
@@ -391,6 +411,7 @@ function renderFeaturesSection() {
             const suppressed = feature?.suppressed === true;
             const beyondTimeline = !api.features.isIndexBuilt(index);
             this.container.appendChild(this.createItemRow(label, feature, 2, {
+                featureIndex: index,
                 selected: this.selectedFeatureIds?.has?.(feature?.id),
                 eyeVisible: visible,
                 suppressed,
@@ -413,27 +434,17 @@ function renderFeaturesSection() {
                     }
                 ],
                 draggable: true,
-                isTimelineDragging: () => !!this.dragTimelineActive,
+                isTimelineDragging: () => false,
                 onDragStart: f => {
                     this.dragFeatureId = f?.id || null;
                 },
                 onDragOver: (_f, event) => {
-                    if (this.dragTimelineActive) return;
                     event.preventDefault();
                 },
                 onDrop: (f, event, info) => {
-                    if (this.dragTimelineActive) return;
                     event.preventDefault();
                     dropMove(f, info?.before !== false);
                     this.dragFeatureId = null;
-                },
-                onTimelineDragOver: (_f, event) => {
-                    event.preventDefault();
-                },
-                onTimelineDrop: (_f, event, info) => {
-                    event.preventDefault();
-                    setTimeline(info?.before !== false ? index : index + 1);
-                    this.dragTimelineActive = false;
                 },
                 onDragEnd: () => {
                     this.dragFeatureId = null;
@@ -444,16 +455,11 @@ function renderFeaturesSection() {
                 onHoverLeave: isSketch ? () => api.sketchRuntime?.setHovered(null) : null
             }));
         }
-        if (i === 0 && items.length && timelineCount === features.length) {
+        if (i === 0 && items.length && markerCount === features.length) {
             this.container.appendChild(this.createTimelineMarkerRow({
                 active: true,
                 onSelect: () => setTimeline(features.length),
-                onDragStart: () => {
-                    this.dragTimelineActive = true;
-                },
-                onDragEnd: () => {
-                    this.dragTimelineActive = false;
-                }
+                onPointerStart: beginTimelinePointerDrag
             }));
         }
     }

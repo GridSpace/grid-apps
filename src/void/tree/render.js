@@ -75,31 +75,15 @@ function createRow({ label, depth = 0, expanded, onToggle, eyeVisible, onEye, on
     return row;
 }
 
-function createTimelineMarkerRow({ active = false, onSelect, onDragStart, onDragEnd }) {
+function createTimelineMarkerRow({ active = false, onSelect, onPointerStart }) {
     const row = document.createElement('div');
     row.className = `tree-timeline-marker ${active ? 'active' : ''}`;
     row.onclick = () => onSelect?.();
-    row.draggable = true;
     row.onmousedown = event => {
         if (event.button !== 0) return;
-        createTimelineMarkerRow._dragActive = true;
         onSelect?.();
+        onPointerStart?.(event);
         event.preventDefault();
-    };
-    row.ondragstart = event => {
-        createTimelineMarkerRow._dragActive = true;
-        event.dataTransfer?.setData('text/x-void-timeline', '1');
-        event.dataTransfer.effectAllowed = 'move';
-        onDragStart?.(event);
-    };
-    row.ondragend = event => {
-        createTimelineMarkerRow._dragActive = false;
-        onDragEnd?.(event);
-    };
-    row.onmouseenter = event => {
-        if (!createTimelineMarkerRow._dragActive) return;
-        if (!(event.buttons & 1)) return;
-        onSelect?.();
     };
     row.title = 'Move history marker';
 
@@ -107,12 +91,6 @@ function createTimelineMarkerRow({ active = false, onSelect, onDragStart, onDrag
     line.className = 'tree-timeline-line';
     row.appendChild(line);
 
-    if (!createTimelineMarkerRow._boundMouseUp) {
-        createTimelineMarkerRow._boundMouseUp = true;
-        window.addEventListener('mouseup', () => {
-            createTimelineMarkerRow._dragActive = false;
-        });
-    }
     return row;
 }
 
@@ -132,6 +110,9 @@ function createItemRow(label, feature, depth = 0, opts = {}) {
         row.classList.add('is-future');
     }
     row.style.paddingLeft = `${8 + depth * 16}px`;
+    if (Number.isFinite(opts.featureIndex)) {
+        row.dataset.featureIndex = String(opts.featureIndex);
+    }
     if (opts.draggable) {
         row.draggable = true;
     }
