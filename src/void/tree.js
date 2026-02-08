@@ -13,6 +13,7 @@ const tree = {
     solidsExpanded: true,
     selectedFeatureId: null,
     selectedFeatureIds: new Set(),
+    selectedSolidIds: new Set(),
     _boundRuntimeChanges: false,
 
     build() {
@@ -24,6 +25,7 @@ const tree = {
         window.addEventListener('void-clear-selection', () => {
             this.selectedFeatureId = null;
             this.selectedFeatureIds.clear();
+            this.selectedSolidIds.clear();
             api.sketchRuntime?.setSelected([]);
             this.render();
         });

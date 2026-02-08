@@ -223,6 +223,14 @@ src/
 - 3D solid generation/rebuild for extrude is still pending (Manifold integration next)
 - timeline/reorder/suppress semantics are active at the feature-history layer before full BREP ops
 
+**Solid Pipeline (new scaffold)**
+- `void` now has a dedicated solid path (separate from `kiri/mesh` CSG wrappers):
+  - `src/void/api/solids.js` (rebuild scheduling + orchestration)
+  - `src/void/solid/kernel.js` (direct Manifold JS initialization/extrude entrypoint)
+  - `src/void/solid/rebuild.js` (feature replay -> generated solids artifacts)
+  - `src/void/solid/provenance.js` (seed provenance model for feature/profile->body mapping)
+- Solids tree should read generated artifacts (`doc.generated.solids`) rather than mirroring feature rows.
+
 **Sketch MVP Contract (checkpointed, 2026-02-06)**
 - Primitive rollout:
   - v1: `point` + `line`

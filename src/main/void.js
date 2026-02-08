@@ -42,6 +42,7 @@ async function init() {
     // Initialize API
     api.init();
     await initSketchConstraintsSolver();
+    await api.solids.init();
 
     // Setup 3D workspace
     space.setAntiAlias(true);
@@ -166,6 +167,7 @@ async function init() {
     // Restore last active document, or seed a new blank one.
     await api.document.restoreOrCreate();
     api.sketchRuntime.sync();
+    await api.solids.rebuild('startup');
     toolbar.updateDocumentTitle();
     tree.render();
 

@@ -42,6 +42,9 @@ function createDocumentApi(getApi, cfg) {
                 timeline: {
                     index: null
                 },
+                generated: {
+                    solids: []
+                },
                 scene: {
                     datum: api.datum.defaultState(),
                     origin: api.origin.defaultState()
@@ -99,6 +102,14 @@ function createDocumentApi(getApi, cfg) {
             }
             if (doc.timeline.index !== null && !Number.isFinite(doc.timeline.index)) {
                 doc.timeline.index = null;
+                changed = true;
+            }
+            if (!doc.generated || typeof doc.generated !== 'object') {
+                doc.generated = { solids: [] };
+                changed = true;
+            }
+            if (!Array.isArray(doc.generated.solids)) {
+                doc.generated.solids = [];
                 changed = true;
             }
             if (!doc.scene) {
@@ -389,6 +400,7 @@ function createDocumentApi(getApi, cfg) {
             this.current.head_rev = revision.rev_id || this.revisionKey(this.current.id, this.current.version);
             this.current.modified_at = revision.created_at || this.current.modified_at || Date.now();
             this.hydrateRuntimeState(this.current);
+            api.solids?.scheduleRebuild?.('document.hydrate');
             return Promise.all([
                 api.db.documents.put(this.current.id, this.current),
                 api.db.admin.put(ADMIN_CURRENT_DOC_KEY, this.current.id),
@@ -501,6 +513,7 @@ function createDocumentApi(getApi, cfg) {
                 payload: { previous: prevCount, next: nextCount }
             }).then(() => {
                 api.sketchRuntime?.sync();
+                api.solids?.scheduleRebuild?.('timeline.set');
                 return true;
             });
         }

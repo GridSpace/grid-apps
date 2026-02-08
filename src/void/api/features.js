@@ -68,6 +68,7 @@ function createFeaturesApi(getApi) {
                     doc.timeline.index = doc.features.length - 1;
                 }
                 api.sketchRuntime?.sync();
+                api.solids?.scheduleRebuild?.('feature.add');
             }
         },
 
@@ -93,6 +94,7 @@ function createFeaturesApi(getApi) {
                         }
                     });
                     api.sketchRuntime?.sync();
+                    api.solids?.scheduleRebuild?.('feature.remove');
                 }
             }
         },
@@ -128,6 +130,7 @@ function createFeaturesApi(getApi) {
             });
 
             api.sketchRuntime?.sync();
+            api.solids?.scheduleRebuild?.('feature.update');
             return feature;
         },
 
@@ -158,6 +161,7 @@ function createFeaturesApi(getApi) {
                 }
             });
             api.sketchRuntime?.sync();
+            api.solids?.scheduleRebuild?.('feature.commit');
             return feature;
         },
 
@@ -206,6 +210,7 @@ function createFeaturesApi(getApi) {
                 payload: { id: featureId, from: fromIndex, to: clamped }
             });
             api.sketchRuntime?.sync();
+            api.solids?.scheduleRebuild?.('feature.move');
             return true;
         }
     };

@@ -88,6 +88,7 @@ function onFeatureSelected(feature) {
     } else {
         this.selectedFeatureIds.add(id);
     }
+    this.selectedSolidIds?.clear?.();
     this.selectedFeatureId = this.selectedFeatureIds.values().next().value || null;
     api.sketchRuntime?.setEditing(null);
     api.interact?.selectedSketchProfiles?.clear?.();
@@ -110,6 +111,7 @@ function onFeatureEdit(feature) {
     if (feature?.id) {
         this.selectedFeatureIds.add(feature.id);
     }
+    this.selectedSolidIds?.clear?.();
     const selectedSketchIds = feature?.type === 'sketch' ? [feature.id] : [];
     api.interact?.selectedSketchProfiles?.clear?.();
     api.interact.hoveredSketchProfileKey = null;
@@ -499,9 +501,7 @@ function renderSolidsSection() {
         return;
     }
 
-    const solids = api.features
-        .listBuilt()
-        .filter(feature => feature?.type === 'extrude');
+    const solids = api.solids?.list?.() || [];
     const activeEditIndex = getActiveEditIndex();
 
     if (!solids.length) {
@@ -512,19 +512,42 @@ function renderSolidsSection() {
     for (const solid of solids) {
         const label = solid?.name || 'Solid';
         const visible = solid?.visible !== false;
-        const featureIndex = api.features.list().findIndex(feature => feature?.id === solid?.id);
+        const sourceFeatureId = solid?.source?.feature_id || null;
+        const featureIndex = sourceFeatureId
+            ? api.features.list().findIndex(feature => feature?.id === sourceFeatureId)
+            : -1;
         const blockedByEditing = activeEditIndex >= 0 && featureIndex > activeEditIndex;
         this.container.appendChild(this.createItemRow(label, solid, 1, {
-            selected: this.selectedFeatureIds?.has?.(solid?.id),
+            selected: this.selectedSolidIds?.has?.(solid?.id),
             eyeVisible: visible,
             disabled: blockedByEditing,
-            onEye: feature => {
-                api.features.setVisible(feature.id, feature.visible === false);
+            onEye: item => {
+                const doc = api.document.current;
+                if (!doc?.generated?.solids) return;
+                const target = doc.generated.solids.find(s => s?.id === item?.id);
+                if (!target) return;
+                target.visible = target.visible === false;
+                api.document.save({
+                    kind: 'micro',
+                    opType: 'solid.update',
+                    undoable: false,
+                    payload: { id: target.id, field: 'visible', value: !!target.visible }
+                });
                 this.render();
                 window.dispatchEvent(new CustomEvent('void-state-change'));
             },
-            onSelect: feature => this.onFeatureSelected(feature),
-            onEdit: feature => this.onFeatureEdit(feature)
+            onSelect: item => {
+                const id = item?.id || null;
+                if (!id) return;
+                if (!this.selectedSolidIds) this.selectedSolidIds = new Set();
+                if (this.selectedSolidIds.has(id)) {
+                    this.selectedSolidIds.delete(id);
+                } else {
+                    this.selectedSolidIds.add(id);
+                }
+                this.render();
+                window.dispatchEvent(new CustomEvent('void-state-change'));
+            }
         }));
     }
 }

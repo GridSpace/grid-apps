@@ -9,6 +9,7 @@ import { createFeaturesApi } from './api/features.js';
 import { createSketchApi } from './sketch/api.js';
 import { createSketchRuntimeApi } from './sketch/runtime.js';
 import { createDocumentApi } from './api/document.js';
+import { createSolidsApi } from './api/solids.js';
 
 const DOC_SCHEMA_VERSION = 1;
 const ADMIN_CURRENT_DOC_KEY = 'current_doc_id';
@@ -56,6 +57,7 @@ const api = {
     sketch: null,
     sketchRuntime: null,
     features: null,
+    solids: null,
 
     // Selection management
     selection: {
@@ -100,5 +102,6 @@ api.document = createDocumentApi(() => api, {
     idFactory: shortId,
     revString
 });
+api.solids = createSolidsApi(() => api);
 
 export { api };
