@@ -817,7 +817,9 @@ function handleSketchMouseUp(event, intersections) {
     if (!feature) {
         return false;
     }
-    if (!this.isSketchEventInViewport(event)) {
+    const tool = this.getSketchTool();
+    const allowOutsideViewport = tool === 'circle' && !!this.sketchCircleCenter;
+    if (!allowOutsideViewport && !this.isSketchEventInViewport(event)) {
         return false;
     }
     if (this.sketchMarquee) {
@@ -833,7 +835,6 @@ function handleSketchMouseUp(event, intersections) {
         return true;
     }
 
-    const tool = this.getSketchTool();
     if (tool === 'select') {
         const upHit = this.resolveSketchHit(event, intersections, feature);
         const hit = upHit
@@ -971,32 +972,30 @@ function handleSketchMouseUp(event, intersections) {
         const resolved = upHit || fallbackHovered;
         const unsnappedLocal = this.projectEventToSketchLocal(event, feature);
         const snappedLocal = this.getSketchHitLocalPoint(feature, resolved) || unsnappedLocal;
-        if (!unsnappedLocal && !snappedLocal) {
-            return true;
-        }
         if (!this.sketchCircleCenter) {
             return true;
         }
-        if (this.sketchCircleStartSeq === pointerDown?.seq) {
-            // Same gesture: decide click-vs-drag in sketch-local space.
-            // This avoids unreliable client pixel deltas from upstream events.
-            const gesture = Math.hypot(
-                (unsnappedLocal?.x ?? snappedLocal?.x ?? 0) - (pointerDown?.local?.x ?? this.sketchCircleCenter.x ?? 0),
-                (unsnappedLocal?.y ?? snappedLocal?.y ?? 0) - (pointerDown?.local?.y ?? this.sketchCircleCenter.y ?? 0)
-            );
-            if (!Number.isFinite(gesture) || gesture <= SKETCH_MIN_LINE_LENGTH) {
-                return true;
-            }
-            const created = this.createSketchCircle(feature, this.sketchCircleCenter, unsnappedLocal || snappedLocal, {
-                centerRefId: this.sketchCircleCenterRefId || null
-            });
-            if (created) {
-                this.cancelSketchCircle();
-                this.setSketchTool('select');
-            }
+        // Circle creation is intentionally simple:
+        // first click establishes center, any later mouse-up with non-zero radius creates.
+        // Works for click-click and click-drag-release.
+        let end = unsnappedLocal || snappedLocal;
+        if (!end && this.sketchArcPreview?.mode === 'circle') {
+            end = {
+                x: (this.sketchArcPreview.cx || 0) + (this.sketchArcPreview.radius || 0),
+                y: this.sketchArcPreview.cy || 0
+            };
+        }
+        if (!end) {
             return true;
         }
-        const created = this.createSketchCircle(feature, this.sketchCircleCenter, snappedLocal || unsnappedLocal, {
+        const radial = Math.hypot(
+            (end.x || 0) - (this.sketchCircleCenter.x || 0),
+            (end.y || 0) - (this.sketchCircleCenter.y || 0)
+        );
+        if (!Number.isFinite(radial) || radial <= SKETCH_MIN_LINE_LENGTH) {
+            return true;
+        }
+        const created = this.createSketchCircle(feature, this.sketchCircleCenter, end, {
             centerRefId: this.sketchCircleCenterRefId || null
         });
         if (created) {
@@ -1046,7 +1045,40 @@ function handleSketchMouseUp(event, intersections) {
 
 function handleSketchDrag(delta, offset, isDone) {
     const feature = this.getEditingSketchFeature();
-    if (!feature || this.getSketchTool() !== 'select') {
+    if (!feature) {
+        return false;
+    }
+    const tool = this.getSketchTool();
+
+    if (tool === 'circle') {
+        if (!isDone) {
+            return true;
+        }
+        if (!this.sketchCircleCenter) {
+            return false;
+        }
+        const preview = this.sketchArcPreview;
+        if (!preview || preview.mode !== 'circle' || !Number.isFinite(preview.radius)) {
+            return true;
+        }
+        if (preview.radius <= SKETCH_MIN_LINE_LENGTH) {
+            return true;
+        }
+        const end = {
+            x: Number(preview.cx || 0) + Number(preview.radius || 0),
+            y: Number(preview.cy || 0)
+        };
+        const created = this.createSketchCircle(feature, this.sketchCircleCenter, end, {
+            centerRefId: this.sketchCircleCenterRefId || null
+        });
+        if (created) {
+            this.cancelSketchCircle();
+            this.setSketchTool('select');
+        }
+        return true;
+    }
+
+    if (tool !== 'select') {
         return false;
     }
 
@@ -1080,10 +1112,7 @@ function handleSketchDrag(delta, offset, isDone) {
                 enforceSketchConstraintsInPlace(feature);
             }
             // Always run one final full solve at gesture end to settle coupled constraints.
-            enforceSketchConstraintsInPlace(feature, {
-                useFallback: true,
-                iterations: 48
-            });
+            enforceSketchConstraintsInPlace(feature);
             api.features.commit(feature.id, {
                 opType: 'feature.update',
                 payload: {
@@ -1237,7 +1266,6 @@ function handleSketchDrag(delta, offset, isDone) {
             draggedPointIds: Array.from(this.sketchDrag.movedPointIds || [])
         });
     }
-    this.rebaseSketchDragState(feature, local);
     this.sketchDrag.moved = this.sketchDrag.moved || Math.hypot(dx, dy) > 0;
     api.sketchRuntime.sync();
     this.updateSketchInteractionVisuals();
