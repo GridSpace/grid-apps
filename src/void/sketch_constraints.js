@@ -3,6 +3,7 @@
 import { make_gcs_wrapper, Algorithm, SolveStatus } from './solver/planegcs.js';
 import {
     enforceWithFallback,
+    applyThreePointCircleDefinitions,
     captureFixedAnchors,
     getLineEndpointId,
     applyPointOnArcConstraints,
@@ -60,7 +61,7 @@ function enforceSketchConstraintsInPlace(sketch, opts = {}) {
 function enforceWithPlanegcs(sketch, opts = {}) {
     const entities = Array.isArray(sketch?.entities) ? sketch.entities : [];
     const constraints = Array.isArray(sketch?.constraints) ? sketch.constraints : [];
-    if (!entities.length || !constraints.length) {
+    if (!entities.length) {
         return false;
     }
 
@@ -110,40 +111,40 @@ function enforceWithPlanegcs(sketch, opts = {}) {
         }
     }
 
-    if (!primitives.length) {
-        return false;
-    }
-
-    gcsWrapper.clear_data();
-    gcsWrapper.push_primitives_and_params(primitives);
-    const status = gcsWrapper.solve(Algorithm.DogLeg);
-    if (!(status === SolveStatus.Success || status === SolveStatus.Converged)) {
-        throw new Error(`planegcs solve status=${status}`);
-    }
-
-    gcsWrapper.apply_solution();
-
     let changed = false;
     const pointEntityById = new Map(entities.filter(e => e?.type === 'point' && e.id).map(e => [e.id, e]));
-    const solvedPrimitives = gcsWrapper?.sketch_index?.get_primitives?.() || [];
-    const solvedPointById = new Map(
-        solvedPrimitives
-            .filter(e => e?.type === 'point' && e.id)
-            .map(e => [e.id, e])
-    );
-    for (const [id, p] of pointEntityById.entries()) {
-        const solved = solvedPointById.get(id);
-        if (!solved) continue;
-        const nx = Number(solved.x || 0);
-        const ny = Number(solved.y || 0);
-        if (Math.abs((p.x || 0) - nx) > EPS || Math.abs((p.y || 0) - ny) > EPS) {
-            p.x = nx;
-            p.y = ny;
-            changed = true;
+
+    if (primitives.length) {
+        gcsWrapper.clear_data();
+        gcsWrapper.push_primitives_and_params(primitives);
+        const status = gcsWrapper.solve(Algorithm.DogLeg);
+        if (!(status === SolveStatus.Success || status === SolveStatus.Converged)) {
+            throw new Error(`planegcs solve status=${status}`);
+        }
+
+        gcsWrapper.apply_solution();
+
+        const solvedPrimitives = gcsWrapper?.sketch_index?.get_primitives?.() || [];
+        const solvedPointById = new Map(
+            solvedPrimitives
+                .filter(e => e?.type === 'point' && e.id)
+                .map(e => [e.id, e])
+        );
+        for (const [id, p] of pointEntityById.entries()) {
+            const solved = solvedPointById.get(id);
+            if (!solved) continue;
+            const nx = Number(solved.x || 0);
+            const ny = Number(solved.y || 0);
+            if (Math.abs((p.x || 0) - nx) > EPS || Math.abs((p.y || 0) - ny) > EPS) {
+                p.x = nx;
+                p.y = ny;
+                changed = true;
+            }
         }
     }
 
     const fixed = captureFixedAnchors(constraints, pointEntityById);
+    changed = applyThreePointCircleDefinitions(arcById, pointEntityById, fixed) || changed;
     changed = applyPointOnArcConstraints(constraints, pointEntityById, arcById, fixed) || changed;
     changed = applyArcCenterCoincidentConstraints(constraints, pointEntityById, lineById, arcById, fixed) || changed;
     const dragged = new Set(Array.isArray(opts?.draggedPointIds) ? opts.draggedPointIds : []);

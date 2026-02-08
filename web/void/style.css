@@ -375,6 +375,7 @@ html, body {
     text-align: left;
     padding: 0 10px;
     font-size: 13px;
+    white-space: nowrap;
     cursor: pointer;
 }
 

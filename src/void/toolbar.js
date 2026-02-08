@@ -93,11 +93,22 @@ const toolbar = {
             })
         };
         const arcMenu = this.addMenu(container, 'Arc', [
-            { key: 'arc', label: 'Arc', onClick: () => {
-                api.interact.setSketchTool('arc');
+            { key: 'arc-3pt', label: '3 Point Arc', onClick: () => {
+                api.interact.setSketchTool('arc-3pt');
             } },
-            { key: 'circle', label: 'Circle', onClick: () => {
-                api.interact.setSketchTool('circle');
+            { key: 'arc-center', label: 'Center Point Arc', onClick: () => {
+                api.interact.setSketchTool('arc-center');
+            } },
+            { key: 'arc-tangent', label: 'Tangent Arc', onClick: () => {
+                api.interact.setSketchTool('arc-tangent');
+            } }
+        ]);
+        const circleMenu = this.addMenu(container, 'Circle', [
+            { key: 'circle-center', label: 'Center Point Circle', onClick: () => {
+                api.interact.setSketchTool('circle-center');
+            } },
+            { key: 'circle-3pt', label: '3 Point Circle', onClick: () => {
+                api.interact.setSketchTool('circle-3pt');
             } }
         ]);
         const rectMenu = this.addMenu(container, 'Rect', [
@@ -118,6 +129,7 @@ const toolbar = {
         ]);
         this.sketchToolMenuItems = {
             ...arcMenu.items,
+            ...circleMenu.items,
             ...rectMenu.items,
             ...polyMenu.items
         };
@@ -219,7 +231,8 @@ const toolbar = {
             this.sketchBtn.disabled = !canCreate;
         }
 
-        const tool = api.interact.getSketchTool ? api.interact.getSketchTool() : 'select';
+        const rawTool = api.interact.getSketchTool ? api.interact.getSketchTool() : 'select';
+        const tool = rawTool === 'arc' ? 'arc-3pt' : (rawTool === 'circle' ? 'circle-center' : rawTool);
         if (this.sketchToolButtons) {
             for (const [name, btn] of Object.entries(this.sketchToolButtons)) {
                 const enabled = editing;
@@ -228,35 +241,15 @@ const toolbar = {
             }
         }
         if (this.sketchToolMenuItems) {
-            const arc = this.sketchToolMenuItems.arc;
-            if (arc) {
-                arc.disabled = !editing;
-                arc.classList.toggle('active', editing && tool === 'arc');
-            }
-            const circle = this.sketchToolMenuItems.circle;
-            if (circle) {
-                circle.disabled = !editing;
-                circle.classList.toggle('active', editing && tool === 'circle');
-            }
-            const rect = this.sketchToolMenuItems.rect;
-            if (rect) {
-                rect.disabled = !editing;
-                rect.classList.toggle('active', editing && tool === 'rect');
-            }
-            const rectCenter = this.sketchToolMenuItems['rect-center'];
-            if (rectCenter) {
-                rectCenter.disabled = !editing;
-                rectCenter.classList.toggle('active', editing && tool === 'rect-center');
-            }
-            const inscribed = this.sketchToolMenuItems.inscribed;
-            if (inscribed) {
-                inscribed.disabled = !editing;
-                inscribed.classList.remove('active');
-            }
-            const circumscribed = this.sketchToolMenuItems.circumscribed;
-            if (circumscribed) {
-                circumscribed.disabled = !editing;
-                circumscribed.classList.remove('active');
+            const toolKeys = ['arc-3pt', 'arc-center', 'arc-tangent', 'circle-center', 'circle-3pt', 'rect', 'rect-center', 'inscribed', 'circumscribed'];
+            for (const key of toolKeys) {
+                const btn = this.sketchToolMenuItems[key];
+                if (!btn) continue;
+                btn.disabled = !editing;
+                btn.classList.toggle('active', editing && key === tool);
+                if (key === 'inscribed' || key === 'circumscribed') {
+                    btn.classList.remove('active');
+                }
             }
         }
         if (this.sketchConstraintButtons) {
@@ -379,8 +372,8 @@ const toolbar = {
                 items: [
                     { key: 'V', desc: 'Select tool' },
                     { key: 'L', desc: 'Line tool' },
-                    { key: 'A', desc: 'Arc tool' },
-                    { key: 'O', desc: 'Circle tool' },
+                    { key: 'A', desc: '3 point arc tool' },
+                    { key: 'O', desc: 'Center point circle tool' },
                     { key: 'R', desc: 'Corner rectangle tool' },
                     { key: 'Shift+R', desc: 'Center rectangle tool' },
                     { key: 'Q', desc: 'Toggle construction on selected lines/arcs' },

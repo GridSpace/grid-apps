@@ -3,7 +3,7 @@
 import { THREE } from '../../ext/three.js';
 import { space } from '../../moto/space.js';
 import { api } from '../api.js';
-import { isCircleCurve } from '../sketch_curve.js';
+import { isCircleCurve, isThreePointCircle, isCenterPointCircle } from '../sketch_curve.js';
 import {
     SKETCH_HIT_POINT_PX,
     SKETCH_HIT_LINE_PX,
@@ -68,7 +68,7 @@ function hitTestSketchEntity(event, feature) {
         }
         if (entity.type === 'arc') {
             const center = this.getArcCenterLocalFromEntity(entity, pointById);
-            if (center) {
+            if (center && !isThreePointCircle(entity)) {
                 const wc = this.sketchLocalToWorld(center, basis);
                 const pc = api.overlay.project3Dto2D(wc);
                 if (pc?.visible) {
@@ -232,6 +232,7 @@ function getSketchDragSnapTarget(event, feature, movedPointIds) {
     const byId = new Map(points.map(p => [p.id, p]));
     for (const arc of entities) {
         if (arc?.type !== 'arc' || !arc.id) continue;
+        if (isThreePointCircle(arc)) continue;
         const center = this.getArcCenterLocalFromEntity(arc, byId);
         if (!center) continue;
         const world = this.sketchLocalToWorld(center, basis);
@@ -334,6 +335,7 @@ function applyCircleDragKinematics(feature, dx = 0, dy = 0, local = null) {
 
     for (const arc of entities) {
         if (arc?.type !== 'arc' || !isCircleCurve(arc) || !arc.id) continue;
+        if (!isCenterPointCircle(arc)) continue;
         const touchesCircle = drag.activeIds?.has?.(arc.id)
             || drag.movedPointIds?.has?.(arc.a)
             || drag.movedPointIds?.has?.(arc.b);

@@ -14,10 +14,25 @@ function isSketchEditing() {
 }
 
 function setSketchTool(tool = 'select') {
-    const allowed = new Set(['select', 'point', 'line', 'arc', 'circle', 'rect', 'rect-center']);
+    if (tool === 'arc') tool = 'arc-3pt';
+    if (tool === 'circle') tool = 'circle-center';
+    const allowed = new Set([
+        'select',
+        'point',
+        'line',
+        'arc',
+        'arc-3pt',
+        'arc-center',
+        'arc-tangent',
+        'circle',
+        'circle-center',
+        'circle-3pt',
+        'rect',
+        'rect-center'
+    ]);
     const next = allowed.has(tool) ? tool : 'select';
     if (this.sketchTool === next) {
-        if (next === 'circle') {
+        if (next === 'circle' || next === 'circle-center' || next === 'circle-3pt') {
             this.cancelSketchCircle();
             this.sketchPointerDown = null;
             this.sketchDrag = null;
@@ -29,10 +44,10 @@ function setSketchTool(tool = 'select') {
     if (next !== 'line') {
         this.cancelSketchLine();
     }
-    if (next !== 'arc') {
+    if (next !== 'arc' && next !== 'arc-3pt' && next !== 'arc-center' && next !== 'arc-tangent') {
         this.cancelSketchArc();
     }
-    if (next !== 'circle') {
+    if (next !== 'circle' && next !== 'circle-center' && next !== 'circle-3pt') {
         this.cancelSketchCircle();
     }
     if (next !== 'rect' && next !== 'rect-center') {
@@ -64,6 +79,7 @@ function cancelSketchArc() {
 
 function cancelSketchCircle() {
     this.sketchCircleCenter = null;
+    this.sketchCircleSecond = null;
     this.sketchCircleCenterRefId = null;
     this.sketchCircleStartSeq = null;
     this.sketchArcPreview = null;
@@ -136,11 +152,11 @@ function handleSketchKeyDown(event) {
         return true;
     }
     if (event.code === 'KeyA') {
-        this.setSketchTool('arc');
+        this.setSketchTool('arc-3pt');
         return true;
     }
     if (event.code === 'KeyO') {
-        this.setSketchTool('circle');
+        this.setSketchTool('circle-center');
         return true;
     }
     if (event.code === 'KeyR') {

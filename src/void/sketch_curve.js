@@ -67,12 +67,28 @@ function markArcThreePoint(entity) {
     return applyCurveSchema(entity, CURVE_TYPE.ARC, CURVE_DEF.ARC_THREE_POINT);
 }
 
+function markArcCenterPoint(entity) {
+    return applyCurveSchema(entity, CURVE_TYPE.ARC, CURVE_DEF.ARC_CENTER_POINT);
+}
+
+function markArcTangent(entity) {
+    return applyCurveSchema(entity, CURVE_TYPE.ARC, CURVE_DEF.ARC_TANGENT);
+}
+
 function markCircleCenterPoint(entity) {
     return applyCurveSchema(entity, CURVE_TYPE.CIRCLE, CURVE_DEF.CIRCLE_CENTER_POINT);
 }
 
 function markCircleThreePoint(entity) {
     return applyCurveSchema(entity, CURVE_TYPE.CIRCLE, CURVE_DEF.CIRCLE_THREE_POINT);
+}
+
+function isCenterPointCircle(entity) {
+    return isCircleCurve(entity) && getCurveDefinition(entity) === CURVE_DEF.CIRCLE_CENTER_POINT;
+}
+
+function isThreePointCircle(entity) {
+    return isCircleCurve(entity) && getCurveDefinition(entity) === CURVE_DEF.CIRCLE_THREE_POINT;
 }
 
 export {
@@ -84,6 +100,10 @@ export {
     getCurveDefinition,
     applyCurveSchema,
     markArcThreePoint,
+    markArcCenterPoint,
+    markArcTangent,
     markCircleCenterPoint,
-    markCircleThreePoint
+    markCircleThreePoint,
+    isCenterPointCircle,
+    isThreePointCircle
 };

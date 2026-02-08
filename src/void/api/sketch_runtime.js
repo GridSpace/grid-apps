@@ -7,7 +7,7 @@ import * as markerOps from './sketch_runtime_markers.js';
 import * as profileOps from './sketch_runtime_profiles.js';
 import * as arcOps from './sketch_runtime_arc.js';
 import * as uiOps from './sketch_runtime_ui.js';
-import { isCircleCurve } from '../sketch_curve.js';
+import { isCircleCurve, isThreePointCircle } from '../sketch_curve.js';
 
 const SKETCH_COLORS = {
     planeDefault: { fill: 0x5a9fd4, fillOpacity: 0.1, outline: 0x5a9fd4, outlineOpacity: 0.65 },
@@ -402,7 +402,7 @@ function createSketchRuntimeApi(getApi) {
                     rec.entityViews.set(entity.id, { entity, object: arc, type: 'arc' });
 
                     const center = this.getArcCenterLocal(entity, a, b);
-                    if (center) {
+                    if (center && !isThreePointCircle(entity)) {
                         const centerKey = `arc-center:${entity.id}`;
                         const centerMarker = this.createArcCenterMarker(center.x, center.y);
                         centerMarker.userData.sketchEntityId = centerKey;

@@ -5,6 +5,8 @@ import { enforceSketchConstraintsInPlace } from '../sketch_constraints.js';
 import {
     isCircleCurve,
     markArcThreePoint,
+    markArcCenterPoint,
+    markArcTangent,
     markCircleCenterPoint,
     markCircleThreePoint
 } from '../sketch_curve.js';
@@ -243,7 +245,13 @@ function createSketchArc(feature, start, end, onArc, options = {}) {
             endAngle: geom.endAngle,
             ccw: geom.ccw
         };
-        markArcThreePoint(arcEntity);
+        if (options?.variant === 'arc-center') {
+            markArcCenterPoint(arcEntity);
+        } else if (options?.variant === 'arc-tangent') {
+            markArcTangent(arcEntity);
+        } else {
+            markArcThreePoint(arcEntity);
+        }
         sketch.entities.push(arcEntity);
         enforceSketchConstraintsInPlace(sketch);
     }, {
@@ -258,6 +266,17 @@ function createSketchArc(feature, start, end, onArc, options = {}) {
     this.sketchArcPreview = null;
     this.updateSketchInteractionVisuals();
     return { arcId: id, startPointId: createdStartPointId, endPointId: createdEndPointId };
+}
+
+function createSketchArcFromCenter(feature, center, start, endRaw, options = {}) {
+    const geom = computeArcGeometryFromCenter(center, start, endRaw);
+    if (!geom) {
+        return null;
+    }
+    return createSketchArc.call(this, feature, geom.start, geom.end, geom.onArc, {
+        ...options,
+        variant: 'arc-center'
+    });
 }
 
 function createSketchCircle(feature, center, edge, options = {}) {
@@ -317,7 +336,11 @@ function createSketchCircle(feature, center, edge, options = {}) {
             endAngle: Math.PI * 2,
             ccw: true
         };
-        markCircleCenterPoint(circleEntity);
+        if (options?.circleVariant === 'three-point') {
+            markCircleThreePoint(circleEntity);
+        } else {
+            markCircleCenterPoint(circleEntity);
+        }
         sketch.entities.push(circleEntity);
         addCoincidentConstraintIfMissing.call(this, sketch, p1.id, p2.id);
         enforceSketchConstraintsInPlace(sketch);
@@ -333,6 +356,67 @@ function createSketchCircle(feature, center, edge, options = {}) {
     this.sketchArcPreview = null;
     this.updateSketchInteractionVisuals();
     return { circleId: id, pointIds: [p1Id, p2Id] };
+}
+
+function createSketchCircle3Point(feature, a, b, c, options = {}) {
+    const circle = computeCircleFromThreePoints(a, b, c);
+    if (!circle) {
+        return null;
+    }
+    const id = this.newSketchEntityId('arc');
+    const pRefIds = [];
+    let hiddenAId = null;
+    let hiddenBId = null;
+    api.features.update(feature.id, sketch => {
+        sketch.entities = Array.isArray(sketch.entities) ? sketch.entities : [];
+        sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
+        const p1 = { id: this.newSketchEntityId('point'), type: 'point', x: a.x, y: a.y, fixed: false };
+        const p2 = { id: this.newSketchEntityId('point'), type: 'point', x: b.x, y: b.y, fixed: false };
+        const p3 = { id: this.newSketchEntityId('point'), type: 'point', x: c.x, y: c.y, fixed: false };
+        const h1 = { id: this.newSketchEntityId('point'), type: 'point', x: a.x, y: a.y, fixed: false };
+        const h2 = { id: this.newSketchEntityId('point'), type: 'point', x: a.x, y: a.y, fixed: false };
+        pRefIds.push(p1.id, p2.id, p3.id);
+        hiddenAId = h1.id;
+        hiddenBId = h2.id;
+        sketch.entities.push(p1, p2, p3, h1, h2);
+        const circleEntity = {
+            id,
+            type: 'arc',
+            construction: false,
+            a: h1.id,
+            b: h2.id,
+            cx: circle.cx,
+            cy: circle.cy,
+            radius: circle.radius,
+            mx: circle.cx,
+            my: circle.cy + circle.radius,
+            startAngle: 0,
+            endAngle: Math.PI * 2,
+            ccw: true,
+            data: {
+                ...(options?.data || {}),
+                threePointIds: [p1.id, p2.id, p3.id]
+            }
+        };
+        markCircleThreePoint(circleEntity);
+        sketch.entities.push(circleEntity);
+        addCoincidentConstraintIfMissing.call(this, sketch, h1.id, h2.id);
+        enforceSketchConstraintsInPlace(sketch);
+    }, {
+        opType: 'feature.update',
+        payload: { field: 'entities.add', entity: 'circle-3pt' }
+    });
+
+    this.selectedSketchEntities.clear();
+    this.selectedSketchArcCenters?.clear?.();
+    for (const pid of pRefIds) {
+        this.selectedSketchEntities.add(pid);
+    }
+    this.selectedSketchEntities.add(id);
+    this.hoveredSketchEntityId = null;
+    this.sketchArcPreview = null;
+    this.updateSketchInteractionVisuals();
+    return { circleId: id, pointIds: pRefIds, hiddenIds: [hiddenAId, hiddenBId] };
 }
 
 function makeSketchRectPreview(start, end, centerMode = false) {
@@ -592,6 +676,81 @@ function computeArcGeometry(start, end, onArc) {
     return { cx, cy, radius, startAngle, endAngle, ccw };
 }
 
+function computeCircleFromThreePoints(a, b, c) {
+    if (!a || !b || !c) return null;
+    const x1 = a.x || 0;
+    const y1 = a.y || 0;
+    const x2 = b.x || 0;
+    const y2 = b.y || 0;
+    const x3 = c.x || 0;
+    const y3 = c.y || 0;
+    const d = 2 * (x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2));
+    if (Math.abs(d) < 1e-8) {
+        return null;
+    }
+    const x1sq = x1 * x1 + y1 * y1;
+    const x2sq = x2 * x2 + y2 * y2;
+    const x3sq = x3 * x3 + y3 * y3;
+    const cx = (x1sq * (y2 - y3) + x2sq * (y3 - y1) + x3sq * (y1 - y2)) / d;
+    const cy = (x1sq * (x3 - x2) + x2sq * (x1 - x3) + x3sq * (x2 - x1)) / d;
+    const radius = Math.hypot(x1 - cx, y1 - cy);
+    if (!Number.isFinite(radius) || radius < SKETCH_MIN_LINE_LENGTH) {
+        return null;
+    }
+    return { cx, cy, radius };
+}
+
+function computeArcGeometryFromCenter(center, start, endRaw) {
+    if (!center || !start || !endRaw) return null;
+    const cx = center.x || 0;
+    const cy = center.y || 0;
+    const sx = start.x || 0;
+    const sy = start.y || 0;
+    const radius = Math.hypot(sx - cx, sy - cy);
+    if (!Number.isFinite(radius) || radius < SKETCH_MIN_LINE_LENGTH) {
+        return null;
+    }
+    const exv = (endRaw.x || 0) - cx;
+    const eyv = (endRaw.y || 0) - cy;
+    const evl = Math.hypot(exv, eyv);
+    if (!Number.isFinite(evl) || evl < 1e-9) {
+        return null;
+    }
+    const end = {
+        x: cx + (exv / evl) * radius,
+        y: cy + (eyv / evl) * radius
+    };
+    const startAngle = Math.atan2(sy - cy, sx - cx);
+    const endAngle = Math.atan2(end.y - cy, end.x - cx);
+    const cross = (sx - cx) * (end.y - cy) - (sy - cy) * (end.x - cx);
+    const ccw = cross >= 0;
+    const tau = Math.PI * 2;
+    const norm = a => {
+        let out = a % tau;
+        if (out < 0) out += tau;
+        return out;
+    };
+    const sa = norm(startAngle);
+    const ea = norm(endAngle);
+    let mid;
+    if (ccw) {
+        const sweep = (ea - sa + tau) % tau;
+        mid = sa + sweep * 0.5;
+    } else {
+        const sweep = (sa - ea + tau) % tau;
+        mid = sa - sweep * 0.5;
+    }
+    const onArc = {
+        x: cx + Math.cos(mid) * radius,
+        y: cy + Math.sin(mid) * radius
+    };
+    return {
+        start: { x: sx, y: sy },
+        end,
+        onArc
+    };
+}
+
 function addCoincidentConstraintIfMissing(sketch, aId, bId) {
     if (!aId || !bId || aId === bId) return;
     sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
@@ -665,7 +824,9 @@ export {
     createSketchPoint,
     createSketchLine,
     createSketchArc,
+    createSketchArcFromCenter,
     createSketchCircle,
+    createSketchCircle3Point,
     makeSketchRectPreview,
     getRectangleCorners,
     createSketchRectangle,
@@ -673,6 +834,8 @@ export {
     getSelectedSketchCircle,
     getCircleData,
     computeArcGeometry,
+    computeArcGeometryFromCenter,
+    computeCircleFromThreePoints,
     addCoincidentConstraintIfMissing,
     convertArcToCircleInSketch
 };

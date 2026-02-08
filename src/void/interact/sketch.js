@@ -71,8 +71,16 @@ function createSketchArc(feature, start, end, onArc, options = {}) {
     return sketchCreate.createSketchArc.call(this, feature, start, end, onArc, options);
 }
 
+function createSketchArcFromCenter(feature, center, start, endRaw, options = {}) {
+    return sketchCreate.createSketchArcFromCenter.call(this, feature, center, start, endRaw, options);
+}
+
 function createSketchCircle(feature, center, edge, options = {}) {
     return sketchCreate.createSketchCircle.call(this, feature, center, edge, options);
+}
+
+function createSketchCircle3Point(feature, a, b, c, options = {}) {
+    return sketchCreate.createSketchCircle3Point.call(this, feature, a, b, c, options);
 }
 
 function makeSketchRectPreview(start, end, centerMode = false) {
@@ -103,6 +111,14 @@ function computeArcGeometry(start, end, onArc) {
     return sketchCreate.computeArcGeometry.call(this, start, end, onArc);
 }
 
+function computeArcGeometryFromCenter(center, start, endRaw) {
+    return sketchCreate.computeArcGeometryFromCenter.call(this, center, start, endRaw);
+}
+
+function computeCircleFromThreePoints(a, b, c) {
+    return sketchCreate.computeCircleFromThreePoints.call(this, a, b, c);
+}
+
 function addCoincidentConstraintIfMissing(sketch, aId, bId) {
     return sketchCreate.addCoincidentConstraintIfMissing.call(this, sketch, aId, bId);
 }
@@ -124,7 +140,7 @@ function updateSketchInteractionVisuals() {
         selectedConstraintIds: Array.from(this.selectedSketchConstraints || []),
         previewLine: this.sketchLinePreview,
         previewStart: this.sketchLineStart || this.sketchArcStart || this.sketchCircleCenter || this.sketchRectStart,
-        previewEnd: this.sketchArcEnd || null,
+        previewEnd: this.sketchArcEnd || this.sketchCircleSecond || null,
         previewArc: this.sketchArcPreview,
         previewRect: this.sketchRectPreview
     });
@@ -272,7 +288,9 @@ export {
     collectCoordinateRefsFromIds,
     isPointOnSelectedSketchLine,
     createSketchArc,
+    createSketchArcFromCenter,
     createSketchCircle,
+    createSketchCircle3Point,
     createSketchRectangle,
     makeSketchRectPreview,
     getRectangleCorners,
@@ -280,6 +298,8 @@ export {
     convertArcToCircle,
     convertArcToCircleInSketch,
     computeArcGeometry,
+    computeArcGeometryFromCenter,
+    computeCircleFromThreePoints,
     getArcEndpoints,
     applyCircleDragKinematics,
     projectPointOnArcConstraintsForArcs,

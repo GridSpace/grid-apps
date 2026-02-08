@@ -3,7 +3,7 @@
 import { api } from '../api.js';
 import { enforceSketchConstraintsInPlace } from '../sketch_constraints.js';
 import * as sketchCreate from './sketch_create.js';
-import { isCircleCurve } from '../sketch_curve.js';
+import { isCircleCurve, isCenterPointCircle, isThreePointCircle } from '../sketch_curve.js';
 import {
     SKETCH_DRAG_START_PX,
     SKETCH_MIN_LINE_LENGTH,
@@ -31,7 +31,12 @@ function handleSketchPointerDown(event, intersections) {
         clientY: event?.clientY ?? 0
     };
 
-    if (this.getSketchTool() === 'line' && !this.sketchLineStart) {
+    const tool = this.getSketchTool();
+    const isArcThreePoint = tool === 'arc' || tool === 'arc-3pt' || tool === 'arc-tangent';
+    const isCircleCenter = tool === 'circle' || tool === 'circle-center';
+    const isCircleThreePoint = tool === 'circle-3pt';
+
+    if (tool === 'line' && !this.sketchLineStart) {
         const start = hitLocal || local;
         if (!start) {
             return true;
@@ -53,15 +58,24 @@ function handleSketchPointerDown(event, intersections) {
         this.sketchRectPreview = this.makeSketchRectPreview(start, start, this.getSketchTool() === 'rect-center');
         this.updateSketchInteractionVisuals();
     }
-    if (this.getSketchTool() === 'circle' && !this.sketchCircleCenter) {
+    if ((isArcThreePoint) && !this.sketchArcStart) {
+        // no-op: first click handled in mouse-up for click/click workflow
+    }
+
+    if (isCircleCenter && !this.sketchCircleCenter) {
         const start = hitLocal || local;
         if (!start) {
             return true;
         }
         this.sketchCircleCenter = start;
         this.sketchCircleCenterRefId = null;
+        this.sketchCircleSecond = null;
         this.sketchCircleStartSeq = seq;
         this.updateSketchInteractionVisuals();
+    }
+
+    if (isCircleThreePoint && !this.sketchCircleCenter) {
+        // no-op: click sequence handled in mouse-up
     }
     return true;
 }
@@ -77,6 +91,10 @@ function handleSketchHover(event, intersections) {
     }
 
     const tool = this.getSketchTool();
+    const isArcThreePoint = tool === 'arc' || tool === 'arc-3pt' || tool === 'arc-tangent';
+    const isArcCenterPoint = tool === 'arc-center';
+    const isCircleCenter = tool === 'circle' || tool === 'circle-center';
+    const isCircleThreePoint = tool === 'circle-3pt';
     let previewChanged = false;
     if (tool === 'line' && this.sketchLineStart) {
         const local = event ? this.projectEventToSketchLocal(event, feature) : null;
@@ -98,7 +116,7 @@ function handleSketchHover(event, intersections) {
         previewChanged = true;
     }
 
-    if (tool === 'arc') {
+    if (isArcThreePoint) {
         const local = event ? this.projectEventToSketchLocal(event, feature) : null;
         let nextArc = null;
         if (this.sketchArcStart && !this.sketchArcEnd && local) {
@@ -112,12 +130,29 @@ function handleSketchHover(event, intersections) {
             this.sketchArcPreview = nextArc;
             previewChanged = true;
         }
+    } else if (isArcCenterPoint) {
+        const local = event ? this.projectEventToSketchLocal(event, feature) : null;
+        let nextArc = null;
+        if (this.sketchArcStart && !this.sketchArcEnd && local) {
+            nextArc = { mode: 'chord', a: this.sketchArcStart, b: local };
+        } else if (this.sketchArcStart && this.sketchArcEnd && local) {
+            const geom = this.computeArcGeometryFromCenter(this.sketchArcStart, this.sketchArcEnd, local);
+            if (geom) {
+                const arc = this.computeArcGeometry(geom.start, geom.end, geom.onArc);
+                if (arc) nextArc = { mode: 'arc', a: geom.start, b: geom.end, ...arc };
+            }
+        }
+        const sameArc = JSON.stringify(this.sketchArcPreview || null) === JSON.stringify(nextArc || null);
+        if (!sameArc) {
+            this.sketchArcPreview = nextArc;
+            previewChanged = true;
+        }
     } else if (this.sketchArcPreview !== null) {
         this.sketchArcPreview = null;
         previewChanged = true;
     }
 
-    if (tool === 'circle') {
+    if (isCircleCenter) {
         const local = event ? this.projectEventToSketchLocal(event, feature) : null;
         let nextArc = null;
         if (this.sketchCircleCenter && local) {
@@ -129,6 +164,26 @@ function handleSketchHover(event, intersections) {
                     cx: this.sketchCircleCenter.x || 0,
                     cy: this.sketchCircleCenter.y || 0,
                     radius
+                };
+            }
+        }
+        const sameArc = JSON.stringify(this.sketchArcPreview || null) === JSON.stringify(nextArc || null);
+        if (!sameArc) {
+            this.sketchArcPreview = nextArc;
+            previewChanged = true;
+        }
+    } else if (isCircleThreePoint) {
+        const local = event ? this.projectEventToSketchLocal(event, feature) : null;
+        let nextArc = null;
+        if (this.sketchCircleCenter && this.sketchCircleSecond && local) {
+            const circle = this.computeCircleFromThreePoints(this.sketchCircleCenter, this.sketchCircleSecond, local);
+            if (circle && circle.radius > SKETCH_MIN_LINE_LENGTH) {
+                nextArc = {
+                    mode: 'circle',
+                    circle: true,
+                    cx: circle.cx,
+                    cy: circle.cy,
+                    radius: circle.radius
                 };
             }
         }
@@ -183,7 +238,11 @@ function handleSketchMouseUp(event, intersections) {
     const feature = this.getEditingSketchFeature();
     if (!feature) return false;
     const tool = this.getSketchTool();
-    const allowOutsideViewport = tool === 'circle' && !!this.sketchCircleCenter;
+    const isArcThreePoint = tool === 'arc' || tool === 'arc-3pt' || tool === 'arc-tangent';
+    const isArcCenterPoint = tool === 'arc-center';
+    const isCircleCenter = tool === 'circle' || tool === 'circle-center';
+    const isCircleThreePoint = tool === 'circle-3pt';
+    const allowOutsideViewport = (isCircleCenter || isCircleThreePoint) && !!this.sketchCircleCenter;
     if (!allowOutsideViewport && !this.isSketchEventInViewport(event)) return false;
     if (this.sketchMarquee) {
         this.finishSketchMarquee(feature);
@@ -254,7 +313,7 @@ function handleSketchMouseUp(event, intersections) {
         return true;
     }
 
-    if (tool === 'arc') {
+    if (isArcThreePoint) {
         const upHit = this.resolveSketchHit(event, intersections, feature);
         const fallbackHovered = this.hoveredSketchEntityId && this.hoveredSketchEntityId !== SKETCH_VIRTUAL_ORIGIN_ID ? { id: this.hoveredSketchEntityId, type: 'point' } : null;
         const resolved = upHit || fallbackHovered;
@@ -289,7 +348,8 @@ function handleSketchMouseUp(event, intersections) {
         }
         const created = this.createSketchArc(feature, this.sketchArcStart, this.sketchArcEnd, local, {
             startRefId: this.sketchArcStartRefId || null,
-            endRefId: this.sketchArcEndRefId || null
+            endRefId: this.sketchArcEndRefId || null,
+            variant: tool === 'arc-tangent' ? 'arc-tangent' : 'arc-3pt'
         });
         if (created) {
             this.cancelSketchArc();
@@ -298,7 +358,40 @@ function handleSketchMouseUp(event, intersections) {
         return true;
     }
 
-    if (tool === 'circle') {
+    if (isArcCenterPoint) {
+        const upHit = this.resolveSketchHit(event, intersections, feature);
+        const fallbackHovered = this.hoveredSketchEntityId && this.hoveredSketchEntityId !== SKETCH_VIRTUAL_ORIGIN_ID ? { id: this.hoveredSketchEntityId, type: 'point' } : null;
+        const resolved = upHit || fallbackHovered;
+        const local = this.getSketchHitLocalPoint(feature, resolved) || this.projectEventToSketchLocal(event, feature);
+        const refId = (resolved?.type === 'point' && resolved?.id && resolved.id !== SKETCH_VIRTUAL_ORIGIN_ID) ? resolved.id : null;
+        if (!local) return true;
+        if (!this.sketchArcStart) {
+            this.sketchArcStart = { x: local.x, y: local.y }; // center
+            this.sketchArcStartRefId = refId;
+            this.sketchArcEnd = null;
+            this.sketchArcEndRefId = null;
+            this.sketchArcPreview = null;
+            this.updateSketchInteractionVisuals();
+            return true;
+        }
+        if (!this.sketchArcEnd) {
+            this.sketchArcEnd = { x: local.x, y: local.y };
+            this.sketchArcEndRefId = refId;
+            this.updateSketchInteractionVisuals();
+            return true;
+        }
+        const created = this.createSketchArcFromCenter(feature, this.sketchArcStart, this.sketchArcEnd, local, {
+            startRefId: this.sketchArcEndRefId || null,
+            endRefId: refId || null
+        });
+        if (created) {
+            this.cancelSketchArc();
+            this.setSketchTool('select');
+        }
+        return true;
+    }
+
+    if (isCircleCenter) {
         const upHit = this.resolveSketchHit(event, intersections, feature);
         const fallbackHovered = this.hoveredSketchEntityId && this.hoveredSketchEntityId !== SKETCH_VIRTUAL_ORIGIN_ID ? { id: this.hoveredSketchEntityId, type: 'point' } : null;
         const resolved = upHit || fallbackHovered;
@@ -318,6 +411,32 @@ function handleSketchMouseUp(event, intersections) {
         const created = this.createSketchCircle(feature, this.sketchCircleCenter, end, {
             centerRefId: this.sketchCircleCenterRefId || null
         });
+        if (created) {
+            this.cancelSketchCircle();
+            this.setSketchTool('select');
+        }
+        return true;
+    }
+
+    if (isCircleThreePoint) {
+        const upHit = this.resolveSketchHit(event, intersections, feature);
+        const fallbackHovered = this.hoveredSketchEntityId && this.hoveredSketchEntityId !== SKETCH_VIRTUAL_ORIGIN_ID ? { id: this.hoveredSketchEntityId, type: 'point' } : null;
+        const resolved = upHit || fallbackHovered;
+        const local = this.getSketchHitLocalPoint(feature, resolved) || this.projectEventToSketchLocal(event, feature);
+        if (!local) return true;
+        if (!this.sketchCircleCenter) {
+            this.sketchCircleCenter = { x: local.x, y: local.y };
+            this.sketchCircleSecond = null;
+            this.sketchArcPreview = null;
+            this.updateSketchInteractionVisuals();
+            return true;
+        }
+        if (!this.sketchCircleSecond) {
+            this.sketchCircleSecond = { x: local.x, y: local.y };
+            this.updateSketchInteractionVisuals();
+            return true;
+        }
+        const created = this.createSketchCircle3Point(feature, this.sketchCircleCenter, this.sketchCircleSecond, local);
         if (created) {
             this.cancelSketchCircle();
             this.setSketchTool('select');
@@ -360,6 +479,7 @@ function handleSketchDrag(delta, offset, isDone) {
     const feature = this.getEditingSketchFeature();
     if (!feature) return false;
     const tool = this.getSketchTool();
+    const isCircleCenter = tool === 'circle' || tool === 'circle-center';
 
     if (tool === 'line') {
         if (!isDone) {
@@ -413,7 +533,7 @@ function handleSketchDrag(delta, offset, isDone) {
         return true;
     }
 
-    if (tool === 'circle') {
+    if (isCircleCenter) {
         if (!isDone) {
             if (!this.sketchCircleCenter) return true;
             const local = this.projectEventToSketchLocal(delta?.event, feature);
@@ -522,17 +642,17 @@ function handleSketchDrag(delta, offset, isDone) {
         }
         const centerDrag = downType === 'arc-center';
         const downEntity = entityById.get(downId) || null;
-        const circleCurveDown = downType === 'arc' && downEntity?.type === 'arc' && isCircleCurve(downEntity);
+        const circleCurveDown = downType === 'arc' && downEntity?.type === 'arc' && isCenterPointCircle(downEntity);
         const dragSelectedLines = this.selectedSketchEntities.has(downId) || this.isPointOnSelectedSketchLine(feature, downId);
         const activeIds = centerDrag ? new Set([downId]) : circleCurveDown ? new Set([downId]) : dragSelectedLines ? new Set(this.selectedSketchEntities) : new Set([downId]);
         const circleCurveDragIds = new Set();
         if (!centerDrag) {
             for (const id of activeIds) {
                 const ent = entityById.get(id);
-                if (ent?.type === 'arc' && isCircleCurve(ent)) circleCurveDragIds.add(id);
+                if (ent?.type === 'arc' && isCenterPointCircle(ent)) circleCurveDragIds.add(id);
             }
             const downEnt = entityById.get(downId);
-            if (downType === 'arc' && downEnt?.type === 'arc' && isCircleCurve(downEnt)) circleCurveDragIds.add(downId);
+            if (downType === 'arc' && downEnt?.type === 'arc' && isCenterPointCircle(downEnt)) circleCurveDragIds.add(downId);
         }
         const refs = this.collectCoordinateRefsFromIds(feature, activeIds);
         if (!this.sketchPointerDown.local) return false;
@@ -598,6 +718,7 @@ function handleSketchDrag(delta, offset, isDone) {
         ctrl.entity.mx = ctrl.mx + dx;
         ctrl.entity.my = ctrl.my + dy;
     }
+    refreshThreePointCirclesFromDefinitions.call(this, feature);
     this.applyCircleDragKinematics(feature, dx, dy, local);
 
     const activeCircleDrag = !!(this.sketchDrag.circleCurveDragIds?.size);
@@ -636,10 +757,89 @@ function handleSketchDrag(delta, offset, isDone) {
         });
         this.applyDragLockedArcCenters(feature, this.sketchDrag.centerLocks);
     }
+    refreshThreePointCirclesFromDefinitions.call(this, feature);
     this.sketchDrag.moved = this.sketchDrag.moved || Math.hypot(dx, dy) > 0;
     api.sketchRuntime.sync();
     this.updateSketchInteractionVisuals();
     return true;
+}
+
+function refreshThreePointCirclesFromDefinitions(feature) {
+    const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+    if (!entities.length) return false;
+    const points = new Map(entities.filter(e => e?.type === 'point' && e.id).map(e => [e.id, e]));
+    let changed = false;
+    for (const arc of entities) {
+        if (arc?.type !== 'arc' || !arc?.id) continue;
+        const ids = Array.isArray(arc?.data?.threePointIds) ? arc.data.threePointIds.filter(Boolean) : [];
+        if (!isThreePointCircle(arc) && ids.length < 3) continue;
+        if (ids.length < 3) continue;
+        const p1 = points.get(ids[0]);
+        const p2 = points.get(ids[1]);
+        const p3 = points.get(ids[2]);
+        if (!p1 || !p2 || !p3) continue;
+        const circle = this.computeCircleFromThreePoints(p1, p2, p3);
+        if (!circle) continue;
+        const radius = Number(circle.radius || 0);
+        if (!Number.isFinite(radius) || radius <= SKETCH_MIN_LINE_LENGTH) continue;
+        const cx = Number(circle.cx || 0);
+        const cy = Number(circle.cy || 0);
+        if (Math.abs((arc.cx || 0) - cx) > 1e-9) {
+            arc.cx = cx;
+            changed = true;
+        }
+        if (Math.abs((arc.cy || 0) - cy) > 1e-9) {
+            arc.cy = cy;
+            changed = true;
+        }
+        if (Math.abs((arc.radius || 0) - radius) > 1e-9) {
+            arc.radius = radius;
+            changed = true;
+        }
+        if (Math.abs((arc.startAngle || 0) - 0) > 1e-9) {
+            arc.startAngle = 0;
+            changed = true;
+        }
+        if (Math.abs((arc.endAngle || 0) - (Math.PI * 2)) > 1e-9) {
+            arc.endAngle = Math.PI * 2;
+            changed = true;
+        }
+        if (arc.ccw !== true) {
+            arc.ccw = true;
+            changed = true;
+        }
+        const mx = cx;
+        const my = cy + radius;
+        if (Math.abs((arc.mx || 0) - mx) > 1e-9) {
+            arc.mx = mx;
+            changed = true;
+        }
+        if (Math.abs((arc.my || 0) - my) > 1e-9) {
+            arc.my = my;
+            changed = true;
+        }
+        const a = typeof arc.a === 'string' ? points.get(arc.a) : null;
+        const b = typeof arc.b === 'string' ? points.get(arc.b) : null;
+        if (a) {
+            const nx = p1.x || 0;
+            const ny = p1.y || 0;
+            if (Math.abs((a.x || 0) - nx) > 1e-9 || Math.abs((a.y || 0) - ny) > 1e-9) {
+                a.x = nx;
+                a.y = ny;
+                changed = true;
+            }
+        }
+        if (b) {
+            const nx = p1.x || 0;
+            const ny = p1.y || 0;
+            if (Math.abs((b.x || 0) - nx) > 1e-9 || Math.abs((b.y || 0) - ny) > 1e-9) {
+                b.x = nx;
+                b.y = ny;
+                changed = true;
+            }
+        }
+    }
+    return changed;
 }
 
 function collectDragLockedArcCenters(feature, activeIds, refs = [], options = {}) {

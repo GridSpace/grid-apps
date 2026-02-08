@@ -1,14 +1,14 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { applyTangentConstraint } from './sketch_constraints_tangent.js';
-import { isCircleCurve } from './sketch_curve.js';
+import { isCircleCurve, isThreePointCircle, markCircleThreePoint } from './sketch_curve.js';
 
 const EPS = 1e-9;
 
 function enforceWithFallback(sketch, opts = {}) {
     const entities = Array.isArray(sketch?.entities) ? sketch.entities : [];
     const constraints = Array.isArray(sketch?.constraints) ? sketch.constraints : [];
-    if (!entities.length || !constraints.length) {
+    if (!entities.length) {
         return false;
     }
 
@@ -26,12 +26,15 @@ function enforceWithFallback(sketch, opts = {}) {
     }
 
     const fixed = captureFixedAnchors(constraints, points);
+    const refreshThreePointCircles = () => applyThreePointCircleDefinitions(arcs, points, fixed);
+    let changed = refreshThreePointCircles();
+    if (!constraints.length) {
+        return changed;
+    }
     const dragged = new Set(Array.isArray(opts?.draggedPointIds) ? opts.draggedPointIds : []);
     const draggedArcs = new Set(Array.isArray(opts?.draggedArcIds) ? opts.draggedArcIds : []);
     const tangentAggressive = !!opts?.tangentAggressive;
     const iterations = Math.max(1, Math.min(64, opts.iterations || 12));
-    let changed = false;
-
     for (let i = 0; i < iterations; i++) {
         let iterChanged = false;
         for (const c of constraints) {
@@ -83,6 +86,7 @@ function enforceWithFallback(sketch, opts = {}) {
                     break;
             }
         }
+        iterChanged = refreshThreePointCircles() || iterChanged;
         // Keep on-curve constraints "hard" at the end of each iteration so
         // subsequent line-length adjustments do not leave vertices drifting
         // off circles/arcs during drag.
@@ -92,6 +96,43 @@ function enforceWithFallback(sketch, opts = {}) {
         if (!iterChanged) break;
     }
 
+    return changed;
+}
+
+function applyThreePointCircleDefinitions(arcs, points, fixed) {
+    let changed = false;
+    if (!(arcs instanceof Map) || !(points instanceof Map)) return false;
+    for (const arc of arcs.values()) {
+        if (!arc) continue;
+        const ids = Array.isArray(arc?.data?.threePointIds) ? arc.data.threePointIds.filter(Boolean) : [];
+        if (!isThreePointCircle(arc) && ids.length < 3) continue;
+        if (ids.length < 3) continue;
+        const p1 = points.get(ids[0]);
+        const p2 = points.get(ids[1]);
+        const p3 = points.get(ids[2]);
+        if (!p1 || !p2 || !p3) continue;
+        const circle = computeArcGeometry(
+            { x: p1.x || 0, y: p1.y || 0 },
+            { x: p2.x || 0, y: p2.y || 0 },
+            { x: p3.x || 0, y: p3.y || 0 }
+        );
+        if (!circle) continue;
+        const radius = Math.hypot((p1.x || 0) - circle.cx, (p1.y || 0) - circle.cy);
+        if (!Number.isFinite(radius) || radius < EPS) continue;
+        const a = points.get(getLineEndpointId(arc, 'a'));
+        const b = points.get(getLineEndpointId(arc, 'b'));
+        const aId = getLineEndpointId(arc, 'a');
+        const bId = getLineEndpointId(arc, 'b');
+        if (a && !isFixed(aId, fixed)) {
+            changed = setPoint(a, p1.x || 0, p1.y || 0) || changed;
+        }
+        if (b && !isFixed(bId, fixed)) {
+            changed = setPoint(b, p1.x || 0, p1.y || 0) || changed;
+        }
+        changed = setArcCenterAndMeta(arc, circle.cx, circle.cy, radius, 0, Math.PI * 2, true) || changed;
+        changed = setArcControl(arc, circle.cx, circle.cy + radius) || changed;
+        changed = markCircleThreePoint(arc) || changed;
+    }
     return changed;
 }
 
@@ -940,6 +981,7 @@ function computeArcGeometry(start, end, onArc) {
 
 export {
     enforceWithFallback,
+    applyThreePointCircleDefinitions,
     captureFixedAnchors,
     getLineEndpointId,
     applyPointOnArcConstraints,
