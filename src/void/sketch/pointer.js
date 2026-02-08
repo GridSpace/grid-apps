@@ -753,17 +753,15 @@ function handleSketchDrag(delta, offset, isDone) {
             this.sketchDrag.movedPointIds || new Set(),
             this.sketchDrag.draggedArcIds || new Set()
         );
-        if (this.draggedArcsHaveTangent(feature, this.sketchDrag.draggedArcIds)) {
-            this.applyDragLockedArcCenters(feature, this.sketchDrag.centerLocks);
-            enforceSketchConstraintsInPlace(feature, {
-                useFallback: tangentDriven || !this.sketchDrag.pointDrag,
-                iterations: 24,
-                draggedPointIds: Array.from(this.sketchDrag.movedPointIds || []),
-                draggedArcIds: Array.from(this.sketchDrag.draggedArcIds || []),
-                tangentAggressive: false
-            });
-            this.applyDragLockedArcCenters(feature, this.sketchDrag.centerLocks);
-        }
+        this.applyDragLockedArcCenters(feature, this.sketchDrag.centerLocks);
+        enforceSketchConstraintsInPlace(feature, {
+            useFallback: tangentDriven || !this.sketchDrag.pointDrag,
+            iterations: 24,
+            draggedPointIds: Array.from(this.sketchDrag.movedPointIds || []),
+            draggedArcIds: Array.from(this.sketchDrag.draggedArcIds || []),
+            tangentAggressive: false
+        });
+        this.applyDragLockedArcCenters(feature, this.sketchDrag.centerLocks);
     } else {
         const tangentDriven = dragTouchesTangentConstraint(
             feature,
