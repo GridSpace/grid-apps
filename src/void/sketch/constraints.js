@@ -18,6 +18,30 @@ let gcsWrapper = null;
 let gcsInitPromise = null;
 let gcsInitError = null;
 
+function withQuietRedundantLogs(fn) {
+    const origLog = console.log;
+    const origErr = console.error;
+    const isRedundantMsg = msg => {
+        const text = String(msg || '');
+        return text.includes('Redundant solving:')
+            || text.includes('RedundantSolving-DogLeg-');
+    };
+    console.log = (...args) => {
+        if (args.some(isRedundantMsg)) return;
+        origLog(...args);
+    };
+    console.error = (...args) => {
+        if (args.some(isRedundantMsg)) return;
+        origErr(...args);
+    };
+    try {
+        return fn();
+    } finally {
+        console.log = origLog;
+        console.error = origErr;
+    }
+}
+
 function initSketchConstraintsSolver() {
     if (gcsWrapper) {
         return Promise.resolve(gcsWrapper);
@@ -117,7 +141,7 @@ function enforceWithPlanegcs(sketch, opts = {}) {
     if (primitives.length) {
         gcsWrapper.clear_data();
         gcsWrapper.push_primitives_and_params(primitives);
-        const status = gcsWrapper.solve(Algorithm.DogLeg);
+        const status = withQuietRedundantLogs(() => gcsWrapper.solve(Algorithm.DogLeg));
         if (!(status === SolveStatus.Success || status === SolveStatus.Converged)) {
             throw new Error(`planegcs solve status=${status}`);
         }
