@@ -607,6 +607,12 @@ html, body {
     opacity: 0.55;
 }
 
+.tree-item-row.is-disabled {
+    opacity: 0.35;
+    cursor: default;
+    filter: grayscale(0.15);
+}
+
 .tree-row-left {
     flex: 1;
     min-width: 0;

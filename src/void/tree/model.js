@@ -42,6 +42,19 @@ function bindRuntimeChanges() {
     api.origin.onChange(() => this.render());
 }
 
+function getActiveEditFeatureId() {
+    const sketchEditingId = api.sketchRuntime?.editingId || null;
+    if (sketchEditingId) return sketchEditingId;
+    return properties.currentFeatureId || null;
+}
+
+function getActiveEditIndex() {
+    const activeId = getActiveEditFeatureId();
+    if (!activeId) return -1;
+    const features = api.features.list();
+    return features.findIndex(feature => feature?.id === activeId);
+}
+
 function ensureEditingSketchIsRenderable() {
     const editingId = api.sketchRuntime?.editingId;
     if (!editingId) return;
@@ -225,6 +238,7 @@ function renderFeaturesSection() {
     }
     const hasOnlyDefaultFolder = folders.length === 1 && folders[0]?.id === 'features';
     const timelineCount = api.document.getTimelineCount();
+    const activeEditIndex = getActiveEditIndex();
     const markerCount = this.timelinePointerDrag ? this.timelineDragTargetCount : timelineCount;
     const setTimeline = async next => {
         const changed = await api.document.setTimelineCount(next);
@@ -313,12 +327,14 @@ function renderFeaturesSection() {
             const visible = feature?.visible !== false;
             const suppressed = feature?.suppressed === true;
             const beyondTimeline = !api.features.isIndexBuilt(index);
-                this.container.appendChild(this.createItemRow(label, feature, 1, {
+            const blockedByEditing = activeEditIndex >= 0 && index > activeEditIndex;
+            this.container.appendChild(this.createItemRow(label, feature, 1, {
                 featureIndex: index,
                 selected: this.selectedFeatureIds?.has?.(feature?.id),
                 eyeVisible: visible,
                 suppressed,
                 beyondTimeline,
+                disabled: blockedByEditing,
                 onEye: isSketch ? f => {
                     api.features.setVisible(f.id, f.visible === false);
                     this.render();
@@ -408,18 +424,20 @@ function renderFeaturesSection() {
             const label = feature?.name || feature?.type || 'Feature';
             const isSketch = feature?.type === 'sketch';
             const visible = feature?.visible !== false;
-            const suppressed = feature?.suppressed === true;
-            const beyondTimeline = !api.features.isIndexBuilt(index);
-            this.container.appendChild(this.createItemRow(label, feature, 2, {
-                featureIndex: index,
-                selected: this.selectedFeatureIds?.has?.(feature?.id),
-                eyeVisible: visible,
-                suppressed,
-                beyondTimeline,
-                onEye: isSketch ? f => {
-                    api.features.setVisible(f.id, f.visible === false);
-                    this.render();
-                } : null,
+                const suppressed = feature?.suppressed === true;
+                const beyondTimeline = !api.features.isIndexBuilt(index);
+                const blockedByEditing = activeEditIndex >= 0 && index > activeEditIndex;
+                this.container.appendChild(this.createItemRow(label, feature, 2, {
+                    featureIndex: index,
+                    selected: this.selectedFeatureIds?.has?.(feature?.id),
+                    eyeVisible: visible,
+                    suppressed,
+                    beyondTimeline,
+                    disabled: blockedByEditing,
+                    onEye: isSketch ? f => {
+                        api.features.setVisible(f.id, f.visible === false);
+                        this.render();
+                    } : null,
                 actions: [
                     {
                         label: suppressed ? '▶' : '⏸',
@@ -484,6 +502,7 @@ function renderSolidsSection() {
     const solids = api.features
         .listBuilt()
         .filter(feature => feature?.type === 'extrude');
+    const activeEditIndex = getActiveEditIndex();
 
     if (!solids.length) {
         this.container.appendChild(this.createEmptyRow('No solids yet', 1));
@@ -493,9 +512,12 @@ function renderSolidsSection() {
     for (const solid of solids) {
         const label = solid?.name || 'Solid';
         const visible = solid?.visible !== false;
+        const featureIndex = api.features.list().findIndex(feature => feature?.id === solid?.id);
+        const blockedByEditing = activeEditIndex >= 0 && featureIndex > activeEditIndex;
         this.container.appendChild(this.createItemRow(label, solid, 1, {
             selected: this.selectedFeatureIds?.has?.(solid?.id),
             eyeVisible: visible,
+            disabled: blockedByEditing,
             onEye: feature => {
                 api.features.setVisible(feature.id, feature.visible === false);
                 this.render();

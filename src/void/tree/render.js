@@ -97,6 +97,7 @@ function createTimelineMarkerRow({ active = false, onSelect, onPointerStart }) {
 function createItemRow(label, feature, depth = 0, opts = {}) {
     const row = document.createElement('div');
     row.className = 'tree-item-row';
+    const disabled = !!opts.disabled;
     if (opts.selected) {
         row.classList.add('active');
     }
@@ -109,11 +110,14 @@ function createItemRow(label, feature, depth = 0, opts = {}) {
     if (opts.beyondTimeline) {
         row.classList.add('is-future');
     }
+    if (disabled) {
+        row.classList.add('is-disabled');
+    }
     row.style.paddingLeft = `${8 + depth * 16}px`;
     if (Number.isFinite(opts.featureIndex)) {
         row.dataset.featureIndex = String(opts.featureIndex);
     }
-    if (opts.draggable) {
+    if (opts.draggable && !disabled) {
         row.draggable = true;
     }
 
@@ -133,7 +137,7 @@ function createItemRow(label, feature, depth = 0, opts = {}) {
     row.appendChild(left);
 
     const actions = Array.isArray(opts.actions) ? opts.actions : [];
-    if (actions.length) {
+    if (actions.length && !disabled) {
         const actionWrap = document.createElement('div');
         actionWrap.className = 'tree-item-actions';
         for (const action of actions) {
@@ -155,26 +159,28 @@ function createItemRow(label, feature, depth = 0, opts = {}) {
         row.appendChild(actionWrap);
     }
 
-    row.onclick = () => {
-        if (typeof opts.onSelect === 'function') {
-            opts.onSelect(feature);
-        } else {
-            console.log('Feature selected:', feature);
-        }
-    };
-    row.ondblclick = () => {
-        if (typeof opts.onEdit === 'function') {
-            opts.onEdit(feature);
-        }
-    };
-    if (typeof opts.onHoverEnter === 'function') {
+    if (!disabled) {
+        row.onclick = () => {
+            if (typeof opts.onSelect === 'function') {
+                opts.onSelect(feature);
+            } else {
+                console.log('Feature selected:', feature);
+            }
+        };
+        row.ondblclick = () => {
+            if (typeof opts.onEdit === 'function') {
+                opts.onEdit(feature);
+            }
+        };
+    }
+    if (!disabled && typeof opts.onHoverEnter === 'function') {
         row.onmouseenter = () => opts.onHoverEnter(feature);
     }
-    if (typeof opts.onHoverLeave === 'function') {
+    if (!disabled && typeof opts.onHoverLeave === 'function') {
         row.onmouseleave = () => opts.onHoverLeave(feature);
     }
 
-    if (typeof opts.onEye === 'function') {
+    if (!disabled && typeof opts.onEye === 'function') {
         const eye = document.createElement('button');
         eye.className = `tree-eye ${opts.eyeVisible !== false ? 'visible' : 'off'}`;
         eye.textContent = '👁';
@@ -186,7 +192,7 @@ function createItemRow(label, feature, depth = 0, opts = {}) {
         row.appendChild(eye);
     }
 
-    if (opts.draggable && typeof opts.onDragStart === 'function') {
+    if (!disabled && opts.draggable && typeof opts.onDragStart === 'function') {
         row.ondragstart = event => {
             row.classList.add('is-dragging');
             event.dataTransfer?.setData('text/x-void-feature', String(feature?.id || ''));
@@ -194,7 +200,7 @@ function createItemRow(label, feature, depth = 0, opts = {}) {
             opts.onDragStart(feature, event);
         };
     }
-    if (opts.draggable) {
+    if (!disabled && opts.draggable) {
         row.ondragend = () => {
             row.classList.remove('is-dragging');
             row.classList.remove('drag-over-before');
@@ -204,7 +210,7 @@ function createItemRow(label, feature, depth = 0, opts = {}) {
             }
         };
     }
-    if (opts.draggable && typeof opts.onDragOver === 'function') {
+    if (!disabled && opts.draggable && typeof opts.onDragOver === 'function') {
         row.ondragover = event => {
             event.preventDefault();
             const timelineDrag = !!opts.isTimelineDragging?.();
@@ -218,13 +224,13 @@ function createItemRow(label, feature, depth = 0, opts = {}) {
             }
         };
     }
-    if (opts.draggable) {
+    if (!disabled && opts.draggable) {
         row.ondragleave = () => {
             row.classList.remove('drag-over-before');
             row.classList.remove('drag-over-after');
         };
     }
-    if (opts.draggable && typeof opts.onDrop === 'function') {
+    if (!disabled && opts.draggable && typeof opts.onDrop === 'function') {
         row.ondrop = event => {
             event.preventDefault();
             const timelineDrag = !!opts.isTimelineDragging?.();
