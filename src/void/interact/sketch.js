@@ -1110,12 +1110,14 @@ function handleSketchDrag(delta, offset, isDone) {
         if (!this.sketchDrag) {
             return false;
         }
-        const moved = !!this.sketchDrag.moved;
-        const snapPointId = this.sketchDrag.snapPointId || null;
-        const snapPointType = this.sketchDrag.snapPointType || null;
-        const snapArcId = this.sketchDrag.snapArcId || null;
-        const snapMovedPointId = this.sketchDrag.snapMovedPointId || null;
-        const movedPointIds = this.sketchDrag.movedPointIds || new Set();
+        const drag = this.sketchDrag;
+        const moved = !!drag.moved;
+        const snapPointId = drag.snapPointId || null;
+        const snapPointType = drag.snapPointType || null;
+        const snapArcId = drag.snapArcId || null;
+        const snapMovedPointId = drag.snapMovedPointId || null;
+        const movedPointIds = drag.movedPointIds || new Set();
+        const draggedArcIds = drag.draggedArcIds || new Set();
         this.sketchDrag = null;
         api.sketchRuntime?.setMutating?.(feature.id, false);
         if (moved) {
@@ -1129,7 +1131,12 @@ function handleSketchDrag(delta, offset, isDone) {
                 enforceSketchConstraintsInPlace(feature);
             }
             // Always run one final full solve at gesture end to settle coupled constraints.
-            enforceSketchConstraintsInPlace(feature);
+            enforceSketchConstraintsInPlace(feature, {
+                useFallback: true,
+                iterations: 64,
+                draggedPointIds: Array.from(movedPointIds || []),
+                draggedArcIds: Array.from(draggedArcIds || [])
+            });
             api.features.commit(feature.id, {
                 opType: 'feature.update',
                 payload: {
@@ -1227,6 +1234,7 @@ function handleSketchDrag(delta, offset, isDone) {
             activeIds,
             circleCurveDragIds,
             movedPointIds: new Set((centerDrag ? [] : refs).map(ref => ref?.id).filter(Boolean)),
+            draggedArcIds: new Set(Array.from(activeIds).filter(id => entityById.get(id)?.type === 'arc')),
             centerLocks: (!centerDrag && !circleCurveDown)
                 ? this.collectDragLockedArcCenters(feature, activeIds, refs, {
                     includePointOnArc: true
@@ -1287,7 +1295,8 @@ function handleSketchDrag(delta, offset, isDone) {
         enforceSketchConstraintsInPlace(feature, {
             useFallback: true,
             iterations: 48,
-            draggedPointIds: Array.from(this.sketchDrag.movedPointIds || [])
+            draggedPointIds: Array.from(this.sketchDrag.movedPointIds || []),
+            draggedArcIds: Array.from(this.sketchDrag.draggedArcIds || [])
         });
         this.applyDragLockedArcCenters(feature, this.sketchDrag.centerLocks);
     }
