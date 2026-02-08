@@ -54,6 +54,12 @@ function deleteSelectedSketchEntities() {
             if (entity?.type !== 'line' && entity?.type !== 'arc') continue;
             if (typeof entity.a === 'string') endpointCandidates.add(entity.a);
             if (typeof entity.b === 'string') endpointCandidates.add(entity.b);
+            if (entity?.type === 'arc') {
+                const threePointIds = Array.isArray(entity?.data?.threePointIds) ? entity.data.threePointIds : [];
+                for (const pid of threePointIds) {
+                    if (typeof pid === 'string') endpointCandidates.add(pid);
+                }
+            }
         }
         if (endpointCandidates.size) {
             const prospectiveRemove = new Set([...removeIds, ...endpointCandidates]);

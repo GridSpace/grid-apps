@@ -249,6 +249,10 @@ function collectCoordinateRefsFromIds(feature, selectedIds) {
             const bId = typeof entity?.b === 'string' ? entity.b : null;
             if (aId && pointById.has(aId)) refs.add(pointById.get(aId));
             if (bId && pointById.has(bId)) refs.add(pointById.get(bId));
+            const threePointIds = Array.isArray(entity?.data?.threePointIds) ? entity.data.threePointIds : [];
+            for (const pid of threePointIds) {
+                if (pid && pointById.has(pid)) refs.add(pointById.get(pid));
+            }
         }
     }
     return Array.from(refs);

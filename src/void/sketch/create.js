@@ -370,15 +370,27 @@ function createSketchCircle3Point(feature, a, b, c, options = {}) {
     api.features.update(feature.id, sketch => {
         sketch.entities = Array.isArray(sketch.entities) ? sketch.entities : [];
         sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
-        const p1 = { id: this.newSketchEntityId('point'), type: 'point', x: a.x, y: a.y, fixed: false };
-        const p2 = { id: this.newSketchEntityId('point'), type: 'point', x: b.x, y: b.y, fixed: false };
-        const p3 = { id: this.newSketchEntityId('point'), type: 'point', x: c.x, y: c.y, fixed: false };
-        const h1 = { id: this.newSketchEntityId('point'), type: 'point', x: a.x, y: a.y, fixed: false };
-        const h2 = { id: this.newSketchEntityId('point'), type: 'point', x: a.x, y: a.y, fixed: false };
-        pRefIds.push(p1.id, p2.id, p3.id);
+        const pointById = new Map(sketch.entities.filter(e => e?.type === 'point' && e.id).map(e => [e.id, e]));
+        const refIds = Array.isArray(options?.pointRefIds) ? options.pointRefIds : [];
+        const resolvePointId = (refId, local) => {
+            if (typeof refId === 'string' && pointById.has(refId)) {
+                return refId;
+            }
+            const p = { id: this.newSketchEntityId('point'), type: 'point', x: local.x, y: local.y, fixed: false };
+            sketch.entities.push(p);
+            pointById.set(p.id, p);
+            return p.id;
+        };
+        const p1Id = resolvePointId(refIds[0], a);
+        const p2Id = resolvePointId(refIds[1], b);
+        const p3Id = resolvePointId(refIds[2], c);
+        const p1 = pointById.get(p1Id);
+        const h1 = { id: this.newSketchEntityId('point'), type: 'point', x: p1?.x ?? a.x, y: p1?.y ?? a.y, fixed: false };
+        const h2 = { id: this.newSketchEntityId('point'), type: 'point', x: p1?.x ?? a.x, y: p1?.y ?? a.y, fixed: false };
+        pRefIds.push(p1Id, p2Id, p3Id);
         hiddenAId = h1.id;
         hiddenBId = h2.id;
-        sketch.entities.push(p1, p2, p3, h1, h2);
+        sketch.entities.push(h1, h2);
         const circleEntity = {
             id,
             type: 'arc',
@@ -395,7 +407,7 @@ function createSketchCircle3Point(feature, a, b, c, options = {}) {
             ccw: true,
             data: {
                 ...(options?.data || {}),
-                threePointIds: [p1.id, p2.id, p3.id]
+                threePointIds: [p1Id, p2Id, p3Id]
             }
         };
         markCircleThreePoint(circleEntity);

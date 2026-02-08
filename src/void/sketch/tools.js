@@ -81,6 +81,7 @@ function cancelSketchCircle() {
     this.sketchCircleCenter = null;
     this.sketchCircleSecond = null;
     this.sketchCircleCenterRefId = null;
+    this.sketchCircleSecondRefId = null;
     this.sketchCircleStartSeq = null;
     this.sketchArcPreview = null;
 }

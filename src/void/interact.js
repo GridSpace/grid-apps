@@ -52,6 +52,7 @@ const interact = {
     sketchCircleCenter: null,
     sketchCircleSecond: null,
     sketchCircleCenterRefId: null,
+    sketchCircleSecondRefId: null,
     sketchCircleStartSeq: null,
     sketchRectStart: null,
     sketchRectStartRefId: null,

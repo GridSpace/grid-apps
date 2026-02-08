@@ -423,20 +423,30 @@ function handleSketchMouseUp(event, intersections) {
         const fallbackHovered = this.hoveredSketchEntityId && this.hoveredSketchEntityId !== SKETCH_VIRTUAL_ORIGIN_ID ? { id: this.hoveredSketchEntityId, type: 'point' } : null;
         const resolved = upHit || fallbackHovered;
         const local = this.getSketchHitLocalPoint(feature, resolved) || this.projectEventToSketchLocal(event, feature);
+        const refId = (resolved?.type === 'point' && resolved?.id && resolved.id !== SKETCH_VIRTUAL_ORIGIN_ID) ? resolved.id : null;
         if (!local) return true;
         if (!this.sketchCircleCenter) {
             this.sketchCircleCenter = { x: local.x, y: local.y };
+            this.sketchCircleCenterRefId = refId;
             this.sketchCircleSecond = null;
+            this.sketchCircleSecondRefId = null;
             this.sketchArcPreview = null;
             this.updateSketchInteractionVisuals();
             return true;
         }
         if (!this.sketchCircleSecond) {
             this.sketchCircleSecond = { x: local.x, y: local.y };
+            this.sketchCircleSecondRefId = refId;
             this.updateSketchInteractionVisuals();
             return true;
         }
-        const created = this.createSketchCircle3Point(feature, this.sketchCircleCenter, this.sketchCircleSecond, local);
+        const created = this.createSketchCircle3Point(feature, this.sketchCircleCenter, this.sketchCircleSecond, local, {
+            pointRefIds: [
+                this.sketchCircleCenterRefId || null,
+                this.sketchCircleSecondRefId || null,
+                refId || null
+            ]
+        });
         if (created) {
             this.cancelSketchCircle();
             this.setSketchTool('select');
