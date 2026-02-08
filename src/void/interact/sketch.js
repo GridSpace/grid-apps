@@ -26,7 +26,17 @@ function isSketchEditing() {
 function setSketchTool(tool = 'select') {
     const allowed = new Set(['select', 'point', 'line', 'arc', 'circle', 'rect', 'rect-center']);
     const next = allowed.has(tool) ? tool : 'select';
-    if (this.sketchTool === next) return;
+    if (this.sketchTool === next) {
+        // Allow re-clicking circle tool to recover from stale pending-center state
+        // without requiring a page reload.
+        if (next === 'circle') {
+            this.cancelSketchCircle();
+            this.sketchPointerDown = null;
+            this.sketchDrag = null;
+            this.updateSketchInteractionVisuals();
+        }
+        return;
+    }
     this.sketchTool = next;
     if (next !== 'line') {
         this.cancelSketchLine();
@@ -68,6 +78,7 @@ function cancelSketchCircle() {
     this.sketchCircleCenter = null;
     this.sketchCircleCenterRefId = null;
     this.sketchCircleStartSeq = null;
+    this.sketchArcPreview = null;
 }
 
 function cancelSketchRect() {
@@ -1266,6 +1277,8 @@ function handleSketchDrag(delta, offset, isDone) {
             draggedPointIds: Array.from(this.sketchDrag.movedPointIds || [])
         });
     }
+    // Rebase to current solved state to keep long drags stable.
+    this.rebaseSketchDragState(feature, local);
     this.sketchDrag.moved = this.sketchDrag.moved || Math.hypot(dx, dy) > 0;
     api.sketchRuntime.sync();
     this.updateSketchInteractionVisuals();
