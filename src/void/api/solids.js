@@ -4,6 +4,8 @@ import { THREE, BufferGeometryUtils } from '../../ext/three.js';
 import { ensureKernel } from '../solid/kernel.js';
 import { rebuildGeneratedSolids } from '../solid/rebuild.js';
 
+const SOLID_CREASE_ANGLE_DEG = 30;
+
 function createSolidsApi(getApi) {
     function buildSolidGeometry(meshData) {
         const geometry = new THREE.BufferGeometry();
@@ -45,9 +47,30 @@ function createSolidsApi(getApi) {
         }
 
         const triNormals = new Float32Array(triCount * 3);
+        const triDs = new Float32Array(triCount);
         const triNeighbors = Array.from({ length: triCount }, () => new Set());
         const triToGroup = new Int32Array(triCount).fill(-1);
         const edgeMap = new Map();
+        const posPointId = new Map();
+        const pointIdByIndex = new Map();
+        let pointSeq = 0;
+        const quant = 1e6;
+        const pointIdForIndex = (vi) => {
+            const cached = pointIdByIndex.get(vi);
+            if (cached !== undefined) return cached;
+            const p = vi * 3;
+            const kx = Math.round(positions[p] * quant);
+            const ky = Math.round(positions[p + 1] * quant);
+            const kz = Math.round(positions[p + 2] * quant);
+            const key = `${kx},${ky},${kz}`;
+            let pid = posPointId.get(key);
+            if (pid === undefined) {
+                pid = pointSeq++;
+                posPointId.set(key, pid);
+            }
+            pointIdByIndex.set(vi, pid);
+            return pid;
+        };
         const tmpA = new THREE.Vector3();
         const tmpB = new THREE.Vector3();
         const tmpC = new THREE.Vector3();
@@ -69,8 +92,12 @@ function createSolidsApi(getApi) {
             triNormals[t * 3] = tmpN.x;
             triNormals[t * 3 + 1] = tmpN.y;
             triNormals[t * 3 + 2] = tmpN.z;
+            triDs[t] = tmpN.dot(tmpA);
 
-            const edges = [[i0, i1], [i1, i2], [i2, i0]];
+            const p0 = pointIdForIndex(i0);
+            const p1 = pointIdForIndex(i1);
+            const p2 = pointIdForIndex(i2);
+            const edges = [[p0, p1], [p1, p2], [p2, p0]];
             for (const [ea, eb] of edges) {
                 const ek = edgeKey(ea, eb);
                 const list = edgeMap.get(ek);
@@ -89,8 +116,8 @@ function createSolidsApi(getApi) {
             }
         }
 
-        // Region join threshold for smooth surfaces. Sharp edges (near 90 deg) split regions.
-        const smoothJoinDot = Math.cos(40 * Math.PI / 180);
+        // Must match EdgesGeometry threshold so selectable regions align with drawn boundaries.
+        const smoothJoinDot = Math.cos(SOLID_CREASE_ANGLE_DEG * Math.PI / 180);
         const groups = new Map();
         let groupId = 0;
 
@@ -155,8 +182,6 @@ function createSolidsApi(getApi) {
                 xAxis.sub(normal.clone().multiplyScalar(xAxis.dot(normal)));
             }
             xAxis.normalize();
-
-            // A region is planar when all member vertices lie on one plane and normals are near-identical.
             const planeD = normal.dot(center);
             let maxPlanarError = 0;
             let minDot = 1;
@@ -188,7 +213,6 @@ function createSolidsApi(getApi) {
             });
             groupId++;
         }
-
         return { triToGroup, groups };
     }
 
@@ -316,7 +340,7 @@ function createSolidsApi(getApi) {
                     const mesh = new THREE.Mesh(built.render, this._material.clone());
                     mesh.userData.solidId = id;
                     mesh.userData.solid = true;
-                    const edgesGeom = new THREE.EdgesGeometry(built.render, 30);
+                    const edgesGeom = new THREE.EdgesGeometry(built.render, SOLID_CREASE_ANGLE_DEG);
                     const edges = new THREE.LineSegments(edgesGeom, this._edgeMaterial.clone());
                     edges.userData.solidId = id;
                     const overlays = new THREE.Group();
@@ -345,7 +369,7 @@ function createSolidsApi(getApi) {
                     const built = buildSolidGeometry(meshData);
                     view.mesh.geometry = built.render;
                     view.indexedGeometry = built.indexed;
-                    view.edges.geometry = new THREE.EdgesGeometry(built.render, 30);
+                    view.edges.geometry = new THREE.EdgesGeometry(built.render, SOLID_CREASE_ANGLE_DEG);
                 }
                 const faceData = buildSurfaceRegionData(view.indexedGeometry || view.mesh.geometry);
                 view.faceTriToGroup = faceData.triToGroup;
@@ -395,26 +419,9 @@ function createSolidsApi(getApi) {
                 const view = this._meshViews.get(solidId);
                 if (!view) continue;
                 const groupId = view.faceTriToGroup?.[tri];
-                if (groupId === undefined) {
-                    console.log('void.solid.face.map.miss', {
-                        solidId,
-                        tri,
-                        triMapLen: view.faceTriToGroup?.length || 0
-                    });
-                }
                 if (groupId === undefined || groupId < 0) continue;
                 const key = `${solidId}:${groupId}`;
                 return { key, solidId, groupId, intersection: hit };
-            }
-            if (intersections.length) {
-                console.log('void.solid.face.hover.none', {
-                    hitCount: intersections.length,
-                    sample: intersections.slice(0, 3).map(hit => ({
-                        solidId: hit?.object?.userData?.solidId || null,
-                        faceIndex: hit?.faceIndex ?? null,
-                        object: hit?.object?.name || hit?.object?.type || null
-                    }))
-                });
             }
             return null;
         },
@@ -450,11 +457,6 @@ function createSolidsApi(getApi) {
             if (!multi) this._selectedFaceKeys.clear();
             if (this._selectedFaceKeys.has(key)) this._selectedFaceKeys.delete(key);
             else this._selectedFaceKeys.add(key);
-            console.log('void.solid.face.toggle', {
-                key,
-                multi,
-                selected: Array.from(this._selectedFaceKeys)
-            });
             this.syncFaceOverlays();
             return Array.from(this._selectedFaceKeys);
         },

@@ -9,12 +9,19 @@ function getPrimarySketchTarget() {
 }
 
 function resolveSketchTargetFromSelection() {
-    if (this.selectedSolidFaceKeys?.size === 1) {
-        const key = this.selectedSolidFaceKeys.values().next().value;
-        const target = api.solids?.getSketchTargetForFaceKey?.(key);
-        if (target?.frame) {
-            return target;
+    const selectedFaceKeys = api.solids?.getSelectedFaceKeys?.() || Array.from(this.selectedSolidFaceKeys || []);
+    const selectedFaceCount = selectedFaceKeys.length;
+    if (selectedFaceCount > 0) {
+        if (selectedFaceCount === 1) {
+            const key = selectedFaceKeys[0];
+            const target = api.solids?.getSketchTargetForFaceKey?.(key);
+            if (target?.frame) {
+                return target;
+            }
         }
+        // If any solid face is selected but it's not a valid sketch target (for now: non-planar),
+        // do not silently fall back to a datum plane.
+        return null;
     }
     if (this.selectedPlanes.size !== 1) {
         return null;

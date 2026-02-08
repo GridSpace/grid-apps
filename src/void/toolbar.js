@@ -231,6 +231,7 @@ const toolbar = {
 
         if (this.sketchBtn) {
             this.sketchBtn.disabled = !canCreate;
+            this.sketchBtn.classList.toggle('active', canCreate && !editing);
         }
         if (this.extrudeBtn) {
             this.extrudeBtn.disabled = !canExtrude;
