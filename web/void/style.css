@@ -585,7 +585,16 @@ html, body {
     background: var(--bg-tertiary);
 }
 
+.tree-row.hovered {
+    background: var(--bg-tertiary);
+}
+
 .tree-item-row.active {
+    background: rgba(90, 159, 212, 0.2);
+    border: 1px solid rgba(90, 159, 212, 0.55);
+}
+
+.tree-item-row.hovered {
     background: rgba(90, 159, 212, 0.2);
     border: 1px solid rgba(90, 159, 212, 0.55);
 }
@@ -677,6 +686,10 @@ html, body {
     pointer-events: auto;
 }
 .tree-item-row.active .tree-eye {
+    opacity: 1;
+    pointer-events: auto;
+}
+.tree-item-row.hovered .tree-eye {
     opacity: 1;
     pointer-events: auto;
 }

@@ -16,14 +16,14 @@ function makeBodyId(featureId, index) {
 
 function basisFromPlaneFrame(frame) {
     const origin = {
-        x: Number(frame?.origin?.x || 0),
-        y: Number(frame?.origin?.y || 0),
-        z: Number(frame?.origin?.z || 0)
+        x: Number(frame?.origin?.x ?? 0),
+        y: Number(frame?.origin?.y ?? 0),
+        z: Number(frame?.origin?.z ?? 0)
     };
     const normalRaw = {
-        x: Number(frame?.normal?.x || 0),
-        y: Number(frame?.normal?.y || 0),
-        z: Number(frame?.normal?.z || 1)
+        x: Number(frame?.normal?.x ?? 0),
+        y: Number(frame?.normal?.y ?? 0),
+        z: Number(frame?.normal?.z ?? 1)
     };
     const nxLen = Math.hypot(normalRaw.x, normalRaw.y, normalRaw.z) || 1;
     const normal = {

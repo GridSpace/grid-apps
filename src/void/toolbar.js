@@ -69,18 +69,7 @@ const toolbar = {
 
         // Sketch tools
         this.sketchBtn = this.addButton(container, 'Sketch', () => {
-            const faceKeys = api.solids?.getSelectedFaceKeys?.() || [];
-            const planeIds = Array.from(api.interact?.selectedPlanes || []).map(p => p?.id || p?.name || 'plane');
             const target = api.interact.resolveSketchTargetFromSelection();
-            console.log('void.sketch.target.resolve', {
-                selectedFaceKeys: faceKeys,
-                selectedPlaneIds: planeIds,
-                resolved: target ? {
-                    kind: target.kind,
-                    id: target.id,
-                    source: target.source
-                } : null
-            });
             if (!target) {
                 return;
             }
@@ -88,10 +77,14 @@ const toolbar = {
             if (!sketch) {
                 return;
             }
-            api.sketchRuntime?.setEditing(sketch.id);
-            api.interact?.clearSketchSelection?.();
-            api.interact?.setSketchTool?.('select');
             tree.selectedFeatureId = sketch.id;
+            tree.selectedFeatureIds = new Set([sketch.id]);
+            tree.selectedSolidIds = new Set();
+            api.solids?.setSelected?.([]);
+            properties.showFeature(sketch, {
+                onChange: () => tree.render()
+            });
+            api.interact?.setSketchTool?.('select');
             tree.render();
             window.dispatchEvent(new CustomEvent('void-state-change'));
         }, { id: 'btn-sketch' });

@@ -73,6 +73,48 @@ function getSolidIdsForFeature(featureId) {
         .filter(Boolean);
 }
 
+function getSketchIdsForSolid(solid) {
+    const ids = new Set();
+    const add = value => {
+        if (value) ids.add(value);
+    };
+    add(solid?.source?.profile?.sketchId);
+    add(solid?.provenance?.source?.profile?.sketchId);
+    for (const face of solid?.provenance?.faces || []) {
+        add(face?.source?.sketchId);
+    }
+    return ids;
+}
+
+function getHoverContext() {
+    const hoveredSolidIds = new Set();
+    const hoveredSketchIds = new Set();
+    const hoveredProfileKey = api.interact?.hoveredSketchProfileKey || null;
+    if (hoveredProfileKey) {
+        const sketchId = String(hoveredProfileKey).split(':')[0];
+        if (sketchId) hoveredSketchIds.add(sketchId);
+    }
+    const hoveredFaceKey = api.interact?.hoveredSolidFaceKey || null;
+    if (hoveredFaceKey) {
+        const raw = String(hoveredFaceKey);
+        const split = raw.lastIndexOf(':');
+        if (split > 0) {
+            hoveredSolidIds.add(raw.substring(0, split));
+        }
+    }
+    if (hoveredSolidIds.size) {
+        const solids = api.solids?.list?.() || [];
+        for (const solidId of hoveredSolidIds) {
+            const solid = solids.find(s => s?.id === solidId);
+            if (!solid) continue;
+            for (const sketchId of getSketchIdsForSolid(solid)) {
+                hoveredSketchIds.add(sketchId);
+            }
+        }
+    }
+    return { hoveredSolidIds, hoveredSketchIds };
+}
+
 function render() {
     if (!this.container) return;
     this.container.innerHTML = '';
@@ -224,6 +266,7 @@ function renderDefaultGeometrySection() {
 }
 
 function renderFeaturesSection() {
+    const hover = getHoverContext();
     const row = this.createRow({
         label: 'Features',
         depth: 0,
@@ -344,6 +387,7 @@ function renderFeaturesSection() {
             this.container.appendChild(this.createItemRow(label, feature, 1, {
                 featureIndex: index,
                 selected: this.selectedFeatureIds?.has?.(feature?.id),
+                hovered: !!(isSketch && hover.hoveredSketchIds.has(feature?.id)),
                 eyeVisible: visible,
                 suppressed,
                 beyondTimeline,
@@ -450,6 +494,7 @@ function renderFeaturesSection() {
                 this.container.appendChild(this.createItemRow(label, feature, 2, {
                     featureIndex: index,
                     selected: this.selectedFeatureIds?.has?.(feature?.id),
+                    hovered: !!(isSketch && hover.hoveredSketchIds.has(feature?.id)),
                     eyeVisible: visible,
                     suppressed,
                     beyondTimeline,
@@ -510,6 +555,7 @@ function renderFeaturesSection() {
 }
 
 function renderSolidsSection() {
+    const hover = getHoverContext();
     const row = this.createRow({
         label: 'Solids',
         depth: 0,
@@ -543,6 +589,7 @@ function renderSolidsSection() {
         const blockedByEditing = activeEditIndex >= 0 && featureIndex > activeEditIndex;
         this.container.appendChild(this.createItemRow(label, solid, 1, {
             selected: this.selectedSolidIds?.has?.(solid?.id),
+            hovered: hover.hoveredSolidIds.has(solid?.id),
             eyeVisible: visible,
             disabled: blockedByEditing,
             onEye: item => {

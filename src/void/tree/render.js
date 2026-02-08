@@ -13,11 +13,14 @@ function createDivider() {
     return el;
 }
 
-function createRow({ label, depth = 0, expanded, onToggle, eyeVisible, onEye, onSelect, onHoverEnter, onHoverLeave, selected = false }) {
+function createRow({ label, depth = 0, expanded, onToggle, eyeVisible, onEye, onSelect, onHoverEnter, onHoverLeave, selected = false, hovered = false }) {
     const row = document.createElement('div');
     row.className = 'tree-row';
     if (selected) {
         row.classList.add('active');
+    }
+    if (hovered) {
+        row.classList.add('hovered');
     }
     if (onEye && eyeVisible === false) {
         row.classList.add('is-off');
@@ -100,6 +103,9 @@ function createItemRow(label, feature, depth = 0, opts = {}) {
     const disabled = !!opts.disabled;
     if (opts.selected) {
         row.classList.add('active');
+    }
+    if (opts.hovered) {
+        row.classList.add('hovered');
     }
     if (opts.eyeVisible === false) {
         row.classList.add('is-off');

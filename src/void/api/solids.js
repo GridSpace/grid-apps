@@ -480,7 +480,15 @@ function createSolidsApi(getApi) {
             // space for sketch planes (do not apply WORLD scene rotation).
             const center = meta.center.clone();
             const normal = meta.normal.clone().normalize();
-            const xAxis = meta.xAxis.clone().normalize();
+            let xAxis = new THREE.Vector3(1, 0, 0);
+            if (Math.abs(xAxis.dot(normal)) > 0.95) {
+                xAxis.set(0, 1, 0);
+            }
+            xAxis.addScaledVector(normal, -xAxis.dot(normal));
+            if (xAxis.lengthSq() <= 1e-10) {
+                xAxis.set(0, 0, 1).addScaledVector(normal, -normal.z);
+            }
+            xAxis.normalize();
             return {
                 kind: 'face',
                 id: `${solidId}:f${faceId}`,
