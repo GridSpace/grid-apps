@@ -20,6 +20,8 @@ const properties = {
     _drag: null,
     _savedPos: null,
     _loadingPos: false,
+    _sessionStartRev: null,
+    _sessionFeatureId: null,
 
     init() {
         if (this.panel) return;
@@ -36,14 +38,25 @@ const properties = {
         title.className = 'props-title';
         title.textContent = 'Properties';
 
+        const actions = document.createElement('div');
+        actions.className = 'props-header-actions';
+
+        const accept = document.createElement('button');
+        accept.className = 'props-close';
+        accept.textContent = '✓';
+        accept.title = 'Accept';
+        accept.onclick = () => this.hide('accept');
+
         const close = document.createElement('button');
         close.className = 'props-close';
-        close.textContent = '×';
-        close.title = 'Close';
-        close.onclick = () => this.hide();
+        close.textContent = 'x';
+        close.title = 'Cancel';
+        close.onclick = () => this.hide('cancel');
 
+        actions.appendChild(accept);
+        actions.appendChild(close);
         header.appendChild(title);
-        header.appendChild(close);
+        header.appendChild(actions);
         panel.appendChild(header);
 
         const body = document.createElement('div');
@@ -193,6 +206,8 @@ const properties = {
         this.init();
         if (!feature || !this.panel || !this.body) return;
         this.currentFeatureId = feature.id;
+        this._sessionFeatureId = feature.id;
+        this._sessionStartRev = api.document.current?.head_rev || null;
         this._onChange = opts.onChange || null;
         api.sketchRuntime?.setEditing(feature.type === 'sketch' ? feature.id : null);
         if (feature.type !== 'sketch') {
@@ -213,13 +228,28 @@ const properties = {
         window.dispatchEvent(new CustomEvent('void-state-change'));
     },
 
-    hide() {
+    async hide(mode = 'accept') {
         if (!this.panel) return;
+        if (mode === 'cancel') {
+            const startRev = this._sessionStartRev || null;
+            const currentRev = api.document.current?.head_rev || null;
+            if (startRev && currentRev && startRev !== currentRev) {
+                const revision = await api.document.getRevision(startRev);
+                if (revision) {
+                    await api.document.applyRevision(revision);
+                    if (typeof this._onChange === 'function') {
+                        this._onChange();
+                    }
+                }
+            }
+        }
         this.panel.classList.add('hidden');
         api.sketchRuntime?.setEditing(null);
         api.interact?.clearSketchSelection?.();
         this.syncExtrudeProfileSelection(null);
         this.currentFeatureId = null;
+        this._sessionFeatureId = null;
+        this._sessionStartRev = null;
         this._onChange = null;
         window.dispatchEvent(new CustomEvent('void-state-change'));
     },

@@ -786,6 +786,12 @@ html, body {
     color: var(--text-primary);
 }
 
+.props-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
 .props-close {
     width: 22px;
     height: 22px;
