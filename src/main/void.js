@@ -15,7 +15,7 @@ import { datum } from '../void/datum.js';
 import { interact } from '../void/interact.js';
 import { properties } from '../void/properties.js';
 import { ViewCube } from '../void/viewcube.js';
-import { initSketchConstraintsSolver } from '../void/sketch_constraints.js';
+import { initSketchConstraintsSolver } from '../void/sketch/constraints.js';
 
 const version = '0.1.0';
 const dbindex = ["admin", "documents", "versions"];

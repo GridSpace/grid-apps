@@ -1,6 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { isCircleCurve } from './sketch_curve.js';
+import { isCircleCurve } from './curve.js';
 
 function getLineEndpoints(line, pointById) {
     const aId = typeof line?.a === 'string' ? line.a : (typeof line?.p1_id === 'string' ? line.p1_id : null);

@@ -7,7 +7,7 @@ import * as targetOps from './interact/targets.js';
 import * as pointOps from './interact/points.js';
 import * as selectionOps from './interact/selection.js';
 import * as planeOps from './interact/planes.js';
-import * as sketchOps from './interact/sketch.js';
+import * as sketchOps from './sketch/index.js';
 
 /**
  * Interaction manager for void:form primitives

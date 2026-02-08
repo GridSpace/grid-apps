@@ -6,8 +6,8 @@ import { Plane } from './plane.js';
 import { interact } from './interact.js';
 import { createOriginApi } from './api/origin.js';
 import { createFeaturesApi } from './api/features.js';
-import { createSketchApi } from './api/sketch.js';
-import { createSketchRuntimeApi } from './api/sketch_runtime.js';
+import { createSketchApi } from './sketch/api.js';
+import { createSketchRuntimeApi } from './sketch/runtime.js';
 import { createDocumentApi } from './api/document.js';
 
 const DOC_SCHEMA_VERSION = 1;

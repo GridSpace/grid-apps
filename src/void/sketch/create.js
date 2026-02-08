@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { api } from '../api.js';
-import { enforceSketchConstraintsInPlace } from './sketch_constraints.js';
+import { enforceSketchConstraintsInPlace } from './constraints.js';
 import {
     isCircleCurve,
     markArcThreePoint,
@@ -9,11 +9,11 @@ import {
     markArcTangent,
     markCircleCenterPoint,
     markCircleThreePoint
-} from './sketch_curve.js';
+} from './curve.js';
 import {
     SKETCH_MIN_LINE_LENGTH,
     SKETCH_POINT_MERGE_EPS
-} from './sketch_constants.js';
+} from './constants.js';
 
 function findArcWithEndpoints(feature, p1Id, p2Id) {
     if (!feature || !p1Id || !p2Id || p1Id === p2Id) return null;

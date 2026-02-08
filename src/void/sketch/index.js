@@ -4,9 +4,9 @@ import { space } from '../../moto/space.js';
 import { api } from '../api.js';
 import {
     SKETCH_POINT_MERGE_EPS
-} from './sketch_constants.js';
-import * as sketchGeom from './sketch_geometry.js';
-import * as sketchCreate from './sketch_create.js';
+} from './constants.js';
+import * as sketchGeom from './geometry.js';
+import * as sketchCreate from './create.js';
 import {
     getEditingSketchFeature,
     isSketchEditing,
@@ -20,7 +20,7 @@ import {
     handleSketchKeyDown,
     selectSketchConstraint,
     setHoveredSketchConstraint
-} from './sketch_tools.js';
+} from './tools.js';
 import {
     deleteSelectedSketchConstraints,
     deleteSelectedSketchEntities,
@@ -31,7 +31,7 @@ import {
     toggleSketchConstraintInList,
     normalizeConstraintRefs,
     makeSketchConstraintKey
-} from './sketch_constraints_actions.js';
+} from './constraints_actions.js';
 import {
     handleSketchPointerDown,
     handleSketchHover,
@@ -42,7 +42,7 @@ import {
     applyDragLockedArcCenters,
     draggedArcsHaveTangent,
     isPointOnSelectedSketchLine
-} from './sketch_pointer.js';
+} from './pointer.js';
 import {
     startSketchMarquee,
     updateSketchMarquee,
@@ -57,7 +57,7 @@ import {
     segmentsIntersect,
     collectSelectedCoordinateRefs,
     collectCoordinateRefsFromIds
-} from './sketch_marquee.js';
+} from './marquee.js';
 
 function createSketchPoint(feature, local) {
     return sketchCreate.createSketchPoint.call(this, feature, local);

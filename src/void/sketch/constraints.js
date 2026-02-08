@@ -10,7 +10,7 @@ import {
     applyArcCenterCoincidentConstraints,
     applyMidpointConstraints,
     applyTangentConstraints
-} from './sketch_constraints_fallback.js';
+} from './constraints_fallback.js';
 
 const EPS = 1e-9;
 

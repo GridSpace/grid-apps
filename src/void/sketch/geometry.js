@@ -3,14 +3,14 @@
 import { THREE } from '../../ext/three.js';
 import { space } from '../../moto/space.js';
 import { api } from '../api.js';
-import { isCircleCurve, isThreePointCircle, isCenterPointCircle } from './sketch_curve.js';
+import { isCircleCurve, isThreePointCircle, isCenterPointCircle } from './curve.js';
 import {
     SKETCH_HIT_POINT_PX,
     SKETCH_HIT_LINE_PX,
     SKETCH_MIN_LINE_LENGTH,
     SKETCH_POINT_MERGE_EPS,
     SKETCH_VIRTUAL_ORIGIN_ID
-} from './sketch_constants.js';
+} from './constants.js';
 
 function pointerDistance(event, pointerDown) {
     if (!event || !pointerDown) return 0;

@@ -3,11 +3,11 @@
 import { THREE } from '../../ext/three.js';
 import { space } from '../../moto/space.js';
 import { Plane } from '../plane.js';
-import * as markerOps from './sketch_runtime_markers.js';
-import * as profileOps from './sketch_runtime_profiles.js';
-import * as arcOps from './sketch_runtime_arc.js';
-import * as uiOps from './sketch_runtime_ui.js';
-import { isCircleCurve, isThreePointCircle } from './sketch_curve.js';
+import * as markerOps from './runtime_markers.js';
+import * as profileOps from './runtime_profiles.js';
+import * as arcOps from './runtime_arc.js';
+import * as uiOps from './runtime_ui.js';
+import { isCircleCurve, isThreePointCircle } from './curve.js';
 
 const SKETCH_COLORS = {
     planeDefault: { fill: 0x5a9fd4, fillOpacity: 0.1, outline: 0x5a9fd4, outlineOpacity: 0.65 },

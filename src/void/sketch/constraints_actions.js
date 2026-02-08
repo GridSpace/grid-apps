@@ -1,8 +1,8 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { api } from '../api.js';
-import { enforceSketchConstraintsInPlace } from './sketch_constraints.js';
-import * as sketchCreate from './sketch_create.js';
+import { enforceSketchConstraintsInPlace } from './constraints.js';
+import * as sketchCreate from './create.js';
 
 function deleteSelectedSketchConstraints() {
     const feature = this.getEditingSketchFeature();

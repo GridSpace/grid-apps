@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { applyTangentConstraint } from './sketch_constraints_tangent.js';
-import { isCircleCurve, isThreePointCircle, markCircleThreePoint } from './sketch_curve.js';
+import { applyTangentConstraint } from './constraints_tangent.js';
+import { isCircleCurve, isThreePointCircle, markCircleThreePoint } from './curve.js';
 
 const EPS = 1e-9;
 

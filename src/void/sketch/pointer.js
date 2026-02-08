@@ -1,14 +1,14 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { api } from '../api.js';
-import { enforceSketchConstraintsInPlace } from './sketch_constraints.js';
-import * as sketchCreate from './sketch_create.js';
-import { isCircleCurve, isCenterPointCircle, isThreePointCircle } from './sketch_curve.js';
+import { enforceSketchConstraintsInPlace } from './constraints.js';
+import * as sketchCreate from './create.js';
+import { isCircleCurve, isCenterPointCircle, isThreePointCircle } from './curve.js';
 import {
     SKETCH_DRAG_START_PX,
     SKETCH_MIN_LINE_LENGTH,
     SKETCH_VIRTUAL_ORIGIN_ID
-} from './sketch_constants.js';
+} from './constants.js';
 
 function handleSketchPointerDown(event, intersections) {
     const feature = this.getEditingSketchFeature();
