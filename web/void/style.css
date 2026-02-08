@@ -323,13 +323,6 @@ html, body {
     margin: 0 4px;
 }
 
-.toolbar-pipe {
-    color: var(--text-secondary);
-    opacity: 0.75;
-    padding: 0 4px;
-    user-select: none;
-}
-
 .toolbar-menu {
     position: relative;
 }

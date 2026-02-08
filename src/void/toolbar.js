@@ -133,7 +133,7 @@ const toolbar = {
             ...rectMenu.items,
             ...polyMenu.items
         };
-        this.addPipe(container);
+        container.appendChild(this.separator());
         this.sketchConstraintMenu = this.addMenu(container, 'Constraints', [
             { key: 'horizontal', label: 'Horizontal', onClick: () => api.interact.applySketchConstraint?.('horizontal') },
             { key: 'vertical', label: 'Vertical', onClick: () => api.interact.applySketchConstraint?.('vertical') },
@@ -185,7 +185,7 @@ const toolbar = {
         }, { id: 'btn-camera-toggle' });
         this.addButton(container, '?', () => {
             this.toggleHotkeysDialog();
-        }, { id: 'btn-hotkeys' }).classList.add('compact');
+        }, { id: 'btn-hotkeys' });
 
         const spacer = document.createElement('div');
         spacer.className = 'toolbar-spacer';
@@ -551,14 +551,6 @@ const toolbar = {
         container.appendChild(btn);
         this.buttons.push(btn);
         return btn;
-    },
-
-    addPipe(container) {
-        const pipe = document.createElement('div');
-        pipe.className = 'toolbar-pipe';
-        pipe.textContent = '|';
-        container.appendChild(pipe);
-        return pipe;
     },
 
     addMenu(container, label, entries = []) {
