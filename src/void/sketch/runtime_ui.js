@@ -18,7 +18,8 @@ function constraintGlyphLabel(type) {
         fixed: 'F',
         tangent: 'T',
         equal: '=',
-        midpoint: 'M'
+        midpoint: 'M',
+        polygon_pattern: 'PG'
     };
     return labels[type] || '?';
 }

@@ -594,18 +594,19 @@ function createSketchPolygonFromSelectedCircle(mode = 'inscribed') {
             });
         }
 
-        for (let i = 1; i < lineIds.length; i++) {
-            this.toggleSketchConstraintInList(sketch, sketch.constraints, 'equal', [lineIds[0], lineIds[i]]);
-        }
-        if (isCircumscribed) {
-            for (const lineId of lineIds) {
-                this.toggleSketchConstraintInList(sketch, sketch.constraints, 'tangent', [lineId, circle.id]);
-            }
-        } else {
-            for (const pointId of pointIds) {
-                this.toggleSketchConstraintInList(sketch, sketch.constraints, 'point_on_arc', [pointId, circle.id]);
-            }
-        }
+        sketch.constraints.push({
+            id: this.newSketchEntityId('cst'),
+            type: 'polygon_pattern',
+            refs: [circle.id, ...pointIds, ...lineIds],
+            data: {
+                mode: isCircumscribed ? 'circumscribed' : 'inscribed',
+                sides,
+                circleId: circle.id,
+                pointIds: [...pointIds],
+                lineIds: [...lineIds]
+            },
+            created_at: Date.now()
+        });
         enforceSketchConstraintsInPlace(sketch, {
             useFallback: true,
             iterations: 96

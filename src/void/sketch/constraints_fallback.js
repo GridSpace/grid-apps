@@ -52,6 +52,9 @@ function enforceWithFallback(sketch, opts = {}) {
                 case 'point_on_arc':
                     iterChanged = applyPointOnArc(c, points, arcs, fixed) || iterChanged;
                     break;
+                case 'polygon_pattern':
+                    iterChanged = applyPolygonPattern(c, constraints, points, lines, arcs, fixed, dragged) || iterChanged;
+                    break;
                 case 'horizontal':
                     iterChanged = applyHorizontal(c, points, lines, fixed) || iterChanged;
                     break;
@@ -97,6 +100,116 @@ function enforceWithFallback(sketch, opts = {}) {
     }
 
     return changed;
+}
+
+function applyPolygonPattern(constraint, constraints, points, lines, arcs, fixed, dragged = new Set()) {
+    let changed = false;
+    const data = constraint?.data || {};
+    const mode = data?.mode === 'circumscribed' ? 'circumscribed' : 'inscribed';
+    const sides = Math.max(3, Math.min(128, Number(data?.sides || 0) || 0));
+    const pointIds = Array.isArray(data?.pointIds) ? data.pointIds.filter(Boolean) : [];
+    const lineIds = Array.isArray(data?.lineIds) ? data.lineIds.filter(Boolean) : [];
+    if (!sides || pointIds.length < sides || lineIds.length < sides) return false;
+
+    const circleId = (typeof data?.circleId === 'string' && arcs.has(data.circleId))
+        ? data.circleId
+        : (Array.isArray(constraint?.refs) ? constraint.refs.find(id => arcs.has(id)) : null);
+    if (!circleId) return false;
+    const circle = arcs.get(circleId);
+    const circ = getArcCircleData(circle, points);
+    if (!circ || !Number.isFinite(circ.radius) || circ.radius < EPS) return false;
+
+    const step = (Math.PI * 2) / sides;
+    let circleRadius = circ.radius;
+    const draggedPatternPoints = pointIds.filter(id => dragged?.has?.(id)).map(id => points.get(id)).filter(Boolean);
+    if (draggedPatternPoints.length) {
+        const avgDraggedDist = draggedPatternPoints.reduce((sum, p) => {
+            return sum + Math.hypot((p.x || 0) - circ.cx, (p.y || 0) - circ.cy);
+        }, 0) / draggedPatternPoints.length;
+        if (Number.isFinite(avgDraggedDist) && avgDraggedDist > EPS) {
+            circleRadius = mode === 'circumscribed'
+                ? avgDraggedDist * Math.cos(Math.PI / sides)
+                : avgDraggedDist;
+            if (Number.isFinite(circleRadius) && circleRadius > EPS) {
+                changed = setArcCenterAndMeta(circle, circ.cx, circ.cy, circleRadius, 0, Math.PI * 2, true) || changed;
+                changed = setArcControl(circle, circ.cx, circ.cy + circleRadius) || changed;
+                const a = points.get(getLineEndpointId(circle, 'a'));
+                const b = points.get(getLineEndpointId(circle, 'b'));
+                if (a && !isFixed(getLineEndpointId(circle, 'a'), fixed)) {
+                    changed = setPoint(a, circ.cx + circleRadius, circ.cy) || changed;
+                }
+                if (b && !isFixed(getLineEndpointId(circle, 'b'), fixed)) {
+                    changed = setPoint(b, circ.cx + circleRadius, circ.cy) || changed;
+                }
+            }
+        }
+    }
+    const polyRadius = mode === 'circumscribed'
+        ? (circleRadius / Math.cos(Math.PI / sides))
+        : circleRadius;
+    if (!Number.isFinite(polyRadius) || polyRadius < EPS) return false;
+
+    let base = derivePatternBaseFromPoints(pointIds, points, circ.cx, circ.cy, step);
+    const oriented = derivePatternBaseFromLineOrientation(lineIds, constraints, step);
+    if (Number.isFinite(oriented)) {
+        base = oriented;
+    }
+
+    for (let i = 0; i < sides; i++) {
+        const id = pointIds[i];
+        const p = points.get(id);
+        if (!p || isFixed(id, fixed)) continue;
+        const ang = base + i * step;
+        const tx = circ.cx + Math.cos(ang) * polyRadius;
+        const ty = circ.cy + Math.sin(ang) * polyRadius;
+        changed = setPoint(p, tx, ty) || changed;
+    }
+    return changed;
+}
+
+function applyPolygonPatternConstraints(constraints, points, lines, arcs, fixed, dragged = new Set()) {
+    let changed = false;
+    for (const c of constraints || []) {
+        if (c?.type !== 'polygon_pattern') continue;
+        changed = applyPolygonPattern(c, constraints, points, lines, arcs, fixed, dragged) || changed;
+    }
+    return changed;
+}
+
+function derivePatternBaseFromPoints(pointIds, points, cx, cy, step) {
+    let sx = 0;
+    let sy = 0;
+    let count = 0;
+    for (let i = 0; i < pointIds.length; i++) {
+        const p = points.get(pointIds[i]);
+        if (!p) continue;
+        const ang = Math.atan2((p.y || 0) - cy, (p.x || 0) - cx);
+        const phase = ang - i * step;
+        sx += Math.cos(phase);
+        sy += Math.sin(phase);
+        count++;
+    }
+    if (!count) return 0;
+    return Math.atan2(sy, sx);
+}
+
+function derivePatternBaseFromLineOrientation(lineIds, constraints, step) {
+    const orientationByLine = new Map();
+    for (const c of constraints || []) {
+        if (!c?.type) continue;
+        if (c.type !== 'horizontal' && c.type !== 'vertical') continue;
+        const lid = Array.isArray(c.refs) ? c.refs[0] : null;
+        if (!lid) continue;
+        orientationByLine.set(lid, c.type);
+    }
+    for (let i = 0; i < lineIds.length; i++) {
+        const type = orientationByLine.get(lineIds[i]);
+        if (!type) continue;
+        const target = type === 'vertical' ? (Math.PI * 0.5) : 0;
+        // Regular polygon edge i direction = base + i*step + step/2 + pi/2.
+        return target - (i * step) - (step * 0.5) - (Math.PI * 0.5);
+    }
+    return NaN;
 }
 
 function applyThreePointCircleDefinitions(arcs, points, fixed) {
@@ -984,6 +1097,8 @@ export {
     applyThreePointCircleDefinitions,
     captureFixedAnchors,
     getLineEndpointId,
+    applyPolygonPattern,
+    applyPolygonPatternConstraints,
     applyPointOnArcConstraints,
     applyArcCenterCoincidentConstraints,
     applyMidpointConstraints,

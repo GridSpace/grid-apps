@@ -601,6 +601,7 @@ function handleSketchDrag(delta, offset, isDone) {
         const movedPointIds = drag.movedPointIds || new Set();
         const draggedArcIds = drag.draggedArcIds || new Set();
         const pointDrag = !!drag.pointDrag;
+        const tangentDriven = dragTouchesTangentConstraint(feature, movedPointIds, draggedArcIds);
         this.sketchDrag = null;
         api.sketchRuntime?.setMutating?.(feature.id, false);
         if (moved) {
@@ -614,7 +615,7 @@ function handleSketchDrag(delta, offset, isDone) {
                 enforceSketchConstraintsInPlace(feature);
             }
             enforceSketchConstraintsInPlace(feature, {
-                useFallback: !pointDrag,
+                useFallback: tangentDriven || !pointDrag,
                 iterations: 64,
                 draggedPointIds: Array.from(movedPointIds || []),
                 draggedArcIds: Array.from(draggedArcIds || []),
@@ -747,10 +748,15 @@ function handleSketchDrag(delta, offset, isDone) {
 
     if (activeCircleDrag && !this.sketchDrag.centerDrag) {
         this.projectPointOnArcConstraintsForArcs(feature, this.sketchDrag.circleCurveDragIds);
+        const tangentDriven = dragTouchesTangentConstraint(
+            feature,
+            this.sketchDrag.movedPointIds || new Set(),
+            this.sketchDrag.draggedArcIds || new Set()
+        );
         if (this.draggedArcsHaveTangent(feature, this.sketchDrag.draggedArcIds)) {
             this.applyDragLockedArcCenters(feature, this.sketchDrag.centerLocks);
             enforceSketchConstraintsInPlace(feature, {
-                useFallback: !this.sketchDrag.pointDrag,
+                useFallback: tangentDriven || !this.sketchDrag.pointDrag,
                 iterations: 24,
                 draggedPointIds: Array.from(this.sketchDrag.movedPointIds || []),
                 draggedArcIds: Array.from(this.sketchDrag.draggedArcIds || []),
@@ -759,9 +765,14 @@ function handleSketchDrag(delta, offset, isDone) {
             this.applyDragLockedArcCenters(feature, this.sketchDrag.centerLocks);
         }
     } else {
+        const tangentDriven = dragTouchesTangentConstraint(
+            feature,
+            this.sketchDrag.movedPointIds || new Set(),
+            this.sketchDrag.draggedArcIds || new Set()
+        );
         this.applyDragLockedArcCenters(feature, this.sketchDrag.centerLocks);
         enforceSketchConstraintsInPlace(feature, {
-            useFallback: !this.sketchDrag.pointDrag,
+            useFallback: tangentDriven || !this.sketchDrag.pointDrag,
             iterations: 48,
             draggedPointIds: Array.from(this.sketchDrag.movedPointIds || []),
             draggedArcIds: Array.from(this.sketchDrag.draggedArcIds || []),
@@ -920,6 +931,28 @@ function draggedArcsHaveTangent(feature, draggedArcIds) {
     return false;
 }
 
+function dragTouchesTangentConstraint(feature, movedPointIds = new Set(), draggedArcIds = new Set()) {
+    const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+    const constraints = Array.isArray(feature?.constraints) ? feature.constraints : [];
+    if (!constraints.length) return false;
+    const touched = new Set(Array.from(draggedArcIds || []));
+    for (const entity of entities) {
+        if (entity?.type !== 'line' || !entity.id) continue;
+        const aId = typeof entity?.a === 'string' ? entity.a : (typeof entity?.p1_id === 'string' ? entity.p1_id : null);
+        const bId = typeof entity?.b === 'string' ? entity.b : (typeof entity?.p2_id === 'string' ? entity.p2_id : null);
+        if ((aId && movedPointIds?.has?.(aId)) || (bId && movedPointIds?.has?.(bId))) {
+            touched.add(entity.id);
+        }
+    }
+    if (!touched.size) return false;
+    for (const c of constraints) {
+        if (c?.type !== 'tangent') continue;
+        const refs = Array.isArray(c.refs) ? c.refs : [];
+        if (refs.some(id => touched.has(id))) return true;
+    }
+    return false;
+}
+
 function isPointOnSelectedSketchLine(feature, pointId) {
     if (!pointId || !this.selectedSketchEntities?.size) return false;
     const entities = Array.isArray(feature?.entities) ? feature.entities : [];
@@ -942,5 +975,6 @@ export {
     collectDragLockedArcCenters,
     applyDragLockedArcCenters,
     draggedArcsHaveTangent,
+    dragTouchesTangentConstraint,
     isPointOnSelectedSketchLine
 };
