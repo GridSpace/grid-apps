@@ -143,7 +143,12 @@ src/
     │   ├── document.js   # Document persistence + revisions/undo/redo
     │   ├── features.js   # Feature list mutations
     │   ├── origin.js     # Origin point visibility/state
-    │   └── sketch.js     # Sketch feature creation scaffold
+    │   ├── sketch.js     # Sketch feature creation scaffold
+    │   ├── sketch_runtime.js # Sketch runtime orchestrator/state
+    │   ├── sketch_runtime_arc.js # Arc/line endpoint + arc sampling helpers
+    │   ├── sketch_runtime_markers.js # Sketch point/arc-center marker builders
+    │   ├── sketch_runtime_profiles.js # Closed-profile detection + fill loops
+    │   └── sketch_runtime_ui.js # Sketch runtime style/preview/glyph UI helpers
     ├── toolbar.js        # Top toolbar UI
     ├── tree.js           # Tree composition root
     ├── tree/
@@ -154,10 +159,18 @@ src/
     ├── plane.js          # Plane primitive class
     ├── interact.js       # Interaction composition root + event wiring
     ├── interact/
+    │   ├── sketch.js     # Sketch interaction orchestrator (event flow + mutations)
+    │   ├── sketch_constraints_actions.js # Constraint apply/toggle/delete actions
+    │   ├── sketch_tools.js # Sketch tool mode + keybinding behavior
+    │   ├── sketch_geometry.js # Sketch hit-test/projection/drag geometry helpers
+    │   ├── sketch_constants.js # Shared sketch interaction constants
     │   ├── planes.js     # Plane hover/select/resize + view-normal
     │   ├── points.js     # Point hover/select hit-testing
     │   ├── selection.js  # Shared selection state transitions
     │   └── targets.js    # Sketch target/frame resolution
+    ├── sketch_constraints.js # Constraint orchestration (planegcs + post-solve hooks)
+    ├── sketch_constraints_fallback.js # Legacy/incremental fallback solver
+    ├── sketch_constraints_tangent.js # Tangent constraint solver helpers
     └── viewcube.js       # ViewCube navigation widget (NEW)
 ```
 

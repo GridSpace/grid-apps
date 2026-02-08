@@ -1,9 +1,12 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { THREE } from '../../ext/three.js';
-import { ClipperLib } from '../../ext/clip2.esm.js';
 import { space } from '../../moto/space.js';
 import { Plane } from '../plane.js';
+import * as markerOps from './sketch_runtime_markers.js';
+import * as profileOps from './sketch_runtime_profiles.js';
+import * as arcOps from './sketch_runtime_arc.js';
+import * as uiOps from './sketch_runtime_ui.js';
 
 const SKETCH_COLORS = {
     planeDefault: { fill: 0x5a9fd4, fillOpacity: 0.1, outline: 0x5a9fd4, outlineOpacity: 0.65 },
@@ -28,8 +31,6 @@ const SKETCH_POINT_BASE_RADIUS = 1.8;
 const SKETCH_VIRTUAL_ORIGIN_ID = '__sketch-origin__';
 const CONSTRAINT_GLYPH_SIZE_PX = 18;
 const CONSTRAINT_GLYPH_GAP_PX = 4;
-const PROFILE_MERGE_EPS = 1e-3;
-const CLIPPER_SCALE = 100000;
 
 function createSketchRuntimeApi(getApi) {
     return {
@@ -267,120 +268,19 @@ function createSketchRuntimeApi(getApi) {
         },
 
         constraintGlyphLabel(type) {
-            const labels = {
-                horizontal: 'H',
-                vertical: 'V',
-                horizontal_points: 'H',
-                vertical_points: 'V',
-                perpendicular: 'P',
-                collinear: 'L',
-                coincident: 'C',
-                point_on_line: 'PL',
-                point_on_arc: 'PA',
-                arc_center_coincident: 'C',
-                fixed: 'F',
-                tangent: 'T',
-                equal: '=',
-                midpoint: 'M'
-            };
-            return labels[type] || '?';
+            return uiOps.constraintGlyphLabel(type);
         },
 
         makePointRing(radius, color, opacity = 1) {
-            const seg = 24;
-            const verts = [];
-            for (let i = 0; i <= seg; i++) {
-                const t = (i / seg) * Math.PI * 2;
-                verts.push(Math.cos(t) * radius, Math.sin(t) * radius, 0.01);
-            }
-            const geo = new THREE.BufferGeometry();
-            geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
-            const mat = new THREE.LineBasicMaterial({
-                color,
-                transparent: opacity < 1,
-                opacity,
-                depthWrite: false
-            });
-            const ring = new THREE.Line(geo, mat);
-            return ring;
+            return markerOps.makePointRing(radius, color, opacity);
         },
 
         createSketchPointMarker(x = 0, y = 0, opts = {}) {
-            const marker = new THREE.Group();
-            marker.position.set(x, y, 0);
-            marker.renderOrder = 8;
-
-            const core = new THREE.Mesh(
-                new THREE.CircleGeometry(0.72, 20),
-                new THREE.MeshBasicMaterial({
-                    color: 0x8f8f8f,
-                    transparent: false,
-                    depthWrite: false,
-                    side: THREE.DoubleSide
-                })
-            );
-            core.renderOrder = 8;
-            core.userData.sketchPointPick = true;
-            marker.add(core);
-
-            const ringBlack = this.makePointRing(0.94, 0x101010, 0.95);
-            ringBlack.renderOrder = 9;
-            marker.add(ringBlack);
-
-            const ringWhite = this.makePointRing(1.18, 0xffffff, 0.95);
-            ringWhite.renderOrder = 10;
-            marker.add(ringWhite);
-
-            const ringHighlight = this.makePointRing(1.45, SKETCH_COLORS.pointsHover, 0.95);
-            ringHighlight.renderOrder = 11;
-            ringHighlight.visible = false;
-            marker.add(ringHighlight);
-
-            marker.userData._markerParts = {
-                core,
-                ringBlack,
-                ringWhite,
-                ringHighlight
-            };
-            marker.userData._isVirtualOrigin = !!opts.virtualOrigin;
-
-            return marker;
+            return markerOps.createSketchPointMarker(x, y, opts, SKETCH_COLORS);
         },
 
         createArcCenterMarker(x = 0, y = 0) {
-            const marker = new THREE.Group();
-            marker.position.set(x, y, 0);
-            marker.renderOrder = 8;
-
-            const core = new THREE.Mesh(
-                new THREE.CircleGeometry(0.58, 20),
-                new THREE.MeshBasicMaterial({
-                    color: 0x8f8f8f,
-                    transparent: true,
-                    opacity: 0.95,
-                    depthWrite: false,
-                    side: THREE.DoubleSide
-                })
-            );
-            core.renderOrder = 8;
-            marker.add(core);
-
-            const ring = this.makePointRing(0.9, 0xffffff, 0.9);
-            ring.renderOrder = 9;
-            marker.add(ring);
-
-            const ringHighlight = this.makePointRing(1.15, SKETCH_COLORS.pointsHover, 0.95);
-            ringHighlight.renderOrder = 10;
-            ringHighlight.visible = false;
-            marker.add(ringHighlight);
-
-            marker.userData._markerParts = {
-                core,
-                ringWhite: ring,
-                ringHighlight
-            };
-            marker.userData._isArcCenter = true;
-            return marker;
+            return markerOps.createArcCenterMarker(x, y, SKETCH_COLORS);
         },
 
         rebuildEntities(rec) {
@@ -564,730 +464,71 @@ function createSketchRuntimeApi(getApi) {
         },
 
         addClosedProfileFills(rec, entities, pointById) {
-            const loops = this.findClosedCurveLoops(rec.feature, entities, pointById);
-            for (const loop of loops) {
-                if (!Array.isArray(loop) || loop.length < 3) continue;
-                const shape = new THREE.Shape();
-                shape.moveTo(loop[0].x, loop[0].y);
-                for (let i = 1; i < loop.length; i++) {
-                    shape.lineTo(loop[i].x, loop[i].y);
-                }
-                shape.closePath();
-                const geom = new THREE.ShapeGeometry(shape);
-                const mat = new THREE.MeshBasicMaterial({
-                    color: 0x8f8f8f,
-                    transparent: true,
-                    opacity: 0.18,
-                    depthWrite: false,
-                    side: THREE.DoubleSide
-                });
-                const fill = new THREE.Mesh(geom, mat);
-                fill.position.z = -0.005;
-                fill.renderOrder = 6;
-                rec.entitiesGroup.add(fill);
-            }
+            return profileOps.addClosedProfileFills.call(this, rec, entities, pointById);
         },
 
         simplifyLoopsWithClipper(loops) {
-            if (!Array.isArray(loops) || !loops.length || !ClipperLib?.Clipper) {
-                return loops || [];
-            }
-            const out = [];
-            const fill = ClipperLib.PolyFillType.pftEvenOdd;
-            for (const loop of loops) {
-                if (!Array.isArray(loop) || loop.length < 3) continue;
-                const path = [];
-                for (const p of loop) {
-                    path.push({
-                        X: Math.round((p.x || 0) * CLIPPER_SCALE),
-                        Y: Math.round((p.y || 0) * CLIPPER_SCALE)
-                    });
-                }
-                if (path.length < 3) continue;
-                const simp = ClipperLib.Clipper.SimplifyPolygon(path, fill) || [];
-                if (!simp.length) {
-                    out.push(loop);
-                    continue;
-                }
-                for (const poly of simp) {
-                    if (!Array.isArray(poly) || poly.length < 3) continue;
-                    out.push(poly.map(pt => ({
-                        x: (pt.X || 0) / CLIPPER_SCALE,
-                        y: (pt.Y || 0) / CLIPPER_SCALE
-                    })));
-                }
-            }
-            return out.length ? out : loops;
+            return profileOps.simplifyLoopsWithClipper.call(this, loops);
         },
 
         findClosedCurveLoops(feature, entities, pointById) {
-            const curves = entities.filter(e => (e?.type === 'line' || e?.type === 'arc') && !e.construction);
-            if (!curves.length) return [];
-
-            const q = v => Math.round(v / PROFILE_MERGE_EPS) * PROFILE_MERGE_EPS;
-            const nodes = new Map(); // key -> { id, x, y }
-            const nodeCoord = new Map(); // id -> { x, y }
-            const baseSegments = [];
-            let nodeSeq = 0;
-
-            const getNodeId = (x, y) => {
-                const key = `${q(x)},${q(y)}`;
-                let node = nodes.get(key);
-                if (!node) {
-                    node = { id: `n${++nodeSeq}`, x, y };
-                    nodes.set(key, node);
-                    nodeCoord.set(node.id, { x, y });
-                }
-                return node.id;
-            };
-
-            for (const curve of curves) {
-                let poly = null;
-                if (curve.type === 'line') {
-                    const [a, b] = this.getLineEndpoints(curve, pointById);
-                    if (a && b) {
-                        poly = [
-                            { x: a.x || 0, y: a.y || 0 },
-                            { x: b.x || 0, y: b.y || 0 }
-                        ];
-                    }
-                } else if (curve.type === 'arc') {
-                    const [a, b] = this.getArcEndpoints(curve, pointById);
-                    if (a && b) {
-                        poly = this.getArcRenderPoints(curve, a, b, 64);
-                    }
-                }
-                if (!poly || poly.length < 2) continue;
-
-                for (let i = 0; i < poly.length - 1; i++) {
-                    const p1 = poly[i];
-                    const p2 = poly[i + 1];
-                    const x1 = p1.x || 0;
-                    const y1 = p1.y || 0;
-                    const x2 = p2.x || 0;
-                    const y2 = p2.y || 0;
-                    if (Math.hypot(x2 - x1, y2 - y1) < PROFILE_MERGE_EPS) continue;
-                    baseSegments.push({
-                        id: baseSegments.length,
-                        a: { x: x1, y: y1 },
-                        b: { x: x2, y: y2 },
-                        ts: [0, 1]
-                    });
-                }
-            }
-            if (!baseSegments.length) return [];
-
-            const segEps = 1e-9;
-            for (let i = 0; i < baseSegments.length; i++) {
-                const s1 = baseSegments[i];
-                for (let j = i + 1; j < baseSegments.length; j++) {
-                    const s2 = baseSegments[j];
-                    const hit = this.segmentIntersectionParams(s1.a, s1.b, s2.a, s2.b, segEps);
-                    if (!hit) continue;
-                    if (hit.collinear) continue;
-                    const t1 = hit.t;
-                    const t2 = hit.u;
-                    if (Number.isFinite(t1) && t1 >= -segEps && t1 <= 1 + segEps) {
-                        s1.ts.push(Math.max(0, Math.min(1, t1)));
-                    }
-                    if (Number.isFinite(t2) && t2 >= -segEps && t2 <= 1 + segEps) {
-                        s2.ts.push(Math.max(0, Math.min(1, t2)));
-                    }
-                }
-            }
-
-            const edges = [];
-            const edgeKeys = new Set();
-            const uniqueSorted = list => {
-                const out = Array.from(new Set(list.map(v => Number(v.toFixed(12)))));
-                out.sort((a, b) => a - b);
-                return out;
-            };
-            for (const seg of baseSegments) {
-                const ts = uniqueSorted(seg.ts).filter(t => t >= 0 && t <= 1);
-                if (ts.length < 2) continue;
-                const sx = seg.a.x;
-                const sy = seg.a.y;
-                const dx = seg.b.x - seg.a.x;
-                const dy = seg.b.y - seg.a.y;
-                for (let i = 0; i < ts.length - 1; i++) {
-                    const t0 = ts[i];
-                    const t1 = ts[i + 1];
-                    if ((t1 - t0) < 1e-9) continue;
-                    const p0 = { x: sx + dx * t0, y: sy + dy * t0 };
-                    const p1 = { x: sx + dx * t1, y: sy + dy * t1 };
-                    if (Math.hypot(p1.x - p0.x, p1.y - p0.y) < PROFILE_MERGE_EPS) continue;
-                    const aId = getNodeId(p0.x, p0.y);
-                    const bId = getNodeId(p1.x, p1.y);
-                    if (!aId || !bId || aId === bId) continue;
-                    const key = aId < bId ? `${aId}|${bId}` : `${bId}|${aId}`;
-                    if (edgeKeys.has(key)) continue;
-                    edgeKeys.add(key);
-                    edges.push({ id: edges.length, a: aId, b: bId });
-                }
-            }
-            if (!edges.length) return [];
-
-            const halfEdges = [];
-            const outgoing = new Map();
-            const addOutgoing = (nid, heId) => {
-                if (!outgoing.has(nid)) outgoing.set(nid, []);
-                outgoing.get(nid).push(heId);
-            };
-            for (const edge of edges) {
-                const a = nodeCoord.get(edge.a);
-                const b = nodeCoord.get(edge.b);
-                if (!a || !b) continue;
-                const heAB = {
-                    id: halfEdges.length,
-                    edgeId: edge.id,
-                    from: edge.a,
-                    to: edge.b,
-                    angle: Math.atan2(b.y - a.y, b.x - a.x),
-                    twin: -1
-                };
-                halfEdges.push(heAB);
-                const heBA = {
-                    id: halfEdges.length,
-                    edgeId: edge.id,
-                    from: edge.b,
-                    to: edge.a,
-                    angle: Math.atan2(a.y - b.y, a.x - b.x),
-                    twin: heAB.id
-                };
-                halfEdges.push(heBA);
-                heAB.twin = heBA.id;
-                addOutgoing(heAB.from, heAB.id);
-                addOutgoing(heBA.from, heBA.id);
-            }
-            for (const [nid, list] of outgoing.entries()) {
-                list.sort((ha, hb) => halfEdges[ha].angle - halfEdges[hb].angle);
-                outgoing.set(nid, list);
-            }
-
-            const visited = new Set();
-            const loops = [];
-            const minArea = 1e-5;
-            for (const start of halfEdges) {
-                if (visited.has(start.id)) continue;
-                const cycleHes = [];
-                let curr = start;
-                let guard = 0;
-                while (curr && !visited.has(curr.id) && guard++ < halfEdges.length * 4) {
-                    visited.add(curr.id);
-                    cycleHes.push(curr.id);
-                    const outAtTo = outgoing.get(curr.to) || [];
-                    if (!outAtTo.length) break;
-                    const twinIndex = outAtTo.indexOf(curr.twin);
-                    if (twinIndex < 0) break;
-                    const nextIndex = (twinIndex - 1 + outAtTo.length) % outAtTo.length;
-                    const nextId = outAtTo[nextIndex];
-                    curr = halfEdges[nextId];
-                    if (curr.id === start.id) {
-                        cycleHes.push(curr.id);
-                        break;
-                    }
-                }
-                if (!cycleHes.length) continue;
-                if (cycleHes[cycleHes.length - 1] !== start.id) continue;
-                const nodeIds = [];
-                for (let i = 0; i < cycleHes.length - 1; i++) {
-                    nodeIds.push(halfEdges[cycleHes[i]].from);
-                }
-                if (nodeIds.length < 3) continue;
-                const pts = nodeIds.map(nid => nodeCoord.get(nid)).filter(Boolean);
-                if (pts.length < 3) continue;
-                let area2 = 0;
-                for (let i = 0; i < pts.length; i++) {
-                    const p = pts[i];
-                    const q2 = pts[(i + 1) % pts.length];
-                    area2 += p.x * q2.y - q2.x * p.y;
-                }
-                const area = area2 * 0.5;
-                if (area > minArea) {
-                    loops.push(pts.map(p => ({ x: p.x, y: p.y })));
-                }
-            }
-            return loops;
+            return profileOps.findClosedCurveLoops.call(this, feature, entities, pointById);
         },
 
         segmentIntersectionParams(a, b, c, d, eps = 1e-9) {
-            const r = { x: (b.x || 0) - (a.x || 0), y: (b.y || 0) - (a.y || 0) };
-            const s = { x: (d.x || 0) - (c.x || 0), y: (d.y || 0) - (c.y || 0) };
-            const cross = (u, v) => u.x * v.y - u.y * v.x;
-            const qmp = { x: (c.x || 0) - (a.x || 0), y: (c.y || 0) - (a.y || 0) };
-            const denom = cross(r, s);
-            const qmpxr = cross(qmp, r);
-
-            if (Math.abs(denom) < eps) {
-                if (Math.abs(qmpxr) < eps) {
-                    return { collinear: true };
-                }
-                return null;
-            }
-            const t = cross(qmp, s) / denom;
-            const u = cross(qmp, r) / denom;
-            if (t < -eps || t > 1 + eps || u < -eps || u > 1 + eps) {
-                return null;
-            }
-            return { t, u, collinear: false };
+            return profileOps.segmentIntersectionParams.call(this, a, b, c, d, eps);
         },
 
         findClosedLineLoops(feature, entities, pointById) {
-            const lines = entities.filter(e => e?.type === 'line' && e.a && e.b && !e.construction);
-            if (!lines.length) return [];
-            const constraints = Array.isArray(feature?.constraints) ? feature.constraints : [];
-
-            const parent = new Map();
-            const find = id => {
-                if (!parent.has(id)) parent.set(id, id);
-                let p = parent.get(id);
-                while (p !== parent.get(p)) {
-                    p = parent.get(p);
-                }
-                let n = id;
-                while (parent.get(n) !== p) {
-                    const next = parent.get(n);
-                    parent.set(n, p);
-                    n = next;
-                }
-                return p;
-            };
-            const union = (a, b) => {
-                const ra = find(a);
-                const rb = find(b);
-                if (ra !== rb) parent.set(rb, ra);
-            };
-
-            for (const [id] of pointById) {
-                find(id);
-            }
-            for (const c of constraints) {
-                if (c?.type !== 'coincident') continue;
-                const refs = Array.isArray(c.refs) ? c.refs : [];
-                if (refs.length >= 2 && pointById.has(refs[0]) && pointById.has(refs[1])) {
-                    union(refs[0], refs[1]);
-                }
-            }
-
-            const byRep = new Map();
-            for (const [id, p] of pointById) {
-                const rep = find(id);
-                if (!byRep.has(rep)) byRep.set(rep, []);
-                byRep.get(rep).push(p);
-            }
-
-            const nodes = new Map();
-            const repToNode = new Map();
-            let nodeSeq = 0;
-            const q = v => Math.round(v / PROFILE_MERGE_EPS) * PROFILE_MERGE_EPS;
-            for (const [rep, pts] of byRep) {
-                const avg = pts.reduce((a, p) => ({ x: a.x + (p.x || 0), y: a.y + (p.y || 0) }), { x: 0, y: 0 });
-                avg.x /= pts.length;
-                avg.y /= pts.length;
-                const key = `${q(avg.x)},${q(avg.y)}`;
-                let nid = nodes.get(key)?.id;
-                if (!nid) {
-                    nid = `n${++nodeSeq}`;
-                    nodes.set(key, { id: nid, x: avg.x, y: avg.y });
-                }
-                repToNode.set(rep, nid);
-            }
-
-            const nodeCoord = new Map(Array.from(nodes.values()).map(n => [n.id, { x: n.x, y: n.y }]));
-            const edges = [];
-            for (const line of lines) {
-                const ra = find(line.a);
-                const rb = find(line.b);
-                const na = repToNode.get(ra);
-                const nb = repToNode.get(rb);
-                if (!na || !nb || na === nb) continue;
-                const edgeId = edges.length;
-                edges.push({ id: edgeId, a: na, b: nb });
-            }
-            if (!edges.length) return [];
-
-            // Build directed half-edges and face-walk the planar graph.
-            const halfEdges = [];
-            const outgoing = new Map();
-            const addOutgoing = (nid, heId) => {
-                if (!outgoing.has(nid)) outgoing.set(nid, []);
-                outgoing.get(nid).push(heId);
-            };
-            for (const edge of edges) {
-                const a = nodeCoord.get(edge.a);
-                const b = nodeCoord.get(edge.b);
-                if (!a || !b) continue;
-                const heAB = {
-                    id: halfEdges.length,
-                    edgeId: edge.id,
-                    from: edge.a,
-                    to: edge.b,
-                    angle: Math.atan2(b.y - a.y, b.x - a.x),
-                    twin: -1
-                };
-                halfEdges.push(heAB);
-                const heBA = {
-                    id: halfEdges.length,
-                    edgeId: edge.id,
-                    from: edge.b,
-                    to: edge.a,
-                    angle: Math.atan2(a.y - b.y, a.x - b.x),
-                    twin: heAB.id
-                };
-                halfEdges.push(heBA);
-                heAB.twin = heBA.id;
-                addOutgoing(heAB.from, heAB.id);
-                addOutgoing(heBA.from, heBA.id);
-            }
-            for (const [nid, list] of outgoing.entries()) {
-                list.sort((ha, hb) => halfEdges[ha].angle - halfEdges[hb].angle);
-                outgoing.set(nid, list);
-            }
-
-            const visited = new Set();
-            const loops = [];
-            const minArea = 1e-5;
-            for (const start of halfEdges) {
-                if (visited.has(start.id)) continue;
-                const cycleHes = [];
-                let curr = start;
-                let guard = 0;
-                while (curr && !visited.has(curr.id) && guard++ < halfEdges.length * 4) {
-                    visited.add(curr.id);
-                    cycleHes.push(curr.id);
-                    const outAtTo = outgoing.get(curr.to) || [];
-                    if (!outAtTo.length) break;
-                    const twinIndex = outAtTo.indexOf(curr.twin);
-                    if (twinIndex < 0) break;
-                    // predecessor in CCW sorted list keeps interior face on left.
-                    const nextIndex = (twinIndex - 1 + outAtTo.length) % outAtTo.length;
-                    const nextId = outAtTo[nextIndex];
-                    curr = halfEdges[nextId];
-                    if (curr.id === start.id) {
-                        cycleHes.push(curr.id);
-                        break;
-                    }
-                }
-                if (!cycleHes.length) continue;
-                if (cycleHes[cycleHes.length - 1] !== start.id) continue;
-                const nodeIds = [];
-                for (let i = 0; i < cycleHes.length - 1; i++) {
-                    nodeIds.push(halfEdges[cycleHes[i]].from);
-                }
-                if (nodeIds.length < 3) continue;
-                const pts = nodeIds.map(nid => nodeCoord.get(nid)).filter(Boolean);
-                if (pts.length < 3) continue;
-                let area2 = 0;
-                for (let i = 0; i < pts.length; i++) {
-                    const p = pts[i];
-                    const q2 = pts[(i + 1) % pts.length];
-                    area2 += p.x * q2.y - q2.x * p.y;
-                }
-                const area = area2 * 0.5;
-                // Keep only interior faces (CCW), discard outer/inverted traces.
-                if (area > minArea) {
-                    loops.push(pts.map(p => ({ x: p.x, y: p.y })));
-                }
-            }
-            return loops;
+            return profileOps.findClosedLineLoops.call(this, feature, entities, pointById);
         },
 
         applySketchState(rec) {
-            const feature = rec.feature || {};
-            const visible = feature.visible !== false;
-            const hovered = this.hoveredId === feature.id;
-            const editing = this.editingId === feature.id;
-            const selected = this.selectedIds.has(feature.id);
-
-            const showPlane = editing || hovered || selected;
-            const showEntities = visible || hovered || editing || selected;
-
-            rec.plane.setVisible(showPlane);
-            rec.entitiesGroup.visible = showEntities;
-
-            const mode = editing ? 'edit' : (hovered || selected ? 'hover' : 'default');
-            this.applyPlaneStyle(rec.plane, mode);
-            this.applyEntityStyle(rec, mode);
-            this.applyPreviewLine(rec, mode, editing);
-            this.applyPreviewArc(rec, mode, editing);
-            this.applyPreviewRect(rec, mode, editing);
-            this.applyPreviewStart(rec, mode, editing);
-            this.applyPreviewEnd(rec, mode, editing);
-            this.applyLabelState(rec, mode, showPlane);
+            return uiOps.applySketchState.call(this, rec, getApi, SKETCH_COLORS);
         },
 
         applyPlaneStyle(plane, mode) {
-            const style = mode === 'edit'
-                ? SKETCH_COLORS.planeEdit
-                : mode === 'hover'
-                    ? SKETCH_COLORS.planeHover
-                    : SKETCH_COLORS.planeDefault;
-            plane.setColor(style.fill);
-            plane.setOpacity(style.fillOpacity);
-            plane.setOutlineColor(style.outline);
-            plane.setOutlineOpacity(style.outlineOpacity);
+            return uiOps.applyPlaneStyle.call(this, plane, mode, SKETCH_COLORS);
         },
 
         applyEntityStyle(rec, mode) {
-            const baseLineColor = mode === 'edit'
-                ? SKETCH_COLORS.linesEdit
-                : mode === 'hover'
-                    ? SKETCH_COLORS.linesHover
-                    : SKETCH_COLORS.linesGray;
-            const basePointColor = SKETCH_COLORS.pointsGray;
-
-            const hoveredId = rec.interaction?.hoveredId || null;
-            const selectedIds = rec.interaction?.selectedIds || new Set();
-            const constraintHighlight = this.getConstraintHoverHighlight(rec);
-
-            for (const [id, view] of rec.entityViews.entries()) {
-                const selected = mode === 'edit' && selectedIds.has(id);
-                const constrained = mode === 'edit' && constraintHighlight.has(id) && !selected;
-                const hovered = mode === 'edit' && (hoveredId === id || constrained) && !selected;
-
-                if (view.type === 'line' || view.type === 'arc') {
-                    const color = selected
-                        ? SKETCH_COLORS.linesHover
-                        : hovered
-                            ? SKETCH_COLORS.linesHover
-                            : baseLineColor;
-                    view.object.material.color.setHex(color);
-                    continue;
-                }
-                if (view.type === 'arc-center') {
-                    const parts = view.object.userData?._markerParts || {};
-                    const active = mode === 'edit' && (hoveredId === view.entity?.id || selectedIds.has(view.entity?.id));
-                    view.object.visible = true;
-                    if (parts.core?.material?.color) {
-                        parts.core.material.color.setHex(active ? SKETCH_COLORS.pointsHover : basePointColor);
-                    }
-                    if (parts.ringHighlight) {
-                        parts.ringHighlight.visible = !!active;
-                    }
-                    continue;
-                }
-
-                if (view.type === 'point') {
-                    const parts = view.object.userData?._markerParts || {};
-                    const active = selected || hovered;
-                    if (parts.core?.material?.color) {
-                        parts.core.material.color.setHex(active ? SKETCH_COLORS.pointsHover : basePointColor);
-                    }
-                    if (parts.ringHighlight) {
-                        parts.ringHighlight.visible = !!active;
-                        if (parts.ringHighlight.material?.color) {
-                            parts.ringHighlight.material.color.setHex(SKETCH_COLORS.pointsHover);
-                        }
-                    }
-                    if (parts.ringWhite?.material?.color) {
-                        parts.ringWhite.material.color.setHex(active ? 0xffffff : 0xffffff);
-                    }
-                    if (parts.ringBlack?.material?.color) {
-                        parts.ringBlack.material.color.setHex(0x101010);
-                    }
-                }
-            }
+            return uiOps.applyEntityStyle.call(this, rec, mode, SKETCH_COLORS);
         },
 
         getConstraintHoverHighlight(rec) {
-            const out = new Set();
-            const hoveredConstraintId = rec?.interaction?.hoveredConstraintId || null;
-            if (!hoveredConstraintId) {
-                return out;
-            }
-            const constraints = Array.isArray(rec?.feature?.constraints) ? rec.feature.constraints : [];
-            const entities = Array.isArray(rec?.feature?.entities) ? rec.feature.entities : [];
-            const byId = new Map(entities.map(e => [e?.id, e]));
-            const c = constraints.find(cst => cst?.id === hoveredConstraintId);
-            if (!c) return out;
-            const refs = Array.isArray(c.refs) ? c.refs : [];
-            const pointRefs = [];
-            for (const ref of refs) {
-                if (!ref) continue;
-                out.add(ref);
-                const ent = byId.get(ref);
-                if (ent?.type === 'point') {
-                    pointRefs.push(ref);
-                }
-            }
-            // When point constraints are hovered (especially coincident), also
-            // highlight incident curves so users can tell which chain segment is constrained.
-            if (pointRefs.length) {
-                for (const ent of entities) {
-                    if ((ent?.type !== 'line' && ent?.type !== 'arc') || !ent.id) continue;
-                    if (pointRefs.includes(ent.a) || pointRefs.includes(ent.b)) {
-                        out.add(ent.id);
-                    }
-                }
-            }
-            return out;
+            return uiOps.getConstraintHoverHighlight.call(this, rec);
         },
 
         applyPreviewLine(rec, mode, editing) {
-            if (!rec.previewLine) return;
-            const preview = rec.interaction?.previewLine;
-            if (!editing || !preview?.a || !preview?.b) {
-                rec.previewLine.visible = false;
-                return;
-            }
-            const a = new THREE.Vector3(preview.a.x || 0, preview.a.y || 0, 0);
-            const b = new THREE.Vector3(preview.b.x || 0, preview.b.y || 0, 0);
-            rec.previewLine.geometry.dispose();
-            rec.previewLine.geometry = new THREE.BufferGeometry().setFromPoints([a, b]);
-            rec.previewLine.material.color.setHex(mode === 'edit' ? SKETCH_COLORS.linesEdit : SKETCH_COLORS.linesHover);
-            rec.previewLine.visible = true;
+            return uiOps.applyPreviewLine.call(this, rec, mode, editing, SKETCH_COLORS);
         },
 
         applyPreviewStart(rec, mode, editing) {
-            if (!rec.previewStart) return;
-            const start = rec.interaction?.previewStart;
-            if (!editing || !start) {
-                rec.previewStart.visible = false;
-                return;
-            }
-            rec.previewStart.position.set(start.x || 0, start.y || 0, 0);
-            const parts = rec.previewStart.userData?._markerParts || {};
-            if (parts.core?.material?.color) {
-                parts.core.material.color.setHex(SKETCH_COLORS.pointsGray);
-            }
-            if (parts.ringHighlight) {
-                parts.ringHighlight.visible = true;
-                if (parts.ringHighlight.material?.color) {
-                    parts.ringHighlight.material.color.setHex(SKETCH_COLORS.pointsHover);
-                }
-            }
-            rec.previewStart.visible = true;
+            return uiOps.applyPreviewStart.call(this, rec, mode, editing, SKETCH_COLORS);
         },
 
         applyPreviewEnd(rec, mode, editing) {
-            if (!rec.previewEnd) return;
-            const end = rec.interaction?.previewEnd;
-            if (!editing || !end) {
-                rec.previewEnd.visible = false;
-                return;
-            }
-            rec.previewEnd.position.set(end.x || 0, end.y || 0, 0);
-            const parts = rec.previewEnd.userData?._markerParts || {};
-            if (parts.core?.material?.color) {
-                parts.core.material.color.setHex(SKETCH_COLORS.pointsGray);
-            }
-            if (parts.ringHighlight) {
-                parts.ringHighlight.visible = true;
-                if (parts.ringHighlight.material?.color) {
-                    parts.ringHighlight.material.color.setHex(SKETCH_COLORS.pointsHover);
-                }
-            }
-            rec.previewEnd.visible = true;
+            return uiOps.applyPreviewEnd.call(this, rec, mode, editing, SKETCH_COLORS);
         },
 
         applyPreviewArc(rec, mode, editing) {
-            if (!rec.previewArc) return;
-            const preview = rec.interaction?.previewArc;
-            if (!editing || !preview) {
-                rec.previewArc.visible = false;
-                if (rec.previewArcCenter) {
-                    rec.previewArcCenter.visible = false;
-                }
-                return;
-            }
-            if (preview.mode === 'chord' && preview.a && preview.b) {
-                const a = new THREE.Vector3(preview.a.x || 0, preview.a.y || 0, 0);
-                const b = new THREE.Vector3(preview.b.x || 0, preview.b.y || 0, 0);
-                rec.previewArc.geometry.dispose();
-                rec.previewArc.geometry = new THREE.BufferGeometry().setFromPoints([a, b]);
-                rec.previewArc.material.color.setHex(mode === 'edit' ? SKETCH_COLORS.linesEdit : SKETCH_COLORS.linesHover);
-                rec.previewArc.visible = true;
-                if (rec.previewArcCenter) {
-                    rec.previewArcCenter.visible = false;
-                }
-                return;
-            }
-            if ((preview.mode === 'arc' || preview.mode === 'circle') && Number.isFinite(preview.cx) && Number.isFinite(preview.cy)) {
-                const pts = this.getArcRenderPoints(preview, preview.a, preview.b, 48);
-                if (pts.length >= 2) {
-                    rec.previewArc.geometry.dispose();
-                    rec.previewArc.geometry = new THREE.BufferGeometry().setFromPoints(pts.map(p => new THREE.Vector3(p.x, p.y, 0)));
-                    rec.previewArc.material.color.setHex(mode === 'edit' ? SKETCH_COLORS.linesEdit : SKETCH_COLORS.linesHover);
-                    rec.previewArc.visible = true;
-                    if (rec.previewArcCenter) {
-                        rec.previewArcCenter.position.set(preview.cx || 0, preview.cy || 0, 0);
-                        const parts = rec.previewArcCenter.userData?._markerParts || {};
-                        if (parts.ringHighlight) {
-                            parts.ringHighlight.visible = true;
-                        }
-                        rec.previewArcCenter.visible = true;
-                    }
-                    return;
-                }
-            }
-            rec.previewArc.visible = false;
-            if (rec.previewArcCenter) {
-                rec.previewArcCenter.visible = false;
-            }
+            return uiOps.applyPreviewArc.call(this, rec, mode, editing, SKETCH_COLORS);
         },
 
         applyPreviewRect(rec, mode, editing) {
-            if (!rec.previewRect) return;
-            const preview = rec.interaction?.previewRect;
-            const corners = Array.isArray(preview?.corners) ? preview.corners : null;
-            if (!editing || !corners || corners.length !== 4) {
-                rec.previewRect.visible = false;
-                return;
-            }
-            const pts = [
-                new THREE.Vector3(corners[0].x || 0, corners[0].y || 0, 0),
-                new THREE.Vector3(corners[1].x || 0, corners[1].y || 0, 0),
-                new THREE.Vector3(corners[2].x || 0, corners[2].y || 0, 0),
-                new THREE.Vector3(corners[3].x || 0, corners[3].y || 0, 0),
-                new THREE.Vector3(corners[0].x || 0, corners[0].y || 0, 0)
-            ];
-            rec.previewRect.geometry.dispose();
-            rec.previewRect.geometry = new THREE.BufferGeometry().setFromPoints(pts);
-            rec.previewRect.material.color.setHex(mode === 'edit' ? SKETCH_COLORS.linesEdit : SKETCH_COLORS.linesHover);
-            rec.previewRect.visible = true;
+            return uiOps.applyPreviewRect.call(this, rec, mode, editing, SKETCH_COLORS);
         },
 
         applyLabelState(rec, mode, showPlane) {
-            const api = getApi();
-            const overlay = api.overlay;
-            if (!overlay) return;
-
-            if (!showPlane) {
-                this.removeLabel(rec);
-                return;
-            }
-
-            const text = rec.feature?.name || 'Sketch';
-            const color = mode === 'edit'
-                ? SKETCH_COLORS.labelEdit
-                : mode === 'hover'
-                    ? SKETCH_COLORS.labelHover
-                    : SKETCH_COLORS.labelDefault;
-            const pos3d = this.getPlaneLabelPosition(rec.plane);
-            const id = rec.labelId;
-
-            if (overlay.elements.has(id)) {
-                overlay.update(id, { pos3d, text, color });
-            } else {
-                overlay.add(id, 'text', {
-                    pos3d,
-                    text,
-                    color,
-                    fontSize: 13,
-                    anchor: 'start',
-                    className: 'sketch-label'
-                });
-            }
+            return uiOps.applyLabelState.call(this, rec, mode, showPlane, getApi, SKETCH_COLORS);
         },
 
         removeLabel(rec) {
-            const api = getApi();
-            api.overlay?.remove(rec?.labelId);
+            return uiOps.removeLabel.call(this, rec, getApi);
         },
 
         getPlaneLabelPosition(plane) {
-            return plane.getTopLeftCorner();
+            return uiOps.getPlaneLabelPosition.call(this, plane);
         },
 
         setHovered(featureId) {
@@ -1348,456 +589,60 @@ function createSketchRuntimeApi(getApi) {
         },
 
         getLineEndpoints(line, pointById) {
-            const aId = typeof line?.a === 'string' ? line.a : (typeof line?.p1_id === 'string' ? line.p1_id : null);
-            const bId = typeof line?.b === 'string' ? line.b : (typeof line?.p2_id === 'string' ? line.p2_id : null);
-            let a = null;
-            let b = null;
-            if (aId) {
-                a = pointById?.get(aId) || null;
-            } else if (line?.a && typeof line.a === 'object') {
-                a = line.a;
-            }
-            if (bId) {
-                b = pointById?.get(bId) || null;
-            } else if (line?.b && typeof line.b === 'object') {
-                b = line.b;
-            }
-            return [a, b];
+            return arcOps.getLineEndpoints(line, pointById);
         },
 
         getArcEndpoints(arc, pointById) {
-            const aId = typeof arc?.a === 'string' ? arc.a : null;
-            const bId = typeof arc?.b === 'string' ? arc.b : null;
-            const a = aId ? (pointById?.get(aId) || null) : null;
-            const b = bId ? (pointById?.get(bId) || null) : null;
-            return [a, b];
+            return arcOps.getArcEndpoints(arc, pointById);
         },
 
         getArcRenderPoints(arc, a, b, segments = 32) {
-            if (arc?.circle) {
-                const cx = Number(arc?.cx);
-                const cy = Number(arc?.cy);
-                let radius = Number(arc?.radius);
-                if (!Number.isFinite(radius) || radius <= 0) {
-                    if (a) {
-                        radius = Math.hypot((a.x || 0) - cx, (a.y || 0) - cy);
-                    }
-                }
-                if (!Number.isFinite(cx) || !Number.isFinite(cy) || !Number.isFinite(radius) || radius <= 0) {
-                    return [];
-                }
-                const count = Math.max(32, segments * 2);
-                let start = 0;
-                if (a) {
-                    start = Math.atan2((a.y || 0) - cy, (a.x || 0) - cx);
-                }
-                const pts = [];
-                for (let i = 0; i <= count; i++) {
-                    const t = i / count;
-                    const ang = start + t * Math.PI * 2;
-                    pts.push({
-                        x: cx + Math.cos(ang) * radius,
-                        y: cy + Math.sin(ang) * radius
-                    });
-                }
-                return pts;
-            }
-            let cx = Number(arc?.cx);
-            let cy = Number(arc?.cy);
-            let radius = Number(arc?.radius);
-            let startAngle = Number(arc?.startAngle);
-            let endAngle = Number(arc?.endAngle);
-            let ccw = arc?.ccw !== false;
-            if (Number.isFinite(arc?.mx) && Number.isFinite(arc?.my) && a && b) {
-                const geom = this.computeArcFromThreePoints(
-                    { x: a.x || 0, y: a.y || 0 },
-                    { x: b.x || 0, y: b.y || 0 },
-                    { x: arc.mx, y: arc.my }
-                );
-                if (geom) {
-                    cx = geom.cx;
-                    cy = geom.cy;
-                    radius = geom.radius;
-                    startAngle = geom.startAngle;
-                    endAngle = geom.endAngle;
-                    ccw = geom.ccw;
-                }
-            }
-            if (!Number.isFinite(cx) || !Number.isFinite(cy) || !Number.isFinite(startAngle) || !Number.isFinite(endAngle)) {
-                return [];
-            }
-            if (!Number.isFinite(radius) || radius <= 0) {
-                if (a) {
-                    radius = Math.hypot((a.x || 0) - cx, (a.y || 0) - cy);
-                }
-            }
-            if (!Number.isFinite(radius) || radius <= 0) {
-                return [];
-            }
-            const tau = Math.PI * 2;
-            let sweep;
-            if (ccw) {
-                sweep = (endAngle - startAngle) % tau;
-                if (sweep < 0) sweep += tau;
-            } else {
-                sweep = (startAngle - endAngle) % tau;
-                if (sweep < 0) sweep += tau;
-                sweep = -sweep;
-            }
-            const count = Math.max(8, segments);
-            const pts = [];
-            for (let i = 0; i <= count; i++) {
-                const t = i / count;
-                const ang = startAngle + sweep * t;
-                pts.push({
-                    x: cx + Math.cos(ang) * radius,
-                    y: cy + Math.sin(ang) * radius
-                });
-            }
-            if (a) pts[0] = { x: a.x || 0, y: a.y || 0 };
-            if (b) pts[pts.length - 1] = { x: b.x || 0, y: b.y || 0 };
-            return pts;
+            return arcOps.getArcRenderPoints(arc, a, b, segments);
         },
 
         getArcCenterLocal(arc, a, b) {
-            if (arc?.circle) {
-                const cx = Number(arc?.cx);
-                const cy = Number(arc?.cy);
-                if (Number.isFinite(cx) && Number.isFinite(cy)) {
-                    return { x: cx, y: cy };
-                }
-            }
-            if (Number.isFinite(arc?.mx) && Number.isFinite(arc?.my) && a && b) {
-                const geom = this.computeArcFromThreePoints(
-                    { x: a.x || 0, y: a.y || 0 },
-                    { x: b.x || 0, y: b.y || 0 },
-                    { x: arc.mx, y: arc.my }
-                );
-                if (geom) {
-                    return { x: geom.cx, y: geom.cy };
-                }
-            }
-            const cx = Number(arc?.cx);
-            const cy = Number(arc?.cy);
-            if (Number.isFinite(cx) && Number.isFinite(cy)) {
-                return { x: cx, y: cy };
-            }
-            return null;
+            return arcOps.getArcCenterLocal(arc, a, b);
         },
 
         computeArcFromThreePoints(start, end, onArc) {
-            const x1 = start.x || 0;
-            const y1 = start.y || 0;
-            const x2 = end.x || 0;
-            const y2 = end.y || 0;
-            const x3 = onArc.x || 0;
-            const y3 = onArc.y || 0;
-            const d = 2 * (x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2));
-            if (Math.abs(d) < 1e-8) {
-                return null;
-            }
-            const x1sq = x1 * x1 + y1 * y1;
-            const x2sq = x2 * x2 + y2 * y2;
-            const x3sq = x3 * x3 + y3 * y3;
-            const cx = (x1sq * (y2 - y3) + x2sq * (y3 - y1) + x3sq * (y1 - y2)) / d;
-            const cy = (x1sq * (x3 - x2) + x2sq * (x1 - x3) + x3sq * (x2 - x1)) / d;
-            const radius = Math.hypot(x1 - cx, y1 - cy);
-            if (!Number.isFinite(radius) || radius < 1e-6) {
-                return null;
-            }
-            const startAngle = Math.atan2(y1 - cy, x1 - cx);
-            const endAngle = Math.atan2(y2 - cy, x2 - cx);
-            const midAngle = Math.atan2(y3 - cy, x3 - cx);
-            const normalize = a => {
-                let out = a % (Math.PI * 2);
-                if (out < 0) out += Math.PI * 2;
-                return out;
-            };
-            const sa = normalize(startAngle);
-            const ea = normalize(endAngle);
-            const ma = normalize(midAngle);
-            const ccwSpan = (ea - sa + Math.PI * 2) % (Math.PI * 2);
-            const ccwMid = (ma - sa + Math.PI * 2) % (Math.PI * 2);
-            const ccw = ccwMid <= ccwSpan;
-            return { cx, cy, radius, startAngle, endAngle, ccw };
+            return arcOps.computeArcFromThreePoints(start, end, onArc);
         },
 
         updatePointScreenScales() {
-            const { camera, renderer } = space.internals();
-            if (!camera || !renderer) return;
-            const viewHeightPx = renderer.domElement?.clientHeight || renderer.domElement?.height;
-            if (!viewHeightPx) return;
-            const tmp = this._tmpPointWorld || new THREE.Vector3();
-
-            for (const rec of this.sketches.values()) {
-                for (const view of rec.entityViews.values()) {
-                    if ((view.type !== 'point' && view.type !== 'arc-center') || !view.object) continue;
-                    view.object.getWorldPosition(tmp);
-                    let worldPerPixel;
-                    if (camera.isPerspectiveCamera) {
-                        const distance = camera.position.distanceTo(tmp);
-                        const fovRad = camera.fov * Math.PI / 180;
-                        worldPerPixel = (2 * Math.tan(fovRad / 2) * distance) / viewHeightPx;
-                    } else if (camera.isOrthographicCamera) {
-                        worldPerPixel = ((camera.top - camera.bottom) / camera.zoom) / viewHeightPx;
-                    } else {
-                        continue;
-                    }
-                    const desiredWorldRadius = SKETCH_POINT_SCREEN_RADIUS_PX * worldPerPixel;
-                    const scale = Math.max(0.0001, desiredWorldRadius / SKETCH_POINT_BASE_RADIUS);
-                    view.object.scale.setScalar(scale);
-                }
-                if (rec.previewStart) {
-                    rec.previewStart.getWorldPosition(tmp);
-                    let worldPerPixel;
-                    if (camera.isPerspectiveCamera) {
-                        const distance = camera.position.distanceTo(tmp);
-                        const fovRad = camera.fov * Math.PI / 180;
-                        worldPerPixel = (2 * Math.tan(fovRad / 2) * distance) / viewHeightPx;
-                    } else if (camera.isOrthographicCamera) {
-                        worldPerPixel = ((camera.top - camera.bottom) / camera.zoom) / viewHeightPx;
-                    } else {
-                        continue;
-                    }
-                    const desiredWorldRadius = SKETCH_POINT_SCREEN_RADIUS_PX * worldPerPixel;
-                    const scale = Math.max(0.0001, desiredWorldRadius / SKETCH_POINT_BASE_RADIUS);
-                    rec.previewStart.scale.setScalar(scale);
-                }
-                if (rec.previewEnd) {
-                    rec.previewEnd.getWorldPosition(tmp);
-                    let worldPerPixel;
-                    if (camera.isPerspectiveCamera) {
-                        const distance = camera.position.distanceTo(tmp);
-                        const fovRad = camera.fov * Math.PI / 180;
-                        worldPerPixel = (2 * Math.tan(fovRad / 2) * distance) / viewHeightPx;
-                    } else if (camera.isOrthographicCamera) {
-                        worldPerPixel = ((camera.top - camera.bottom) / camera.zoom) / viewHeightPx;
-                    } else {
-                        continue;
-                    }
-                    const desiredWorldRadius = SKETCH_POINT_SCREEN_RADIUS_PX * worldPerPixel;
-                    const scale = Math.max(0.0001, desiredWorldRadius / SKETCH_POINT_BASE_RADIUS);
-                    rec.previewEnd.scale.setScalar(scale);
-                }
-                if (rec.previewArcCenter) {
-                    rec.previewArcCenter.getWorldPosition(tmp);
-                    let worldPerPixel;
-                    if (camera.isPerspectiveCamera) {
-                        const distance = camera.position.distanceTo(tmp);
-                        const fovRad = camera.fov * Math.PI / 180;
-                        worldPerPixel = (2 * Math.tan(fovRad / 2) * distance) / viewHeightPx;
-                    } else if (camera.isOrthographicCamera) {
-                        worldPerPixel = ((camera.top - camera.bottom) / camera.zoom) / viewHeightPx;
-                    } else {
-                        continue;
-                    }
-                    const desiredWorldRadius = SKETCH_POINT_SCREEN_RADIUS_PX * worldPerPixel;
-                    const scale = Math.max(0.0001, desiredWorldRadius / SKETCH_POINT_BASE_RADIUS);
-                    rec.previewArcCenter.scale.setScalar(scale);
-                }
-            }
+            return uiOps.updatePointScreenScales.call(this, {
+                pointScreenRadiusPx: SKETCH_POINT_SCREEN_RADIUS_PX,
+                pointBaseRadius: SKETCH_POINT_BASE_RADIUS
+            });
         },
 
         getConstraintAnchorLocal(feature, constraint) {
-            const entities = Array.isArray(feature?.entities) ? feature.entities : [];
-            const byId = new Map(entities.map(e => [e?.id, e]));
-            const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
-            const lineTypes = new Set(['horizontal', 'vertical', 'horizontal_points', 'vertical_points', 'tangent', 'equal', 'collinear']);
-
-            if (lineTypes.has(constraint?.type)) {
-                const line = refs.map(id => byId.get(id)).find(e => e?.type === 'line');
-                if (line) {
-                    const [a, b] = this.getLineEndpoints(line, byId);
-                    if (a && b) {
-                        return { x: ((a.x || 0) + (b.x || 0)) * 0.5, y: ((a.y || 0) + (b.y || 0)) * 0.5 };
-                    }
-                }
-                if (constraint?.type === 'tangent') {
-                    const arcRefs = refs.map(id => byId.get(id)).filter(e => e?.type === 'arc');
-                    if (arcRefs.length >= 2) {
-                        const a1 = arcRefs[0];
-                        const a2 = arcRefs[1];
-                        const [p1a, p1b] = this.getArcEndpoints(a1, byId);
-                        const [p2a, p2b] = this.getArcEndpoints(a2, byId);
-                        const c1 = this.getArcCenterLocal(a1, p1a, p1b);
-                        const c2 = this.getArcCenterLocal(a2, p2a, p2b);
-                        if (c1 && c2) {
-                            return { x: (c1.x + c2.x) * 0.5, y: (c1.y + c2.y) * 0.5 };
-                        }
-                    }
-                }
-            }
-
-            const points = refs.map(id => byId.get(id)).filter(e => e?.type === 'point');
-            if (constraint?.type === 'midpoint' && points.length >= 3) {
-                const a = points[1];
-                const b = points[2];
-                return { x: ((a.x || 0) + (b.x || 0)) * 0.5, y: ((a.y || 0) + (b.y || 0)) * 0.5 };
-            }
-            if (points.length >= 2) {
-                return {
-                    x: ((points[0].x || 0) + (points[1].x || 0)) * 0.5,
-                    y: ((points[0].y || 0) + (points[1].y || 0)) * 0.5
-                };
-            }
-            if (points.length === 1) {
-                return { x: points[0].x || 0, y: points[0].y || 0 };
-            }
-            return null;
+            return uiOps.getConstraintAnchorLocal.call(this, feature, constraint);
         },
 
         projectConstraintAnchor(rec, local) {
-            if (!rec?.entitiesGroup || !local) {
-                return null;
-            }
-            const world = new THREE.Vector3(local.x || 0, local.y || 0, 0);
-            rec.entitiesGroup.localToWorld(world);
-            const proj = getApi().overlay.project3Dto2D(world);
-            if (!proj?.visible) {
-                return null;
-            }
-            return { x: proj.x, y: proj.y };
+            return uiOps.projectConstraintAnchor.call(this, rec, local, getApi);
         },
 
         tagPointMarker(marker, id) {
-            if (!marker) return;
-            marker.traverse(obj => {
-                obj.userData = obj.userData || {};
-                obj.userData.sketchEntityId = id;
-                obj.userData.sketchEntityType = 'point';
-            });
+            return uiOps.tagPointMarker(marker, id);
         },
 
         applyConstraintOffset(constraint, screenPos, slotIndex = 0, slotCount = 1) {
-            const base = constraint?.ui?.offset_px || { x: 0, y: -18 };
-            const rowWidth = slotCount * CONSTRAINT_GLYPH_SIZE_PX + Math.max(0, slotCount - 1) * CONSTRAINT_GLYPH_GAP_PX;
-            const slotX = -rowWidth / 2 + (slotIndex + 0.5) * CONSTRAINT_GLYPH_SIZE_PX + slotIndex * CONSTRAINT_GLYPH_GAP_PX;
-            return {
-                x: screenPos.x + (base.x || 0) + slotX,
-                y: screenPos.y + (base.y || 0)
-            };
+            return uiOps.applyConstraintOffset(constraint, screenPos, slotIndex, slotCount, {
+                glyphSizePx: CONSTRAINT_GLYPH_SIZE_PX,
+                glyphGapPx: CONSTRAINT_GLYPH_GAP_PX
+            });
         },
 
         updateConstraintGlyphs() {
-            const layer = this.ensureConstraintGlyphLayer();
-            if (!layer) return;
-            layer.innerHTML = '';
-
-            const rec = this.getEditingRecord();
-            if (!rec?.feature) {
-                return;
-            }
-
-            const constraints = Array.isArray(rec.feature.constraints) ? rec.feature.constraints : [];
-            if (!constraints.length) {
-                return;
-            }
-
-            const selectedEntityIds = rec.interaction?.selectedIds || new Set();
-            const hoveredEntityId = rec.interaction?.hoveredId || null;
-            const selectedConstraintIds = rec.interaction?.selectedConstraintIds || new Set();
-            const hoveredConstraintId = rec.interaction?.hoveredConstraintId || null;
-            const draggingConstraintId = this._glyphDrag?.constraintId || null;
-
-            const visible = [];
-            for (const constraint of constraints) {
-                const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
-                const byEntity = refs.some(ref => selectedEntityIds.has(ref));
-                const byHover = !!hoveredEntityId && refs.includes(hoveredEntityId);
-                const byDrag = draggingConstraintId === constraint?.id;
-                if (byEntity || byHover || byDrag) {
-                    visible.push(constraint);
-                }
-            }
-            // If the currently hovered constraint is no longer visible as a glyph,
-            // clear hover state so constrained-entity highlight does not stick.
-            if (hoveredConstraintId && !visible.some(c => c?.id === hoveredConstraintId)) {
-                const api = getApi();
-                api.interact?.setHoveredSketchConstraint?.(null);
-            }
-            if (!visible.length) {
-                return;
-            }
-
-            const clusters = new Map();
-            for (const constraint of visible) {
-                const local = this.getConstraintAnchorLocal(rec.feature, constraint);
-                const screen = this.projectConstraintAnchor(rec, local);
-                if (!screen) continue;
-                const key = `${Math.round(screen.x / 10)}:${Math.round(screen.y / 10)}`;
-                if (!clusters.has(key)) {
-                    clusters.set(key, { screen, items: [] });
-                }
-                clusters.get(key).items.push(constraint);
-            }
-
-            for (const { screen, items } of clusters.values()) {
-                for (let i = 0; i < items.length; i++) {
-                    const c = items[i];
-                    const pos = this.applyConstraintOffset(c, screen, i, items.length);
-                    const glyph = document.createElement('button');
-                    glyph.className = 'sketch-constraint-glyph';
-                    glyph.textContent = this.constraintGlyphLabel(c.type);
-                    glyph.style.left = `${Math.round(pos.x)}px`;
-                    glyph.style.top = `${Math.round(pos.y)}px`;
-                    if (selectedConstraintIds.has(c.id)) {
-                        glyph.classList.add('selected');
-                    } else if (hoveredConstraintId === c.id) {
-                        glyph.classList.add('hover');
-                    }
-                    glyph.title = c.type || 'constraint';
-                    glyph.onmouseenter = () => {
-                        const api = getApi();
-                        api.interact?.setHoveredSketchConstraint?.(c.id);
-                    };
-                    glyph.onmouseleave = () => {
-                        const api = getApi();
-                        api.interact?.setHoveredSketchConstraint?.(null);
-                    };
-                    glyph.onmousedown = event => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        const api = getApi();
-                        api.interact?.selectSketchConstraint?.(c.id, event);
-                        this._glyphDrag = {
-                            featureId: rec.feature.id,
-                            constraintId: c.id,
-                            startX: event.clientX,
-                            startY: event.clientY,
-                            base: c?.ui?.offset_px ? { x: c.ui.offset_px.x || 0, y: c.ui.offset_px.y || 0 } : { x: 0, y: -18 },
-                            moved: false
-                        };
-                    };
-                    layer.appendChild(glyph);
-                }
-            }
+            return uiOps.updateConstraintGlyphs.call(this, getApi, {
+                glyphSizePx: CONSTRAINT_GLYPH_SIZE_PX,
+                glyphGapPx: CONSTRAINT_GLYPH_GAP_PX
+            });
         },
 
         updateConstraintDrag(event, done = false) {
-            if (!this._glyphDrag) return;
-            const drag = this._glyphDrag;
-            const dx = (event?.clientX || 0) - drag.startX;
-            const dy = (event?.clientY || 0) - drag.startY;
-            const moved = Math.hypot(dx, dy) > 0.5;
-            drag.moved = drag.moved || moved;
-            const next = { x: drag.base.x + dx, y: drag.base.y + dy };
-            const api = getApi();
-            api.features.mutateTransient(drag.featureId, sketch => {
-                sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
-                const c = sketch.constraints.find(cst => cst?.id === drag.constraintId);
-                if (!c) return;
-                c.ui = c.ui || {};
-                c.ui.offset_px = next;
-            });
-            if (done) {
-                if (drag.moved) {
-                    api.features.commit(drag.featureId, {
-                        opType: 'feature.update',
-                        payload: { field: 'constraints.ui.move', id: drag.constraintId }
-                    });
-                }
-                this._glyphDrag = null;
-            }
+            return uiOps.updateConstraintDrag.call(this, event, done, getApi);
         },
 
         refreshStates() {
