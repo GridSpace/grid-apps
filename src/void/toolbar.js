@@ -69,7 +69,18 @@ const toolbar = {
 
         // Sketch tools
         this.sketchBtn = this.addButton(container, 'Sketch', () => {
+            const faceKeys = api.solids?.getSelectedFaceKeys?.() || [];
+            const planeIds = Array.from(api.interact?.selectedPlanes || []).map(p => p?.id || p?.name || 'plane');
             const target = api.interact.resolveSketchTargetFromSelection();
+            console.log('void.sketch.target.resolve', {
+                selectedFaceKeys: faceKeys,
+                selectedPlaneIds: planeIds,
+                resolved: target ? {
+                    kind: target.kind,
+                    id: target.id,
+                    source: target.source
+                } : null
+            });
             if (!target) {
                 return;
             }

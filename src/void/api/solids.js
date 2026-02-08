@@ -476,9 +476,11 @@ function createSolidsApi(getApi) {
             if (!face) return null;
             const { meta, view, solidId, faceId } = face;
             if (!meta.planar) return null;
-            const center = meta.center.clone().applyMatrix4(view.mesh.matrixWorld);
-            const normal = meta.normal.clone().transformDirection(view.mesh.matrixWorld).normalize();
-            const xAxis = meta.xAxis.clone().transformDirection(view.mesh.matrixWorld).normalize();
+            // Face regions are built in document-space coordinates; keep them in that
+            // space for sketch planes (do not apply WORLD scene rotation).
+            const center = meta.center.clone();
+            const normal = meta.normal.clone().normalize();
+            const xAxis = meta.xAxis.clone().normalize();
             return {
                 kind: 'face',
                 id: `${solidId}:f${faceId}`,
