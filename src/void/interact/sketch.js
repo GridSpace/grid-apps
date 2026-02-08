@@ -1135,7 +1135,8 @@ function handleSketchDrag(delta, offset, isDone) {
                 useFallback: true,
                 iterations: 64,
                 draggedPointIds: Array.from(movedPointIds || []),
-                draggedArcIds: Array.from(draggedArcIds || [])
+                draggedArcIds: Array.from(draggedArcIds || []),
+                tangentAggressive: true
             });
             api.features.commit(feature.id, {
                 opType: 'feature.update',
@@ -1290,13 +1291,25 @@ function handleSketchDrag(delta, offset, isDone) {
     if (activeCircleDrag && !this.sketchDrag.centerDrag) {
         // Keep circle-attached points stable during live radius drags; do one full solve on mouse-up.
         this.projectPointOnArcConstraintsForArcs(feature, this.sketchDrag.circleCurveDragIds);
+        if (this.draggedArcsHaveTangent(feature, this.sketchDrag.draggedArcIds)) {
+            this.applyDragLockedArcCenters(feature, this.sketchDrag.centerLocks);
+            enforceSketchConstraintsInPlace(feature, {
+                useFallback: true,
+                iterations: 24,
+                draggedPointIds: Array.from(this.sketchDrag.movedPointIds || []),
+                draggedArcIds: Array.from(this.sketchDrag.draggedArcIds || []),
+                tangentAggressive: false
+            });
+            this.applyDragLockedArcCenters(feature, this.sketchDrag.centerLocks);
+        }
     } else {
         this.applyDragLockedArcCenters(feature, this.sketchDrag.centerLocks);
         enforceSketchConstraintsInPlace(feature, {
             useFallback: true,
             iterations: 48,
             draggedPointIds: Array.from(this.sketchDrag.movedPointIds || []),
-            draggedArcIds: Array.from(this.sketchDrag.draggedArcIds || [])
+            draggedArcIds: Array.from(this.sketchDrag.draggedArcIds || []),
+            tangentAggressive: false
         });
         this.applyDragLockedArcCenters(feature, this.sketchDrag.centerLocks);
     }
@@ -1351,6 +1364,21 @@ function applyDragLockedArcCenters(feature, centerLocks) {
         arc.cx = lock.cx;
         arc.cy = lock.cy;
     }
+}
+
+function draggedArcsHaveTangent(feature, draggedArcIds) {
+    if (!(draggedArcIds instanceof Set) || !draggedArcIds.size) {
+        return false;
+    }
+    const constraints = Array.isArray(feature?.constraints) ? feature.constraints : [];
+    for (const c of constraints) {
+        if (c?.type !== 'tangent') continue;
+        const refs = Array.isArray(c.refs) ? c.refs : [];
+        if (refs.some(id => draggedArcIds.has(id))) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function isPointOnSelectedSketchLine(feature, pointId) {
@@ -2928,6 +2956,7 @@ export {
     projectPointOnArcConstraintsForArcs,
     collectDragLockedArcCenters,
     applyDragLockedArcCenters,
+    draggedArcsHaveTangent,
     rebaseSketchDragState,
     getArcCenterLocalFromEntity,
     sampleArcPolyline,

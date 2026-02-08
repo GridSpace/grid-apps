@@ -302,6 +302,7 @@ function enforceWithFallback(sketch, opts = {}) {
     const fixed = captureFixedAnchors(constraints, points);
     const dragged = new Set(Array.isArray(opts?.draggedPointIds) ? opts.draggedPointIds : []);
     const draggedArcs = new Set(Array.isArray(opts?.draggedArcIds) ? opts.draggedArcIds : []);
+    const tangentAggressive = !!opts?.tangentAggressive;
     const iterations = Math.max(1, Math.min(64, opts.iterations || 12));
     let changed = false;
 
@@ -344,7 +345,7 @@ function enforceWithFallback(sketch, opts = {}) {
                     iterChanged = applyCollinear(c, points, lines, fixed) || iterChanged;
                     break;
                 case 'tangent':
-                    iterChanged = applyTangent(c, points, lines, arcs, fixed, dragged, draggedArcs) || iterChanged;
+                    iterChanged = applyTangent(c, points, lines, arcs, fixed, dragged, draggedArcs, tangentAggressive) || iterChanged;
                     break;
                 case 'arc_center_coincident':
                     iterChanged = applyArcCenterCoincident(c, points, lines, arcs, fixed) || iterChanged;
@@ -903,7 +904,7 @@ function applyArcCenterCoincidentConstraints(constraints, points, lines, arcs, f
     return changed;
 }
 
-function applyTangent(constraint, points, lines, arcs, fixed, dragged = new Set(), draggedArcs = new Set()) {
+function applyTangent(constraint, points, lines, arcs, fixed, dragged = new Set(), draggedArcs = new Set(), tangentAggressive = false) {
     const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
     if (refs.length < 2) return false;
     const line = lines.get(lines.has(refs[0]) ? refs[0] : (lines.has(refs[1]) ? refs[1] : null));
@@ -913,7 +914,7 @@ function applyTangent(constraint, points, lines, arcs, fixed, dragged = new Set(
         const a1 = arcs.get(refs[0]);
         const a2 = arcs.get(refs[1]);
         if (!a1 || !a2) return false;
-        return applyArcArcTangent(a1, a2, points, fixed, dragged, draggedArcs);
+        return applyArcArcTangent(a1, a2, points, fixed, dragged, draggedArcs, tangentAggressive);
     }
     if (!line || !arc) return false;
     const [a, b] = getLineEndpoints(line, points);
@@ -960,7 +961,7 @@ function applyTangent(constraint, points, lines, arcs, fixed, dragged = new Set(
     return setPoint(b, x2 + corr * nx, y2 + corr * ny);
 }
 
-function applyArcArcTangent(arc1, arc2, points, fixed, dragged = new Set(), draggedArcs = new Set()) {
+function applyArcArcTangent(arc1, arc2, points, fixed, dragged = new Set(), draggedArcs = new Set(), tangentAggressive = false) {
     const c1 = getArcCircleData(arc1, points);
     const c2 = getArcCircleData(arc2, points);
     if (!c1 || !c2) return false;
@@ -982,10 +983,10 @@ function applyArcArcTangent(arc1, arc2, points, fixed, dragged = new Set(), drag
     const err = dist - target;
     if (Math.abs(err) < 1e-5) return false;
 
-    // Arc-arc tangency should be exact and stable; partial correction leaves
-    // visible small gaps at mouse-up.
-    const relax = 1.0;
-    const maxStep = Math.max(1.0, Math.max(c1.radius, c2.radius) * 4);
+    const relax = tangentAggressive ? 1.0 : 0.32;
+    const maxStep = tangentAggressive
+        ? Math.max(1.0, Math.max(c1.radius, c2.radius) * 4)
+        : Math.max(0.2, Math.max(c1.radius, c2.radius) * 0.25);
     const corr = Math.max(-maxStep, Math.min(maxStep, err * relax));
 
     const a2id = getLineEndpointId(arc2, 'a');
