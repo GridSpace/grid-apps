@@ -79,6 +79,9 @@ function getSketchIdsForSolid(solid) {
         if (value) ids.add(value);
     };
     add(solid?.source?.profile?.sketchId);
+    for (const sid of solid?.source?.sketch_ids || []) {
+        add(sid);
+    }
     add(solid?.provenance?.source?.profile?.sketchId);
     for (const face of solid?.provenance?.faces || []) {
         add(face?.source?.sketchId);
@@ -174,6 +177,12 @@ function onFeatureEdit(feature) {
         api.sketchRuntime?.setEditing(feature.id);
         api.interact?.clearSketchSelection?.();
         api.interact?.setSketchTool?.('select');
+    } else if (feature?.type === 'boolean') {
+        const solids = Array.isArray(feature?.input?.solids) ? feature.input.solids.filter(Boolean) : [];
+        this.selectedSolidIds = new Set(solids);
+        api.solids?.setSelected?.(solids);
+        api.sketchRuntime?.setEditing(null);
+        api.interact?.clearSketchSelection?.();
     } else {
         api.sketchRuntime?.setEditing(null);
         api.interact?.clearSketchSelection?.();
@@ -380,6 +389,7 @@ function renderFeaturesSection() {
             const label = feature?.name || feature?.type || 'Feature';
             const isSketch = feature?.type === 'sketch';
             const isExtrude = feature?.type === 'extrude';
+            const isBoolean = feature?.type === 'boolean';
             const visible = feature?.visible !== false;
             const suppressed = feature?.suppressed === true;
             const beyondTimeline = !api.features.isIndexBuilt(index);
@@ -429,11 +439,11 @@ function renderFeaturesSection() {
                 onEdit: f => this.onFeatureEdit(f),
                 onHoverEnter: f => {
                     if (isSketch) api.sketchRuntime?.setHovered(f.id);
-                    if (isExtrude) api.solids?.setHovered?.(getSolidIdsForFeature(f?.id));
+                    if (isExtrude || isBoolean) api.solids?.setHovered?.(getSolidIdsForFeature(f?.id));
                 },
                 onHoverLeave: () => {
                     if (isSketch) api.sketchRuntime?.setHovered(null);
-                    if (isExtrude) api.solids?.setHovered?.([]);
+                    if (isExtrude || isBoolean) api.solids?.setHovered?.([]);
                 }
             }));
         }
@@ -487,6 +497,7 @@ function renderFeaturesSection() {
             const label = feature?.name || feature?.type || 'Feature';
             const isSketch = feature?.type === 'sketch';
             const isExtrude = feature?.type === 'extrude';
+            const isBoolean = feature?.type === 'boolean';
             const visible = feature?.visible !== false;
                 const suppressed = feature?.suppressed === true;
                 const beyondTimeline = !api.features.isIndexBuilt(index);
@@ -536,11 +547,11 @@ function renderFeaturesSection() {
                 onEdit: f => this.onFeatureEdit(f),
                 onHoverEnter: f => {
                     if (isSketch) api.sketchRuntime?.setHovered(f.id);
-                    if (isExtrude) api.solids?.setHovered?.(getSolidIdsForFeature(f?.id));
+                    if (isExtrude || isBoolean) api.solids?.setHovered?.(getSolidIdsForFeature(f?.id));
                 },
                 onHoverLeave: () => {
                     if (isSketch) api.sketchRuntime?.setHovered(null);
-                    if (isExtrude) api.solids?.setHovered?.([]);
+                    if (isExtrude || isBoolean) api.solids?.setHovered?.([]);
                 }
             }));
         }
@@ -608,11 +619,13 @@ function renderSolidsSection() {
                 this.render();
                 window.dispatchEvent(new CustomEvent('void-state-change'));
             },
-            onSelect: item => {
+            onSelect: (item, event) => {
                 const id = item?.id || null;
                 if (!id) return;
                 if (!this.selectedSolidIds) this.selectedSolidIds = new Set();
-                const multi = false;
+                const currentFeature = properties.currentFeatureId ? api.features.findById(properties.currentFeatureId) : null;
+                const editingBoolean = currentFeature?.type === 'boolean' && currentFeature?.id === properties.currentFeatureId;
+                const multi = editingBoolean || !!(event?.ctrlKey || event?.metaKey);
                 if (!multi) {
                     if (this.selectedSolidIds.size === 1 && this.selectedSolidIds.has(id)) {
                         this.selectedSolidIds.clear();
@@ -620,9 +633,25 @@ function renderSolidsSection() {
                         this.selectedSolidIds.clear();
                         this.selectedSolidIds.add(id);
                     }
+                } else if (this.selectedSolidIds.has(id)) {
+                    this.selectedSolidIds.delete(id);
+                } else {
+                    this.selectedSolidIds.add(id);
                 }
-                this.selectedFeatureIds?.clear?.();
-                this.selectedFeatureId = null;
+                if (!editingBoolean) {
+                    this.selectedFeatureIds?.clear?.();
+                    this.selectedFeatureId = null;
+                } else {
+                    const next = Array.from(this.selectedSolidIds);
+                    api.features.update(currentFeature.id, feature => {
+                        feature.input = feature.input || {};
+                        feature.input.solids = next;
+                    }, {
+                        opType: 'feature.update',
+                        payload: { field: 'solids', value: next }
+                    });
+                    properties.onChanged?.();
+                }
                 api.solids?.setSelected?.(Array.from(this.selectedSolidIds));
                 this.render();
                 window.dispatchEvent(new CustomEvent('void-state-change'));

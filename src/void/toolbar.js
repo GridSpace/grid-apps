@@ -11,6 +11,7 @@ const toolbar = {
     cameraToggleBtn: null,
     sketchBtn: null,
     extrudeBtn: null,
+    booleanBtn: null,
     sketchToolButtons: null,
     sketchToolMenuItems: null,
     sketchConstraintButtons: null,
@@ -156,6 +157,9 @@ const toolbar = {
         this.extrudeBtn = this.addButton(container, 'Extrude', () => {
             this.onExtrudeButton();
         }, { id: 'btn-extrude', disabled: true });
+        this.booleanBtn = this.addButton(container, 'Boolean', () => {
+            this.onBooleanButton();
+        }, { id: 'btn-boolean', disabled: true });
 
         container.appendChild(this.separator());
 
@@ -232,6 +236,7 @@ const toolbar = {
         const editing = !!api.sketchRuntime?.editingId;
         const canCreate = !editing && !!api.interact.resolveSketchTargetFromSelection();
         const canExtrude = !editing && (this.getSelectedExtrudeTargets().length > 0 || !!this.getSelectedSolidSourceExtrudeFeature());
+        const canBoolean = !editing && (this.getSelectedBooleanTargets().length >= 2 || !!this.getSelectedSolidSourceBooleanFeature());
 
         if (this.sketchBtn) {
             this.sketchBtn.disabled = !canCreate;
@@ -239,6 +244,9 @@ const toolbar = {
         }
         if (this.extrudeBtn) {
             this.extrudeBtn.disabled = !canExtrude;
+        }
+        if (this.booleanBtn) {
+            this.booleanBtn.disabled = !canBoolean;
         }
 
         const rawTool = api.interact.getSketchTool ? api.interact.getSketchTool() : 'select';
@@ -333,6 +341,61 @@ const toolbar = {
         return feature;
     },
 
+    getSelectedBooleanTargets() {
+        const solidIds = Array.from(tree.selectedSolidIds || []);
+        const solids = api.solids?.list?.() || [];
+        return solidIds.filter(id => solids.some(solid => solid?.id === id));
+    },
+
+    createBooleanFeatureFromSelection() {
+        const targets = this.getSelectedBooleanTargets();
+        if (targets.length < 2) return null;
+        const doc = api.document.current;
+        if (!doc) return null;
+        const booleanCount = (doc.features || []).filter(f => f?.type === 'boolean').length;
+        const id = (typeof crypto !== 'undefined' && crypto.randomUUID)
+            ? crypto.randomUUID().replace(/-/g, '').slice(0, 12)
+            : `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+        const feature = {
+            id,
+            type: 'boolean',
+            name: `Boolean ${booleanCount + 1}`,
+            created_at: Date.now(),
+            suppressed: false,
+            visible: true,
+            input: {
+                solids: targets
+            },
+            params: {
+                mode: 'add'
+            },
+            result: null
+        };
+        api.features.add(feature);
+        tree.selectedFeatureId = feature.id;
+        tree.selectedFeatureIds = new Set([feature.id]);
+        tree.selectedSolidIds = new Set(targets);
+        api.solids?.setSelected?.(targets);
+        properties.showFeature(feature, {
+            onChange: () => tree.render()
+        });
+        tree.render();
+        window.dispatchEvent(new CustomEvent('void-state-change'));
+        return feature;
+    },
+
+    getSelectedSolidSourceBooleanFeature() {
+        const solidIds = Array.from(tree.selectedSolidIds || []);
+        if (solidIds.length !== 1) return null;
+        const solidId = solidIds[0];
+        const solid = (api.solids?.list?.() || []).find(item => item?.id === solidId);
+        const sourceFeatureId = solid?.source?.feature_id || null;
+        if (!sourceFeatureId) return null;
+        const feature = api.features.findById(sourceFeatureId);
+        if (!feature || feature.type !== 'boolean') return null;
+        return feature;
+    },
+
     onExtrudeButton() {
         const existing = this.getSelectedSolidSourceExtrudeFeature();
         if (existing) {
@@ -347,6 +410,24 @@ const toolbar = {
             return;
         }
         this.createExtrudeFeatureFromSelection();
+    },
+
+    onBooleanButton() {
+        const existing = this.getSelectedSolidSourceBooleanFeature();
+        if (existing) {
+            const targets = Array.isArray(existing?.input?.solids) ? existing.input.solids.filter(Boolean) : [];
+            tree.selectedSolidIds = new Set(targets);
+            tree.selectedFeatureIds = new Set([existing.id]);
+            tree.selectedFeatureId = existing.id;
+            api.solids?.setSelected?.(targets);
+            properties.showFeature(existing, {
+                onChange: () => tree.render()
+            });
+            tree.render();
+            window.dispatchEvent(new CustomEvent('void-state-change'));
+            return;
+        }
+        this.createBooleanFeatureFromSelection();
     },
 
     getProjectionLabel() {

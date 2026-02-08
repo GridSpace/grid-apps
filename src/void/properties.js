@@ -266,6 +266,7 @@ const properties = {
         api.sketchRuntime?.setEditing(null);
         api.interact?.clearSketchSelection?.();
         this.syncExtrudeProfileSelection(null);
+        this.syncBooleanSolidSelection(null);
         this.currentFeatureId = null;
         this._sessionFeatureId = null;
         this._sessionFeatureType = null;
@@ -291,8 +292,11 @@ const properties = {
             this.renderSketchFields(feature);
         } else if (feature.type === 'extrude') {
             this.renderExtrudeFields(feature);
+        } else if (feature.type === 'boolean') {
+            this.renderBooleanFields(feature);
         }
         this.syncExtrudeProfileSelection(feature);
+        this.syncBooleanSolidSelection(feature);
     },
 
     renderSketchFields(feature) {
@@ -427,6 +431,70 @@ const properties = {
         this.body.appendChild(wrap);
     },
 
+    renderBooleanFields(feature) {
+        const mode = String(feature?.params?.mode || 'add');
+        this.body.appendChild(this.createSelectField('Mode', mode, [
+            { value: 'add', label: 'Add' },
+            { value: 'subtract', label: 'Subtract' },
+            { value: 'intersect', label: 'Intersect' }
+        ], value => {
+            const next = ['add', 'subtract', 'intersect'].includes(value) ? value : 'add';
+            const updated = api.features.update(feature.id, item => {
+                item.params = item.params || {};
+                item.params.mode = next;
+            }, {
+                opType: 'feature.update',
+                payload: { field: 'mode', value: next }
+            });
+            if (updated) this.onChanged();
+        }));
+
+        const wrap = document.createElement('div');
+        wrap.className = 'props-field';
+        const label = document.createElement('label');
+        label.textContent = 'Solids';
+        wrap.appendChild(label);
+        const list = document.createElement('div');
+        list.className = 'props-extrude-profiles';
+        const solidIds = Array.isArray(feature?.input?.solids) ? feature.input.solids : [];
+        if (!solidIds.length) {
+            const empty = document.createElement('div');
+            empty.className = 'props-extrude-profile-empty';
+            empty.textContent = 'No solids selected';
+            list.appendChild(empty);
+        } else {
+            const solids = api.solids?.list?.() || [];
+            for (const solidId of solidIds) {
+                const solid = solids.find(item => item?.id === solidId);
+                const row = document.createElement('div');
+                row.className = 'props-extrude-profile-row';
+                const text = document.createElement('div');
+                text.className = 'props-extrude-profile-text';
+                text.textContent = solid?.name || solidId;
+                const remove = document.createElement('button');
+                remove.className = 'props-extrude-profile-remove';
+                remove.textContent = '×';
+                remove.title = 'Remove solid';
+                remove.onclick = () => {
+                    const updated = api.features.update(feature.id, item => {
+                        item.input = item.input || {};
+                        const current = Array.isArray(item.input.solids) ? item.input.solids : [];
+                        item.input.solids = current.filter(id => id !== solidId);
+                    }, {
+                        opType: 'feature.update',
+                        payload: { field: 'solids.remove', solidId }
+                    });
+                    if (updated) this.onChanged();
+                };
+                row.appendChild(text);
+                row.appendChild(remove);
+                list.appendChild(row);
+            }
+        }
+        wrap.appendChild(list);
+        this.body.appendChild(wrap);
+    },
+
     syncExtrudeProfileSelection(feature) {
         const isExtrude = feature?.type === 'extrude' && this.currentFeatureId === feature?.id;
         if (!isExtrude) {
@@ -442,6 +510,15 @@ const properties = {
             .filter(Boolean);
         api.interact.selectedSketchProfiles = new Set(keys);
         api.sketchRuntime?.setSelectedProfiles?.(keys);
+    },
+
+    syncBooleanSolidSelection(feature) {
+        const isBoolean = feature?.type === 'boolean' && this.currentFeatureId === feature?.id;
+        if (!isBoolean) {
+            return;
+        }
+        const solids = Array.isArray(feature?.input?.solids) ? feature.input.solids.filter(Boolean) : [];
+        api.solids?.setSelected?.(solids);
     },
 
     getPlaneOptionId(feature) {

@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { buildSeedProvenance } from './provenance.js';
-import { extrudePolygons } from './kernel.js';
+import { extrudePolygons, booleanMeshes } from './kernel.js';
 
 function profileLoopFromRuntime(api, sketchId, profileId) {
     const rec = api.sketchRuntime?.getRecord?.(sketchId);
@@ -12,6 +12,22 @@ function profileLoopFromRuntime(api, sketchId, profileId) {
 
 function makeBodyId(featureId, index) {
     return `${featureId}:body:${index}`;
+}
+
+function getSketchIdsForSolid(solid) {
+    const ids = new Set();
+    const add = value => {
+        if (value) ids.add(value);
+    };
+    add(solid?.source?.profile?.sketchId);
+    for (const sid of solid?.source?.sketch_ids || []) {
+        add(sid);
+    }
+    add(solid?.provenance?.source?.profile?.sketchId);
+    for (const face of solid?.provenance?.faces || []) {
+        add(face?.source?.sketchId);
+    }
+    return ids;
 }
 
 function basisFromPlaneFrame(frame) {
@@ -91,61 +107,125 @@ async function rebuildGeneratedSolids(api, options = {}) {
     let bodySeq = 0;
 
     for (const feature of builtFeatures) {
-        if (feature?.type !== 'extrude') continue;
-        const profiles = Array.isArray(feature?.input?.profiles) ? feature.input.profiles : [];
-        if (!profiles.length) continue;
-        const params = feature?.params || {};
-        const depth = Math.max(0.0001, Math.abs(Number(params.depth ?? params.distance ?? 1)));
-        const symmetric = params.symmetric === true;
-        const direction = params.direction === 'reverse' ? 'reverse' : 'normal';
-        const localZShift = symmetric ? (-depth / 2) : (direction === 'reverse' ? -depth : 0);
+        if (feature?.type === 'extrude') {
+            const profiles = Array.isArray(feature?.input?.profiles) ? feature.input.profiles : [];
+            if (!profiles.length) continue;
+            const params = feature?.params || {};
+            const depth = Math.max(0.0001, Math.abs(Number(params.depth ?? params.distance ?? 1)));
+            const symmetric = params.symmetric === true;
+            const direction = params.direction === 'reverse' ? 'reverse' : 'normal';
+            const localZShift = symmetric ? (-depth / 2) : (direction === 'reverse' ? -depth : 0);
 
-        for (const profileTarget of profiles) {
-            const sketchId = profileTarget?.sketchId || null;
-            const profileId = profileTarget?.profileId || null;
-            if (!sketchId || !profileId) continue;
-            const loop = profileLoopFromRuntime(api, sketchId, profileId);
-            const sketchFeature = api.features.findById(sketchId);
-            const basis = basisFromPlaneFrame(sketchFeature?.plane || {});
-            const bodyIndex = bodySeq++;
-            const id = makeBodyId(feature.id, bodyIndex);
-            const body = {
-                id,
-                name: `${feature.name || 'Extrude'}-${bodyIndex + 1}`,
-                visible: feature.visible !== false,
-                source: {
-                    feature_id: feature.id,
-                    feature_type: feature.type,
-                    profile: profileTarget
-                },
-                provenance: buildSeedProvenance(feature, profileTarget, bodyIndex),
-                mesh: null,
-                status: loop ? 'pending_manifold' : 'missing_profile_loop'
-            };
+            for (const profileTarget of profiles) {
+                const sketchId = profileTarget?.sketchId || null;
+                const profileId = profileTarget?.profileId || null;
+                if (!sketchId || !profileId) continue;
+                const loop = profileLoopFromRuntime(api, sketchId, profileId);
+                const sketchFeature = api.features.findById(sketchId);
+                const basis = basisFromPlaneFrame(sketchFeature?.plane || {});
+                const bodyIndex = bodySeq++;
+                const id = makeBodyId(feature.id, bodyIndex);
+                const body = {
+                    id,
+                    name: `${feature.name || 'Extrude'}-${bodyIndex + 1}`,
+                    visible: feature.visible !== false,
+                    source: {
+                        feature_id: feature.id,
+                        feature_type: feature.type,
+                        profile: profileTarget
+                    },
+                    provenance: buildSeedProvenance(feature, profileTarget, bodyIndex),
+                    mesh: null,
+                    status: loop ? 'pending_manifold' : 'missing_profile_loop'
+                };
 
-            if (loop) {
-                // Initial direct-manifold path. Full boolean/replay topology comes next.
-                const result = await extrudePolygons([loop.map(p => [p.x || 0, p.y || 0])], depth);
-                if (result?.mesh) {
-                    const meshWorld = transformMeshToWorld(result.mesh, basis, localZShift);
-                    body.status = 'manifold_mesh_ready';
-                    body.mesh = {
-                        tri_count: (result.mesh?.triVerts?.length || 0) / 3,
-                        vert_count: (result.mesh?.vertProperties?.length || 0) / Math.max(1, result.mesh?.numProp || 3)
-                    };
-                    body.extrude = {
-                        depth,
-                        direction,
-                        symmetric
-                    };
-                    if (meshWorld) {
-                        meshCache.set(id, meshWorld);
+                if (loop) {
+                    // Initial direct-manifold path. Full boolean/replay topology comes next.
+                    const result = await extrudePolygons([loop.map(p => [p.x || 0, p.y || 0])], depth);
+                    if (result?.mesh) {
+                        const meshWorld = transformMeshToWorld(result.mesh, basis, localZShift);
+                        body.status = 'manifold_mesh_ready';
+                        body.mesh = {
+                            tri_count: (result.mesh?.triVerts?.length || 0) / 3,
+                            vert_count: (result.mesh?.vertProperties?.length || 0) / Math.max(1, result.mesh?.numProp || 3)
+                        };
+                        body.extrude = {
+                            depth,
+                            direction,
+                            symmetric
+                        };
+                        if (meshWorld) {
+                            meshCache.set(id, meshWorld);
+                        }
+                        result.manifold?.delete?.();
                     }
-                    result.manifold?.delete?.();
+                }
+
+                solids.push(body);
+            }
+            continue;
+        }
+
+        if (feature?.type === 'boolean') {
+            const targets = Array.isArray(feature?.input?.solids)
+                ? feature.input.solids.map(id => String(id || '')).filter(Boolean)
+                : [];
+            if (targets.length < 2) continue;
+            const targetSet = new Set(targets);
+            const targetSolids = targets
+                .map(id => solids.find(s => s?.id === id))
+                .filter(Boolean);
+            if (targetSolids.length < 2) continue;
+            const meshes = targetSolids
+                .map(s => meshCache.get(s.id))
+                .filter(mesh => mesh?.positions?.length && mesh?.indices?.length);
+            if (meshes.length < 2) continue;
+            const mode = String(feature?.params?.mode || 'add');
+            const sketchIds = new Set();
+            for (const solid of targetSolids) {
+                for (const sid of getSketchIdsForSolid(solid)) {
+                    sketchIds.add(sid);
                 }
             }
-
-            solids.push(body);
+            const result = await booleanMeshes(meshes, mode);
+            const kept = solids.filter(s => !targetSet.has(s?.id));
+            for (const target of targetSolids) {
+                meshCache.delete(target.id);
+            }
+            solids.length = 0;
+            solids.push(...kept);
+            if (result?.mesh?.positions?.length && result?.mesh?.indices?.length) {
+                const bodyIndex = bodySeq++;
+                const id = makeBodyId(feature.id, bodyIndex);
+                const body = {
+                    id,
+                    name: `${feature.name || 'Boolean'}-${bodyIndex + 1}`,
+                    visible: feature.visible !== false,
+                    source: {
+                        feature_id: feature.id,
+                        feature_type: feature.type,
+                        solids: targets,
+                        mode,
+                        sketch_ids: Array.from(sketchIds)
+                    },
+                    provenance: {
+                        source: {
+                            feature_id: feature.id,
+                            feature_type: feature.type,
+                            solids: targets,
+                            mode
+                        },
+                        parents: targets
+                    },
+                    mesh: {
+                        tri_count: (result.mesh?.indices?.length || 0) / 3,
+                        vert_count: (result.mesh?.positions?.length || 0) / 3
+                    },
+                    status: 'manifold_boolean_ready'
+                };
+                meshCache.set(id, result.mesh);
+                solids.push(body);
+            }
         }
     }
 

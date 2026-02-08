@@ -66,7 +66,7 @@ function createRow({ label, depth = 0, expanded, onToggle, eyeVisible, onEye, on
     }
 
     if (typeof onSelect === 'function') {
-        row.onclick = () => onSelect();
+        row.onclick = event => onSelect(event);
     }
     if (typeof onHoverEnter === 'function') {
         row.onmouseenter = () => onHoverEnter();
@@ -166,9 +166,9 @@ function createItemRow(label, feature, depth = 0, opts = {}) {
     }
 
     if (!disabled) {
-        row.onclick = () => {
+        row.onclick = event => {
             if (typeof opts.onSelect === 'function') {
-                opts.onSelect(feature);
+                opts.onSelect(feature, event);
             } else {
                 console.log('Feature selected:', feature);
             }
