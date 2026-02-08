@@ -129,6 +129,13 @@ function handleHover(intersection, event, allIntersections) {
     if (!(this.isSketchEditing && this.isSketchEditing())) {
         const solidFaceHit = api.solids?.getFaceHitFromIntersections?.(allIntersections || (intersection ? [intersection] : []));
         if (solidFaceHit) {
+            if (this.hoveredSolidFaceKey !== solidFaceHit.key) {
+                console.log('void.solid.face.hover', {
+                    key: solidFaceHit.key,
+                    solidId: solidFaceHit.solidId,
+                    faceId: solidFaceHit.groupId
+                });
+            }
             if (this.hoveredSketchProfileKey) {
                 this.hoveredSketchProfileKey = null;
                 api.sketchRuntime?.setHoveredProfile(null);
@@ -145,6 +152,7 @@ function handleHover(intersection, event, allIntersections) {
             return;
         }
         if (this.hoveredSolidFaceKey) {
+            console.log('void.solid.face.hover.clear', { key: this.hoveredSolidFaceKey });
             this.hoveredSolidFaceKey = null;
             api.solids?.setHoveredFace?.(null);
         }
@@ -357,6 +365,11 @@ function selectSketchProfile(hit, event) {
 }
 
 function selectSolidFace(hit, event) {
+    console.log('void.solid.face.click', {
+        key: hit?.key,
+        ctrl: !!event?.ctrlKey,
+        meta: !!event?.metaKey
+    });
     const multi = !!(event?.ctrlKey || event?.metaKey);
     if (!multi) {
         for (const selectedPlane of this.selectedPlanes || []) {
@@ -372,6 +385,7 @@ function selectSolidFace(hit, event) {
     this.selectedSolidFaceKeys = new Set(selected);
     this.hoveredSolidFaceKey = hit.key;
     api.solids?.setHoveredFace?.(hit.key);
+    console.log('void.solid.face.selected', { keys: selected });
     window.dispatchEvent(new CustomEvent('void-state-change'));
 }
 

@@ -65,6 +65,14 @@ function ensureEditingSketchIsRenderable() {
     }
 }
 
+function getSolidIdsForFeature(featureId) {
+    if (!featureId) return [];
+    return (api.solids?.list?.() || [])
+        .filter(solid => solid?.source?.feature_id === featureId)
+        .map(solid => solid.id)
+        .filter(Boolean);
+}
+
 function render() {
     if (!this.container) return;
     this.container.innerHTML = '';
@@ -328,6 +336,7 @@ function renderFeaturesSection() {
             }
             const label = feature?.name || feature?.type || 'Feature';
             const isSketch = feature?.type === 'sketch';
+            const isExtrude = feature?.type === 'extrude';
             const visible = feature?.visible !== false;
             const suppressed = feature?.suppressed === true;
             const beyondTimeline = !api.features.isIndexBuilt(index);
@@ -374,8 +383,14 @@ function renderFeaturesSection() {
                 },
                 onSelect: f => this.onFeatureSelected(f),
                 onEdit: f => this.onFeatureEdit(f),
-                onHoverEnter: isSketch ? f => api.sketchRuntime?.setHovered(f.id) : null,
-                onHoverLeave: isSketch ? () => api.sketchRuntime?.setHovered(null) : null
+                onHoverEnter: f => {
+                    if (isSketch) api.sketchRuntime?.setHovered(f.id);
+                    if (isExtrude) api.solids?.setHovered?.(getSolidIdsForFeature(f?.id));
+                },
+                onHoverLeave: () => {
+                    if (isSketch) api.sketchRuntime?.setHovered(null);
+                    if (isExtrude) api.solids?.setHovered?.([]);
+                }
             }));
         }
         if (markerCount === features.length) {
@@ -427,6 +442,7 @@ function renderFeaturesSection() {
             }
             const label = feature?.name || feature?.type || 'Feature';
             const isSketch = feature?.type === 'sketch';
+            const isExtrude = feature?.type === 'extrude';
             const visible = feature?.visible !== false;
                 const suppressed = feature?.suppressed === true;
                 const beyondTimeline = !api.features.isIndexBuilt(index);
@@ -473,8 +489,14 @@ function renderFeaturesSection() {
                 },
                 onSelect: f => this.onFeatureSelected(f),
                 onEdit: f => this.onFeatureEdit(f),
-                onHoverEnter: isSketch ? f => api.sketchRuntime?.setHovered(f.id) : null,
-                onHoverLeave: isSketch ? () => api.sketchRuntime?.setHovered(null) : null
+                onHoverEnter: f => {
+                    if (isSketch) api.sketchRuntime?.setHovered(f.id);
+                    if (isExtrude) api.solids?.setHovered?.(getSolidIdsForFeature(f?.id));
+                },
+                onHoverLeave: () => {
+                    if (isSketch) api.sketchRuntime?.setHovered(null);
+                    if (isExtrude) api.solids?.setHovered?.([]);
+                }
             }));
         }
         if (i === 0 && items.length && markerCount === features.length) {

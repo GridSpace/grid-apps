@@ -30,7 +30,7 @@ function createSolidsApi(getApi) {
         return a < b ? `${a}:${b}` : `${b}:${a}`;
     }
 
-    function buildPlanarFaceData(geometry) {
+    function buildSurfaceRegionData(geometry) {
         const posAttr = geometry?.getAttribute?.('position');
         const idxAttr = geometry?.getIndex?.();
         if (!posAttr) {
@@ -45,7 +45,6 @@ function createSolidsApi(getApi) {
         }
 
         const triNormals = new Float32Array(triCount * 3);
-        const triDs = new Float32Array(triCount);
         const triNeighbors = Array.from({ length: triCount }, () => new Set());
         const triToGroup = new Int32Array(triCount).fill(-1);
         const edgeMap = new Map();
@@ -70,7 +69,6 @@ function createSolidsApi(getApi) {
             triNormals[t * 3] = tmpN.x;
             triNormals[t * 3 + 1] = tmpN.y;
             triNormals[t * 3 + 2] = tmpN.z;
-            triDs[t] = tmpN.dot(tmpA);
 
             const edges = [[i0, i1], [i1, i2], [i2, i0]];
             for (const [ea, eb] of edges) {
@@ -91,17 +89,13 @@ function createSolidsApi(getApi) {
             }
         }
 
-        const normalDotEps = 1 - 1e-4;
-        const planeDistEps = 1e-4;
+        // Region join threshold for smooth surfaces. Sharp edges (near 90 deg) split regions.
+        const smoothJoinDot = Math.cos(40 * Math.PI / 180);
         const groups = new Map();
         let groupId = 0;
 
         for (let t = 0; t < triCount; t++) {
             if (triToGroup[t] >= 0) continue;
-            const seedNx = triNormals[t * 3];
-            const seedNy = triNormals[t * 3 + 1];
-            const seedNz = triNormals[t * 3 + 2];
-            const seedD = triDs[t];
             const queue = [t];
             const tris = [];
             triToGroup[t] = groupId;
@@ -111,12 +105,14 @@ function createSolidsApi(getApi) {
                 tris.push(cur);
                 for (const nb of triNeighbors[cur]) {
                     if (triToGroup[nb] >= 0) continue;
-                    const nx = triNormals[nb * 3];
-                    const ny = triNormals[nb * 3 + 1];
-                    const nz = triNormals[nb * 3 + 2];
-                    const dot = nx * seedNx + ny * seedNy + nz * seedNz;
-                    if (dot < normalDotEps) continue;
-                    if (Math.abs(triDs[nb] - seedD) > planeDistEps) continue;
+                    const cNx = triNormals[cur * 3];
+                    const cNy = triNormals[cur * 3 + 1];
+                    const cNz = triNormals[cur * 3 + 2];
+                    const nNx = triNormals[nb * 3];
+                    const nNy = triNormals[nb * 3 + 1];
+                    const nNz = triNormals[nb * 3 + 2];
+                    const dot = cNx * nNx + cNy * nNy + cNz * nNz;
+                    if (dot < smoothJoinDot) continue;
                     triToGroup[nb] = groupId;
                     queue.push(nb);
                 }
@@ -125,6 +121,7 @@ function createSolidsApi(getApi) {
             const groupIndices = [];
             const vertexSet = new Set();
             let xAxis = new THREE.Vector3(1, 0, 0);
+            const avgNormal = new THREE.Vector3();
             for (const tri of tris) {
                 const i0 = indices[tri * 3];
                 const i1 = indices[tri * 3 + 1];
@@ -138,6 +135,9 @@ function createSolidsApi(getApi) {
                     vec3FromPos(positions, i1, tmpB);
                     xAxis = tmpB.sub(tmpA);
                 }
+                avgNormal.x += triNormals[tri * 3];
+                avgNormal.y += triNormals[tri * 3 + 1];
+                avgNormal.z += triNormals[tri * 3 + 2];
             }
             const center = new THREE.Vector3();
             if (vertexSet.size) {
@@ -147,7 +147,7 @@ function createSolidsApi(getApi) {
                 }
                 center.multiplyScalar(1 / vertexSet.size);
             }
-            const normal = new THREE.Vector3(seedNx, seedNy, seedNz).normalize();
+            const normal = avgNormal.lengthSq() > 1e-12 ? avgNormal.normalize() : new THREE.Vector3(0, 0, 1);
             const xDotN = xAxis.dot(normal);
             xAxis = xAxis.sub(normal.clone().multiplyScalar(xDotN));
             if (xAxis.lengthSq() <= 1e-8) {
@@ -155,6 +155,24 @@ function createSolidsApi(getApi) {
                 xAxis.sub(normal.clone().multiplyScalar(xAxis.dot(normal)));
             }
             xAxis.normalize();
+
+            // A region is planar when all member vertices lie on one plane and normals are near-identical.
+            const planeD = normal.dot(center);
+            let maxPlanarError = 0;
+            let minDot = 1;
+            for (const vi of vertexSet) {
+                vec3FromPos(positions, vi, tmpA);
+                const dErr = Math.abs(normal.dot(tmpA) - planeD);
+                if (dErr > maxPlanarError) maxPlanarError = dErr;
+            }
+            for (const tri of tris) {
+                const nx = triNormals[tri * 3];
+                const ny = triNormals[tri * 3 + 1];
+                const nz = triNormals[tri * 3 + 2];
+                const dot = nx * normal.x + ny * normal.y + nz * normal.z;
+                if (dot < minDot) minDot = dot;
+            }
+            const planar = maxPlanarError < 1e-4 && minDot > (1 - 1e-4);
 
             const faceGeom = new THREE.BufferGeometry();
             faceGeom.setAttribute('position', posAttr.clone());
@@ -165,7 +183,8 @@ function createSolidsApi(getApi) {
                 geometry: faceGeom,
                 center,
                 normal,
-                xAxis
+                xAxis,
+                planar
             });
             groupId++;
         }
@@ -180,6 +199,7 @@ function createSolidsApi(getApi) {
                 transparent: true,
                 opacity: 0.26,
                 side: THREE.DoubleSide,
+                depthTest: false,
                 depthWrite: false,
                 polygonOffset: true,
                 polygonOffsetFactor: -1,
@@ -190,6 +210,7 @@ function createSolidsApi(getApi) {
                 transparent: true,
                 opacity: 0.34,
                 side: THREE.DoubleSide,
+                depthTest: false,
                 depthWrite: false,
                 polygonOffset: true,
                 polygonOffsetFactor: -1,
@@ -326,12 +347,13 @@ function createSolidsApi(getApi) {
                     view.indexedGeometry = built.indexed;
                     view.edges.geometry = new THREE.EdgesGeometry(built.render, 30);
                 }
-                const faceData = buildPlanarFaceData(view.mesh.geometry);
+                const faceData = buildSurfaceRegionData(view.indexedGeometry || view.mesh.geometry);
                 view.faceTriToGroup = faceData.triToGroup;
                 view.faceGroups = faceData.groups;
                 for (const [faceId, face] of faceData.groups.entries()) {
                     const mesh = new THREE.Mesh(face.geometry, this._faceMats.hover);
                     mesh.visible = false;
+                    mesh.renderOrder = 40;
                     mesh.userData.solidFaceOverlay = true;
                     view.overlays.add(mesh);
                     view.faceOverlays.set(faceId, mesh);
@@ -373,16 +395,36 @@ function createSolidsApi(getApi) {
                 const view = this._meshViews.get(solidId);
                 if (!view) continue;
                 const groupId = view.faceTriToGroup?.[tri];
+                if (groupId === undefined) {
+                    console.log('void.solid.face.map.miss', {
+                        solidId,
+                        tri,
+                        triMapLen: view.faceTriToGroup?.length || 0
+                    });
+                }
                 if (groupId === undefined || groupId < 0) continue;
                 const key = `${solidId}:${groupId}`;
                 return { key, solidId, groupId, intersection: hit };
+            }
+            if (intersections.length) {
+                console.log('void.solid.face.hover.none', {
+                    hitCount: intersections.length,
+                    sample: intersections.slice(0, 3).map(hit => ({
+                        solidId: hit?.object?.userData?.solidId || null,
+                        faceIndex: hit?.faceIndex ?? null,
+                        object: hit?.object?.name || hit?.object?.type || null
+                    }))
+                });
             }
             return null;
         },
 
         getFaceByKey(key) {
-            const [solidId, faceIdRaw] = String(key || '').split(':');
-            if (!solidId || faceIdRaw === undefined) return null;
+            const raw = String(key || '');
+            const splitAt = raw.lastIndexOf(':');
+            if (splitAt <= 0 || splitAt >= raw.length - 1) return null;
+            const solidId = raw.substring(0, splitAt);
+            const faceIdRaw = raw.substring(splitAt + 1);
             const faceId = Number(faceIdRaw);
             if (!Number.isFinite(faceId)) return null;
             const view = this._meshViews.get(solidId);
@@ -408,6 +450,11 @@ function createSolidsApi(getApi) {
             if (!multi) this._selectedFaceKeys.clear();
             if (this._selectedFaceKeys.has(key)) this._selectedFaceKeys.delete(key);
             else this._selectedFaceKeys.add(key);
+            console.log('void.solid.face.toggle', {
+                key,
+                multi,
+                selected: Array.from(this._selectedFaceKeys)
+            });
             this.syncFaceOverlays();
             return Array.from(this._selectedFaceKeys);
         },
@@ -426,6 +473,7 @@ function createSolidsApi(getApi) {
             const face = this.getFaceByKey(key);
             if (!face) return null;
             const { meta, view, solidId, faceId } = face;
+            if (!meta.planar) return null;
             const center = meta.center.clone().applyMatrix4(view.mesh.matrixWorld);
             const normal = meta.normal.clone().transformDirection(view.mesh.matrixWorld).normalize();
             const xAxis = meta.xAxis.clone().transformDirection(view.mesh.matrixWorld).normalize();
