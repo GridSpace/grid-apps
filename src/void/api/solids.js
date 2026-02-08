@@ -9,14 +9,193 @@ function createSolidsApi(getApi) {
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute('position', new THREE.Float32BufferAttribute(meshData.positions, 3));
         geometry.setIndex(new THREE.BufferAttribute(meshData.indices, 1));
+        const indexed = geometry.clone();
         if (BufferGeometryUtils?.toCreasedNormals) {
             // Keep hard CAD-like edges while preserving smooth shading where faces are near-coplanar.
             const creased = BufferGeometryUtils.toCreasedNormals(geometry, Math.PI / 3);
             geometry.dispose();
-            return creased;
+            return { render: creased, indexed };
         }
         geometry.computeVertexNormals();
-        return geometry;
+        return { render: geometry, indexed };
+    }
+
+    function vec3FromPos(posArray, index, out = new THREE.Vector3()) {
+        const i = index * 3;
+        out.set(posArray[i], posArray[i + 1], posArray[i + 2]);
+        return out;
+    }
+
+    function edgeKey(a, b) {
+        return a < b ? `${a}:${b}` : `${b}:${a}`;
+    }
+
+    function buildPlanarFaceData(geometry) {
+        const posAttr = geometry?.getAttribute?.('position');
+        const idxAttr = geometry?.getIndex?.();
+        if (!posAttr) {
+            return { triToGroup: new Int32Array(0), groups: new Map() };
+        }
+        const positions = posAttr.array;
+        const vertCount = Math.floor(positions.length / 3);
+        const indices = idxAttr?.array || Uint32Array.from(Array.from({ length: vertCount }, (_, i) => i));
+        const triCount = Math.floor(indices.length / 3);
+        if (!triCount) {
+            return { triToGroup: new Int32Array(0), groups: new Map() };
+        }
+
+        const triNormals = new Float32Array(triCount * 3);
+        const triDs = new Float32Array(triCount);
+        const triNeighbors = Array.from({ length: triCount }, () => new Set());
+        const triToGroup = new Int32Array(triCount).fill(-1);
+        const edgeMap = new Map();
+        const tmpA = new THREE.Vector3();
+        const tmpB = new THREE.Vector3();
+        const tmpC = new THREE.Vector3();
+        const tmpAB = new THREE.Vector3();
+        const tmpAC = new THREE.Vector3();
+        const tmpN = new THREE.Vector3();
+
+        for (let t = 0; t < triCount; t++) {
+            const i0 = indices[t * 3];
+            const i1 = indices[t * 3 + 1];
+            const i2 = indices[t * 3 + 2];
+            vec3FromPos(positions, i0, tmpA);
+            vec3FromPos(positions, i1, tmpB);
+            vec3FromPos(positions, i2, tmpC);
+            tmpAB.subVectors(tmpB, tmpA);
+            tmpAC.subVectors(tmpC, tmpA);
+            tmpN.crossVectors(tmpAB, tmpAC);
+            if (tmpN.lengthSq() > 0) tmpN.normalize();
+            triNormals[t * 3] = tmpN.x;
+            triNormals[t * 3 + 1] = tmpN.y;
+            triNormals[t * 3 + 2] = tmpN.z;
+            triDs[t] = tmpN.dot(tmpA);
+
+            const edges = [[i0, i1], [i1, i2], [i2, i0]];
+            for (const [ea, eb] of edges) {
+                const ek = edgeKey(ea, eb);
+                const list = edgeMap.get(ek);
+                if (list) list.push(t);
+                else edgeMap.set(ek, [t]);
+            }
+        }
+
+        for (const list of edgeMap.values()) {
+            if (list.length < 2) continue;
+            for (let i = 0; i < list.length; i++) {
+                for (let j = i + 1; j < list.length; j++) {
+                    triNeighbors[list[i]].add(list[j]);
+                    triNeighbors[list[j]].add(list[i]);
+                }
+            }
+        }
+
+        const normalDotEps = 1 - 1e-4;
+        const planeDistEps = 1e-4;
+        const groups = new Map();
+        let groupId = 0;
+
+        for (let t = 0; t < triCount; t++) {
+            if (triToGroup[t] >= 0) continue;
+            const seedNx = triNormals[t * 3];
+            const seedNy = triNormals[t * 3 + 1];
+            const seedNz = triNormals[t * 3 + 2];
+            const seedD = triDs[t];
+            const queue = [t];
+            const tris = [];
+            triToGroup[t] = groupId;
+
+            while (queue.length) {
+                const cur = queue.pop();
+                tris.push(cur);
+                for (const nb of triNeighbors[cur]) {
+                    if (triToGroup[nb] >= 0) continue;
+                    const nx = triNormals[nb * 3];
+                    const ny = triNormals[nb * 3 + 1];
+                    const nz = triNormals[nb * 3 + 2];
+                    const dot = nx * seedNx + ny * seedNy + nz * seedNz;
+                    if (dot < normalDotEps) continue;
+                    if (Math.abs(triDs[nb] - seedD) > planeDistEps) continue;
+                    triToGroup[nb] = groupId;
+                    queue.push(nb);
+                }
+            }
+
+            const groupIndices = [];
+            const vertexSet = new Set();
+            let xAxis = new THREE.Vector3(1, 0, 0);
+            for (const tri of tris) {
+                const i0 = indices[tri * 3];
+                const i1 = indices[tri * 3 + 1];
+                const i2 = indices[tri * 3 + 2];
+                groupIndices.push(i0, i1, i2);
+                vertexSet.add(i0);
+                vertexSet.add(i1);
+                vertexSet.add(i2);
+                if (xAxis.lengthSq() <= 1e-8) {
+                    vec3FromPos(positions, i0, tmpA);
+                    vec3FromPos(positions, i1, tmpB);
+                    xAxis = tmpB.sub(tmpA);
+                }
+            }
+            const center = new THREE.Vector3();
+            if (vertexSet.size) {
+                for (const vi of vertexSet) {
+                    vec3FromPos(positions, vi, tmpA);
+                    center.add(tmpA);
+                }
+                center.multiplyScalar(1 / vertexSet.size);
+            }
+            const normal = new THREE.Vector3(seedNx, seedNy, seedNz).normalize();
+            const xDotN = xAxis.dot(normal);
+            xAxis = xAxis.sub(normal.clone().multiplyScalar(xDotN));
+            if (xAxis.lengthSq() <= 1e-8) {
+                xAxis = Math.abs(normal.z) < 0.9 ? new THREE.Vector3(0, 0, 1) : new THREE.Vector3(0, 1, 0);
+                xAxis.sub(normal.clone().multiplyScalar(xAxis.dot(normal)));
+            }
+            xAxis.normalize();
+
+            const faceGeom = new THREE.BufferGeometry();
+            faceGeom.setAttribute('position', posAttr.clone());
+            faceGeom.setIndex(new THREE.BufferAttribute(Uint32Array.from(groupIndices), 1));
+
+            groups.set(groupId, {
+                id: groupId,
+                geometry: faceGeom,
+                center,
+                normal,
+                xAxis
+            });
+            groupId++;
+        }
+
+        return { triToGroup, groups };
+    }
+
+    function makeFaceMaterials() {
+        return {
+            hover: new THREE.MeshBasicMaterial({
+                color: 0xffa347,
+                transparent: true,
+                opacity: 0.26,
+                side: THREE.DoubleSide,
+                depthWrite: false,
+                polygonOffset: true,
+                polygonOffsetFactor: -1,
+                polygonOffsetUnits: -1
+            }),
+            selected: new THREE.MeshBasicMaterial({
+                color: 0xffa347,
+                transparent: true,
+                opacity: 0.34,
+                side: THREE.DoubleSide,
+                depthWrite: false,
+                polygonOffset: true,
+                polygonOffsetFactor: -1,
+                polygonOffsetUnits: -1
+            })
+        };
     }
 
     return {
@@ -26,9 +205,13 @@ function createSolidsApi(getApi) {
         _meshCache: new Map(),
         _meshViews: new Map(),
         _selectedIds: new Set(),
+        _hoveredIds: new Set(),
         _root: null,
         _material: null,
         _edgeMaterial: null,
+        _selectedFaceKeys: new Set(),
+        _hoveredFaceKey: null,
+        _faceMats: null,
 
         async init() {
             await ensureKernel();
@@ -45,6 +228,9 @@ function createSolidsApi(getApi) {
                     transparent: true,
                     opacity: 0.22
                 });
+            }
+            if (!this._faceMats) {
+                this._faceMats = makeFaceMaterials();
             }
         },
 
@@ -67,6 +253,11 @@ function createSolidsApi(getApi) {
             this.syncRuntime();
         },
 
+        setHovered(ids = []) {
+            this._hoveredIds = new Set(ids || []);
+            this.syncRuntime();
+        },
+
         syncRuntime() {
             if (!this._root) return;
             const solids = this.list();
@@ -76,9 +267,13 @@ function createSolidsApi(getApi) {
                 if (byId.has(id)) continue;
                 this._root.remove(view.group);
                 view.mesh.geometry?.dispose?.();
+                view.indexedGeometry?.dispose?.();
                 view.mesh.material?.dispose?.();
                 view.edges.geometry?.dispose?.();
                 view.edges.material?.dispose?.();
+                for (const overlay of view.faceOverlays?.values?.() || []) {
+                    overlay.geometry?.dispose?.();
+                }
                 this._meshViews.delete(id);
             }
 
@@ -96,37 +291,170 @@ function createSolidsApi(getApi) {
                 }
                 let view = this._meshViews.get(id);
                 if (!view) {
-                    const geometry = buildSolidGeometry(meshData);
-                    const mesh = new THREE.Mesh(geometry, this._material.clone());
+                    const built = buildSolidGeometry(meshData);
+                    const mesh = new THREE.Mesh(built.render, this._material.clone());
                     mesh.userData.solidId = id;
                     mesh.userData.solid = true;
-                    const edgesGeom = new THREE.EdgesGeometry(geometry, 30);
+                    const edgesGeom = new THREE.EdgesGeometry(built.render, 30);
                     const edges = new THREE.LineSegments(edgesGeom, this._edgeMaterial.clone());
                     edges.userData.solidId = id;
+                    const overlays = new THREE.Group();
+                    overlays.name = `solid-${id}-face-overlays`;
                     const group = new THREE.Group();
                     group.name = `solid-${id}`;
                     group.add(mesh);
                     group.add(edges);
+                    group.add(overlays);
                     this._root.add(group);
-                    view = { group, mesh, edges };
+                    view = { group, mesh, edges, overlays, faceOverlays: new Map(), faceTriToGroup: new Int32Array(0), faceGroups: new Map(), indexedGeometry: built.indexed };
                     this._meshViews.set(id, view);
                 } else {
                     // Always replace geometry on rebuild. Topology counts can stay
                     // constant while positions change (depth/direction/symmetric).
                     view.mesh.geometry?.dispose?.();
+                    view.indexedGeometry?.dispose?.();
                     view.edges.geometry?.dispose?.();
-                    const geometry = buildSolidGeometry(meshData);
-                    view.mesh.geometry = geometry;
-                    view.edges.geometry = new THREE.EdgesGeometry(geometry, 30);
+                    for (const overlay of view.faceOverlays?.values?.() || []) {
+                        overlay.geometry?.dispose?.();
+                    }
+                    view.faceOverlays?.clear?.();
+                    while (view.overlays?.children?.length) {
+                        view.overlays.remove(view.overlays.children[0]);
+                    }
+                    const built = buildSolidGeometry(meshData);
+                    view.mesh.geometry = built.render;
+                    view.indexedGeometry = built.indexed;
+                    view.edges.geometry = new THREE.EdgesGeometry(built.render, 30);
+                }
+                const faceData = buildPlanarFaceData(view.mesh.geometry);
+                view.faceTriToGroup = faceData.triToGroup;
+                view.faceGroups = faceData.groups;
+                for (const [faceId, face] of faceData.groups.entries()) {
+                    const mesh = new THREE.Mesh(face.geometry, this._faceMats.hover);
+                    mesh.visible = false;
+                    mesh.userData.solidFaceOverlay = true;
+                    view.overlays.add(mesh);
+                    view.faceOverlays.set(faceId, mesh);
                 }
                 const selected = this._selectedIds.has(id);
+                const hovered = this._hoveredIds.has(id);
                 if (view.mesh.material?.color) {
-                    view.mesh.material.color.setHex(selected ? 0xa0b7d1 : 0x8d939a);
+                    view.mesh.material.color.setHex(selected ? 0xa0b7d1 : (hovered ? 0x97a8b8 : 0x8d939a));
                 }
                 if (view.edges.material?.opacity !== undefined) {
-                    view.edges.material.opacity = selected ? 0.9 : 0.22;
+                    view.edges.material.opacity = selected ? 0.9 : (hovered ? 0.55 : 0.22);
                 }
                 view.group.visible = visible;
+            }
+            this._selectedFaceKeys = new Set(Array.from(this._selectedFaceKeys).filter(key => this.getFaceByKey(key)));
+            if (this._hoveredFaceKey && !this.getFaceByKey(this._hoveredFaceKey)) {
+                this._hoveredFaceKey = null;
+            }
+            this.syncFaceOverlays();
+        },
+
+        getPickMeshes() {
+            const out = [];
+            for (const view of this._meshViews.values()) {
+                if (view?.group?.visible !== false && view?.mesh?.visible !== false) {
+                    out.push(view.mesh);
+                }
+            }
+            return out;
+        },
+
+        getFaceHitFromIntersections(intersections = []) {
+            if (!Array.isArray(intersections)) return null;
+            for (const hit of intersections) {
+                const object = hit?.object;
+                const solidId = object?.userData?.solidId;
+                const tri = hit?.faceIndex;
+                if (!solidId || tri === undefined || tri === null) continue;
+                const view = this._meshViews.get(solidId);
+                if (!view) continue;
+                const groupId = view.faceTriToGroup?.[tri];
+                if (groupId === undefined || groupId < 0) continue;
+                const key = `${solidId}:${groupId}`;
+                return { key, solidId, groupId, intersection: hit };
+            }
+            return null;
+        },
+
+        getFaceByKey(key) {
+            const [solidId, faceIdRaw] = String(key || '').split(':');
+            if (!solidId || faceIdRaw === undefined) return null;
+            const faceId = Number(faceIdRaw);
+            if (!Number.isFinite(faceId)) return null;
+            const view = this._meshViews.get(solidId);
+            const meta = view?.faceGroups?.get(faceId);
+            if (!view || !meta) return null;
+            return { key: `${solidId}:${faceId}`, solidId, faceId, view, meta };
+        },
+
+        setHoveredFace(key = null) {
+            const next = key && this.getFaceByKey(key) ? key : null;
+            if (next === this._hoveredFaceKey) return;
+            this._hoveredFaceKey = next;
+            this.syncFaceOverlays();
+        },
+
+        setSelectedFaces(keys = []) {
+            this._selectedFaceKeys = new Set((keys || []).filter(key => this.getFaceByKey(key)));
+            this.syncFaceOverlays();
+        },
+
+        toggleSelectedFace(key, multi = false) {
+            if (!this.getFaceByKey(key)) return Array.from(this._selectedFaceKeys);
+            if (!multi) this._selectedFaceKeys.clear();
+            if (this._selectedFaceKeys.has(key)) this._selectedFaceKeys.delete(key);
+            else this._selectedFaceKeys.add(key);
+            this.syncFaceOverlays();
+            return Array.from(this._selectedFaceKeys);
+        },
+
+        clearFaceSelection() {
+            this._selectedFaceKeys.clear();
+            this._hoveredFaceKey = null;
+            this.syncFaceOverlays();
+        },
+
+        getSelectedFaceKeys() {
+            return Array.from(this._selectedFaceKeys);
+        },
+
+        getSketchTargetForFaceKey(key) {
+            const face = this.getFaceByKey(key);
+            if (!face) return null;
+            const { meta, view, solidId, faceId } = face;
+            const center = meta.center.clone().applyMatrix4(view.mesh.matrixWorld);
+            const normal = meta.normal.clone().transformDirection(view.mesh.matrixWorld).normalize();
+            const xAxis = meta.xAxis.clone().transformDirection(view.mesh.matrixWorld).normalize();
+            return {
+                kind: 'face',
+                id: `${solidId}:f${faceId}`,
+                name: 'Face',
+                frame: {
+                    origin: { x: center.x, y: center.y, z: center.z },
+                    normal: { x: normal.x, y: normal.y, z: normal.z },
+                    x_axis: { x: xAxis.x, y: xAxis.y, z: xAxis.z }
+                },
+                source: {
+                    type: 'solid-face',
+                    solid_id: solidId,
+                    face_id: faceId
+                }
+            };
+        },
+
+        syncFaceOverlays() {
+            for (const view of this._meshViews.values()) {
+                for (const [faceId, overlay] of view.faceOverlays?.entries?.() || []) {
+                    const key = `${view.mesh?.userData?.solidId}:${faceId}`;
+                    const selected = this._selectedFaceKeys.has(key);
+                    const hovered = this._hoveredFaceKey === key;
+                    overlay.visible = selected || hovered;
+                    overlay.material = selected ? this._faceMats.selected : this._faceMats.hover;
+                }
             }
         },
 

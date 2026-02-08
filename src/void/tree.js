@@ -36,6 +36,7 @@ const tree = {
                 plane.setHovered(false);
             }
             api.sketchRuntime?.setHovered(null);
+            api.solids?.setHovered?.([]);
             this.render();
         });
         window.addEventListener('keydown', event => {

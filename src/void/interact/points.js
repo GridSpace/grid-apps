@@ -2,6 +2,7 @@
 
 import { space } from '../../moto/space.js';
 import { overlay } from '../overlay.js';
+import { api } from '../api.js';
 
 function getPointHitFromEvent(event) {
     if (!event || !overlay?.elements) {
@@ -75,6 +76,14 @@ function selectPoint(id, event) {
             plane.setSelected(false);
         }
         this.selectedPlanes.clear();
+        this.selectedSolidFaceKeys?.clear?.();
+        this.hoveredSolidFaceKey = null;
+        this.selectedSketchProfiles?.clear?.();
+        this.hoveredSketchProfileKey = null;
+        this.clearSketchSelection?.();
+        this.cancelSketchLine?.();
+        this.setSketchTool?.('select');
+        api.solids?.clearFaceSelection?.();
         this.clearSelectedPoints();
         this.selectedPoints.add(id);
     } else {

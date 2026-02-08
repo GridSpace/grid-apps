@@ -543,14 +543,28 @@ function renderSolidsSection() {
                 const id = item?.id || null;
                 if (!id) return;
                 if (!this.selectedSolidIds) this.selectedSolidIds = new Set();
-                if (this.selectedSolidIds.has(id)) {
-                    this.selectedSolidIds.delete(id);
-                } else {
-                    this.selectedSolidIds.add(id);
+                const multi = false;
+                if (!multi) {
+                    if (this.selectedSolidIds.size === 1 && this.selectedSolidIds.has(id)) {
+                        this.selectedSolidIds.clear();
+                    } else {
+                        this.selectedSolidIds.clear();
+                        this.selectedSolidIds.add(id);
+                    }
                 }
+                this.selectedFeatureIds?.clear?.();
+                this.selectedFeatureId = null;
                 api.solids?.setSelected?.(Array.from(this.selectedSolidIds));
                 this.render();
                 window.dispatchEvent(new CustomEvent('void-state-change'));
+            },
+            onHoverEnter: item => {
+                const id = item?.id || null;
+                if (!id) return;
+                api.solids?.setHovered?.([id]);
+            },
+            onHoverLeave: () => {
+                api.solids?.setHovered?.([]);
             }
         }));
     }

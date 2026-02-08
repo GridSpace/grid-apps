@@ -28,6 +28,11 @@ function getInteractiveObjects() {
             }
         }
     }
+    if (!(this.isSketchEditing && this.isSketchEditing())) {
+        for (const mesh of api.solids?.getPickMeshes?.() || []) {
+            objects.push(mesh);
+        }
+    }
 
     if (this.isSketchEditing && this.isSketchEditing()) {
         const sketch = this.getEditingSketchFeature && this.getEditingSketchFeature();
@@ -122,6 +127,27 @@ function updateHandleScreenScales() {
 
 function handleHover(intersection, event, allIntersections) {
     if (!(this.isSketchEditing && this.isSketchEditing())) {
+        const solidFaceHit = api.solids?.getFaceHitFromIntersections?.(allIntersections || (intersection ? [intersection] : []));
+        if (solidFaceHit) {
+            if (this.hoveredSketchProfileKey) {
+                this.hoveredSketchProfileKey = null;
+                api.sketchRuntime?.setHoveredProfile(null);
+            }
+            this.hoveredSolidFaceKey = solidFaceHit.key;
+            api.solids?.setHoveredFace?.(solidFaceHit.key);
+            this.hoverIntersection = solidFaceHit.intersection || intersection || null;
+            this.setHoveredPoint(null);
+            if (this.hoveredPlane && !this.hoveredPlane.isSelected()) {
+                this.hoveredPlane.setHovered(false);
+                this.hoveredPlane = null;
+            }
+            window.dispatchEvent(new CustomEvent('void-state-change'));
+            return;
+        }
+        if (this.hoveredSolidFaceKey) {
+            this.hoveredSolidFaceKey = null;
+            api.solids?.setHoveredFace?.(null);
+        }
         const profileHit = this.getSketchProfileHitFromIntersections(allIntersections || (intersection ? [intersection] : []));
         if (profileHit) {
             const key = `${profileHit.featureId}:${profileHit.profileId}`;
@@ -239,6 +265,11 @@ function handleMouseUp(intersection, event, allIntersections) {
     }
 
     if (!(this.isSketchEditing && this.isSketchEditing())) {
+        const solidFaceHit = api.solids?.getFaceHitFromIntersections?.(allIntersections || (intersection ? [intersection] : []));
+        if (solidFaceHit) {
+            this.selectSolidFace(solidFaceHit, event);
+            return;
+        }
         const profileHit = this.getSketchProfileHitFromIntersections(allIntersections || (intersection ? [intersection] : []));
         if (profileHit) {
             this.selectSketchProfile(profileHit, event);
@@ -311,6 +342,9 @@ function selectSketchProfile(hit, event) {
     const key = `${hit.featureId}:${hit.profileId}`;
     const multi = !!(event?.ctrlKey || event?.metaKey);
     if (!multi) {
+        this.selectedSolidFaceKeys?.clear?.();
+        this.hoveredSolidFaceKey = null;
+        api.solids?.clearFaceSelection?.();
         this.selectedSketchProfiles.clear();
     }
     if (this.selectedSketchProfiles.has(key)) {
@@ -319,6 +353,25 @@ function selectSketchProfile(hit, event) {
         this.selectedSketchProfiles.add(key);
     }
     api.sketchRuntime?.setSelectedProfiles(Array.from(this.selectedSketchProfiles));
+    window.dispatchEvent(new CustomEvent('void-state-change'));
+}
+
+function selectSolidFace(hit, event) {
+    const multi = !!(event?.ctrlKey || event?.metaKey);
+    if (!multi) {
+        for (const selectedPlane of this.selectedPlanes || []) {
+            selectedPlane.setSelected(false);
+        }
+        this.selectedPlanes?.clear?.();
+        this.selectedSketchProfiles?.clear?.();
+        this.clearSelectedPoints?.();
+        api.sketchRuntime?.setSelectedProfiles?.([]);
+        api.sketchRuntime?.setHoveredProfile?.(null);
+    }
+    const selected = api.solids?.toggleSelectedFace?.(hit.key, multi) || [];
+    this.selectedSolidFaceKeys = new Set(selected);
+    this.hoveredSolidFaceKey = hit.key;
+    api.solids?.setHoveredFace?.(hit.key);
     window.dispatchEvent(new CustomEvent('void-state-change'));
 }
 
@@ -627,6 +680,7 @@ export {
     handleMouseUp,
     getSketchProfileHitFromIntersections,
     selectSketchProfile,
+    selectSolidFace,
     startHandleDrag,
     getOppositeCorner,
     handleDrag,

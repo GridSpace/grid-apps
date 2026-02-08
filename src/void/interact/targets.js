@@ -2,11 +2,20 @@
 
 import { THREE } from '../../ext/three.js';
 
+import { api } from '../api.js';
+
 function getPrimarySketchTarget() {
     return this.resolveSketchTarget(this.hoverIntersection) || this.resolveSketchTargetFromSelection();
 }
 
 function resolveSketchTargetFromSelection() {
+    if (this.selectedSolidFaceKeys?.size === 1) {
+        const key = this.selectedSolidFaceKeys.values().next().value;
+        const target = api.solids?.getSketchTargetForFaceKey?.(key);
+        if (target?.frame) {
+            return target;
+        }
+    }
     if (this.selectedPlanes.size !== 1) {
         return null;
     }
