@@ -147,6 +147,7 @@ const toolbar = {
             { key: 'perpendicular', label: 'Perpendicular', onClick: () => api.interact.applySketchConstraint?.('perpendicular') },
             { key: 'equal', label: 'Equal', onClick: () => api.interact.applySketchConstraint?.('equal') },
             { key: 'collinear', label: 'Collinear', onClick: () => api.interact.applySketchConstraint?.('collinear') },
+            { key: 'dimension', label: 'Dimension', onClick: () => api.interact.applySketchConstraint?.('dimension') },
             { key: 'tangent', label: 'Tangent', onClick: () => api.interact.applySketchConstraint?.('tangent') },
             { key: 'midpoint', label: 'Midpoint', onClick: () => api.interact.applySketchConstraint?.('midpoint') },
             { key: 'coincident', label: 'Coincident', onClick: () => api.interact.applySketchConstraint?.('coincident') },
@@ -590,6 +591,7 @@ const toolbar = {
                     { key: 'K', desc: 'Perpendicular (exactly 2 selected lines)' },
                     { key: 'E', desc: 'Equal length (selected line pair/group)' },
                     { key: 'G', desc: 'Collinear (exactly 2 selected lines)' },
+                    { key: 'D', desc: 'Dimension (1 line or 2 points)' },
                     { key: 'T', desc: 'Tangent (line+arc/circle or arc/circle pair)' },
                     { key: 'C', desc: 'Coincident (exactly 2 selected points)' },
                     { key: 'F', desc: 'Fixed (selected point(s))' }

@@ -218,6 +218,31 @@ function toPlanegcsConstraint(c, pointById, lineById) {
             l_id: String(lId)
         };
     }
+    if (c.type === 'dimension') {
+        const value = Number(c?.data?.value);
+        if (!Number.isFinite(value) || value <= EPS) return null;
+        if (refs.length === 1 && lineById.has(refs[0])) {
+            const line = lineById.get(refs[0]);
+            if (!line) return null;
+            return {
+                id,
+                type: 'p2p_distance',
+                p1_id: String(line.p1_id),
+                p2_id: String(line.p2_id),
+                distance: value
+            };
+        }
+        if (refs.length >= 2 && pointById.has(refs[0]) && pointById.has(refs[1])) {
+            return {
+                id,
+                type: 'p2p_distance',
+                p1_id: String(refs[0]),
+                p2_id: String(refs[1]),
+                distance: value
+            };
+        }
+        return null;
+    }
 
     if (c.type === 'horizontal') {
         const lId = refs[0];

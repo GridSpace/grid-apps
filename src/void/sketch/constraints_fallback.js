@@ -76,6 +76,9 @@ function enforceWithFallback(sketch, opts = {}) {
                 case 'collinear':
                     iterChanged = applyCollinear(c, points, lines, fixed) || iterChanged;
                     break;
+                case 'dimension':
+                    iterChanged = applyDimension(c, points, lines, fixed) || iterChanged;
+                    break;
                 case 'tangent':
                     iterChanged = applyTangent(c, points, lines, arcs, fixed, dragged, draggedArcs, tangentAggressive) || iterChanged;
                     break;
@@ -602,6 +605,52 @@ function applyCollinear(constraint, points, lines, fixed) {
     const changedParallel = applyParallelLike(l1, l2, points, fixed);
     const changedPointOn = projectPointToLine(getLineEndpointId(l2, 'a'), l1, points, fixed);
     return changedParallel || changedPointOn;
+}
+
+function applyDimension(constraint, points, lines, fixed) {
+    const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
+    const target = Number(constraint?.data?.value);
+    if (!Number.isFinite(target) || target <= EPS) return false;
+
+    let p1Id = null;
+    let p2Id = null;
+    if (refs.length === 1 && lines.has(refs[0])) {
+        const line = lines.get(refs[0]);
+        p1Id = getLineEndpointId(line, 'a');
+        p2Id = getLineEndpointId(line, 'b');
+    } else if (refs.length >= 2 && points.has(refs[0]) && points.has(refs[1])) {
+        p1Id = refs[0];
+        p2Id = refs[1];
+    }
+    if (!p1Id || !p2Id) return false;
+    const a = points.get(p1Id);
+    const b = points.get(p2Id);
+    if (!a || !b) return false;
+    const fa = isFixed(p1Id, fixed);
+    const fb = isFixed(p2Id, fixed);
+    if (fa && fb) return false;
+
+    let vx = (b.x || 0) - (a.x || 0);
+    let vy = (b.y || 0) - (a.y || 0);
+    let len = Math.hypot(vx, vy);
+    if (len < EPS) {
+        vx = 1;
+        vy = 0;
+        len = 1;
+    }
+    const ux = vx / len;
+    const uy = vy / len;
+    if (fa) {
+        return setPoint(b, (a.x || 0) + ux * target, (a.y || 0) + uy * target);
+    }
+    if (fb) {
+        return setPoint(a, (b.x || 0) - ux * target, (b.y || 0) - uy * target);
+    }
+    const mx = ((a.x || 0) + (b.x || 0)) * 0.5;
+    const my = ((a.y || 0) + (b.y || 0)) * 0.5;
+    const hx = ux * target * 0.5;
+    const hy = uy * target * 0.5;
+    return setPoint(a, mx - hx, my - hy) || setPoint(b, mx + hx, my + hy);
 }
 
 function applyParallelLike(l1, l2, points, fixed) {

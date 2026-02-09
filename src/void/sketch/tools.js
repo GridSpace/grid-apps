@@ -186,6 +186,9 @@ function handleSketchKeyDown(event) {
     if (event.code === 'KeyG') {
         return this.applySketchConstraint('collinear');
     }
+    if (event.code === 'KeyD') {
+        return this.applySketchConstraint('dimension');
+    }
     if (event.code === 'KeyT') {
         return this.applySketchConstraint('tangent');
     }

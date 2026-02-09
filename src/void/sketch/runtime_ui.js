@@ -19,9 +19,21 @@ function constraintGlyphLabel(type) {
         tangent: 'T',
         equal: '=',
         midpoint: 'M',
+        dimension: 'D',
         polygon_pattern: 'PG'
     };
     return labels[type] || '?';
+}
+
+function formatDimensionLabel(constraint) {
+    const value = Number(constraint?.data?.value);
+    if (!Number.isFinite(value) || value <= 0) {
+        return 'D';
+    }
+    if (Math.abs(value) >= 1000 || Math.abs(value) < 0.01) {
+        return value.toExponential(2);
+    }
+    return Number(value.toFixed(3)).toString();
 }
 
 function applySketchState(rec, getApi, colors) {
@@ -384,7 +396,7 @@ function getConstraintAnchorLocal(feature, constraint) {
     const entities = Array.isArray(feature?.entities) ? feature.entities : [];
     const byId = new Map(entities.map(e => [e?.id, e]));
     const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
-    const lineTypes = new Set(['horizontal', 'vertical', 'horizontal_points', 'vertical_points', 'tangent', 'equal', 'collinear']);
+    const lineTypes = new Set(['horizontal', 'vertical', 'horizontal_points', 'vertical_points', 'tangent', 'equal', 'collinear', 'dimension']);
 
     if (lineTypes.has(constraint?.type)) {
         const line = refs.map(id => byId.get(id)).find(e => e?.type === 'line');
@@ -519,7 +531,9 @@ function updateConstraintGlyphs(getApi, opts = {}) {
             const pos = this.applyConstraintOffset(c, screen, i, items.length, opts);
             const glyph = document.createElement('button');
             glyph.className = 'sketch-constraint-glyph';
-            glyph.textContent = this.constraintGlyphLabel(c.type);
+            glyph.textContent = c?.type === 'dimension'
+                ? formatDimensionLabel(c)
+                : this.constraintGlyphLabel(c.type);
             glyph.style.left = `${Math.round(pos.x)}px`;
             glyph.style.top = `${Math.round(pos.y)}px`;
             if (selectedConstraintIds.has(c.id)) {

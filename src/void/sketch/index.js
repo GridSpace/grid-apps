@@ -28,6 +28,7 @@ import {
     applySketchConstraint,
     findArcWithEndpoints,
     convertArcToCircle,
+    findSketchConstraintInList,
     toggleSketchConstraintInList,
     normalizeConstraintRefs,
     makeSketchConstraintKey
@@ -250,6 +251,7 @@ export {
     setHoveredSketchConstraint,
     handleSketchKeyDown,
     applySketchConstraint,
+    findSketchConstraintInList,
     toggleSketchConstraintInList,
     normalizeConstraintRefs,
     makeSketchConstraintKey,

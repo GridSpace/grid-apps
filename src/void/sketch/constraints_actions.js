@@ -229,6 +229,49 @@ function applySketchConstraint(type) {
         } else {
             return false;
         }
+    } else if (type === 'dimension') {
+        let dimRefs = null;
+        if (lines.length === 1 && points.length === 0 && arcs.length === 0) {
+            dimRefs = [lines[0].id];
+        } else if (points.length === 2 && lines.length === 0 && arcs.length === 0) {
+            dimRefs = [points[0].id, points[1].id];
+        } else {
+            return false;
+        }
+        const normalized = this.normalizeConstraintRefs('dimension', dimRefs);
+        const current = this.findSketchConstraintInList?.(feature, 'dimension', normalized);
+        const currentValue = Number(current?.data?.value);
+        let measured = NaN;
+        if (normalized.length === 1) {
+            const line = entities.find(e => e?.id === normalized[0] && e?.type === 'line');
+            if (line) {
+                const aId = typeof line?.a === 'string' ? line.a : (typeof line?.p1_id === 'string' ? line.p1_id : null);
+                const bId = typeof line?.b === 'string' ? line.b : (typeof line?.p2_id === 'string' ? line.p2_id : null);
+                const a = entities.find(e => e?.id === aId && e?.type === 'point');
+                const b = entities.find(e => e?.id === bId && e?.type === 'point');
+                if (a && b) {
+                    measured = Math.hypot((b.x || 0) - (a.x || 0), (b.y || 0) - (a.y || 0));
+                }
+            }
+        } else if (normalized.length === 2) {
+            const a = entities.find(e => e?.id === normalized[0] && e?.type === 'point');
+            const b = entities.find(e => e?.id === normalized[1] && e?.type === 'point');
+            if (a && b) {
+                measured = Math.hypot((b.x || 0) - (a.x || 0), (b.y || 0) - (a.y || 0));
+            }
+        }
+        const seed = Number.isFinite(currentValue) && currentValue > 0
+            ? currentValue
+            : (Number.isFinite(measured) && measured > 0 ? measured : 10);
+        const input = window.prompt('Dimension value', String(Number(seed.toFixed(4))));
+        if (input === null) {
+            return false;
+        }
+        const value = Number(input);
+        if (!Number.isFinite(value) || value <= 0) {
+            return false;
+        }
+        specs.push({ type, refs: normalized, data: { value } });
     } else if (type === 'fixed') {
         for (const point of points) {
             specs.push({ type, refs: [point.id] });
@@ -245,7 +288,7 @@ function applySketchConstraint(type) {
     api.features.update(feature.id, sketch => {
         sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
         for (const spec of specs) {
-            if (this.toggleSketchConstraintInList(sketch, sketch.constraints, spec.type, spec.refs)) {
+            if (this.toggleSketchConstraintInList(sketch, sketch.constraints, spec.type, spec.refs, spec.data || null)) {
                 changed = true;
             }
         }
@@ -263,7 +306,8 @@ function applySketchConstraint(type) {
         payload: {
             field: 'constraints.apply',
             type,
-            refs: specs.map(spec => spec.refs)
+            refs: specs.map(spec => spec.refs),
+            data: specs.map(spec => spec.data || null)
         }
     });
 
@@ -278,11 +322,35 @@ function convertArcToCircle(feature, arcId, p1Id, p2Id) {
     return sketchCreate.convertArcToCircle.call(this, feature, arcId, p1Id, p2Id);
 }
 
-function toggleSketchConstraintInList(sketch, list, type, refs) {
+function findSketchConstraintInList(sketch, type, refs) {
+    const list = Array.isArray(sketch?.constraints) ? sketch.constraints : [];
+    const key = this.makeSketchConstraintKey(type, refs);
+    for (const existing of list) {
+        if (this.makeSketchConstraintKey(existing?.type, existing?.refs || []) === key) {
+            return existing;
+        }
+    }
+    return null;
+}
+
+function toggleSketchConstraintInList(sketch, list, type, refs, dataIn = null) {
     const key = this.makeSketchConstraintKey(type, refs);
     for (let i = 0; i < list.length; i++) {
         const existing = list[i];
         if (this.makeSketchConstraintKey(existing?.type, existing?.refs || []) === key) {
+            if (type === 'dimension') {
+                existing.data = existing.data || {};
+                const prev = Number(existing.data.value);
+                const next = Number(dataIn?.value);
+                if (!Number.isFinite(next) || next <= 0) {
+                    return false;
+                }
+                if (Math.abs(prev - next) < 1e-9) {
+                    return false;
+                }
+                existing.data.value = next;
+                return true;
+            }
             list.splice(i, 1);
             return true;
         }
@@ -299,13 +367,21 @@ function toggleSketchConstraintInList(sketch, list, type, refs) {
             }
         }
     }
-    list.push({
+    const rec = {
         id: this.newSketchEntityId('cst'),
         type,
         refs: this.normalizeConstraintRefs(type, refs),
         data,
         created_at: Date.now()
-    });
+    };
+    if (type === 'dimension') {
+        const value = Number(dataIn?.value);
+        if (!Number.isFinite(value) || value <= 0) {
+            return false;
+        }
+        rec.data = { ...rec.data, value };
+    }
+    list.push(rec);
     return true;
 }
 
@@ -326,6 +402,12 @@ function normalizeConstraintRefs(type, refs) {
     if (type === 'arc_center_coincident') {
         return out.slice(0, 2);
     }
+    if (type === 'dimension') {
+        if (out.length === 1) {
+            return out;
+        }
+        return out.slice(0, 2).sort();
+    }
     return out.sort();
 }
 
@@ -340,6 +422,7 @@ export {
     applySketchConstraint,
     findArcWithEndpoints,
     convertArcToCircle,
+    findSketchConstraintInList,
     toggleSketchConstraintInList,
     normalizeConstraintRefs,
     makeSketchConstraintKey
