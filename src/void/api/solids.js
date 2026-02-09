@@ -1183,7 +1183,7 @@ function createSolidsApi(getApi) {
             try {
                 let result = null;
                 let passReason = reason;
-                for (let pass = 0; pass < 2; pass++) {
+                for (let pass = 0; pass < 3; pass++) {
                     api.sketchRuntime?.sync?.();
                     const snapshot = buildRebuildSnapshot(api);
                     try {
@@ -1221,12 +1221,24 @@ function createSolidsApi(getApi) {
                         }
                     }
                     const rebound = this.refreshSketchFaceAttachments();
-                    if (rebound && pass === 0) {
+                    if (rebound || derivedChanged) {
+                        await api.document.save({
+                            kind: 'micro',
+                            opType: 'feature.auto.refresh',
+                            undoable: false,
+                            clearRedo: false,
+                            payload: {
+                                rebound: !!rebound,
+                                derived: !!derivedChanged
+                            }
+                        });
+                    }
+                    if (rebound && pass < 2) {
                         api.sketchRuntime?.sync?.();
                         passReason = 'sketch.face.rebind';
                         continue;
                     }
-                    if (derivedChanged && pass === 0) {
+                    if (derivedChanged && pass < 2) {
                         api.sketchRuntime?.sync?.();
                         passReason = 'sketch.derived.refresh';
                         continue;
