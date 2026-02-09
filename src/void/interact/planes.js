@@ -357,7 +357,17 @@ function selectSketchProfile(hit, event) {
 }
 
 function selectSolidFace(hit, event) {
-    const multi = !!(event?.ctrlKey || event?.metaKey);
+    const currentFeatureId = properties.currentFeatureId || null;
+    const currentFeature = currentFeatureId ? api.features.findById(currentFeatureId) : null;
+    const editingExtrude = currentFeature?.type === 'extrude' && currentFeature?.id === currentFeatureId;
+    const editingBoolean = currentFeature?.type === 'boolean' && currentFeature?.id === currentFeatureId;
+    const extrudeOp = String(currentFeature?.params?.operation || 'new');
+    const extrudeRole = properties.getExtrudePickRole?.() || 'profiles';
+    const editingExtrudeTargets = editingExtrude
+        && (extrudeOp === 'add' || extrudeOp === 'subtract')
+        && extrudeRole === 'targets';
+    const forceMulti = editingBoolean || editingExtrudeTargets;
+    const multi = forceMulti || !!(event?.ctrlKey || event?.metaKey);
     if (!multi) {
         for (const selectedPlane of this.selectedPlanes || []) {
             selectedPlane.setSelected(false);
@@ -372,29 +382,37 @@ function selectSolidFace(hit, event) {
     this.selectedSolidFaceKeys = new Set(selected);
     this.hoveredSolidFaceKey = hit.key;
     api.solids?.setHoveredFace?.(hit.key);
+    const hitSolidId = hit?.solidId || (() => {
+        const splitAt = String(hit?.key || '').lastIndexOf(':');
+        return splitAt > 0 ? String(hit.key).substring(0, splitAt) : null;
+    })();
     const selectedSolidIds = Array.from(new Set(selected.map(key => {
         const splitAt = String(key || '').lastIndexOf(':');
         return splitAt > 0 ? String(key).substring(0, splitAt) : null;
     }).filter(Boolean)));
 
-    const currentFeatureId = properties.currentFeatureId || null;
-    const currentFeature = currentFeatureId ? api.features.findById(currentFeatureId) : null;
-    const editingExtrude = currentFeature?.type === 'extrude' && currentFeature?.id === currentFeatureId;
-    const editingBoolean = currentFeature?.type === 'boolean' && currentFeature?.id === currentFeatureId;
-
     if (editingExtrude) {
         const operation = String(currentFeature?.params?.operation || 'new');
         const pickRole = properties.getExtrudePickRole?.() || 'profiles';
-        if ((operation === 'add' || operation === 'subtract') && pickRole === 'targets') {
+        if ((operation === 'add' || operation === 'subtract') && pickRole === 'targets' && hitSolidId) {
             const updated = api.features.update(currentFeature.id, feature => {
                 feature.input = feature.input || {};
-                feature.input.targets = selectedSolidIds.slice();
+                const current = Array.isArray(feature.input.targets) ? feature.input.targets.filter(Boolean) : [];
+                if (current.includes(hitSolidId)) {
+                    feature.input.targets = current.filter(id => id !== hitSolidId);
+                } else {
+                    feature.input.targets = [...current, hitSolidId];
+                }
             }, {
                 opType: 'feature.update',
-                payload: { field: 'targets', value: selectedSolidIds }
+                payload: { field: 'targets.toggle', solidId: hitSolidId }
             });
             if (updated) {
-                api.solids?.setSelected?.(selectedSolidIds);
+                const nextFeature = api.features.findById(currentFeature.id);
+                const nextTargets = Array.isArray(nextFeature?.input?.targets)
+                    ? nextFeature.input.targets.filter(Boolean)
+                    : [];
+                api.solids?.setSelected?.(nextTargets);
                 properties.onChanged?.();
             }
         }
@@ -405,17 +423,31 @@ function selectSolidFace(hit, event) {
         const legacy = Array.isArray(input.solids) ? input.solids.filter(Boolean) : [];
         let targets = Array.isArray(input.targets) ? input.targets.filter(Boolean) : legacy;
         let tools = Array.isArray(input.tools) ? input.tools.filter(Boolean) : [];
-        if (mode === 'subtract') {
-            if (role === 'tools') {
-                tools = selectedSolidIds.slice();
-                targets = targets.filter(id => !tools.includes(id));
+        if (hitSolidId) {
+            if (mode === 'subtract') {
+                if (role === 'tools') {
+                    if (tools.includes(hitSolidId)) {
+                        tools = tools.filter(id => id !== hitSolidId);
+                    } else {
+                        tools = [...tools, hitSolidId];
+                        targets = targets.filter(id => id !== hitSolidId);
+                    }
+                } else {
+                    if (targets.includes(hitSolidId)) {
+                        targets = targets.filter(id => id !== hitSolidId);
+                    } else {
+                        targets = [...targets, hitSolidId];
+                        tools = tools.filter(id => id !== hitSolidId);
+                    }
+                }
             } else {
-                targets = selectedSolidIds.slice();
-                tools = tools.filter(id => !targets.includes(id));
+                if (targets.includes(hitSolidId)) {
+                    targets = targets.filter(id => id !== hitSolidId);
+                } else {
+                    targets = [...targets, hitSolidId];
+                }
+                tools = [];
             }
-        } else {
-            targets = selectedSolidIds.slice();
-            tools = [];
         }
         const updated = api.features.update(currentFeature.id, feature => {
             feature.input = feature.input || {};
