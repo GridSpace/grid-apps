@@ -165,6 +165,22 @@ async function init() {
         }
     });
 
+    // Ensure scene redraw when app state changes from non-canvas UI interactions
+    // (tree toggles, toolbar actions, property edits, etc.).
+    window.addEventListener('void-state-change', () => {
+        space.update();
+    });
+
+    // Keep rendering responsive for keyboard-driven interactions even when
+    // the pointer is not over the canvas and idle-throttling is active.
+    window.addEventListener('keydown', event => {
+        const activeTag = document.activeElement?.tagName;
+        const editing = activeTag === 'INPUT' || activeTag === 'TEXTAREA' || document.activeElement?.isContentEditable;
+        if (!editing) {
+            space.update();
+        }
+    });
+
     // Restore last active document, or seed a new blank one.
     await api.document.restoreOrCreate();
     api.sketchRuntime.sync();

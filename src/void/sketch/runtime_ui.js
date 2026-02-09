@@ -837,6 +837,7 @@ function updateConstraintDrag(event, done = false, getApi) {
         }
     }
     this.updateConstraintGlyphs(getApi);
+    space.update();
     if (done) {
         if (drag.moved) {
             const api = getApi();
@@ -864,6 +865,7 @@ function updateConstraintDrag(event, done = false, getApi) {
             });
         }
         this._glyphDrag = null;
+        space.update();
     }
 }
 
