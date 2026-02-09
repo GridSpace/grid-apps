@@ -896,7 +896,7 @@ function createDerivedSketchLine(feature, candidate) {
             y: candidate.aLocal.y || 0,
             fixed: true,
             derived: true,
-            source: { ...(source || {}), point_kind: 'a' }
+            source: null
         };
         const p2 = {
             id: this.newSketchEntityId('point'),
@@ -905,7 +905,7 @@ function createDerivedSketchLine(feature, candidate) {
             y: candidate.bLocal.y || 0,
             fixed: true,
             derived: true,
-            source: { ...(source || {}), point_kind: 'b' }
+            source: null
         };
         const line = {
             id: this.newSketchEntityId('line'),
@@ -928,6 +928,129 @@ function createDerivedSketchLine(feature, candidate) {
     this.selectedSketchArcCenters?.clear?.();
     this.selectedSketchEntities.add(created.lineId);
     return created;
+}
+
+function deriveSelectionsAtomic(feature, selection = {}) {
+    if (!feature || feature.type !== 'sketch') return false;
+    const edges = Array.isArray(selection?.edges) ? selection.edges : [];
+    const points = Array.isArray(selection?.points) ? selection.points : [];
+    const faces = Array.isArray(selection?.faces) ? selection.faces : [];
+    const basis = this.getSketchBasis(feature);
+    if (!basis) return false;
+    let added = 0;
+    const createdIds = [];
+    api.features.update(feature.id, sketch => {
+        sketch.entities = Array.isArray(sketch.entities) ? sketch.entities : [];
+        const entities = sketch.entities;
+        const pointById = new Map(entities.filter(e => e?.id).map(e => [e.id, e]));
+        const ensurePoint = (local, source = null) => {
+            const existing = this.findPointByCoord(sketch, local, SKETCH_POINT_MERGE_EPS);
+            if (existing) {
+                existing.derived = true;
+                existing.fixed = true;
+                if (source) existing.source = source;
+                return existing;
+            }
+            const point = {
+                id: this.newSketchEntityId('point'),
+                type: 'point',
+                x: local.x || 0,
+                y: local.y || 0,
+                fixed: true,
+                derived: true,
+                source: source || null
+            };
+            entities.push(point);
+            pointById.set(point.id, point);
+            added++;
+            createdIds.push(point.id);
+            return point;
+        };
+        const hasDerivedLine = (source = null) => {
+            if (!source?.a || !source?.b) return null;
+            for (const line of entities) {
+                if (line?.type !== 'line' || !line?.derived || line?.source?.type !== 'solid-edge') continue;
+                const ls = line.source || {};
+                if (String(ls.solid_id || '') !== String(source.solid_id || '')) continue;
+                if (String(ls.solid_feature_id || '') !== String(source.solid_feature_id || '')) continue;
+                if (!ls?.a || !ls?.b) continue;
+                const sameA = Math.hypot((ls.a.x || 0) - (source.a.x || 0), (ls.a.y || 0) - (source.a.y || 0), (ls.a.z || 0) - (source.a.z || 0)) < 1e-6;
+                const sameB = Math.hypot((ls.b.x || 0) - (source.b.x || 0), (ls.b.y || 0) - (source.b.y || 0), (ls.b.z || 0) - (source.b.z || 0)) < 1e-6;
+                const swapA = Math.hypot((ls.a.x || 0) - (source.b.x || 0), (ls.a.y || 0) - (source.b.y || 0), (ls.a.z || 0) - (source.b.z || 0)) < 1e-6;
+                const swapB = Math.hypot((ls.b.x || 0) - (source.a.x || 0), (ls.b.y || 0) - (source.a.y || 0), (ls.b.z || 0) - (source.a.z || 0)) < 1e-6;
+                if ((sameA && sameB) || (swapA && swapB)) return line;
+            }
+            return null;
+        };
+        const ensureLine = (aLocal, bLocal, source = null) => {
+            if (!aLocal || !bLocal) return null;
+            if (source) {
+                const existing = hasDerivedLine(source);
+                if (existing) return existing;
+            }
+            // Endpoint points are often shared by multiple derived edges.
+            // Keep them unsourced so refresh uses line sources only.
+            const p1 = ensurePoint(aLocal, null);
+            const p2 = ensurePoint(bLocal, null);
+            if (!p1 || !p2 || p1.id === p2.id) return null;
+            const line = {
+                id: this.newSketchEntityId('line'),
+                type: 'line',
+                a: p1.id,
+                b: p2.id,
+                construction: false,
+                fixed: true,
+                derived: true,
+                source: source || null
+            };
+            entities.push(line);
+            added++;
+            createdIds.push(line.id);
+            return line;
+        };
+
+        for (const p of points) {
+            const local = p?.local || null;
+            if (!local) continue;
+            ensurePoint(local, p?.source || null);
+        }
+        for (const e of edges) {
+            ensureLine(e?.aLocal || null, e?.bLocal || null, e?.source || null);
+        }
+        for (const faceKey of faces) {
+            const segs = api.solids?.getFaceBoundarySegments?.(faceKey) || [];
+            const solidId = String(faceKey || '').split(':').slice(0, -1).join(':');
+            const faceIdRaw = String(faceKey || '').split(':').slice(-1)[0];
+            const faceId = Number(faceIdRaw);
+            for (const seg of segs) {
+                if (!seg?.a || !seg?.b) continue;
+                const aLocal = this.worldToSketchLocal(seg.a, basis);
+                const bLocal = this.worldToSketchLocal(seg.b, basis);
+                if (!aLocal || !bLocal) continue;
+                ensureLine(aLocal, bLocal, {
+                    type: 'solid-edge',
+                    solid_id: solidId,
+                    solid_feature_id: null,
+                    face_id: Number.isFinite(faceId) ? faceId : null,
+                    edge_index: null,
+                    a: { x: seg.a.x, y: seg.a.y, z: seg.a.z },
+                    b: { x: seg.b.x, y: seg.b.y, z: seg.b.z }
+                });
+            }
+        }
+    }, {
+        opType: 'feature.update',
+        payload: {
+            field: 'entities.add',
+            entity: 'derived-batch',
+            counts: { edges: edges.length, points: points.length, faces: faces.length }
+        }
+    });
+    if (!added) return false;
+    this.selectedSketchEntities.clear();
+    this.selectedSketchArcCenters?.clear?.();
+    for (const id of createdIds) this.selectedSketchEntities.add(id);
+    return true;
 }
 
 function refreshDerivedSketchGeometry(feature) {
@@ -1003,5 +1126,6 @@ export {
     convertArcToCircleInSketch,
     createDerivedSketchPoint,
     createDerivedSketchLine,
+    deriveSelectionsAtomic,
     refreshDerivedSketchGeometry
 };

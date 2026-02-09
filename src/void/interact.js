@@ -43,6 +43,7 @@ const interact = {
     selectedSketchConstraints: new Set(),
     hoveredSketchEntityId: null,
     hoveredDerivedCandidate: null,
+    selectedDerivedSelections: new Map(),
     hoveredSketchProfileKey: null,
     hoveredSolidFaceKey: null,
     hoveredSketchConstraintId: null,

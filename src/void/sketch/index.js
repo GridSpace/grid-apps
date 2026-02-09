@@ -108,6 +108,10 @@ function createDerivedSketchLine(feature, candidate) {
     return sketchCreate.createDerivedSketchLine.call(this, feature, candidate);
 }
 
+function deriveSelectionsAtomic(feature, selection) {
+    return sketchCreate.deriveSelectionsAtomic.call(this, feature, selection);
+}
+
 function refreshDerivedSketchGeometry(feature) {
     return sketchCreate.refreshDerivedSketchGeometry.call(this, feature);
 }
@@ -369,6 +373,7 @@ export {
     createSketchLine,
     createDerivedSketchPoint,
     createDerivedSketchLine,
+    deriveSelectionsAtomic,
     refreshDerivedSketchGeometry,
     createSketchPolygonFromSelectedCircle,
     deleteSelectedSketchEntities,

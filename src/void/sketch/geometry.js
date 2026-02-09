@@ -203,6 +203,8 @@ function resolveDerivedEdgeCandidate(event, intersections, feature) {
     const faceKey = faceHit?.key || null;
     const frontSolidId = faceHit?.solidId || null;
     if (!faceKey || !frontSolidId) return null;
+    const faceIdRaw = String(faceKey).split(':').slice(-1)[0];
+    const faceId = Number(faceIdRaw);
     const facePoint = faceHit?.intersection?.point || null;
     const toSketchScreen = local => {
         const world = this.sketchLocalToWorld(local, basis);
@@ -274,6 +276,7 @@ function resolveDerivedEdgeCandidate(event, intersections, feature) {
         solidId: best.solidId,
         solidFeatureId: solid?.source?.feature_id || null,
         index: best.segIndex,
+        segDist: bestSegDist,
         aLocal: best.aLocal,
         bLocal: best.bLocal,
         midLocal: best.midLocal,
@@ -285,6 +288,7 @@ function resolveDerivedEdgeCandidate(event, intersections, feature) {
             type: 'solid-edge',
             solid_id: best.solidId,
             solid_feature_id: solid?.source?.feature_id || null,
+            face_id: Number.isFinite(faceId) ? faceId : null,
             edge_index: best.segIndex,
             a: { x: best.a.x, y: best.a.y, z: best.a.z },
             b: { x: best.b.x, y: best.b.y, z: best.b.z }

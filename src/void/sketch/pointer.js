@@ -281,16 +281,50 @@ function handleSketchMouseUp(event, intersections) {
         } else {
             const derived = this.hoveredDerivedCandidate || this.resolveDerivedEdgeCandidate(event, intersections, feature);
             if (derived?.aLocal && derived?.bLocal) {
-                const localPoint = derived?.hoverPoint?.local || derived?.midLocal || null;
-                if (localPoint) {
-                    this.createDerivedSketchPoint(feature, localPoint, {
-                        ...(derived.source || {}),
-                        point_kind: derived?.hoverPoint?.kind || 'mid'
-                    });
-                } else {
-                    this.createDerivedSketchLine(feature, derived);
+                const multi = !!(event?.ctrlKey || event?.metaKey || event?.shiftKey);
+                if (!multi) {
+                    this.selectedDerivedSelections?.clear?.();
+                    this.selectedSolidFaceKeys?.clear?.();
+                    api.solids?.clearFaceSelection?.();
                 }
-                this.hoveredDerivedCandidate = null;
+                const pointKind = derived?.hoverPoint?.kind || null;
+                if (pointKind && derived?.hoverPoint?.local) {
+                    const key = `point:${derived?.solidId || ''}:${derived?.index ?? -1}:${pointKind}`;
+                    if (this.selectedDerivedSelections?.has?.(key)) {
+                        this.selectedDerivedSelections.delete(key);
+                    } else {
+                        this.selectedDerivedSelections?.set?.(key, {
+                            type: 'point',
+                            local: derived.hoverPoint.local,
+                            source: {
+                                ...(derived.source || {}),
+                                point_kind: pointKind || 'mid'
+                            }
+                        });
+                    }
+                } else {
+                    const key = `edge:${derived?.solidId || ''}:${derived?.index ?? -1}`;
+                    if (this.selectedDerivedSelections?.has?.(key)) {
+                        this.selectedDerivedSelections.delete(key);
+                    } else {
+                        this.selectedDerivedSelections?.set?.(key, {
+                            type: 'edge',
+                            aLocal: derived.aLocal,
+                            bLocal: derived.bLocal,
+                            source: derived.source || null
+                        });
+                    }
+                }
+                this.updateSketchInteractionVisuals();
+                return true;
+            }
+            if (this.hoveredSolidFaceKey) {
+                const multi = !!(event?.ctrlKey || event?.metaKey || event?.shiftKey);
+                if (!multi) {
+                    this.selectedDerivedSelections?.clear?.();
+                }
+                const selected = api.solids?.toggleSelectedFace?.(this.hoveredSolidFaceKey, multi) || [];
+                this.selectedSolidFaceKeys = new Set(selected);
                 this.updateSketchInteractionVisuals();
                 return true;
             }
@@ -301,6 +335,9 @@ function handleSketchMouseUp(event, intersections) {
             }
             this.selectedSketchEntities.clear();
             this.selectedSketchArcCenters?.clear?.();
+            this.selectedDerivedSelections?.clear?.();
+            this.selectedSolidFaceKeys?.clear?.();
+            api.solids?.clearFaceSelection?.();
         }
         this.updateSketchInteractionVisuals();
         return true;

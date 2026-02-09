@@ -103,6 +103,9 @@ function clearSketchSelection() {
     api.sketchRuntime?.setHoveredProfile?.(null);
     this.hoveredSketchEntityId = null;
     this.hoveredDerivedCandidate = null;
+    this.selectedDerivedSelections?.clear?.();
+    this.selectedSolidFaceKeys?.clear?.();
+    api.solids?.clearFaceSelection?.();
     this.hoveredSketchConstraintId = null;
     this.sketchLinePreview = null;
     this.sketchArcPreview = null;
@@ -249,39 +252,47 @@ function setHoveredSketchConstraint(constraintId) {
 
 function useHoveredDerivedEdge() {
     const feature = this.getEditingSketchFeature();
-    const candidate = this.hoveredDerivedCandidate || null;
     if (!feature) return false;
-    if (!candidate?.aLocal || !candidate?.bLocal) {
-        const faceKey = this.hoveredSolidFaceKey || null;
-        const basis = this.getSketchBasis(feature);
-        const segs = faceKey ? (api.solids?.getFaceBoundarySegments?.(faceKey) || []) : [];
-        if (!basis || !segs.length) return false;
-        let createdAny = false;
-        for (const seg of segs) {
-            if (!seg?.a || !seg?.b) continue;
-            const aLocal = this.worldToSketchLocal(seg.a, basis);
-            const bLocal = this.worldToSketchLocal(seg.b, basis);
-            if (!aLocal || !bLocal) continue;
-            const created = this.createDerivedSketchLine(feature, {
-                aLocal,
-                bLocal,
-                source: {
-                    type: 'solid-edge',
-                    solid_id: String(faceKey).split(':').slice(0, -1).join(':'),
-                    solid_feature_id: null,
-                    edge_index: null,
-                    a: { x: seg.a.x, y: seg.a.y, z: seg.a.z },
-                    b: { x: seg.b.x, y: seg.b.y, z: seg.b.z }
-                }
-            });
-            if (created) createdAny = true;
-        }
-        if (!createdAny) return false;
-        this.updateSketchInteractionVisuals();
-        return true;
+    const selectionMap = this.selectedDerivedSelections instanceof Map
+        ? this.selectedDerivedSelections
+        : new Map();
+    const selectedEdges = [];
+    const selectedPoints = [];
+    for (const sel of selectionMap.values()) {
+        if (sel?.type === 'edge') selectedEdges.push(sel);
+        if (sel?.type === 'point') selectedPoints.push(sel);
     }
-    const created = this.createDerivedSketchLine(feature, candidate);
+    const selectedFaces = Array.from(this.selectedSolidFaceKeys || []);
+    const hovered = this.hoveredDerivedCandidate || null;
+    if (!selectedEdges.length && !selectedPoints.length && !selectedFaces.length) {
+        if (hovered?.aLocal && hovered?.bLocal) {
+            if (hovered?.hoverPoint?.local && (hovered?.hoverPoint?.kind === 'a' || hovered?.hoverPoint?.kind === 'b' || hovered?.hoverPoint?.kind === 'mid')) {
+                selectedPoints.push({
+                    type: 'point',
+                    local: hovered.hoverPoint.local,
+                    source: { ...(hovered.source || {}), point_kind: hovered.hoverPoint.kind || 'mid' }
+                });
+            } else {
+                selectedEdges.push({
+                    type: 'edge',
+                    aLocal: hovered.aLocal,
+                    bLocal: hovered.bLocal,
+                    source: hovered.source || null
+                });
+            }
+        } else if (this.hoveredSolidFaceKey) {
+            selectedFaces.push(this.hoveredSolidFaceKey);
+        }
+    }
+    const created = this.deriveSelectionsAtomic(feature, {
+        edges: selectedEdges,
+        points: selectedPoints,
+        faces: selectedFaces
+    });
     if (!created) return false;
+    this.selectedDerivedSelections?.clear?.();
+    this.selectedSolidFaceKeys?.clear?.();
+    api.solids?.clearFaceSelection?.();
     this.updateSketchInteractionVisuals();
     return true;
 }

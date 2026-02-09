@@ -691,12 +691,37 @@ function createSolidsApi(getApi) {
             if (source?.type !== 'solid-edge') return null;
             const targetSolidId = String(source?.solid_id || '');
             const targetFeatureId = String(source?.solid_feature_id || '');
+            const sourceFaceId = Number(source?.face_id);
             const sa = source?.a;
             const sb = source?.b;
             if (!sa || !sb) return null;
             const srcA = new THREE.Vector3(Number(sa.x || 0), Number(sa.y || 0), Number(sa.z || 0));
             const srcB = new THREE.Vector3(Number(sb.x || 0), Number(sb.y || 0), Number(sb.z || 0));
             const solids = this.list() || [];
+            const scoreSegment = (aWorld, bWorld) => {
+                const d1 = aWorld.distanceTo(srcA) + bWorld.distanceTo(srcB);
+                const d2 = aWorld.distanceTo(srcB) + bWorld.distanceTo(srcA);
+                return Math.min(d1, d2);
+            };
+            if (targetSolidId && Number.isFinite(sourceFaceId)) {
+                const faceKey = `${targetSolidId}:${sourceFaceId}`;
+                const segs = this.getFaceBoundarySegments(faceKey) || [];
+                let bestFace = null;
+                let bestFaceScore = Infinity;
+                for (let i = 0; i < segs.length; i++) {
+                    const seg = segs[i];
+                    if (!seg?.a || !seg?.b) continue;
+                    const score = scoreSegment(seg.a, seg.b);
+                    if (score < bestFaceScore) {
+                        bestFaceScore = score;
+                        bestFace = { solidId: targetSolidId, index: i, aWorld: seg.a, bWorld: seg.b };
+                    }
+                }
+                if (bestFace) {
+                    bestFace.midWorld = bestFace.aWorld.clone().add(bestFace.bWorld).multiplyScalar(0.5);
+                    return bestFace;
+                }
+            }
             const searchSets = [];
             if (targetSolidId) {
                 searchSets.push([targetSolidId]);
@@ -731,9 +756,7 @@ function createSolidsApi(getApi) {
                     for (let i = 0; i < segCount; i++) {
                         const seg = this.getEdgeSegmentWorld(edgesObj, i);
                         if (!seg) continue;
-                        const d1 = seg.a.distanceTo(srcA) + seg.b.distanceTo(srcB);
-                        const d2 = seg.a.distanceTo(srcB) + seg.b.distanceTo(srcA);
-                        const score = Math.min(d1, d2);
+                        const score = scoreSegment(seg.a, seg.b);
                         if (score < bestScore) {
                             bestScore = score;
                             best = { solidId, index: i, aWorld: seg.a, bWorld: seg.b };
