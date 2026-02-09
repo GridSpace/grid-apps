@@ -160,13 +160,14 @@ function updateSketchInteractionVisuals() {
         && !this.sketchArcStart
         && !this.sketchCircleCenter
         && !this.sketchRectStart;
-    const externalLine = canShowExternalPreview && external?.aLocal && external?.bLocal
-        ? { a: external.aLocal, b: external.bLocal, forceHover: true }
-        : null;
-    const externalStart = canShowExternalPreview && external?.aLocal ? external.aLocal : null;
-    const externalEnd = canShowExternalPreview && external?.bLocal ? external.bLocal : null;
-    const externalMid = canShowExternalPreview ? (external?.hoverPoint?.local || external?.midLocal || null) : null;
-    const projectedFaceSegments = this.hoveredSolidFaceKey
+    const externalPointLocal = canShowExternalPreview ? (external?.hoverPoint?.local || null) : null;
+    const showExternalPoint = !!externalPointLocal;
+    const showExternalLine = canShowExternalPreview && !!external?.aLocal && !!external?.bLocal && !showExternalPoint;
+    const externalLine = showExternalLine ? { a: external.aLocal, b: external.bLocal, forceHover: true } : null;
+    const externalStart = showExternalPoint ? externalPointLocal : null;
+    const externalEnd = null;
+    const externalMid = null;
+    const projectedFaceSegments = !showExternalPoint && !showExternalLine && this.hoveredSolidFaceKey
         ? this.projectFaceBoundaryToSketch(feature, this.hoveredSolidFaceKey)
         : null;
     api.sketchRuntime?.setEntityInteraction(feature.id, {

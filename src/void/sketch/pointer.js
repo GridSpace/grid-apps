@@ -211,6 +211,13 @@ function handleSketchHover(event, intersections) {
 
     const hit = this.resolveSketchHit(event, intersections, feature);
     const derived = this.resolveDerivedEdgeCandidate(event, intersections, feature);
+    if (this.hoveredSolidFaceKey) {
+        if (derived) {
+            api.solids?.setHoveredFace?.(null);
+        } else {
+            api.solids?.setHoveredFace?.(this.hoveredSolidFaceKey);
+        }
+    }
     const prevDerived = this.hoveredDerivedCandidate || null;
     this.hoveredDerivedCandidate = derived || null;
     const derivedChanged = (!!prevDerived) !== (!!derived)
