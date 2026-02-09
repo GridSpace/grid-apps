@@ -220,7 +220,7 @@ src/
 
 **Phase 3: Feature History Scaffold (in progress)**
 - `extrude` can now be created as a history feature from a selected sketch (tree + document/history plumbing)
-- 3D solid generation/rebuild for extrude is still pending (Manifold integration next)
+- 3D solid generation/rebuild is active via Manifold replay (extrude + boolean paths)
 - timeline/reorder/suppress semantics are active at the feature-history layer before full BREP ops
 
 **Solid Pipeline (new scaffold)**
@@ -229,7 +229,17 @@ src/
   - `src/void/solid/kernel.js` (direct Manifold JS initialization/extrude entrypoint)
   - `src/void/solid/rebuild.js` (feature replay -> generated solids artifacts)
   - `src/void/solid/provenance.js` (seed provenance model for feature/profile->body mapping)
+  - `src/void/worker/solids_worker.js` (phase-1 compute worker for rebuild replay)
 - Solids tree should read generated artifacts (`doc.generated.solids`) rather than mirroring feature rows.
+- Phase-1 worker behavior (current):
+  - main thread builds a compact rebuild snapshot (`builtFeatures`, sketch planes, profile loops)
+  - worker runs feature replay + manifold ops off-main-thread
+  - mesh payload returns as transferable typed arrays (zero-copy `ArrayBuffer` transfer)
+  - if worker fails, runtime falls back to existing main-thread rebuild path
+- Path forward:
+  - phase-2: incremental suffix replay + cancellation preemption
+  - phase-3: cached per-feature artifacts keyed by input hash
+  - phase-4: worker pool for independent heavy ops (exports/tessellation), keeping deterministic rebuild order
 
 **Sketch MVP Contract (checkpointed, 2026-02-06)**
 - Primitive rollout:
@@ -539,7 +549,7 @@ space.mouse.onDrag((delta) => {
 ### 4. Worker/Threading Pattern
 - **Kiri**: Multi-threaded minion pool for slicing (up to 4 workers)
 - **Mesh**: Single worker for heavy 3D operations
-- **Void**: Single worker for constraint solving (planned)
+- **Void**: Single worker for solid rebuild replay (active), constraint solve still on main thread
 
 ### 5. API Surface Pattern
 Each app exports main `api` object:
@@ -572,7 +582,7 @@ api.db.data.get(id)
 | **Data Model** | Widget-based slicing | Triangle mesh + sketches | Early document/features scaffold + datum planes |
 | **UI Pattern** | Tabs + device/process panels | Tree + mode buttons | Toolbar + feature tree scaffold |
 | **3D System** | space.js + platform | space.js + platform | space.js + datum planes |
-| **Calculation** | Web Workers (minion pool) | Web Worker | Single worker (planned) |
+| **Calculation** | Web Workers (minion pool) | Web Worker | Single rebuild worker (active) |
 | **Modes** | CAM/FDM/LASER/SLA/WEDM/WJET | Object/Tool/Face/Surface/Edge/Sketch | Sketch mode (phase 2) |
 | **Mouse** | Configurable bindings | Standard bindings | Onshape-style bindings |
 | **Database** | Profiles, settings, history | Models, groups, sketches | Documents + versions revision history |

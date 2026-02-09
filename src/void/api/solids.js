@@ -7,6 +7,68 @@ import { rebuildGeneratedSolids } from '../solid/rebuild.js';
 const SOLID_CREASE_ANGLE_DEG = 30;
 
 function createSolidsApi(getApi) {
+    function profileLoopsFromRuntime(api, profileTarget) {
+        const sketchId = profileTarget?.sketchId || null;
+        const profileId = profileTarget?.profileId || null;
+        if (!sketchId || !profileId) return null;
+        if (Array.isArray(profileTarget?.loops) && profileTarget.loops.length) {
+            const loops = profileTarget.loops
+                .filter(loop => Array.isArray(loop) && loop.length >= 3)
+                .map(loop => loop.map(p => ({ x: p?.x || 0, y: p?.y || 0 })));
+            if (loops.length) return loops;
+        }
+        const rec = api.sketchRuntime?.getRecord?.(sketchId);
+        const view = rec?.entityViews?.get?.(profileId);
+        const loops = view?.object?.userData?.sketchProfileLoops || view?.entity?.loops || null;
+        if (Array.isArray(loops) && loops.length) {
+            const out = loops.filter(loop => Array.isArray(loop) && loop.length >= 3);
+            return out.length ? out : null;
+        }
+        const loop = view?.object?.userData?.sketchProfileLoop || view?.entity?.loop || null;
+        return Array.isArray(loop) && loop.length >= 3 ? [loop] : null;
+    }
+
+    function buildRebuildSnapshot(api) {
+        const builtFeatures = api.features.listBuilt();
+        const sketchPlanes = {};
+        const profileLoops = {};
+        for (const feature of (api.features.list() || [])) {
+            if (feature?.type === 'sketch' && feature?.id) {
+                sketchPlanes[feature.id] = feature.plane || {};
+            }
+        }
+        for (const feature of builtFeatures) {
+            if (feature?.type !== 'extrude') continue;
+            const profiles = Array.isArray(feature?.input?.profiles) ? feature.input.profiles : [];
+            for (const profileTarget of profiles) {
+                const sketchId = profileTarget?.sketchId || null;
+                const profileId = profileTarget?.profileId || null;
+                if (!sketchId || !profileId) continue;
+                const loops = profileLoopsFromRuntime(api, profileTarget);
+                if (!loops?.length) continue;
+                profileLoops[`${sketchId}:${profileId}`] = loops;
+            }
+        }
+        return { builtFeatures, sketchPlanes, profileLoops };
+    }
+
+    function meshCacheFromWorkerPayload(payloadMeshes = []) {
+        const map = new Map();
+        for (const rec of payloadMeshes || []) {
+            const id = rec?.id;
+            if (!id) continue;
+            const positions = rec.positions instanceof Float32Array
+                ? rec.positions
+                : new Float32Array(rec.positions || []);
+            const indices = rec.indices instanceof Uint32Array
+                ? rec.indices
+                : new Uint32Array(rec.indices || []);
+            if (!positions.length || !indices.length) continue;
+            map.set(id, { positions, indices });
+        }
+        return map;
+    }
+
     function flattenMeshToTriangleVertexArray(meshData) {
         const positions = meshData?.positions;
         const indices = meshData?.indices;
@@ -272,6 +334,11 @@ function createSolidsApi(getApi) {
         _selectedFaceKeys: new Set(),
         _hoveredFaceKey: null,
         _faceMats: null,
+        _worker: null,
+        _workerReady: false,
+        _workerReqId: 0,
+        _workerPending: new Map(),
+        _rebuildSeq: 0,
 
         async init() {
             await ensureKernel();
@@ -292,6 +359,51 @@ function createSolidsApi(getApi) {
             if (!this._faceMats) {
                 this._faceMats = makeFaceMaterials();
             }
+            this.ensureWorker();
+        },
+
+        ensureWorker() {
+            if (this._worker) return this._worker;
+            try {
+                const worker = new Worker(new URL('../worker/solids_worker.js', import.meta.url), { type: 'module' });
+                worker.onmessage = (event) => {
+                    const msg = event?.data || {};
+                    const req = this._workerPending.get(msg?.id);
+                    if (!req) return;
+                    this._workerPending.delete(msg.id);
+                    if (msg?.ok) req.resolve(msg);
+                    else req.reject(new Error(msg?.error || 'worker rebuild failed'));
+                };
+                worker.onerror = (error) => {
+                    for (const req of this._workerPending.values()) {
+                        req.reject(error instanceof Error ? error : new Error(String(error)));
+                    }
+                    this._workerPending.clear();
+                    this._worker = null;
+                    this._workerReady = false;
+                };
+                this._worker = worker;
+                this._workerReady = true;
+            } catch (error) {
+                this._worker = null;
+                this._workerReady = false;
+            }
+            return this._worker;
+        },
+
+        requestWorkerRebuild(snapshot, reason = 'worker') {
+            const worker = this.ensureWorker();
+            if (!worker) return Promise.reject(new Error('worker unavailable'));
+            const id = ++this._workerReqId;
+            return new Promise((resolve, reject) => {
+                this._workerPending.set(id, { resolve, reject });
+                worker.postMessage({
+                    id,
+                    type: 'rebuild',
+                    reason,
+                    snapshot
+                });
+            });
         },
 
         attach(world) {
@@ -571,8 +683,35 @@ function createSolidsApi(getApi) {
                 return this.list();
             }
             this._rebuilding = true;
+            const seq = ++this._rebuildSeq;
             try {
-                const result = await rebuildGeneratedSolids(api, { reason });
+                const snapshot = buildRebuildSnapshot(api);
+                let result;
+                try {
+                    const workerReply = await this.requestWorkerRebuild(snapshot, reason);
+                    result = {
+                        solids: workerReply?.solids || [],
+                        meshCache: meshCacheFromWorkerPayload(workerReply?.meshes || [])
+                    };
+                } catch (error) {
+                    console.warn('void.solids: worker rebuild failed, using main-thread fallback', error);
+                    result = await rebuildGeneratedSolids(api, { reason, persist: false });
+                }
+                if (seq !== this._rebuildSeq) {
+                    return this.list();
+                }
+                api.document.current.generated = api.document.current.generated || {};
+                api.document.current.generated.solids = result?.solids || [];
+                await api.document.save({
+                    kind: 'micro',
+                    opType: 'solid.rebuild',
+                    undoable: false,
+                    clearRedo: false,
+                    payload: {
+                        reason: reason || 'rebuild',
+                        solids: api.document.current.generated.solids.length
+                    }
+                });
                 this._meshCache = result?.meshCache || new Map();
                 this.syncRuntime();
                 return result?.solids || this.list();
