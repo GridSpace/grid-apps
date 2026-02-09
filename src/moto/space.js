@@ -973,6 +973,9 @@ function intersect(objects, recurse) {
  ******************************************************************* */
 
 function onMouseDown(event) {
+    if (event?.target?.closest?.('.props-panel')) {
+        return;
+    }
     updateLastAction();
     if (event.target === renderer.domElement) {
         DOC.activeElement.blur();
@@ -1027,6 +1030,9 @@ function onMouseDown(event) {
 }
 
 function onMouseUp(event) {
+    if (event?.target?.closest?.('.props-panel')) {
+        return;
+    }
     updateLastAction();
     if (!viewControl.enabled) {
         viewControl.enabled = true;
@@ -1076,6 +1082,9 @@ function onMouseUp(event) {
 }
 
 function onMouseMove(event) {
+    if (event?.target?.closest?.('.props-panel')) {
+        return;
+    }
     updateLastAction();
     let int, vis, dragTrack;
 
