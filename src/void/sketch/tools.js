@@ -250,8 +250,35 @@ function setHoveredSketchConstraint(constraintId) {
 function useHoveredDerivedEdge() {
     const feature = this.getEditingSketchFeature();
     const candidate = this.hoveredDerivedCandidate || null;
-    if (!feature || !candidate?.aLocal || !candidate?.bLocal) {
-        return false;
+    if (!feature) return false;
+    if (!candidate?.aLocal || !candidate?.bLocal) {
+        const faceKey = this.hoveredSolidFaceKey || null;
+        const basis = this.getSketchBasis(feature);
+        const segs = faceKey ? (api.solids?.getFaceBoundarySegments?.(faceKey) || []) : [];
+        if (!basis || !segs.length) return false;
+        let createdAny = false;
+        for (const seg of segs) {
+            if (!seg?.a || !seg?.b) continue;
+            const aLocal = this.worldToSketchLocal(seg.a, basis);
+            const bLocal = this.worldToSketchLocal(seg.b, basis);
+            if (!aLocal || !bLocal) continue;
+            const created = this.createDerivedSketchLine(feature, {
+                aLocal,
+                bLocal,
+                source: {
+                    type: 'solid-edge',
+                    solid_id: String(faceKey).split(':').slice(0, -1).join(':'),
+                    solid_feature_id: null,
+                    edge_index: null,
+                    a: { x: seg.a.x, y: seg.a.y, z: seg.a.z },
+                    b: { x: seg.b.x, y: seg.b.y, z: seg.b.z }
+                }
+            });
+            if (created) createdAny = true;
+        }
+        if (!createdAny) return false;
+        this.updateSketchInteractionVisuals();
+        return true;
     }
     const created = this.createDerivedSketchLine(feature, candidate);
     if (!created) return false;

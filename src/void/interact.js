@@ -46,8 +46,6 @@ const interact = {
     hoveredSketchProfileKey: null,
     hoveredSolidFaceKey: null,
     hoveredSketchConstraintId: null,
-    _debugDerivedHoverKey: null,
-    _debugDerivedRenderKey: null,
     sketchPointerDown: null,
     sketchDrag: null,
     sketchLineStart: null,

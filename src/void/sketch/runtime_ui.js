@@ -244,6 +244,8 @@ function applySketchState(rec, getApi, colors) {
     this.applyPlaneStyle(rec.plane, mode, colors);
     this.applyEntityStyle(rec, mode, colors);
     this.applyPreviewLine(rec, mode, editing, colors);
+    this.applyPreviewFaceSegments(rec, mode, editing, colors);
+    this.applyPreviewExternalWorld(rec, mode, editing, colors);
     this.applyPreviewArc(rec, mode, editing, colors);
     this.applyPreviewRect(rec, mode, editing, colors);
     this.applyPreviewStart(rec, mode, editing, colors);
@@ -398,6 +400,70 @@ function applyPreviewLine(rec, mode, editing, colors) {
     rec.previewLine.material.depthTest = false;
     rec.previewLine.visible = true;
     rec.previewLine.renderOrder = 60;
+}
+
+function applyPreviewExternalWorld(rec, mode, editing, colors) {
+    const line = rec.previewExternalWorldLine;
+    const point = rec.previewExternalWorldPoint;
+    const srcLine = rec.interaction?.previewExternalWorldLine;
+    const srcPoint = rec.interaction?.previewExternalWorldPoint;
+    const forceHover = !!(srcLine?.forceHover || srcPoint?.forceHover);
+    if (!(editing || forceHover)) {
+        if (line) line.visible = false;
+        if (point) point.visible = false;
+        return;
+    }
+    if (line && srcLine?.a && srcLine?.b) {
+        const a = new THREE.Vector3(srcLine.a.x || 0, srcLine.a.y || 0, srcLine.a.z || 0);
+        const b = new THREE.Vector3(srcLine.b.x || 0, srcLine.b.y || 0, srcLine.b.z || 0);
+        line.geometry.dispose();
+        line.geometry = new THREE.BufferGeometry().setFromPoints([a, b]);
+        line.material.color.setHex(colors.linesDerivedActual || 0x39d7ff);
+        line.material.depthTest = false;
+        line.visible = true;
+        line.renderOrder = 60;
+    } else if (line) {
+        line.visible = false;
+    }
+    if (point && srcPoint) {
+        point.position.set(srcPoint.x || 0, srcPoint.y || 0, srcPoint.z || 0);
+        const parts = point.userData?._markerParts || {};
+        if (parts.core?.material?.color) parts.core.material.color.setHex(colors.pointsDerivedActual || 0x39d7ff);
+        if (parts.ringWhite?.material?.color) parts.ringWhite.material.color.setHex(0xffffff);
+        if (parts.ringHighlight) parts.ringHighlight.visible = false;
+        point.visible = true;
+        point.renderOrder = 60;
+    } else if (point) {
+        point.visible = false;
+    }
+}
+
+function applyPreviewFaceSegments(rec, mode, editing, colors) {
+    if (!rec.previewFaceSegments) return;
+    const segs = rec.interaction?.previewFaceSegments || null;
+    if (!editing || !Array.isArray(segs) || !segs.length) {
+        rec.previewFaceSegments.visible = false;
+        return;
+    }
+    const verts = [];
+    for (const seg of segs) {
+        const a = seg?.a;
+        const b = seg?.b;
+        if (!a || !b) continue;
+        verts.push(a.x || 0, a.y || 0, 0.002);
+        verts.push(b.x || 0, b.y || 0, 0.002);
+    }
+    if (!verts.length) {
+        rec.previewFaceSegments.visible = false;
+        return;
+    }
+    rec.previewFaceSegments.geometry.dispose();
+    rec.previewFaceSegments.geometry = new THREE.BufferGeometry();
+    rec.previewFaceSegments.geometry.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+    rec.previewFaceSegments.material.color.setHex(colors.linesProjectedFace || 0x5a9fd4);
+    rec.previewFaceSegments.material.depthTest = false;
+    rec.previewFaceSegments.renderOrder = 55;
+    rec.previewFaceSegments.visible = true;
 }
 
 function applyPreviewStart(rec, mode, editing, colors) {
@@ -638,6 +704,7 @@ function updatePointScreenScales(opts) {
         if (rec.previewStart) updateScale(rec.previewStart);
         if (rec.previewEnd) updateScale(rec.previewEnd);
         if (rec.previewArcCenter) updateScale(rec.previewArcCenter);
+        if (rec.previewExternalWorldPoint) updateScale(rec.previewExternalWorldPoint);
     }
 }
 
@@ -948,6 +1015,8 @@ export {
     applyEntityStyle,
     getConstraintHoverHighlight,
     applyPreviewLine,
+    applyPreviewFaceSegments,
+    applyPreviewExternalWorld,
     applyPreviewStart,
     applyPreviewEnd,
     applyPreviewArc,

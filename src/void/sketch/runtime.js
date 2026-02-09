@@ -17,10 +17,13 @@ const SKETCH_COLORS = {
     linesHover: 0xff9933,
     linesEdit: 0xffffff,
     linesSelected: 0x9ec7ff,
+    linesProjectedFace: 0x5a9fd4,
+    linesDerivedActual: 0x39d7ff,
     pointsGray: 0x8f8f8f,
     pointsHover: 0xff9933,
     pointsEdit: 0xffffff,
     pointsSelected: 0x9ec7ff,
+    pointsDerivedActual: 0x39d7ff,
     labelDefault: '#8f8f8f',
     labelHover: '#ff9933',
     labelEdit: '#a7cbff'
@@ -194,6 +197,37 @@ function createSketchRuntimeApi(getApi) {
             previewRect.visible = false;
             previewRect.renderOrder = 9;
             entitiesGroup.add(previewRect);
+            const previewFaceSegments = new THREE.LineSegments(
+                new THREE.BufferGeometry(),
+                new THREE.LineBasicMaterial({
+                    color: SKETCH_COLORS.linesHover,
+                    transparent: true,
+                    opacity: 0.85,
+                    depthWrite: false
+                })
+            );
+            previewFaceSegments.visible = false;
+            previewFaceSegments.renderOrder = 55;
+            entitiesGroup.add(previewFaceSegments);
+            const previewExternalWorldLine = new THREE.Line(
+                new THREE.BufferGeometry().setFromPoints([
+                    new THREE.Vector3(0, 0, 0),
+                    new THREE.Vector3(0, 0, 0)
+                ]),
+                new THREE.LineBasicMaterial({
+                    color: SKETCH_COLORS.linesDerivedActual,
+                    transparent: true,
+                    opacity: 0.95,
+                    depthWrite: false
+                })
+            );
+            previewExternalWorldLine.visible = false;
+            previewExternalWorldLine.renderOrder = 60;
+            group.add(previewExternalWorldLine);
+            const previewExternalWorldPoint = this.createArcCenterMarker(0, 0);
+            previewExternalWorldPoint.visible = false;
+            previewExternalWorldPoint.renderOrder = 60;
+            group.add(previewExternalWorldPoint);
 
             group.add(planeGroup);
             group.add(entitiesGroup);
@@ -211,6 +245,9 @@ function createSketchRuntimeApi(getApi) {
                 previewEnd,
                 previewArcCenter,
                 previewRect,
+                previewFaceSegments,
+                previewExternalWorldLine,
+                previewExternalWorldPoint,
                 entityViews: new Map(),
                 interaction: {
                     hoveredId: null,
@@ -222,6 +259,9 @@ function createSketchRuntimeApi(getApi) {
                     previewLine: null,
                     previewArc: null,
                     previewRect: null,
+                    previewFaceSegments: null,
+                    previewExternalWorldLine: null,
+                    previewExternalWorldPoint: null,
                     previewStart: null,
                     previewEnd: null,
                     previewMid: null
@@ -300,7 +340,7 @@ function createSketchRuntimeApi(getApi) {
         rebuildEntities(rec) {
             while (rec.entitiesGroup.children.length) {
                 const child = rec.entitiesGroup.children[0];
-                if (child === rec.previewLine || child === rec.previewArc || child === rec.previewRect || child === rec.previewStart || child === rec.previewEnd || child === rec.previewArcCenter) {
+                if (child === rec.previewLine || child === rec.previewArc || child === rec.previewRect || child === rec.previewFaceSegments || child === rec.previewStart || child === rec.previewEnd || child === rec.previewArcCenter) {
                     rec.entitiesGroup.remove(child);
                     continue;
                 }
@@ -469,6 +509,12 @@ function createSketchRuntimeApi(getApi) {
                 rec.entitiesGroup.remove(rec.previewArcCenter);
                 rec.entitiesGroup.add(rec.previewArcCenter);
             }
+            if (rec.previewFaceSegments && rec.previewFaceSegments.parent !== rec.entitiesGroup) {
+                rec.entitiesGroup.add(rec.previewFaceSegments);
+            } else if (rec.previewFaceSegments) {
+                rec.entitiesGroup.remove(rec.previewFaceSegments);
+                rec.entitiesGroup.add(rec.previewFaceSegments);
+            }
             if (rec.previewRect && rec.previewRect.parent !== rec.entitiesGroup) {
                 rec.entitiesGroup.add(rec.previewRect);
             } else if (rec.previewRect) {
@@ -533,6 +579,14 @@ function createSketchRuntimeApi(getApi) {
             return uiOps.applyPreviewRect.call(this, rec, mode, editing, SKETCH_COLORS);
         },
 
+        applyPreviewFaceSegments(rec, mode, editing) {
+            return uiOps.applyPreviewFaceSegments.call(this, rec, mode, editing, SKETCH_COLORS);
+        },
+
+        applyPreviewExternalWorld(rec, mode, editing) {
+            return uiOps.applyPreviewExternalWorld.call(this, rec, mode, editing, SKETCH_COLORS);
+        },
+
         applyLabelState(rec, mode, showPlane) {
             return uiOps.applyLabelState.call(this, rec, mode, showPlane, getApi, SKETCH_COLORS);
         },
@@ -586,6 +640,9 @@ function createSketchRuntimeApi(getApi) {
             rec.interaction.previewLine = interaction.previewLine || null;
             rec.interaction.previewArc = interaction.previewArc || null;
             rec.interaction.previewRect = interaction.previewRect || null;
+            rec.interaction.previewFaceSegments = interaction.previewFaceSegments || null;
+            rec.interaction.previewExternalWorldLine = interaction.previewExternalWorldLine || null;
+            rec.interaction.previewExternalWorldPoint = interaction.previewExternalWorldPoint || null;
             rec.interaction.previewStart = interaction.previewStart || null;
             rec.interaction.previewEnd = interaction.previewEnd || null;
             rec.interaction.previewMid = interaction.previewMid || null;
@@ -605,6 +662,9 @@ function createSketchRuntimeApi(getApi) {
             rec.interaction.previewLine = null;
             rec.interaction.previewArc = null;
             rec.interaction.previewRect = null;
+            rec.interaction.previewFaceSegments = null;
+            rec.interaction.previewExternalWorldLine = null;
+            rec.interaction.previewExternalWorldPoint = null;
             rec.interaction.previewStart = null;
             rec.interaction.previewEnd = null;
             rec.interaction.previewMid = null;

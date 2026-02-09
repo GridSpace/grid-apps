@@ -162,27 +162,18 @@ function updateSketchInteractionVisuals() {
     const externalStart = canShowExternalPreview && external?.aLocal ? external.aLocal : null;
     const externalEnd = canShowExternalPreview && external?.bLocal ? external.bLocal : null;
     const externalMid = canShowExternalPreview ? (external?.hoverPoint?.local || external?.midLocal || null) : null;
-    const renderDbgKey = external
-        ? `${external.solidId}:${external.index}:${external?.hoverPoint?.kind || 'edge'}:${!!externalLine}`
-        : 'none';
-    if (this._debugDerivedRenderKey !== renderDbgKey) {
-        this._debugDerivedRenderKey = renderDbgKey;
-        console.log('void.sketch.derived.render', {
-            key: renderDbgKey,
-            canShowExternalPreview,
-            hasExternal: !!external,
-            hasLine: !!externalLine,
-            hasStart: !!externalStart,
-            hasEnd: !!externalEnd,
-            hasMid: !!externalMid
-        });
-    }
+    const projectedFaceSegments = this.hoveredSolidFaceKey
+        ? this.projectFaceBoundaryToSketch(feature, this.hoveredSolidFaceKey)
+        : null;
     api.sketchRuntime?.setEntityInteraction(feature.id, {
         hoveredId: this.sketchDrag ? dragHoverId : this.hoveredSketchEntityId,
         selectedIds: Array.from(this.selectedSketchEntities),
         hoveredConstraintId: this.hoveredSketchConstraintId || null,
         selectedConstraintIds: Array.from(this.selectedSketchConstraints || []),
         previewLine: this.sketchLinePreview || externalLine,
+        previewExternalWorldLine: null,
+        previewExternalWorldPoint: null,
+        previewFaceSegments: projectedFaceSegments || null,
         previewStart: this.sketchLineStart || this.sketchArcStart || this.sketchCircleCenter || this.sketchRectStart || externalStart,
         previewEnd: this.sketchArcEnd || this.sketchCircleSecond || externalEnd || null,
         previewMid: externalMid,
@@ -219,6 +210,10 @@ function resolveSketchHit(event, intersections, feature) {
 
 function resolveDerivedEdgeCandidate(event, intersections, feature) {
     return sketchGeom.resolveDerivedEdgeCandidate.call(this, event, intersections, feature);
+}
+
+function projectFaceBoundaryToSketch(feature, faceKey) {
+    return sketchGeom.projectFaceBoundaryToSketch.call(this, feature, faceKey);
 }
 
 function isSketchEventInViewport(event) {
@@ -324,6 +319,7 @@ export {
     getSketchEntityHitFromIntersections,
     resolveSketchHit,
     resolveDerivedEdgeCandidate,
+    projectFaceBoundaryToSketch,
     isSketchEventInViewport,
     getSketchHitLocalPoint,
     getSketchDragSnapTarget,

@@ -130,8 +130,11 @@ function updateHandleScreenScales() {
 }
 
 function handleHover(intersection, event, allIntersections) {
-    if (!(this.isSketchEditing && this.isSketchEditing()) || (this.isSketchRetargetMode && this.isSketchRetargetMode())) {
-        const primaryHit = this.getPrimarySurfaceHitFromIntersections(allIntersections || (intersection ? [intersection] : []));
+    const sketchEditing = !!(this.isSketchEditing && this.isSketchEditing());
+    const retargetMode = !!(this.isSketchRetargetMode && this.isSketchRetargetMode());
+    const primaryHit = this.getPrimarySurfaceHitFromIntersections(allIntersections || (intersection ? [intersection] : []));
+
+    if (!sketchEditing || retargetMode) {
         if (primaryHit?.type === 'profile') {
             const profileHit = primaryHit.hit;
             if (this.hoveredSolidFaceKey) {
@@ -172,6 +175,26 @@ function handleHover(intersection, event, allIntersections) {
             api.solids?.setHoveredFace?.(null);
             window.dispatchEvent(new CustomEvent('void-state-change'));
         }
+    } else if (primaryHit?.type === 'solid-face') {
+        const solidFaceHit = primaryHit.hit;
+        this.hoveredSolidFaceKey = solidFaceHit.key;
+        api.solids?.setHoveredFace?.(solidFaceHit.key);
+        this.hoverIntersection = solidFaceHit.intersection || intersection || null;
+        this.setHoveredPoint(null);
+        this.hoveredSketchProfileKey = null;
+        api.sketchRuntime?.setHoveredProfile?.(null);
+        if (this.hoveredPlane && !this.hoveredPlane.isSelected()) {
+            this.hoveredPlane.setHovered(false);
+            this.hoveredPlane = null;
+        }
+        this.updateSketchInteractionVisuals?.();
+        window.dispatchEvent(new CustomEvent('void-state-change'));
+        return;
+    } else if (this.hoveredSolidFaceKey) {
+        this.hoveredSolidFaceKey = null;
+        api.solids?.setHoveredFace?.(null);
+        this.updateSketchInteractionVisuals?.();
+        window.dispatchEvent(new CustomEvent('void-state-change'));
     }
 
     const pointHit = this.getPointHitFromEvent(event);

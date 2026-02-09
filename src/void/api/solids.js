@@ -20,12 +20,6 @@ function createSolidsApi(getApi) {
         }
         const loop = view?.object?.userData?.sketchProfileLoop || view?.entity?.loop || null;
         if (Array.isArray(loop) && loop.length >= 3) return [loop];
-        if (Array.isArray(profileTarget?.loops) && profileTarget.loops.length) {
-            const cached = profileTarget.loops
-                .filter(item => Array.isArray(item) && item.length >= 3)
-                .map(item => item.map(p => ({ x: p?.x || 0, y: p?.y || 0 })));
-            if (cached.length) return cached;
-        }
         return null;
     }
 
@@ -296,11 +290,27 @@ function createSolidsApi(getApi) {
                 center,
                 normal,
                 xAxis,
-                planar
+                planar,
+                boundarySegmentsLocal: null
             });
             groupId++;
         }
         return { triToGroup, groups };
+    }
+
+    function buildBoundarySegmentsFromGeometry(geometry) {
+        if (!geometry) return [];
+        const edgesGeom = new THREE.EdgesGeometry(geometry, 1);
+        const pos = edgesGeom.getAttribute?.('position');
+        if (!pos) return [];
+        const out = [];
+        for (let i = 0; i + 1 < pos.count; i += 2) {
+            const a = new THREE.Vector3().fromBufferAttribute(pos, i);
+            const b = new THREE.Vector3().fromBufferAttribute(pos, i + 1);
+            out.push({ a, b, mid: a.clone().add(b).multiplyScalar(0.5) });
+        }
+        edgesGeom.dispose?.();
+        return out;
     }
 
     function makeFaceMaterials() {
@@ -621,6 +631,16 @@ function createSolidsApi(getApi) {
             return out;
         },
 
+        getPickEdgeForSolid(solidId) {
+            const id = String(solidId || '');
+            if (!id) return null;
+            const view = this._meshViews.get(id);
+            if (!view || view?.group?.visible === false || view?.mesh?.visible === false || view?.edges?.visible === false) {
+                return null;
+            }
+            return view.edges || null;
+        },
+
         getEdgeSegmentWorld(object, segmentIndex) {
             if (!object?.geometry || segmentIndex < 0) return null;
             object.updateMatrixWorld?.(true);
@@ -677,43 +697,53 @@ function createSolidsApi(getApi) {
             const srcA = new THREE.Vector3(Number(sa.x || 0), Number(sa.y || 0), Number(sa.z || 0));
             const srcB = new THREE.Vector3(Number(sb.x || 0), Number(sb.y || 0), Number(sb.z || 0));
             const solids = this.list() || [];
-            const wanted = [];
+            const searchSets = [];
             if (targetSolidId) {
-                wanted.push(targetSolidId);
-            } else if (targetFeatureId) {
+                searchSets.push([targetSolidId]);
+            }
+            if (targetFeatureId) {
+                const byFeature = [];
                 for (const solid of solids) {
                     if (String(solid?.source?.feature_id || '') === targetFeatureId && solid?.id) {
-                        wanted.push(String(solid.id));
+                        byFeature.push(String(solid.id));
                     }
                 }
-            } else {
-                for (const solid of solids) {
-                    if (solid?.id) wanted.push(String(solid.id));
-                }
+                if (byFeature.length) searchSets.push(byFeature);
             }
+            const all = [];
+            for (const solid of solids) {
+                if (solid?.id) all.push(String(solid.id));
+            }
+            if (all.length) searchSets.push(all);
             let best = null;
             let bestScore = Infinity;
-            for (const solidId of wanted) {
-                const view = this._meshViews.get(solidId);
-                const edgesObj = view?.edges;
-                if (!edgesObj?.geometry) continue;
-                const pos = edgesObj.geometry.getAttribute?.('position');
-                const idx = edgesObj.geometry.getIndex?.();
-                if (!pos) continue;
-                const segCount = idx?.array?.length
-                    ? Math.floor(idx.array.length / 2)
-                    : Math.floor(pos.count / 2);
-                for (let i = 0; i < segCount; i++) {
-                    const seg = this.getEdgeSegmentWorld(edgesObj, i);
-                    if (!seg) continue;
-                    const d1 = seg.a.distanceTo(srcA) + seg.b.distanceTo(srcB);
-                    const d2 = seg.a.distanceTo(srcB) + seg.b.distanceTo(srcA);
-                    const score = Math.min(d1, d2);
-                    if (score < bestScore) {
-                        bestScore = score;
-                        best = { solidId, index: i, aWorld: seg.a, bWorld: seg.b };
+            const scanSet = (wanted = []) => {
+                for (const solidId of wanted) {
+                    const view = this._meshViews.get(solidId);
+                    const edgesObj = view?.edges;
+                    if (!edgesObj?.geometry) continue;
+                    const pos = edgesObj.geometry.getAttribute?.('position');
+                    const idx = edgesObj.geometry.getIndex?.();
+                    if (!pos) continue;
+                    const segCount = idx?.array?.length
+                        ? Math.floor(idx.array.length / 2)
+                        : Math.floor(pos.count / 2);
+                    for (let i = 0; i < segCount; i++) {
+                        const seg = this.getEdgeSegmentWorld(edgesObj, i);
+                        if (!seg) continue;
+                        const d1 = seg.a.distanceTo(srcA) + seg.b.distanceTo(srcB);
+                        const d2 = seg.a.distanceTo(srcB) + seg.b.distanceTo(srcA);
+                        const score = Math.min(d1, d2);
+                        if (score < bestScore) {
+                            bestScore = score;
+                            best = { solidId, index: i, aWorld: seg.a, bWorld: seg.b };
+                        }
                     }
                 }
+            };
+            for (const wanted of searchSets) {
+                if (best) break;
+                scanSet(wanted);
             }
             if (!best) return null;
             best.midWorld = best.aWorld.clone().add(best.bWorld).multiplyScalar(0.5);
@@ -750,6 +780,31 @@ function createSolidsApi(getApi) {
             const meta = view?.faceGroups?.get(faceId);
             if (!view || !meta) return null;
             return { key: `${solidId}:${faceId}`, solidId, faceId, view, meta };
+        },
+
+        getFaceBoundarySegments(key) {
+            const face = this.getFaceByKey(key);
+            if (!face?.meta?.geometry) return [];
+            if (!Array.isArray(face.meta.boundarySegmentsLocal)) {
+                face.meta.boundarySegmentsLocal = buildBoundarySegmentsFromGeometry(face.meta.geometry);
+            }
+            const local = face.meta.boundarySegmentsLocal || [];
+            if (!local.length) return [];
+            const mesh = face?.view?.mesh || null;
+            if (!mesh?.matrixWorld) return [];
+            mesh.updateMatrixWorld?.(true);
+            const out = [];
+            for (const seg of local) {
+                if (!seg?.a || !seg?.b) continue;
+                const a = seg.a.clone().applyMatrix4(mesh.matrixWorld);
+                const b = seg.b.clone().applyMatrix4(mesh.matrixWorld);
+                out.push({
+                    a,
+                    b,
+                    mid: a.clone().add(b).multiplyScalar(0.5)
+                });
+            }
+            return out;
         },
 
         setHoveredFace(key = null) {
@@ -1106,6 +1161,7 @@ function createSolidsApi(getApi) {
                 let result = null;
                 let passReason = reason;
                 for (let pass = 0; pass < 2; pass++) {
+                    api.sketchRuntime?.sync?.();
                     const snapshot = buildRebuildSnapshot(api);
                     try {
                         const workerReply = await this.requestWorkerRebuild(snapshot, passReason);
@@ -1145,6 +1201,11 @@ function createSolidsApi(getApi) {
                     if (rebound && pass === 0) {
                         api.sketchRuntime?.sync?.();
                         passReason = 'sketch.face.rebind';
+                        continue;
+                    }
+                    if (derivedChanged && pass === 0) {
+                        api.sketchRuntime?.sync?.();
+                        passReason = 'sketch.derived.refresh';
                         continue;
                     }
                     if (rebound || derivedChanged) {

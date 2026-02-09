@@ -19,12 +19,6 @@ function profileLoopsFromRuntime(api, profileTarget) {
     }
     const loop = view?.object?.userData?.sketchProfileLoop || view?.entity?.loop || null;
     if (Array.isArray(loop) && loop.length >= 3) return [loop];
-    if (Array.isArray(profileTarget?.loops) && profileTarget.loops.length) {
-        const cached = profileTarget.loops
-            .filter(item => Array.isArray(item) && item.length >= 3)
-            .map(item => item.map(p => ({ x: p?.x || 0, y: p?.y || 0 })));
-        if (cached.length) return cached;
-    }
     return null;
 }
 

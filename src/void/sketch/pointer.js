@@ -213,22 +213,6 @@ function handleSketchHover(event, intersections) {
     const derived = this.resolveDerivedEdgeCandidate(event, intersections, feature);
     const prevDerived = this.hoveredDerivedCandidate || null;
     this.hoveredDerivedCandidate = derived || null;
-    const dbgKey = derived
-        ? `${derived.solidId}:${derived.index}:${derived.hoverPoint?.kind || 'edge'}`
-        : 'none';
-    if (this._debugDerivedHoverKey !== dbgKey) {
-        this._debugDerivedHoverKey = dbgKey;
-        console.log('void.sketch.derived.hover', {
-            key: dbgKey,
-            hasCandidate: !!derived,
-            solidId: derived?.solidId || null,
-            edgeIndex: Number.isFinite(derived?.index) ? derived.index : null,
-            hoverPoint: derived?.hoverPoint?.kind || null,
-            aLocal: derived?.aLocal || null,
-            bLocal: derived?.bLocal || null,
-            midLocal: derived?.midLocal || null
-        });
-    }
     const derivedChanged = (!!prevDerived) !== (!!derived)
         || (prevDerived?.solidId !== derived?.solidId)
         || (prevDerived?.index !== derived?.index)
