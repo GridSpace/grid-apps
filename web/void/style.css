@@ -206,7 +206,11 @@ html, body {
     margin-left: 0;
     transform: translate(-50%, -50%);
     font-size: 10px;
-    line-height: 16px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #1c1c1c;
 }
 
 .sketch-constraint-glyph.dimension::after {
@@ -236,35 +240,45 @@ html, body {
 }
 
 .sketch-dimension-line,
-.sketch-dimension-cap {
+.sketch-dimension-cap,
+.sketch-dimension-extension {
     position: absolute;
     pointer-events: none;
-    z-index: 144;
-    background: rgba(212, 212, 212, 0.85);
+    z-index: 148;
+    background: rgba(198, 198, 198, 0.95);
 }
 
 .sketch-dimension-line {
-    height: 1px;
+    height: 2px;
     transform-origin: 0 50%;
 }
 
 .sketch-dimension-cap {
-    height: 1px;
+    height: 2px;
     transform-origin: 50% 50%;
 }
 
+.sketch-dimension-extension {
+    height: 1px;
+    transform-origin: 0 50%;
+    opacity: 0.9;
+}
+
 .sketch-dimension-line.driven,
-.sketch-dimension-cap.driven {
-    background: rgba(156, 156, 156, 0.75);
+.sketch-dimension-cap.driven,
+.sketch-dimension-extension.driven {
+    background: rgba(142, 142, 142, 0.8);
 }
 
 .sketch-dimension-line.hover,
-.sketch-dimension-cap.hover {
+.sketch-dimension-cap.hover,
+.sketch-dimension-extension.hover {
     background: rgba(255, 153, 51, 0.95);
 }
 
 .sketch-dimension-line.selected,
-.sketch-dimension-cap.selected {
+.sketch-dimension-cap.selected,
+.sketch-dimension-extension.selected {
     background: rgba(90, 159, 212, 0.95);
 }
 

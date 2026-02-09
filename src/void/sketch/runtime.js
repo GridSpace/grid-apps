@@ -45,6 +45,7 @@ function createSketchRuntimeApi(getApi) {
         selectedProfileKeys: new Set(),
         _glyphLayer: null,
         _glyphDrag: null,
+        _glyphClick: null,
 
         init(world) {
             if (this.root) return;
@@ -131,6 +132,8 @@ function createSketchRuntimeApi(getApi) {
 
             const entitiesGroup = new THREE.Group();
             entitiesGroup.name = `sketch-entities-${feature.id}`;
+            const dimensionGroup = new THREE.Group();
+            dimensionGroup.name = `sketch-dimensions-${feature.id}`;
             const previewLine = new THREE.Line(
                 new THREE.BufferGeometry().setFromPoints([
                     new THREE.Vector3(0, 0, 0),
@@ -194,12 +197,14 @@ function createSketchRuntimeApi(getApi) {
 
             group.add(planeGroup);
             group.add(entitiesGroup);
+            group.add(dimensionGroup);
 
             return {
                 feature,
                 group,
                 plane,
                 entitiesGroup,
+                dimensionGroup,
                 previewLine,
                 previewArc,
                 previewStart,
@@ -232,6 +237,9 @@ function createSketchRuntimeApi(getApi) {
                 rec.entitiesGroup.position.copy(pg.position);
                 rec.entitiesGroup.quaternion.copy(pg.quaternion);
                 rec.entitiesGroup.scale.copy(pg.scale);
+                rec.dimensionGroup.position.copy(pg.position);
+                rec.dimensionGroup.quaternion.copy(pg.quaternion);
+                rec.dimensionGroup.scale.copy(pg.scale);
             }
             this.rebuildEntities(rec);
             this.applySketchState(rec);

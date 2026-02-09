@@ -87,38 +87,141 @@ function computeDimensionMeasurement(feature, constraint) {
     return Math.hypot((b.x || 0) - (a.x || 0), (b.y || 0) - (a.y || 0));
 }
 
-function addDimensionDecoration(layer, c, p1, p2, state = {}) {
-    const dx = p2.x - p1.x;
-    const dy = p2.y - p1.y;
-    const len = Math.hypot(dx, dy);
-    if (!Number.isFinite(len) || len < 1) return;
-    const angle = Math.atan2(dy, dx);
-    const mode = getDimensionMode(c);
-
-    const line = document.createElement('div');
-    line.className = 'sketch-dimension-line';
-    if (mode === 'driven') line.classList.add('driven');
-    if (state?.selected) line.classList.add('selected');
-    if (state?.hovered) line.classList.add('hover');
-    line.style.left = `${p1.x}px`;
-    line.style.top = `${p1.y}px`;
-    line.style.width = `${len}px`;
-    line.style.transform = `rotate(${angle}rad)`;
-    layer.appendChild(line);
-
-    const capLen = 6;
-    for (const p of [p1, p2]) {
-        const cap = document.createElement('div');
-        cap.className = 'sketch-dimension-cap';
-        if (mode === 'driven') cap.classList.add('driven');
-        if (state?.selected) cap.classList.add('selected');
-        if (state?.hovered) cap.classList.add('hover');
-        cap.style.left = `${p.x}px`;
-        cap.style.top = `${p.y}px`;
-        cap.style.width = `${capLen}px`;
-        cap.style.transform = `translate(-50%, -50%) rotate(${(angle + Math.PI * 0.5)}rad)`;
-        layer.appendChild(cap);
+function clearDimensionDecorations3D(rec) {
+    if (!rec?.dimensionGroup) return;
+    while (rec.dimensionGroup.children.length) {
+        const child = rec.dimensionGroup.children[0];
+        child.geometry?.dispose?.();
+        if (Array.isArray(child.material)) {
+            for (const mat of child.material) mat?.dispose?.();
+        } else {
+            child.material?.dispose?.();
+        }
+        rec.dimensionGroup.remove(child);
     }
+}
+
+function worldPerPixelAt(rec, localPoint) {
+    const { camera, renderer } = space.internals();
+    if (!camera || !renderer || !rec?.entitiesGroup) return null;
+    const viewHeightPx = renderer.domElement?.clientHeight || renderer.domElement?.height;
+    if (!viewHeightPx) return null;
+    const world = new THREE.Vector3(localPoint.x || 0, localPoint.y || 0, 0);
+    rec.entitiesGroup.localToWorld(world);
+    if (camera.isPerspectiveCamera) {
+        const distance = camera.position.distanceTo(world);
+        const fovRad = camera.fov * Math.PI / 180;
+        return (2 * Math.tan(fovRad / 2) * distance) / viewHeightPx;
+    }
+    if (camera.isOrthographicCamera) {
+        return ((camera.top - camera.bottom) / camera.zoom) / viewHeightPx;
+    }
+    return null;
+}
+
+function screenToSketchLocal(rec, sx, sy) {
+    const { camera, renderer } = space.internals();
+    if (!camera || !renderer || !rec?.entitiesGroup) return null;
+    const rect = renderer.domElement?.getBoundingClientRect?.();
+    if (!rect || !rect.width || !rect.height) return null;
+    const ndc = new THREE.Vector2(
+        ((sx - rect.left) / rect.width) * 2 - 1,
+        -(((sy - rect.top) / rect.height) * 2 - 1)
+    );
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(ndc, camera);
+    const origin = new THREE.Vector3(0, 0, 0);
+    rec.entitiesGroup.localToWorld(origin);
+    const normal = new THREE.Vector3(0, 0, 1).applyQuaternion(rec.entitiesGroup.getWorldQuaternion(new THREE.Quaternion())).normalize();
+    const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(normal, origin);
+    const hit = new THREE.Vector3();
+    const ok = raycaster.ray.intersectPlane(plane, hit);
+    if (!ok) return null;
+    rec.entitiesGroup.worldToLocal(hit);
+    return { x: hit.x || 0, y: hit.y || 0 };
+}
+
+function addLocalOffset(anchor, offset) {
+    return {
+        x: (anchor?.x || 0) + (offset?.x || 0),
+        y: (anchor?.y || 0) + (offset?.y || 0)
+    };
+}
+
+function getDimensionCenterLocal(rec, feature, constraint, drag = null) {
+    const anchor = getConstraintAnchorLocal.call(this, feature, constraint);
+    if (!anchor) return null;
+    if (drag?.constraintId === constraint?.id && drag?.currentLocal) {
+        return drag.currentLocal;
+    }
+    const localOff = constraint?.ui?.offset_local;
+    if (localOff && Number.isFinite(localOff.x) && Number.isFinite(localOff.y)) {
+        return addLocalOffset(anchor, localOff);
+    }
+    return anchor;
+}
+
+function addDimensionDecoration3D(rec, c, a, b, opts = {}) {
+    if (!rec?.dimensionGroup) return;
+    const dx = (b.x || 0) - (a.x || 0);
+    const dy = (b.y || 0) - (a.y || 0);
+    const len = Math.hypot(dx, dy);
+    if (!Number.isFinite(len) || len < 1e-6) return;
+    const ux = dx / len;
+    const uy = dy / len;
+    const anchor = { x: ((a.x || 0) + (b.x || 0)) * 0.5, y: ((a.y || 0) + (b.y || 0)) * 0.5 };
+    const center = opts?.centerLocal || anchor;
+    const proj = p => {
+        const rx = (p.x || 0) - center.x;
+        const ry = (p.y || 0) - center.y;
+        const t = rx * ux + ry * uy;
+        return { x: center.x + ux * t, y: center.y + uy * t, t };
+    };
+    const b1 = proj(a);
+    const b2 = proj(b);
+    const start = b1.t <= b2.t ? b1 : b2;
+    const end = b1.t <= b2.t ? b2 : b1;
+    const wpp = worldPerPixelAt(rec, center);
+    const offScale = Number.isFinite(wpp) ? wpp : 0.05;
+    const capLen = 6 * offScale;
+    const nx = -uy;
+    const ny = ux;
+    const mode = getDimensionMode(c);
+    let color = mode === 'driven' ? 0x8e8e8e : 0xc6c6c6;
+    if (opts?.hovered) color = 0xff9933;
+    if (opts?.selected) color = 0x5a9fd4;
+
+    const makeLine = (p1, p2, z = 0.002) => {
+        const geom = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(p1.x || 0, p1.y || 0, z),
+            new THREE.Vector3(p2.x || 0, p2.y || 0, z)
+        ]);
+        const mat = new THREE.LineBasicMaterial({
+            color,
+            transparent: true,
+            opacity: 0.95,
+            depthTest: true,
+            depthWrite: false
+        });
+        const line = new THREE.Line(geom, mat);
+        line.renderOrder = 11;
+        rec.dimensionGroup.add(line);
+    };
+
+    // extension lines
+    makeLine(a, b1);
+    makeLine(b, b2);
+    // baseline
+    makeLine(start, end);
+    // end caps
+    makeLine(
+        { x: start.x - nx * capLen * 0.5, y: start.y - ny * capLen * 0.5 },
+        { x: start.x + nx * capLen * 0.5, y: start.y + ny * capLen * 0.5 }
+    );
+    makeLine(
+        { x: end.x - nx * capLen * 0.5, y: end.y - ny * capLen * 0.5 },
+        { x: end.x + nx * capLen * 0.5, y: end.y + ny * capLen * 0.5 }
+    );
 }
 
 function applySketchState(rec, getApi, colors) {
@@ -133,6 +236,9 @@ function applySketchState(rec, getApi, colors) {
 
     rec.plane.setVisible(showPlane);
     rec.entitiesGroup.visible = showEntities;
+    if (rec.dimensionGroup) {
+        rec.dimensionGroup.visible = showEntities;
+    }
 
     const mode = editing ? 'edit' : (hovered || selected ? 'hover' : 'default');
     this.applyPlaneStyle(rec.plane, mode, colors);
@@ -566,7 +672,13 @@ function updateConstraintGlyphs(getApi, opts = {}) {
 
     const rec = this.getEditingRecord();
     if (!rec?.feature) {
+        for (const r of this.sketches.values()) {
+            clearDimensionDecorations3D(r);
+        }
         return;
+    }
+    for (const r of this.sketches.values()) {
+        clearDimensionDecorations3D(r);
     }
 
     const constraints = Array.isArray(rec.feature.constraints) ? rec.feature.constraints : [];
@@ -586,7 +698,8 @@ function updateConstraintGlyphs(getApi, opts = {}) {
         const byEntity = refs.some(ref => selectedEntityIds.has(ref));
         const byHover = !!hoveredEntityId && refs.includes(hoveredEntityId);
         const byDrag = draggingConstraintId === constraint?.id;
-        if (byEntity || byHover || byDrag) {
+        const alwaysVisible = constraint?.type === 'dimension';
+        if (alwaysVisible || byEntity || byHover || byDrag) {
             visible.push(constraint);
         }
     }
@@ -613,17 +726,24 @@ function updateConstraintGlyphs(getApi, opts = {}) {
     for (const { screen, items } of clusters.values()) {
         for (let i = 0; i < items.length; i++) {
             const c = items[i];
-            const pos = this.applyConstraintOffset(c, screen, i, items.length, opts);
+            const isDimension = c?.type === 'dimension';
+            let pos;
+            if (isDimension) {
+                const centerLocal = getDimensionCenterLocal.call(this, rec, rec.feature, c, this._glyphDrag);
+                const centerScreen = centerLocal ? this.projectConstraintAnchor(rec, centerLocal, getApi) : null;
+                pos = centerScreen || this.applyConstraintOffset(c, screen, i, items.length, opts);
+            } else {
+                pos = this.applyConstraintOffset(c, screen, i, items.length, opts);
+            }
             const glyph = document.createElement('button');
             glyph.className = 'sketch-constraint-glyph';
-            const isDimension = c?.type === 'dimension';
             const measured = isDimension ? computeDimensionMeasurement(rec.feature, c) : NaN;
             const mode = isDimension ? getDimensionMode(c) : 'driving';
             glyph.textContent = isDimension
                 ? (mode === 'driven' ? formatMeasuredValue(measured) : formatDimensionLabel(c))
                 : this.constraintGlyphLabel(c.type);
             glyph.style.left = `${Math.round(pos.x)}px`;
-            glyph.style.top = `${Math.round(pos.y)}px`;
+            glyph.style.top = `${Math.round(pos.y + (isDimension ? 4 : 0))}px`;
             if (isDimension) {
                 glyph.classList.add('dimension');
                 glyph.classList.toggle('driven', mode === 'driven');
@@ -631,14 +751,12 @@ function updateConstraintGlyphs(getApi, opts = {}) {
                 glyph.dataset.mode = mode === 'driven' ? 'R' : 'D';
                 const ends = getDimensionEndpoints(rec.feature, c);
                 if (ends) {
-                    const p1 = projectLocalToScreen(rec, ends[0], getApi);
-                    const p2 = projectLocalToScreen(rec, ends[1], getApi);
-                    if (p1 && p2) {
-                        addDimensionDecoration(layer, c, p1, p2, {
-                            selected: selectedConstraintIds.has(c.id),
-                            hovered: hoveredConstraintId === c.id
-                        });
-                    }
+                    const centerLocal = getDimensionCenterLocal.call(this, rec, rec.feature, c, this._glyphDrag);
+                    addDimensionDecoration3D(rec, c, ends[0], ends[1], {
+                        selected: selectedConstraintIds.has(c.id),
+                        hovered: hoveredConstraintId === c.id,
+                        centerLocal
+                    });
                 }
             }
             if (selectedConstraintIds.has(c.id)) {
@@ -672,13 +790,28 @@ function updateConstraintGlyphs(getApi, opts = {}) {
                     api.interact?.toggleSketchDimensionMode?.(c.id);
                     return;
                 }
+                if (isDimension) {
+                    const now = performance.now();
+                    const prev = this._glyphClick;
+                    if (prev && prev.id === c.id && (now - prev.time) < 360) {
+                        this._glyphClick = null;
+                        api.interact?.editSketchDimensionConstraint?.(c.id);
+                        return;
+                    }
+                    this._glyphClick = { id: c.id, time: now };
+                } else {
+                    this._glyphClick = null;
+                }
                 api.interact?.selectSketchConstraint?.(c.id, event);
                 this._glyphDrag = {
                     featureId: rec.feature.id,
                     constraintId: c.id,
+                    isDimension,
                     startX: event.clientX,
                     startY: event.clientY,
                     base: c?.ui?.offset_px ? { x: c.ui.offset_px.x || 0, y: c.ui.offset_px.y || 0 } : { x: 0, y: -18 },
+                    current: c?.ui?.offset_px ? { x: c.ui.offset_px.x || 0, y: c.ui.offset_px.y || 0 } : { x: 0, y: -18 },
+                    currentLocal: getDimensionCenterLocal.call(this, rec, rec.feature, c, null),
                     moved: false
                 };
             };
@@ -695,16 +828,36 @@ function updateConstraintDrag(event, done = false, getApi) {
     const moved = Math.hypot(dx, dy) > 0.5;
     drag.moved = drag.moved || moved;
     const next = { x: drag.base.x + dx, y: drag.base.y + dy };
-    const api = getApi();
-    api.features.mutateTransient(drag.featureId, sketch => {
-        sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
-        const c = sketch.constraints.find(cst => cst?.id === drag.constraintId);
-        if (!c) return;
-        c.ui = c.ui || {};
-        c.ui.offset_px = next;
-    });
+    drag.current = next;
+    if (drag.isDimension) {
+        const rec = this.getRecord?.(drag.featureId) || null;
+        const local = rec ? screenToSketchLocal(rec, event?.clientX || 0, event?.clientY || 0) : null;
+        if (local) {
+            drag.currentLocal = local;
+        }
+    }
+    this.updateConstraintGlyphs(getApi);
     if (done) {
         if (drag.moved) {
+            const api = getApi();
+            api.features.mutateTransient(drag.featureId, sketch => {
+                sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
+                const c = sketch.constraints.find(cst => cst?.id === drag.constraintId);
+                if (!c) return;
+                c.ui = c.ui || {};
+                if (drag.isDimension) {
+                    const anchor = getConstraintAnchorLocal.call(this, sketch, c);
+                    const center = drag.currentLocal;
+                    if (anchor && center) {
+                        c.ui.offset_local = {
+                            x: (center.x || 0) - (anchor.x || 0),
+                            y: (center.y || 0) - (anchor.y || 0)
+                        };
+                    }
+                } else {
+                    c.ui.offset_px = next;
+                }
+            });
             api.features.commit(drag.featureId, {
                 opType: 'feature.update',
                 payload: { field: 'constraints.ui.move', id: drag.constraintId }

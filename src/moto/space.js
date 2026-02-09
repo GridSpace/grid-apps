@@ -973,7 +973,7 @@ function intersect(objects, recurse) {
  ******************************************************************* */
 
 function onMouseDown(event) {
-    if (event?.target?.closest?.('.props-panel')) {
+    if (isVoidUiEventTarget(event?.target)) {
         return;
     }
     updateLastAction();
@@ -1030,7 +1030,7 @@ function onMouseDown(event) {
 }
 
 function onMouseUp(event) {
-    if (event?.target?.closest?.('.props-panel')) {
+    if (isVoidUiEventTarget(event?.target)) {
         return;
     }
     updateLastAction();
@@ -1082,7 +1082,7 @@ function onMouseUp(event) {
 }
 
 function onMouseMove(event) {
-    if (event?.target?.closest?.('.props-panel')) {
+    if (isVoidUiEventTarget(event?.target)) {
         return;
     }
     updateLastAction();
@@ -1141,6 +1141,12 @@ function onMouseMove(event) {
         }
     }
     mouse = eventToNDC(event);
+}
+
+function isVoidUiEventTarget(target) {
+    return !!target?.closest?.(
+        '.props-panel, #left-panel, #top-bar, .doc-dialog, .doc-dialog-backdrop, .toolbar-menu, .toolbar-menu-pop, .toolbar-menu-panel, .sketch-constraint-layer'
+    );
 }
 
 /** ******************************************************************
