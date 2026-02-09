@@ -638,6 +638,7 @@ function createSolidsApi(getApi) {
             if (!meta.planar) return null;
             const frame = this.frameFromFaceMeta(meta, null);
             if (!frame) return null;
+            const solid = this.list().find(item => item?.id === solidId) || null;
             return {
                 kind: 'face',
                 id: `${solidId}:f${faceId}`,
@@ -646,7 +647,18 @@ function createSolidsApi(getApi) {
                 source: {
                     type: 'solid-face',
                     solid_id: solidId,
-                    face_id: faceId
+                    face_id: faceId,
+                    solid_feature_id: solid?.source?.feature_id || null,
+                    anchor: {
+                        x: Number(meta.center?.x || 0),
+                        y: Number(meta.center?.y || 0),
+                        z: Number(meta.center?.z || 0)
+                    },
+                    anchor_normal: {
+                        x: Number(meta.normal?.x || 0),
+                        y: Number(meta.normal?.y || 0),
+                        z: Number(meta.normal?.z || 1)
+                    }
                 }
             };
         },
@@ -727,6 +739,21 @@ function createSolidsApi(getApi) {
                     frame: this.frameFromFaceMeta(exactMeta, preferredFrame)
                 };
             }
+            const sourceFeatureId = String(source?.solid_feature_id || '');
+            const anchor = source?.anchor
+                ? new THREE.Vector3(
+                    Number(source.anchor.x || 0),
+                    Number(source.anchor.y || 0),
+                    Number(source.anchor.z || 0)
+                )
+                : null;
+            const anchorNormal = source?.anchor_normal
+                ? new THREE.Vector3(
+                    Number(source.anchor_normal.x || 0),
+                    Number(source.anchor_normal.y || 0),
+                    Number(source.anchor_normal.z || 1)
+                ).normalize()
+                : null;
             let preferredOrigin = null;
             let preferredNormal = null;
             if (preferredFrame?.origin && preferredFrame?.normal) {
@@ -748,18 +775,52 @@ function createSolidsApi(getApi) {
                 for (const [faceId, meta] of meshView.faceGroups.entries()) {
                     if (!meta?.planar) continue;
                     const n = meta.normal.clone().normalize();
-                    let align = 0;
-                    let distPenalty = 0;
-                    if (preferredNormal) {
-                        align = n.dot(preferredNormal);
+                    const alignPref = preferredNormal ? n.dot(preferredNormal) : 0;
+                    if (preferredNormal && alignPref < 0.95) {
+                        continue;
                     }
-                    if (preferredOrigin) {
-                        distPenalty = preferredOrigin.distanceTo(meta.center) * 0.01;
+                    const alignAnchor = anchorNormal ? n.dot(anchorNormal) : 0;
+                    if (anchorNormal && alignAnchor < 0.93) {
+                        continue;
                     }
-                    const score = align - distPenalty + scoreBias;
-                    if (score > bestScore) {
+                    const distPref = preferredOrigin ? preferredOrigin.distanceTo(meta.center) : 0;
+                    const planeDistAnchor = anchor
+                        ? Math.abs(n.dot(anchor) - n.dot(meta.center))
+                        : 0;
+                    const centerDistAnchor = anchor ? anchor.distanceTo(meta.center) : 0;
+                    const sameFaceBonus = (sid === preferredSolidId && Number.isFinite(sourceFaceId) && sourceFaceId === faceId)
+                        ? 2
+                        : 0;
+                    const score =
+                        (alignPref * 6) +
+                        (alignAnchor * 2) -
+                        (distPref * 0.03) -
+                        (planeDistAnchor * 6) -
+                        (centerDistAnchor * 0.003) +
+                        scoreBias +
+                        sameFaceBonus;
+                    if (score > bestScore + 1e-9) {
                         bestScore = score;
-                        best = { solidId: sid, faceId, meta };
+                        best = { solidId: sid, faceId, meta, distPref, planeDistAnchor, centerDistAnchor };
+                    } else if (Math.abs(score - bestScore) <= 1e-9 && best) {
+                        // Deterministic tie-break to avoid jitter.
+                        const bestTuple = [best.planeDistAnchor, best.distPref, best.centerDistAnchor, String(best.solidId), Number(best.faceId)];
+                        const nextTuple = [planeDistAnchor, distPref, centerDistAnchor, String(sid), Number(faceId)];
+                        if (
+                            nextTuple[0] < bestTuple[0] - 1e-9 ||
+                            (Math.abs(nextTuple[0] - bestTuple[0]) <= 1e-9 && (
+                                nextTuple[1] < bestTuple[1] - 1e-9 ||
+                                (Math.abs(nextTuple[1] - bestTuple[1]) <= 1e-9 && (
+                                    nextTuple[2] < bestTuple[2] - 1e-9 ||
+                                    (Math.abs(nextTuple[2] - bestTuple[2]) <= 1e-9 && (
+                                        nextTuple[3] < bestTuple[3] ||
+                                        (nextTuple[3] === bestTuple[3] && nextTuple[4] < bestTuple[4])
+                                    ))
+                                ))
+                            ))
+                        ) {
+                            best = { solidId: sid, faceId, meta, distPref, planeDistAnchor, centerDistAnchor };
+                        }
                     }
                 }
             };
@@ -769,9 +830,23 @@ function createSolidsApi(getApi) {
                 evalView(solidId, view, 0.1);
             } else {
                 // Fallback only when referenced solid no longer exists.
+                const solidsById = new Map((this.list() || []).map(item => [String(item?.id || ''), item]));
+                const candidates = [];
                 for (const [sid, meshView] of this._meshViews.entries()) {
-                    const bias = preferredSolidId && sid === preferredSolidId ? 0.02 : 0;
-                    evalView(sid, meshView, bias);
+                    const solid = solidsById.get(String(sid));
+                    const sameFeature = sourceFeatureId && String(solid?.source?.feature_id || '') === sourceFeatureId;
+                    candidates.push({ sid, meshView, sameFeature });
+                }
+                if (sourceFeatureId && candidates.some(c => c.sameFeature)) {
+                    for (const c of candidates) {
+                        if (!c.sameFeature) continue;
+                        evalView(c.sid, c.meshView, 0.06);
+                    }
+                } else {
+                    for (const c of candidates) {
+                        const bias = preferredSolidId && c.sid === preferredSolidId ? 0.02 : 0;
+                        evalView(c.sid, c.meshView, bias);
+                    }
                 }
             }
             if (!best) return null;
@@ -816,6 +891,20 @@ function createSolidsApi(getApi) {
                     item.target.source.type = 'solid-face';
                     item.target.source.solid_id = nextSolidId;
                     item.target.source.face_id = resolved.faceId;
+                    if (!item.target.source.solid_feature_id) {
+                        const solid = this.list().find(s => s?.id === nextSolidId);
+                        item.target.source.solid_feature_id = solid?.source?.feature_id || null;
+                    }
+                    item.target.source.anchor = {
+                        x: Number(resolved.frame.origin.x || 0),
+                        y: Number(resolved.frame.origin.y || 0),
+                        z: Number(resolved.frame.origin.z || 0)
+                    };
+                    item.target.source.anchor_normal = {
+                        x: Number(resolved.frame.normal.x || 0),
+                        y: Number(resolved.frame.normal.y || 0),
+                        z: Number(resolved.frame.normal.z || 1)
+                    };
                     item.target.id = `${nextSolidId}:f${resolved.faceId}`;
                     item.target.kind = 'face';
                     item.target.name = 'Face';

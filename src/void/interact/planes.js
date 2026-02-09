@@ -452,12 +452,27 @@ function selectSolidFace(hit, event) {
         if (target?.frame) {
             const updated = api.features.update(currentFeature.id, feature => {
                 const offset = Number(feature?.target?.offset || 0);
+                const hitPoint = hit?.intersection?.point || null;
                 feature.target = feature.target || {};
                 feature.target.kind = 'face';
                 feature.target.id = target.id || null;
                 feature.target.name = target.name || 'Face';
                 feature.target.label = target.label || null;
                 feature.target.source = target.source || null;
+                if (feature.target.source) {
+                    if (hitPoint) {
+                        feature.target.source.anchor = {
+                            x: Number(hitPoint.x || 0),
+                            y: Number(hitPoint.y || 0),
+                            z: Number(hitPoint.z || 0)
+                        };
+                    }
+                    const solidId = String(feature.target.source.solid_id || '');
+                    if (solidId) {
+                        const solid = api.solids?.list?.().find?.(item => item?.id === solidId) || null;
+                        feature.target.source.solid_feature_id = solid?.source?.feature_id || feature.target.source.solid_feature_id || null;
+                    }
+                }
                 feature.target.offset = offset;
                 feature.plane = api.solids?.applyOffsetToFrame?.(target.frame, offset) || target.frame;
             }, {
