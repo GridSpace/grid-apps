@@ -387,13 +387,23 @@ function createDocumentApi(getApi, cfg) {
             if (!revision || !revision.snapshot) {
                 return Promise.resolve(null);
             }
-            this._atomicEdit = null;
+            const previousAtomicEdit = this._atomicEdit ? { ...this._atomicEdit } : null;
+            const previousDocId = this.current?.id || null;
             const preserved = this.current ? {
                 name: this.current.name,
                 tree: JSON.parse(JSON.stringify(this.current.tree || { folders: [] }))
             } : null;
             const migrated = this.migrate(JSON.parse(JSON.stringify(revision.snapshot)));
             this.current = migrated.doc;
+            if (previousAtomicEdit && previousDocId && previousDocId === this.current?.id) {
+                const featureId = previousAtomicEdit.feature_id || null;
+                const hasFeature = featureId && Array.isArray(this.current?.features)
+                    ? this.current.features.some(feature => feature?.id === featureId)
+                    : false;
+                this._atomicEdit = hasFeature ? previousAtomicEdit : null;
+            } else {
+                this._atomicEdit = null;
+            }
             if (preserved) {
                 this.current.name = this.normalizeName(preserved.name);
                 this.current.tree = preserved.tree;
