@@ -307,13 +307,8 @@ function handleSketchMouseUp(event, intersections) {
             return true;
         }
         const created = this.createSketchLine(feature, this.sketchLineStart, local, { startRefId: this.sketchLineStartRefId || null, endRefId });
-        if (this.getSketchHitLocalPoint(feature, resolved)) {
-            this.cancelSketchLine();
-            this.setSketchTool('select');
-            return true;
-        }
         this.sketchLineStart = { x: local.x, y: local.y };
-        this.sketchLineStartRefId = created?.endPointId || null;
+        this.sketchLineStartRefId = endRefId || created?.endPointId || null;
         this.sketchLineStartSeq = null;
         return true;
     }
@@ -358,7 +353,6 @@ function handleSketchMouseUp(event, intersections) {
         });
         if (created) {
             this.cancelSketchArc();
-            this.setSketchTool('select');
         }
         return true;
     }
@@ -391,7 +385,6 @@ function handleSketchMouseUp(event, intersections) {
         });
         if (created) {
             this.cancelSketchArc();
-            this.setSketchTool('select');
         }
         return true;
     }
@@ -418,7 +411,6 @@ function handleSketchMouseUp(event, intersections) {
         });
         if (created) {
             this.cancelSketchCircle();
-            this.setSketchTool('select');
         }
         return true;
     }
@@ -454,7 +446,6 @@ function handleSketchMouseUp(event, intersections) {
         });
         if (created) {
             this.cancelSketchCircle();
-            this.setSketchTool('select');
         }
         return true;
     }
@@ -471,7 +462,6 @@ function handleSketchMouseUp(event, intersections) {
             if (dist > SKETCH_DRAG_START_PX) {
                 this.createSketchRectangle(feature, this.sketchRectStart, local, { centerMode, startRefId: this.sketchRectStartRefId || null, endRefId });
                 this.cancelSketchRect();
-                this.setSketchTool('select');
             }
             return true;
         }
@@ -482,7 +472,6 @@ function handleSketchMouseUp(event, intersections) {
         });
         if (created) {
             this.cancelSketchRect();
-            this.setSketchTool('select');
         }
         return true;
     }
@@ -515,7 +504,6 @@ function handleSketchDrag(delta, offset, isDone) {
             endRefId: null
         });
         this.cancelSketchLine();
-        this.setSketchTool('select');
         return true;
     }
 
@@ -543,7 +531,6 @@ function handleSketchDrag(delta, offset, isDone) {
         });
         if (created) {
             this.cancelSketchRect();
-            this.setSketchTool('select');
         }
         return true;
     }
@@ -584,7 +571,6 @@ function handleSketchDrag(delta, offset, isDone) {
         const created = this.createSketchCircle(feature, this.sketchCircleCenter, end, { centerRefId: this.sketchCircleCenterRefId || null });
         if (created) {
             this.cancelSketchCircle();
-            this.setSketchTool('select');
         }
         return true;
     }

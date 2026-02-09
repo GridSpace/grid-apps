@@ -492,6 +492,10 @@ html, body {
     overflow: hidden;
 }
 
+.doc-dialog.export-dialog {
+    width: min(380px, calc(100vw - 40px));
+}
+
 .doc-dialog-header {
     padding: 12px 14px;
     border-bottom: 1px solid var(--border);

@@ -18,6 +18,7 @@ const toolbar = {
     extrudeBtn: null,
     booleanBtn: null,
     sketchToolButtons: null,
+    sketchToolMenus: null,
     sketchToolMenuItems: null,
     sketchConstraintButtons: null,
     sketchConstraintMenu: null,
@@ -147,6 +148,12 @@ const toolbar = {
                 api.interact.createSketchPolygonFromSelectedCircle?.('circumscribed');
             } }
         ]);
+        this.sketchToolMenus = {
+            arc: arcMenu,
+            circle: circleMenu,
+            rect: rectMenu,
+            polygon: polyMenu
+        };
         this.sketchToolMenuItems = {
             ...arcMenu.items,
             ...circleMenu.items,
@@ -271,6 +278,12 @@ const toolbar = {
                 const enabled = editing;
                 btn.disabled = !enabled;
                 btn.classList.toggle('active', enabled && name === tool);
+            }
+        }
+        if (this.sketchToolMenus) {
+            for (const menu of Object.values(this.sketchToolMenus)) {
+                if (!menu?.trigger) continue;
+                menu.trigger.disabled = !editing;
             }
         }
         if (this.sketchToolMenuItems) {
@@ -567,7 +580,7 @@ const toolbar = {
         backdrop.className = 'doc-dialog-backdrop hidden';
 
         const dialog = document.createElement('div');
-        dialog.className = 'doc-dialog';
+        dialog.className = 'doc-dialog export-dialog';
 
         const header = document.createElement('div');
         header.className = 'doc-dialog-header';
@@ -615,7 +628,7 @@ const toolbar = {
         stlZip.type = 'checkbox';
         stlZip.checked = false;
         const stlZipText = document.createElement('span');
-        stlZipText.textContent = 'Zip per solid';
+        stlZipText.textContent = 'zip with file per solid';
         stlZipWrap.appendChild(stlZip);
         stlZipWrap.appendChild(stlZipText);
         stlOptsInfo.appendChild(stlOptsLabel);
