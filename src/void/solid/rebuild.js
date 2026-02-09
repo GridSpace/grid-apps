@@ -2,6 +2,9 @@
 
 import { buildSeedProvenance } from './provenance.js';
 import { extrudePolygons, booleanMeshes } from './kernel.js';
+import { ClipperLib } from '../../ext/clip2.esm.js';
+
+const CLIPPER_SCALE = 100000;
 
 function profileLoopsFromRuntime(api, profileTarget) {
     const sketchId = profileTarget?.sketchId || null;
@@ -111,6 +114,87 @@ function transformMeshToWorld(mesh, basis, zShift = 0) {
     };
 }
 
+function polygonSignedArea(loop) {
+    if (!Array.isArray(loop) || loop.length < 3) return 0;
+    let area2 = 0;
+    for (let i = 0; i < loop.length; i++) {
+        const a = loop[i];
+        const b = loop[(i + 1) % loop.length];
+        area2 += (a.x || 0) * (b.y || 0) - (b.x || 0) * (a.y || 0);
+    }
+    return area2 * 0.5;
+}
+
+function ensureLoopWinding(loop, ccw = true) {
+    if (!Array.isArray(loop) || loop.length < 3) return loop;
+    const isCCW = polygonSignedArea(loop) > 0;
+    if ((ccw && isCCW) || (!ccw && !isCCW)) return loop;
+    return loop.slice().reverse();
+}
+
+function toClipperPath(loop) {
+    if (!Array.isArray(loop) || loop.length < 3) return null;
+    const path = [];
+    for (const p of loop) {
+        path.push({
+            X: Math.round((p?.x || 0) * CLIPPER_SCALE),
+            Y: Math.round((p?.y || 0) * CLIPPER_SCALE)
+        });
+    }
+    return path.length >= 3 ? path : null;
+}
+
+function fromClipperPath(path) {
+    if (!Array.isArray(path) || path.length < 3) return null;
+    return path.map(pt => ({
+        x: Number(pt?.X || 0) / CLIPPER_SCALE,
+        y: Number(pt?.Y || 0) / CLIPPER_SCALE
+    }));
+}
+
+function unionSelectedRegions(profileLoopsList) {
+    if (!Array.isArray(profileLoopsList) || !profileLoopsList.length || !ClipperLib?.Clipper) {
+        return [];
+    }
+    const subject = [];
+    for (const loops of profileLoopsList) {
+        if (!Array.isArray(loops)) continue;
+        for (const loop of loops) {
+            const path = toClipperPath(loop);
+            if (path) subject.push(path);
+        }
+    }
+    if (!subject.length) return [];
+    const clip = new ClipperLib.Clipper();
+    clip.AddPaths(subject, ClipperLib.PolyType.ptSubject, true);
+    const tree = new ClipperLib.PolyTree();
+    const ok = clip.Execute(
+        ClipperLib.ClipType.ctUnion,
+        tree,
+        ClipperLib.PolyFillType.pftEvenOdd,
+        ClipperLib.PolyFillType.pftEvenOdd
+    );
+    if (!ok) return [];
+    const exPolys = ClipperLib.JS?.PolyTreeToExPolygons
+        ? ClipperLib.JS.PolyTreeToExPolygons(tree)
+        : [];
+    const out = [];
+    for (const ex of exPolys || []) {
+        const outer = fromClipperPath(ex?.outer);
+        if (!outer || outer.length < 3) continue;
+        const holes = [];
+        for (const hole of ex?.holes || []) {
+            const loop = fromClipperPath(hole);
+            if (loop && loop.length >= 3) holes.push(loop);
+        }
+        out.push({
+            outer: ensureLoopWinding(outer, true),
+            holes: holes.map(loop => ensureLoopWinding(loop, false))
+        });
+    }
+    return out;
+}
+
 async function rebuildGeneratedSolids(api, options = {}) {
     const doc = api.document.current;
     if (!doc) return { solids: [], meshCache: new Map() };
@@ -133,36 +217,48 @@ async function rebuildGeneratedSolids(api, options = {}) {
                 : 'new';
             const localZShift = symmetric ? (-depth / 2) : (direction === 'reverse' ? -depth : 0);
             const createdBodyIds = [];
-
+            const bySketch = new Map();
             for (const profileTarget of profiles) {
                 const sketchId = profileTarget?.sketchId || null;
                 const profileId = profileTarget?.profileId || null;
                 if (!sketchId || !profileId) continue;
                 const profileLoops = profileLoopsFromRuntime(api, profileTarget);
+                if (!profileLoops?.length) continue;
                 const sketchFeature = api.features.findById(sketchId);
                 const basis = basisFromPlaneFrame(sketchFeature?.plane || {});
-                const bodyIndex = bodySeq++;
-                const id = makeBodyId(feature.id, bodyIndex);
-                const body = {
-                    id,
-                    name: `${feature.name || 'Extrude'}-${bodyIndex + 1}`,
-                    visible: feature.visible !== false,
-                    source: {
-                        feature_id: feature.id,
-                        feature_type: feature.type,
-                        profile: profileTarget
-                    },
-                    provenance: buildSeedProvenance(feature, profileTarget, bodyIndex),
-                    mesh: null,
-                    status: profileLoops ? 'pending_manifold' : 'missing_profile_loop'
-                };
+                if (!bySketch.has(sketchId)) {
+                    bySketch.set(sketchId, { sketchId, basis, entries: [] });
+                }
+                bySketch.get(sketchId).entries.push({ profileTarget, profileLoops });
+            }
 
-                if (profileLoops) {
-                    // Initial direct-manifold path. Full boolean/replay topology comes next.
-                    const polygons = profileLoops.map(loop => loop.map(p => [p.x || 0, p.y || 0]));
+            for (const sketchPack of bySketch.values()) {
+                const resolvedRegions = unionSelectedRegions(sketchPack.entries.map(e => e.profileLoops));
+                for (const region of resolvedRegions) {
+                    const polygons = [
+                        region.outer,
+                        ...(region.holes || [])
+                    ].map(loop => loop.map(p => [p.x || 0, p.y || 0]));
+                    if (!polygons.length) continue;
+                    const bodyIndex = bodySeq++;
+                    const id = makeBodyId(feature.id, bodyIndex);
+                    const primaryTarget = sketchPack.entries[0]?.profileTarget || null;
+                    const body = {
+                        id,
+                        name: `${feature.name || 'Extrude'}-${bodyIndex + 1}`,
+                        visible: feature.visible !== false,
+                        source: {
+                            feature_id: feature.id,
+                            feature_type: feature.type,
+                            profile: primaryTarget
+                        },
+                        provenance: buildSeedProvenance(feature, primaryTarget, bodyIndex),
+                        mesh: null,
+                        status: 'pending_manifold'
+                    };
                     const result = await extrudePolygons(polygons, depth);
                     if (result?.mesh) {
-                        const meshWorld = transformMeshToWorld(result.mesh, basis, localZShift);
+                        const meshWorld = transformMeshToWorld(result.mesh, sketchPack.basis, localZShift);
                         body.status = 'manifold_mesh_ready';
                         body.mesh = {
                             tri_count: (result.mesh?.triVerts?.length || 0) / 3,
@@ -179,9 +275,8 @@ async function rebuildGeneratedSolids(api, options = {}) {
                         }
                         result.manifold?.delete?.();
                     }
+                    solids.push(body);
                 }
-
-                solids.push(body);
             }
             if ((operation === 'add' || operation === 'subtract') && createdBodyIds.length) {
                 const targetIds = Array.isArray(feature?.input?.targets)
