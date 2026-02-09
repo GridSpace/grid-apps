@@ -183,42 +183,32 @@ function onFeatureSelected(feature) {
 }
 
 function onFeatureEdit(feature) {
-    this.selectedFeatureId = feature?.id || null;
+    this.selectedFeatureId = null;
     if (!this.selectedFeatureIds) {
         this.selectedFeatureIds = new Set();
     }
     this.selectedFeatureIds.clear();
-    if (feature?.id) {
-        this.selectedFeatureIds.add(feature.id);
+    if (!this.selectedSolidIds) {
+        this.selectedSolidIds = new Set();
+    } else {
+        this.selectedSolidIds.clear();
     }
-    this.selectedSolidIds?.clear?.();
+    api.interact?.deselectAll?.();
     api.solids?.setSelected?.([]);
-    const selectedSketchIds = feature?.type === 'sketch' ? [feature.id] : [];
+    api.solids?.clearFaceSelection?.();
     api.interact?.selectedSketchProfiles?.clear?.();
     api.interact.hoveredSketchProfileKey = null;
     api.sketchRuntime?.setSelectedProfiles?.([]);
     api.sketchRuntime?.setHoveredProfile?.(null);
-    api.sketchRuntime?.setSelected(selectedSketchIds);
+    api.sketchRuntime?.setSelected([]);
     if (feature?.type === 'sketch') {
         api.sketchRuntime?.setEditing(feature.id);
         api.interact?.clearSketchSelection?.();
         api.interact?.setSketchTool?.('select');
     } else if (feature?.type === 'extrude') {
-        const operation = String(feature?.params?.operation || 'new');
-        const targets = Array.isArray(feature?.input?.targets) ? feature.input.targets.filter(Boolean) : [];
-        const solids = (operation === 'add' || operation === 'subtract') ? targets : [];
-        this.selectedSolidIds = new Set(solids);
-        api.solids?.setSelected?.(solids);
         api.sketchRuntime?.setEditing(null);
         api.interact?.clearSketchSelection?.();
     } else if (feature?.type === 'boolean') {
-        const mode = String(feature?.params?.mode || 'add');
-        const legacy = Array.isArray(feature?.input?.solids) ? feature.input.solids.filter(Boolean) : [];
-        const targets = Array.isArray(feature?.input?.targets) ? feature.input.targets.filter(Boolean) : legacy;
-        const tools = Array.isArray(feature?.input?.tools) ? feature.input.tools.filter(Boolean) : [];
-        const solids = mode === 'subtract' ? Array.from(new Set([...targets, ...tools])) : targets;
-        this.selectedSolidIds = new Set(solids);
-        api.solids?.setSelected?.(solids);
         api.sketchRuntime?.setEditing(null);
         api.interact?.clearSketchSelection?.();
     } else {
