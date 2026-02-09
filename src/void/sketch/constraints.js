@@ -219,6 +219,7 @@ function toPlanegcsConstraint(c, pointById, lineById) {
         };
     }
     if (c.type === 'dimension') {
+        if (c?.data?.mode === 'driven') return null;
         const value = Number(c?.data?.value);
         if (!Number.isFinite(value) || value <= EPS) return null;
         if (refs.length === 1 && lineById.has(refs[0])) {

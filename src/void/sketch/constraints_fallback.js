@@ -608,6 +608,7 @@ function applyCollinear(constraint, points, lines, fixed) {
 }
 
 function applyDimension(constraint, points, lines, fixed) {
+    if (constraint?.data?.mode === 'driven') return false;
     const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
     const target = Number(constraint?.data?.value);
     if (!Number.isFinite(target) || target <= EPS) return false;

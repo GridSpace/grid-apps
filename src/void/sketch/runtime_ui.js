@@ -36,6 +36,91 @@ function formatDimensionLabel(constraint) {
     return Number(value.toFixed(3)).toString();
 }
 
+function getDimensionMode(constraint) {
+    return constraint?.data?.mode === 'driven' ? 'driven' : 'driving';
+}
+
+function formatMeasuredValue(value) {
+    if (!Number.isFinite(value) || value <= 0) return 'D';
+    if (Math.abs(value) >= 1000 || Math.abs(value) < 0.01) {
+        return value.toExponential(2);
+    }
+    return Number(value.toFixed(3)).toString();
+}
+
+function projectLocalToScreen(rec, local, getApi) {
+    if (!rec?.entitiesGroup || !local) return null;
+    const world = new THREE.Vector3(local.x || 0, local.y || 0, 0);
+    rec.entitiesGroup.localToWorld(world);
+    const proj = getApi().overlay.project3Dto2D(world);
+    if (!proj?.visible) return null;
+    return { x: proj.x, y: proj.y };
+}
+
+function getDimensionEndpoints(feature, constraint) {
+    const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+    const byId = new Map(entities.map(e => [e?.id, e]));
+    const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
+    if (refs.length === 1) {
+        const line = byId.get(refs[0]);
+        if (line?.type !== 'line') return null;
+        const aId = typeof line?.a === 'string' ? line.a : (typeof line?.p1_id === 'string' ? line.p1_id : null);
+        const bId = typeof line?.b === 'string' ? line.b : (typeof line?.p2_id === 'string' ? line.p2_id : null);
+        const a = byId.get(aId);
+        const b = byId.get(bId);
+        if (a?.type !== 'point' || b?.type !== 'point') return null;
+        return [a, b];
+    }
+    if (refs.length >= 2) {
+        const a = byId.get(refs[0]);
+        const b = byId.get(refs[1]);
+        if (a?.type !== 'point' || b?.type !== 'point') return null;
+        return [a, b];
+    }
+    return null;
+}
+
+function computeDimensionMeasurement(feature, constraint) {
+    const pts = getDimensionEndpoints(feature, constraint);
+    if (!pts) return NaN;
+    const [a, b] = pts;
+    return Math.hypot((b.x || 0) - (a.x || 0), (b.y || 0) - (a.y || 0));
+}
+
+function addDimensionDecoration(layer, c, p1, p2, state = {}) {
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const len = Math.hypot(dx, dy);
+    if (!Number.isFinite(len) || len < 1) return;
+    const angle = Math.atan2(dy, dx);
+    const mode = getDimensionMode(c);
+
+    const line = document.createElement('div');
+    line.className = 'sketch-dimension-line';
+    if (mode === 'driven') line.classList.add('driven');
+    if (state?.selected) line.classList.add('selected');
+    if (state?.hovered) line.classList.add('hover');
+    line.style.left = `${p1.x}px`;
+    line.style.top = `${p1.y}px`;
+    line.style.width = `${len}px`;
+    line.style.transform = `rotate(${angle}rad)`;
+    layer.appendChild(line);
+
+    const capLen = 6;
+    for (const p of [p1, p2]) {
+        const cap = document.createElement('div');
+        cap.className = 'sketch-dimension-cap';
+        if (mode === 'driven') cap.classList.add('driven');
+        if (state?.selected) cap.classList.add('selected');
+        if (state?.hovered) cap.classList.add('hover');
+        cap.style.left = `${p.x}px`;
+        cap.style.top = `${p.y}px`;
+        cap.style.width = `${capLen}px`;
+        cap.style.transform = `translate(-50%, -50%) rotate(${(angle + Math.PI * 0.5)}rad)`;
+        layer.appendChild(cap);
+    }
+}
+
 function applySketchState(rec, getApi, colors) {
     const feature = rec.feature || {};
     const visible = feature.visible !== false;
@@ -531,17 +616,46 @@ function updateConstraintGlyphs(getApi, opts = {}) {
             const pos = this.applyConstraintOffset(c, screen, i, items.length, opts);
             const glyph = document.createElement('button');
             glyph.className = 'sketch-constraint-glyph';
-            glyph.textContent = c?.type === 'dimension'
-                ? formatDimensionLabel(c)
+            const isDimension = c?.type === 'dimension';
+            const measured = isDimension ? computeDimensionMeasurement(rec.feature, c) : NaN;
+            const mode = isDimension ? getDimensionMode(c) : 'driving';
+            glyph.textContent = isDimension
+                ? (mode === 'driven' ? formatMeasuredValue(measured) : formatDimensionLabel(c))
                 : this.constraintGlyphLabel(c.type);
             glyph.style.left = `${Math.round(pos.x)}px`;
             glyph.style.top = `${Math.round(pos.y)}px`;
+            if (isDimension) {
+                glyph.classList.add('dimension');
+                glyph.classList.toggle('driven', mode === 'driven');
+                glyph.classList.toggle('driving', mode === 'driving');
+                glyph.dataset.mode = mode === 'driven' ? 'R' : 'D';
+                const ends = getDimensionEndpoints(rec.feature, c);
+                if (ends) {
+                    const p1 = projectLocalToScreen(rec, ends[0], getApi);
+                    const p2 = projectLocalToScreen(rec, ends[1], getApi);
+                    if (p1 && p2) {
+                        addDimensionDecoration(layer, c, p1, p2, {
+                            selected: selectedConstraintIds.has(c.id),
+                            hovered: hoveredConstraintId === c.id
+                        });
+                    }
+                }
+            }
             if (selectedConstraintIds.has(c.id)) {
                 glyph.classList.add('selected');
             } else if (hoveredConstraintId === c.id) {
                 glyph.classList.add('hover');
             }
-            glyph.title = c.type || 'constraint';
+            glyph.title = isDimension
+                ? `dimension (${mode}) - double-click edit, alt-click toggle driving/reference`
+                : (c.type || 'constraint');
+            glyph.ondblclick = event => {
+                if (!isDimension) return;
+                event.preventDefault();
+                event.stopPropagation();
+                const api = getApi();
+                api.interact?.editSketchDimensionConstraint?.(c.id);
+            };
             glyph.onmouseenter = () => {
                 const api = getApi();
                 api.interact?.setHoveredSketchConstraint?.(c.id);
@@ -554,6 +668,10 @@ function updateConstraintGlyphs(getApi, opts = {}) {
                 event.preventDefault();
                 event.stopPropagation();
                 const api = getApi();
+                if (isDimension && event.altKey) {
+                    api.interact?.toggleSketchDimensionMode?.(c.id);
+                    return;
+                }
                 api.interact?.selectSketchConstraint?.(c.id, event);
                 this._glyphDrag = {
                     featureId: rec.feature.id,
