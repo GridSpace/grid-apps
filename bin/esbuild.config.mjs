@@ -9,6 +9,9 @@ const isProd = mode === 'prod';
 
 console.log(`Building in ${mode} mode...`);
 
+const VOID_OUTFILE = 'src/pack/void-main.js';
+const VOID_EXTRAS = [ ];
+
 const MESH_OUTFILE = 'src/pack/mesh-main.js';
 const MESH_EXTRAS = [ ];
 
@@ -99,6 +102,20 @@ async function buildApp() {
     try {
         // Concatenate kiri devices
         generateDevices();
+
+        // Bundle void main app
+        await build(Object.assign({}, rec, {
+            entryPoints: [ 'src/main/void.js' ],
+            outfile: VOID_OUTFILE,
+        }));
+
+        appendExtraModules(VOID_EXTRAS, VOID_OUTFILE, isProd);
+
+        // Bundle void worker
+        await build(Object.assign({}, rec, {
+            entryPoints: [ 'src/void/worker/solids_worker.js' ],
+            outfile: 'src/pack/void-work-solid.js',
+        }));
 
         // Bundle mesh main app
         await build(Object.assign({}, rec, {

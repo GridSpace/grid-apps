@@ -374,8 +374,11 @@ function handleSetup(req, res, next) {
 }
 
 const productionMap = {
-    '/lib/mesh/work.js' : '/lib/pack/mesh-work.js',
+    '/lib/main/void.js' : '/lib/pack/void-main.js',
+    '/lib/main/planegcs.wasm' : '/lib/void/solver/planegcs_dist/planegcs.wasm',
+    '/lib/worker/solids_worker.js' : '/lib/pack/void-work-solid.js',
     '/lib/main/mesh.js' : '/lib/pack/mesh-main.js',
+    '/lib/mesh/work.js' : '/lib/pack/mesh-work.js',
     '/lib/main/kiri.js' : '/lib/pack/kiri-main.js',
     '/lib/kiri/run/engine.js' : '/lib/pack/kiri-eng.js',
     '/lib/kiri/run/minion.js' : '/lib/pack/kiri-pool.js',

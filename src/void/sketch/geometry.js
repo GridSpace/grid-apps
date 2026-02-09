@@ -271,6 +271,45 @@ function resolveDerivedEdgeCandidate(event, intersections, feature) {
                 : { x: best.mid.x, y: best.mid.y, z: best.mid.z })
         : null;
     const solid = api.solids?.list?.().find?.(item => item?.id === best.solidId) || null;
+    const target = api.solids?.getSketchTargetForFaceKey?.(faceKey) || null;
+    const faceFrame = target?.frame || null;
+    const frameBasis = (() => {
+        if (!faceFrame?.origin || !faceFrame?.normal || !faceFrame?.x_axis) return null;
+        const origin = new THREE.Vector3(
+            Number(faceFrame.origin.x || 0),
+            Number(faceFrame.origin.y || 0),
+            Number(faceFrame.origin.z || 0)
+        );
+        const normal = new THREE.Vector3(
+            Number(faceFrame.normal.x || 0),
+            Number(faceFrame.normal.y || 0),
+            Number(faceFrame.normal.z || 1)
+        ).normalize();
+        let xAxis = new THREE.Vector3(
+            Number(faceFrame.x_axis.x || 1),
+            Number(faceFrame.x_axis.y || 0),
+            Number(faceFrame.x_axis.z || 0)
+        );
+        xAxis.addScaledVector(normal, -xAxis.dot(normal));
+        if (xAxis.lengthSq() <= 1e-12) {
+            xAxis.set(1, 0, 0);
+            xAxis.addScaledVector(normal, -xAxis.dot(normal));
+        }
+        xAxis.normalize();
+        const yAxis = new THREE.Vector3().crossVectors(normal, xAxis).normalize();
+        return { origin, xAxis, yAxis };
+    })();
+    const toFaceLocal = world => {
+        if (!world || !frameBasis) return null;
+        const rel = world.clone().sub(frameBasis.origin);
+        return {
+            x: rel.dot(frameBasis.xAxis),
+            y: rel.dot(frameBasis.yAxis)
+        };
+    };
+    const localA = toFaceLocal(best.a);
+    const localB = toFaceLocal(best.b);
+    const localP = hoverWorld ? toFaceLocal(new THREE.Vector3(hoverWorld.x, hoverWorld.y, hoverWorld.z)) : null;
     return {
         type: 'solid-edge',
         solidId: best.solidId,
@@ -289,6 +328,10 @@ function resolveDerivedEdgeCandidate(event, intersections, feature) {
             solid_id: best.solidId,
             solid_feature_id: solid?.source?.feature_id || null,
             face_id: Number.isFinite(faceId) ? faceId : null,
+            face_frame: faceFrame || null,
+            local_a: localA || null,
+            local_b: localB || null,
+            local_point: localP || null,
             edge_index: best.segIndex,
             a: { x: best.a.x, y: best.a.y, z: best.a.z },
             b: { x: best.b.x, y: best.b.y, z: best.b.z }

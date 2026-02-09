@@ -7,6 +7,49 @@ import { rebuildGeneratedSolids } from '../solid/rebuild.js';
 const SOLID_CREASE_ANGLE_DEG = 30;
 
 function createSolidsApi(getApi) {
+    function frameToBasis(frame) {
+        if (!frame?.origin || !frame?.normal || !frame?.x_axis) return null;
+        const origin = new THREE.Vector3(
+            Number(frame.origin.x || 0),
+            Number(frame.origin.y || 0),
+            Number(frame.origin.z || 0)
+        );
+        const normal = new THREE.Vector3(
+            Number(frame.normal.x || 0),
+            Number(frame.normal.y || 0),
+            Number(frame.normal.z || 1)
+        ).normalize();
+        let xAxis = new THREE.Vector3(
+            Number(frame.x_axis.x || 1),
+            Number(frame.x_axis.y || 0),
+            Number(frame.x_axis.z || 0)
+        );
+        xAxis.addScaledVector(normal, -xAxis.dot(normal));
+        if (xAxis.lengthSq() <= 1e-12) {
+            xAxis.set(1, 0, 0);
+            xAxis.addScaledVector(normal, -xAxis.dot(normal));
+        }
+        xAxis.normalize();
+        const yAxis = new THREE.Vector3().crossVectors(normal, xAxis).normalize();
+        return { origin, normal, xAxis, yAxis };
+    }
+
+    function worldToFrameLocal(world, basis) {
+        if (!world || !basis) return null;
+        const rel = world.clone().sub(basis.origin);
+        return {
+            x: rel.dot(basis.xAxis),
+            y: rel.dot(basis.yAxis)
+        };
+    }
+
+    function frameLocalToWorld(local, basis) {
+        if (!local || !basis) return null;
+        return basis.origin.clone()
+            .addScaledVector(basis.xAxis, Number(local.x || 0))
+            .addScaledVector(basis.yAxis, Number(local.y || 0));
+    }
+
     function profileLoopsFromRuntime(api, profileTarget) {
         const sketchId = profileTarget?.sketchId || null;
         const profileId = profileTarget?.profileId || null;
@@ -706,12 +749,24 @@ function createSolidsApi(getApi) {
             if (targetSolidId && Number.isFinite(sourceFaceId)) {
                 const faceKey = `${targetSolidId}:${sourceFaceId}`;
                 const segs = this.getFaceBoundarySegments(faceKey) || [];
+                const face = this.getFaceByKey(faceKey);
+                const faceFrame = face?.meta ? this.frameFromFaceMeta(face.meta, source?.face_frame || null) : null;
+                const faceBasis = frameToBasis(faceFrame);
+                const srcLocalA = source?.local_a && faceBasis ? source.local_a : null;
+                const srcLocalB = source?.local_b && faceBasis ? source.local_b : null;
+                const srcPredA = srcLocalA ? frameLocalToWorld(srcLocalA, faceBasis) : null;
+                const srcPredB = srcLocalB ? frameLocalToWorld(srcLocalB, faceBasis) : null;
                 let bestFace = null;
                 let bestFaceScore = Infinity;
                 for (let i = 0; i < segs.length; i++) {
                     const seg = segs[i];
                     if (!seg?.a || !seg?.b) continue;
-                    const score = scoreSegment(seg.a, seg.b);
+                    const score = (srcPredA && srcPredB)
+                        ? Math.min(
+                            seg.a.distanceTo(srcPredA) + seg.b.distanceTo(srcPredB),
+                            seg.a.distanceTo(srcPredB) + seg.b.distanceTo(srcPredA)
+                        )
+                        : scoreSegment(seg.a, seg.b);
                     if (score < bestFaceScore) {
                         bestFaceScore = score;
                         bestFace = { solidId: targetSolidId, index: i, aWorld: seg.a, bWorld: seg.b };
@@ -771,6 +826,28 @@ function createSolidsApi(getApi) {
             if (!best) return null;
             best.midWorld = best.aWorld.clone().add(best.bWorld).multiplyScalar(0.5);
             return best;
+        },
+
+        resolvePointFromSource(source = {}) {
+            if (source?.type !== 'solid-edge') return null;
+            const targetSolidId = String(source?.solid_id || '');
+            const sourceFaceId = Number(source?.face_id);
+            if (targetSolidId && Number.isFinite(sourceFaceId) && source?.local_point) {
+                const faceKey = `${targetSolidId}:${sourceFaceId}`;
+                const face = this.getFaceByKey(faceKey);
+                if (face?.meta) {
+                    const frame = this.frameFromFaceMeta(face.meta, source?.face_frame || null);
+                    const basis = frameToBasis(frame);
+                    const world = frameLocalToWorld(source.local_point, basis);
+                    if (world) return world;
+                }
+            }
+            const seg = this.resolveEdgeFromSource(source);
+            if (!seg) return null;
+            const kind = source?.point_kind || 'mid';
+            if (kind === 'a') return seg.aWorld;
+            if (kind === 'b') return seg.bWorld;
+            return seg.midWorld;
         },
 
         getFaceHitFromIntersections(intersections = []) {

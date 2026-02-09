@@ -16,7 +16,8 @@
       { "src": "src/pack/kiri-pool.js", "dst": "lib/kiri/run/minion.js" },
       { "src": "src/gpu/raster-worker.js", "dst": "lib/gpu/raster-worker.js" },
       { "src": "src/ext/tween.js", "dst": "lib/ext/tween.js" },
-      { "src": "src/moto/license.js", "dst": "lib/moto/license.js" }
+      { "src": "src/moto/license.js", "dst": "lib/moto/license.js" },
+      { "src": "src/void/solver/planegcs_dist/planegcs.wasm", "dst": "lib/main/planegcs.wasm" }
     ],
     "excludes": [
         "src/pack",

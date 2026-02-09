@@ -1022,6 +1022,50 @@ function deriveSelectionsAtomic(feature, selection = {}) {
             const solidId = String(faceKey || '').split(':').slice(0, -1).join(':');
             const faceIdRaw = String(faceKey || '').split(':').slice(-1)[0];
             const faceId = Number(faceIdRaw);
+            const faceTarget = api.solids?.getSketchTargetForFaceKey?.(faceKey) || null;
+            const faceFrame = faceTarget?.frame || null;
+            const faceBasis = (() => {
+                if (!faceFrame?.origin || !faceFrame?.normal || !faceFrame?.x_axis) return null;
+                const origin = {
+                    x: Number(faceFrame.origin.x || 0),
+                    y: Number(faceFrame.origin.y || 0),
+                    z: Number(faceFrame.origin.z || 0)
+                };
+                const normal = {
+                    x: Number(faceFrame.normal.x || 0),
+                    y: Number(faceFrame.normal.y || 0),
+                    z: Number(faceFrame.normal.z || 1)
+                };
+                const xAxis = {
+                    x: Number(faceFrame.x_axis.x || 1),
+                    y: Number(faceFrame.x_axis.y || 0),
+                    z: Number(faceFrame.x_axis.z || 0)
+                };
+                const nx = normal.x, ny = normal.y, nz = normal.z;
+                const nlen = Math.hypot(nx, ny, nz) || 1;
+                const n = { x: nx / nlen, y: ny / nlen, z: nz / nlen };
+                let xx = xAxis.x, xy = xAxis.y, xz = xAxis.z;
+                const xdotn = xx * n.x + xy * n.y + xz * n.z;
+                xx -= n.x * xdotn; xy -= n.y * xdotn; xz -= n.z * xdotn;
+                const xlen = Math.hypot(xx, xy, xz) || 1;
+                const x = { x: xx / xlen, y: xy / xlen, z: xz / xlen };
+                const y = {
+                    x: n.y * x.z - n.z * x.y,
+                    y: n.z * x.x - n.x * x.z,
+                    z: n.x * x.y - n.y * x.x
+                };
+                return { origin, x, y };
+            })();
+            const worldToFaceLocal = world => {
+                if (!faceBasis || !world) return null;
+                const rx = (world.x || 0) - faceBasis.origin.x;
+                const ry = (world.y || 0) - faceBasis.origin.y;
+                const rz = (world.z || 0) - faceBasis.origin.z;
+                return {
+                    x: rx * faceBasis.x.x + ry * faceBasis.x.y + rz * faceBasis.x.z,
+                    y: rx * faceBasis.y.x + ry * faceBasis.y.y + rz * faceBasis.y.z
+                };
+            };
             for (const seg of segs) {
                 if (!seg?.a || !seg?.b) continue;
                 const aLocal = this.worldToSketchLocal(seg.a, basis);
@@ -1032,6 +1076,9 @@ function deriveSelectionsAtomic(feature, selection = {}) {
                     solid_id: solidId,
                     solid_feature_id: null,
                     face_id: Number.isFinite(faceId) ? faceId : null,
+                    face_frame: faceFrame || null,
+                    local_a: worldToFaceLocal(seg.a) || null,
+                    local_b: worldToFaceLocal(seg.b) || null,
                     edge_index: null,
                     a: { x: seg.a.x, y: seg.a.y, z: seg.a.z },
                     b: { x: seg.b.x, y: seg.b.y, z: seg.b.z }
@@ -1065,10 +1112,8 @@ function refreshDerivedSketchGeometry(feature) {
     let changed = false;
 
     const updatePointFromSource = (point, source) => {
-        const seg = api.solids?.resolveEdgeFromSource?.(source);
-        if (!seg) return;
-        const kind = source?.point_kind || 'mid';
-        const world = kind === 'a' ? seg.aWorld : kind === 'b' ? seg.bWorld : seg.midWorld;
+        const world = api.solids?.resolvePointFromSource?.(source) || null;
+        if (!world) return;
         const local = this.worldToSketchLocal(world, basis);
         if (!local) return;
         if (Math.abs((point.x || 0) - local.x) > 1e-6 || Math.abs((point.y || 0) - local.y) > 1e-6) {
