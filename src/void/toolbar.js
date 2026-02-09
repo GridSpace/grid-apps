@@ -5,6 +5,10 @@ import { api } from './api.js';
 import { tree } from './tree.js';
 import { space } from '../moto/space.js';
 import { properties } from './properties.js';
+import { encode as objEncode } from '../load/obj.js';
+import { encode as stlEncode } from '../load/stl.js';
+import { encode as tmfEncode } from '../load/3mf.js';
+import { meshToSTEPWithFaces } from '../load/step.js';
 
 const toolbar = {
     buttons: [],
@@ -20,6 +24,9 @@ const toolbar = {
     openDialogEl: null,
     openDialogListEl: null,
     hotkeysDialogEl: null,
+    exportDialogEl: null,
+    exportDialogInfoEl: null,
+    exportFilenameEl: null,
 
     build() {
         const container = $('top-bar');
@@ -38,15 +45,19 @@ const toolbar = {
         container.appendChild(this.separator());
 
         // Main tools
-        this.addButton(container, 'New', async () => {
-            await api.document.createAndSelect();
-            this.updateDocumentTitle();
-            tree.render();
-        });
-
-        this.addButton(container, 'Open', () => {
-            this.showOpenDialog();
-        });
+        this.addMenu(container, 'File', [
+            { key: 'new', label: 'New', onClick: async () => {
+                await api.document.createAndSelect();
+                this.updateDocumentTitle();
+                tree.render();
+            } },
+            { key: 'open', label: 'Open', onClick: () => {
+                this.showOpenDialog();
+            } },
+            { key: 'export', label: 'Export…', onClick: () => {
+                this.showExportDialog();
+            } }
+        ]);
 
         container.appendChild(this.separator());
 
@@ -214,6 +225,7 @@ const toolbar = {
         container.appendChild(this.docNameEl);
 
         this.buildOpenDialog();
+        this.buildExportDialog();
         this.buildHotkeysDialog();
         this.updateDocumentTitle();
         this.updateSketchControls();
@@ -545,6 +557,166 @@ const toolbar = {
         if (this.openDialogEl) {
             this.openDialogEl.classList.add('hidden');
         }
+    },
+
+    buildExportDialog() {
+        if (this.exportDialogEl) return;
+        const backdrop = document.createElement('div');
+        backdrop.className = 'doc-dialog-backdrop hidden';
+
+        const dialog = document.createElement('div');
+        dialog.className = 'doc-dialog';
+
+        const header = document.createElement('div');
+        header.className = 'doc-dialog-header';
+        header.textContent = 'Export Solids';
+
+        const list = document.createElement('div');
+        list.className = 'doc-dialog-list';
+
+        const info = document.createElement('div');
+        info.className = 'doc-dialog-meta';
+        info.style.padding = '4px 0 10px 0';
+        list.appendChild(info);
+
+        const nameRow = document.createElement('div');
+        nameRow.className = 'doc-dialog-row';
+        const nameInfo = document.createElement('div');
+        nameInfo.className = 'doc-dialog-info';
+        const nameLabel = document.createElement('div');
+        nameLabel.className = 'doc-dialog-name';
+        nameLabel.textContent = 'Filename';
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.value = 'void-export';
+        nameInput.style.width = '100%';
+        nameInput.style.marginTop = '6px';
+        nameInfo.appendChild(nameLabel);
+        nameInfo.appendChild(nameInput);
+        nameRow.appendChild(nameInfo);
+        list.appendChild(nameRow);
+
+        const actions = document.createElement('div');
+        actions.className = 'doc-dialog-actions';
+
+        const mk = (label, fmt) => {
+            const btn = this.addButton(actions, label, () => this.exportSolids(fmt));
+            btn.classList.add('compact');
+            return btn;
+        };
+        mk('OBJ', 'obj');
+        mk('STL', 'stl');
+        mk('3MF', '3mf');
+        mk('STEP', 'step');
+        const closeBtn = this.addButton(actions, 'Close', () => this.hideExportDialog());
+        closeBtn.classList.add('compact');
+
+        dialog.appendChild(header);
+        dialog.appendChild(list);
+        dialog.appendChild(actions);
+        backdrop.appendChild(dialog);
+        document.body.appendChild(backdrop);
+
+        backdrop.addEventListener('click', event => {
+            if (event.target === backdrop) {
+                this.hideExportDialog();
+            }
+        });
+
+        this.exportDialogEl = backdrop;
+        this.exportDialogInfoEl = info;
+        this.exportFilenameEl = nameInput;
+    },
+
+    getExportTargetSolidIds() {
+        const selected = Array.from(tree.selectedSolidIds || []);
+        if (selected.length) return selected;
+        return (api.solids?.list?.() || []).map(s => s?.id).filter(Boolean);
+    },
+
+    showExportDialog() {
+        if (!this.exportDialogEl) {
+            this.buildExportDialog();
+        }
+        const selected = Array.from(tree.selectedSolidIds || []);
+        const ids = this.getExportTargetSolidIds();
+        if (this.exportDialogInfoEl) {
+            this.exportDialogInfoEl.textContent = selected.length
+                ? `Exporting ${ids.length} selected solid(s)`
+                : `No solids selected. Exporting all ${ids.length} solid(s)`;
+        }
+        this.exportDialogEl.classList.remove('hidden');
+        this.exportFilenameEl?.focus?.();
+        this.exportFilenameEl?.select?.();
+    },
+
+    hideExportDialog() {
+        if (this.exportDialogEl) {
+            this.exportDialogEl.classList.add('hidden');
+        }
+    },
+
+    sanitizeExportFilename(name, ext) {
+        const base = String(name || 'void-export').trim().replace(/[\\/:*?"<>|]+/g, '-');
+        const stem = base || 'void-export';
+        return stem.toLowerCase().endsWith(`.${ext}`) ? stem : `${stem}.${ext}`;
+    },
+
+    downloadExport(data, filename, mime = 'application/octet-stream') {
+        const blob = data instanceof Blob ? data : new Blob([data], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 0);
+    },
+
+    recsToStepTriangles(recs) {
+        const out = [];
+        for (const rec of recs) {
+            const varr = rec?.varr || [];
+            for (let i = 0; i + 8 < varr.length; i += 9) {
+                out.push({
+                    v1: { x: varr[i], y: varr[i + 1], z: varr[i + 2] },
+                    v2: { x: varr[i + 3], y: varr[i + 4], z: varr[i + 5] },
+                    v3: { x: varr[i + 6], y: varr[i + 7], z: varr[i + 8] }
+                });
+            }
+        }
+        return out;
+    },
+
+    async exportSolids(format = 'obj') {
+        const ids = this.getExportTargetSolidIds();
+        const recs = api.solids?.getExportRecords?.(ids) || [];
+        if (!recs.length) {
+            window.alert('No solids to export');
+            return;
+        }
+        const ext = String(format || 'obj').toLowerCase();
+        const base = this.exportFilenameEl?.value || 'void-export';
+        const filename = this.sanitizeExportFilename(base, ext);
+        if (ext === 'obj') {
+            const data = objEncode(recs, '# Generated by Void:Form');
+            this.downloadExport(data, filename, 'text/plain;charset=utf-8');
+        } else if (ext === 'stl') {
+            const data = stlEncode(recs, 'Generated by Void:Form');
+            this.downloadExport(data, filename, 'application/sla');
+        } else if (ext === '3mf') {
+            const blob = await tmfEncode(recs, { title: api.document.current?.name || 'Void Export' });
+            this.downloadExport(blob, filename, 'model/3mf');
+        } else if (ext === 'step') {
+            const tris = this.recsToStepTriangles(recs);
+            const data = meshToSTEPWithFaces(tris, { productName: api.document.current?.name || 'void-export' });
+            this.downloadExport(data, filename, 'application/step');
+        } else {
+            window.alert(`Unsupported format: ${format}`);
+            return;
+        }
+        this.hideExportDialog();
     },
 
     hotkeys() {

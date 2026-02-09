@@ -7,6 +7,21 @@ import { rebuildGeneratedSolids } from '../solid/rebuild.js';
 const SOLID_CREASE_ANGLE_DEG = 30;
 
 function createSolidsApi(getApi) {
+    function flattenMeshToTriangleVertexArray(meshData) {
+        const positions = meshData?.positions;
+        const indices = meshData?.indices;
+        if (!positions?.length || !indices?.length) return new Float32Array(0);
+        const out = new Float32Array(indices.length * 3);
+        let oi = 0;
+        for (let i = 0; i < indices.length; i++) {
+            const vi = indices[i] * 3;
+            out[oi++] = positions[vi];
+            out[oi++] = positions[vi + 1];
+            out[oi++] = positions[vi + 2];
+        }
+        return out;
+    }
+
     function buildSolidGeometry(meshData) {
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute('position', new THREE.Float32BufferAttribute(meshData.positions, 3));
@@ -291,6 +306,28 @@ function createSolidsApi(getApi) {
             return Array.isArray(api.document.current?.generated?.solids)
                 ? api.document.current.generated.solids
                 : [];
+        },
+
+        getExportRecords(ids = []) {
+            const requested = Array.isArray(ids) ? ids.filter(Boolean) : [];
+            const wanted = requested.length ? new Set(requested) : null;
+            const solids = this.list();
+            const out = [];
+            for (const solid of solids) {
+                const id = solid?.id;
+                if (!id) continue;
+                if (wanted && !wanted.has(id)) continue;
+                const meshData = this._meshCache.get(id);
+                if (!meshData) continue;
+                const varr = flattenMeshToTriangleVertexArray(meshData);
+                if (!varr.length) continue;
+                out.push({
+                    id,
+                    file: String(solid?.name || `solid-${id}`),
+                    varr
+                });
+            }
+            return out;
         },
 
         setSelected(ids = []) {
