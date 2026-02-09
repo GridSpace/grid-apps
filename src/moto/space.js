@@ -1435,6 +1435,7 @@ let Space = {
             // Calculate desired camera distance based on bounding box
             const padding = opts.padding || 0.75;
             let desiredDistance;
+            let orthoScaleSaveTarget = null;
 
             if (camera.isPerspectiveCamera) {
                 // For perspective, calculate distance to fit object in view
@@ -1442,11 +1443,41 @@ let Space = {
                 // Use maxDim directly (not half) for more conservative framing
                 desiredDistance = maxDim / Math.tan(fov / 2) * padding;
             } else {
-                // For orthographic, calculate equivalent distance
-                // The ortho frustum size is proportional to distance * tan(fov/2)
-                // We want similar framing to perspective mode
-                const fov = perspective * (Math.PI / 180);
-                desiredDistance = maxDim / Math.tan(fov / 2) * padding;
+                // For orthographic, fit based on camera-plane extents (not perspective distance).
+                // This avoids chronic over-zoom-out in ortho mode.
+                camera.updateMatrixWorld(true);
+                const inv = camera.matrixWorldInverse;
+                const min = box.min;
+                const max = box.max;
+                const corners = [
+                    new THREE.Vector3(min.x, min.y, min.z),
+                    new THREE.Vector3(min.x, min.y, max.z),
+                    new THREE.Vector3(min.x, max.y, min.z),
+                    new THREE.Vector3(min.x, max.y, max.z),
+                    new THREE.Vector3(max.x, min.y, min.z),
+                    new THREE.Vector3(max.x, min.y, max.z),
+                    new THREE.Vector3(max.x, max.y, min.z),
+                    new THREE.Vector3(max.x, max.y, max.z)
+                ];
+                let camMinX = Infinity;
+                let camMaxX = -Infinity;
+                let camMinY = Infinity;
+                let camMaxY = -Infinity;
+                for (const corner of corners) {
+                    corner.applyMatrix4(inv);
+                    if (corner.x < camMinX) camMinX = corner.x;
+                    if (corner.x > camMaxX) camMaxX = corner.x;
+                    if (corner.y < camMinY) camMinY = corner.y;
+                    if (corner.y > camMaxY) camMaxY = corner.y;
+                }
+                const spanX = Math.max(1e-6, camMaxX - camMinX);
+                const spanY = Math.max(1e-6, camMaxY - camMinY);
+                const frustumW = Math.max(1e-6, Math.abs(camera.right - camera.left));
+                const frustumH = Math.max(1e-6, Math.abs(camera.top - camera.bottom));
+                const fitX = spanX / frustumW;
+                const fitY = spanY / frustumH;
+                // Keep historical fit padding semantics: lower padding => more margin.
+                orthoScaleSaveTarget = Math.max(fitX, fitY) / Math.max(1e-6, padding);
             }
 
             // Get current view angles or use defaults
@@ -1474,11 +1505,8 @@ let Space = {
             if (camera.isPerspectiveCamera) {
                 fitScaleRatio = desiredDistance / currentDistToCenter;
             } else {
-                // For orthographic, set zoom directly based on viewing size
-                // The camera frustum height is determined by the orthographic bounds
-                // We want the object to fit within the view with padding
-                const targetScaleSave = desiredDistance / currentDistToCenter;
-                // Reset scale accumulation and set absolute zoom
+                // For orthographic, set the absolute target zoom scale directly.
+                const targetScaleSave = Number.isFinite(orthoScaleSaveTarget) ? orthoScaleSaveTarget : currentScaleSave;
                 fitScaleRatio = targetScaleSave / currentScaleSave;
             }
 
