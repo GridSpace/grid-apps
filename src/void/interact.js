@@ -3,6 +3,8 @@
 import { THREE } from '../ext/three.js';
 import { space } from '../moto/space.js';
 import { datum } from './datum.js';
+import { api } from './api.js';
+import { properties } from './properties.js';
 import * as targetOps from './interact/targets.js';
 import * as pointOps from './interact/points.js';
 import * as selectionOps from './interact/selection.js';
@@ -73,6 +75,15 @@ const interact = {
     _focusRaycaster: new THREE.Raycaster(),
     _focusNDC: new THREE.Vector2(),
     focusTweenMs: 120,
+    isSketchRetargetMode() {
+        if (!(this.isSketchEditing && this.isSketchEditing())) return false;
+        const featureId = properties.currentFeatureId || null;
+        if (!featureId) return false;
+        const feature = api.features?.findById?.(featureId);
+        if (!feature || feature.type !== 'sketch') return false;
+        const source = feature?.target?.source || null;
+        return !(source && source.type);
+    },
 
     optionFocusOnDown(event) {
         if (!event || event.button !== 2 || !event.altKey) {
@@ -131,7 +142,7 @@ const interact = {
             }
         });
         window.addEventListener('mousemove', event => {
-            if (this.isSketchEditing()) {
+            if (this.isSketchEditing() && !this.isSketchRetargetMode()) {
                 this.handleSketchPointerMove?.(event);
                 this.handleSketchHover(event);
             }
@@ -145,7 +156,7 @@ const interact = {
             if (event && event.button !== 0) {
                 return;
             }
-            if (this.isSketchEditing()) {
+            if (this.isSketchEditing() && !this.isSketchRetargetMode()) {
                 if (!int && int !== null) {
                     return this.getInteractiveObjects();
                 }
@@ -181,7 +192,7 @@ const interact = {
             if (event && event.button !== 0) {
                 return;
             }
-            if (this.isSketchEditing()) {
+            if (this.isSketchEditing() && !this.isSketchRetargetMode()) {
                 // Query phase from space.js: return selectable objects only.
                 if (!event && int === undefined) {
                     return this.getInteractiveObjects();
@@ -209,7 +220,7 @@ const interact = {
             if (event && event.button !== 0) {
                 return;
             }
-            if (this.isSketchEditing()) {
+            if (this.isSketchEditing() && !this.isSketchRetargetMode()) {
                 // sketch completion is handled by mouseUpSelect (preferred)
                 // or window mouseup fallback when mouseUpSelect is skipped.
                 return;
@@ -223,7 +234,7 @@ const interact = {
             if (event && event.button !== 0) {
                 return;
             }
-            if (!this.isSketchEditing()) {
+            if (!this.isSketchEditing() || this.isSketchRetargetMode()) {
                 return;
             }
             if (this._skipNextWindowSketchUp) {
@@ -248,7 +259,7 @@ const interact = {
             if (event && event.button !== 0) {
                 return;
             }
-            if (!this.isSketchEditing()) {
+            if (!this.isSketchEditing() || this.isSketchRetargetMode()) {
                 return;
             }
             if (this._skipNextWindowSketchDown) {

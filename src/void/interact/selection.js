@@ -2,9 +2,13 @@
 
 import { space } from '../../moto/space.js';
 import { api } from '../api.js';
+import { properties } from '../properties.js';
 
 function selectPlane(plane, event) {
     const multiSelect = event && (event.ctrlKey || event.metaKey);
+    const currentFeatureId = properties.currentFeatureId || null;
+    const currentFeature = currentFeatureId ? api.features.findById(currentFeatureId) : null;
+    const editingSketch = currentFeature?.type === 'sketch' && currentFeature?.id === currentFeatureId;
 
     if (multiSelect) {
         // Toggle selection with Ctrl/Cmd
@@ -40,6 +44,26 @@ function selectPlane(plane, event) {
         this.selectedPlanes.add(plane);
     }
     this.updateHandleScreenScales();
+    if (editingSketch && plane?.getFrame) {
+        const updated = api.features.update(currentFeature.id, feature => {
+            const offset = Number(feature?.target?.offset || 0);
+            feature.target = feature.target || {};
+            feature.target.kind = 'plane';
+            feature.target.id = plane.id || null;
+            feature.target.name = plane.name || plane.label || 'Plane';
+            feature.target.label = plane.label || null;
+            feature.target.source = { type: 'plane', id: plane.id || null };
+            feature.target.offset = offset;
+            const frame = plane.getFrame();
+            feature.plane = api.solids?.applyOffsetToFrame?.(frame, offset) || frame;
+        }, {
+            opType: 'feature.update',
+            payload: { field: 'target.plane', id: plane?.id || null }
+        });
+        if (updated) {
+            properties.onChanged?.();
+        }
+    }
     window.dispatchEvent(new CustomEvent('void-state-change'));
 }
 

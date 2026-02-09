@@ -713,15 +713,19 @@ function createSolidsApi(getApi) {
         },
 
         resolveSketchFrameForSource(source, preferredFrame = null) {
-            if (source?.type !== 'solid-face') return null;
+            const sourceType = String(source?.type || '');
+            if (sourceType !== 'solid-face' && sourceType !== 'face') return null;
             const solidId = String(source?.solid_id || '');
-            if (!solidId) return null;
-            const view = this._meshViews.get(solidId);
-            if (!view?.faceGroups?.size) return null;
+            const preferredSolidId = solidId || null;
+            const view = solidId ? this._meshViews.get(solidId) : null;
             const sourceFaceId = Number(source?.face_id);
-            const exactMeta = Number.isFinite(sourceFaceId) ? view.faceGroups.get(sourceFaceId) : null;
+            const exactMeta = Number.isFinite(sourceFaceId) ? view?.faceGroups?.get?.(sourceFaceId) : null;
             if (exactMeta?.planar) {
-                return { faceId: sourceFaceId, frame: this.frameFromFaceMeta(exactMeta, preferredFrame) };
+                return {
+                    solidId,
+                    faceId: sourceFaceId,
+                    frame: this.frameFromFaceMeta(exactMeta, preferredFrame)
+                };
             }
             let preferredOrigin = null;
             let preferredNormal = null;
@@ -739,25 +743,40 @@ function createSolidsApi(getApi) {
             }
             let best = null;
             let bestScore = -Infinity;
-            for (const [faceId, meta] of view.faceGroups.entries()) {
-                if (!meta?.planar) continue;
-                const n = meta.normal.clone().normalize();
-                let align = 0;
-                let distPenalty = 0;
-                if (preferredNormal) {
-                    align = n.dot(preferredNormal);
+            const evalView = (sid, meshView, scoreBias = 0) => {
+                if (!meshView?.faceGroups?.size) return;
+                for (const [faceId, meta] of meshView.faceGroups.entries()) {
+                    if (!meta?.planar) continue;
+                    const n = meta.normal.clone().normalize();
+                    let align = 0;
+                    let distPenalty = 0;
+                    if (preferredNormal) {
+                        align = n.dot(preferredNormal);
+                    }
+                    if (preferredOrigin) {
+                        distPenalty = preferredOrigin.distanceTo(meta.center) * 0.01;
+                    }
+                    const score = align - distPenalty + scoreBias;
+                    if (score > bestScore) {
+                        bestScore = score;
+                        best = { solidId: sid, faceId, meta };
+                    }
                 }
-                if (preferredOrigin) {
-                    distPenalty = preferredOrigin.distanceTo(meta.center) * 0.01;
-                }
-                const score = align - distPenalty;
-                if (score > bestScore) {
-                    bestScore = score;
-                    best = { faceId, meta };
+            };
+            if (view) {
+                // Keep attachment stable: when the referenced solid still exists,
+                // only search faces on that solid.
+                evalView(solidId, view, 0.1);
+            } else {
+                // Fallback only when referenced solid no longer exists.
+                for (const [sid, meshView] of this._meshViews.entries()) {
+                    const bias = preferredSolidId && sid === preferredSolidId ? 0.02 : 0;
+                    evalView(sid, meshView, bias);
                 }
             }
             if (!best) return null;
             return {
+                solidId: best.solidId,
                 faceId: best.faceId,
                 frame: this.frameFromFaceMeta(best.meta, preferredFrame)
             };
@@ -770,11 +789,12 @@ function createSolidsApi(getApi) {
             for (const feature of features) {
                 if (feature?.type !== 'sketch') continue;
                 const source = feature?.target?.source || null;
-                if (source?.type !== 'solid-face') continue;
+                if (source?.type !== 'solid-face' && source?.type !== 'face') continue;
                 const resolved = this.resolveSketchFrameForSource(source, feature.plane || null);
                 if (!resolved?.frame) continue;
                 const frame = this.applyOffsetToFrame(resolved.frame, Number(feature?.target?.offset || 0));
                 const prev = feature.plane || {};
+                const nextSolidId = String(resolved.solidId || source?.solid_id || '');
                 const same =
                     Math.abs((prev.origin?.x || 0) - frame.origin.x) < 1e-6 &&
                     Math.abs((prev.origin?.y || 0) - frame.origin.y) < 1e-6 &&
@@ -785,16 +805,20 @@ function createSolidsApi(getApi) {
                     Math.abs((prev.x_axis?.x || 0) - frame.x_axis.x) < 1e-6 &&
                     Math.abs((prev.x_axis?.y || 0) - frame.x_axis.y) < 1e-6 &&
                     Math.abs((prev.x_axis?.z || 0) - frame.x_axis.z) < 1e-6 &&
-                    Number(source?.face_id) === Number(resolved.faceId);
+                    Number(source?.face_id) === Number(resolved.faceId) &&
+                    String(source?.solid_id || '') === nextSolidId &&
+                    source?.type === 'solid-face';
                 if (same) continue;
                 api.features.mutateTransient(feature.id, item => {
                     item.plane = frame;
                     item.target = item.target || {};
                     item.target.source = item.target.source || {};
                     item.target.source.type = 'solid-face';
-                    item.target.source.solid_id = source.solid_id;
+                    item.target.source.solid_id = nextSolidId;
                     item.target.source.face_id = resolved.faceId;
-                    item.target.id = `${source.solid_id}:f${resolved.faceId}`;
+                    item.target.id = `${nextSolidId}:f${resolved.faceId}`;
+                    item.target.kind = 'face';
+                    item.target.name = 'Face';
                 });
                 changed = true;
             }

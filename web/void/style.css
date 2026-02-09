@@ -951,6 +951,24 @@ html, body {
     justify-content: flex-end;
 }
 
+.props-inline-button {
+    height: 24px;
+    padding: 0 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.props-inline-button:hover {
+    border-color: var(--accent);
+    color: var(--text-primary);
+}
+
 .props-field label {
     font-size: 12px;
     color: var(--text-secondary);

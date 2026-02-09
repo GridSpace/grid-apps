@@ -7,6 +7,7 @@ import { properties } from '../properties.js';
 
 function getInteractiveObjects() {
     const objects = [];
+    const retargetMode = !!(this.isSketchRetargetMode && this.isSketchRetargetMode());
     for (const plane of this.planes) {
         if (!plane?.getGroup?.().visible) {
             continue;
@@ -20,21 +21,23 @@ function getInteractiveObjects() {
         }
     }
 
-    for (const rec of api.sketchRuntime?.sketches?.values?.() || []) {
-        if (!rec?.entitiesGroup?.visible) continue;
-        for (const view of rec.entityViews?.values?.() || []) {
-            if (view?.type === 'profile' && view.object?.visible !== false) {
-                objects.push(view.object);
+    if (!retargetMode) {
+        for (const rec of api.sketchRuntime?.sketches?.values?.() || []) {
+            if (!rec?.entitiesGroup?.visible) continue;
+            for (const view of rec.entityViews?.values?.() || []) {
+                if (view?.type === 'profile' && view.object?.visible !== false) {
+                    objects.push(view.object);
+                }
             }
         }
     }
-    if (!(this.isSketchEditing && this.isSketchEditing())) {
+    if (!(this.isSketchEditing && this.isSketchEditing()) || (this.isSketchRetargetMode && this.isSketchRetargetMode())) {
         for (const mesh of api.solids?.getPickMeshes?.() || []) {
             objects.push(mesh);
         }
     }
 
-    if (this.isSketchEditing && this.isSketchEditing()) {
+    if (this.isSketchEditing && this.isSketchEditing() && !(this.isSketchRetargetMode && this.isSketchRetargetMode())) {
         const sketch = this.getEditingSketchFeature && this.getEditingSketchFeature();
         const rec = sketch?.id ? api.sketchRuntime?.getRecord?.(sketch.id) : null;
         if (rec?.entityViews) {
@@ -126,7 +129,7 @@ function updateHandleScreenScales() {
 }
 
 function handleHover(intersection, event, allIntersections) {
-    if (!(this.isSketchEditing && this.isSketchEditing())) {
+    if (!(this.isSketchEditing && this.isSketchEditing()) || (this.isSketchRetargetMode && this.isSketchRetargetMode())) {
         const primaryHit = this.getPrimarySurfaceHitFromIntersections(allIntersections || (intersection ? [intersection] : []));
         if (primaryHit?.type === 'profile') {
             const profileHit = primaryHit.hit;
@@ -265,7 +268,7 @@ function handleMouseUp(intersection, event, allIntersections) {
         return;
     }
 
-    if (!(this.isSketchEditing && this.isSketchEditing())) {
+    if (!(this.isSketchEditing && this.isSketchEditing()) || (this.isSketchRetargetMode && this.isSketchRetargetMode())) {
         const primaryHit = this.getPrimarySurfaceHitFromIntersections(allIntersections || (intersection ? [intersection] : []));
         if (primaryHit?.type === 'profile') {
             this.selectSketchProfile(primaryHit.hit, event);
@@ -318,6 +321,7 @@ function getSketchProfileHitFromIntersections(intersections) {
 
 function getPrimarySurfaceHitFromIntersections(intersections) {
     if (!Array.isArray(intersections)) return null;
+    const retargetMode = !!(this.isSketchRetargetMode && this.isSketchRetargetMode());
     const SKETCH_FACE_EPSILON = 0.25;
     let nearestProfile = null;
     let nearestSolidFace = null;
@@ -326,7 +330,7 @@ function getPrimarySurfaceHitFromIntersections(intersections) {
         if (!obj) continue;
         const profileId = obj.userData?.sketchProfileId || null;
         const featureId = obj.userData?.sketchFeatureId || null;
-        if (!nearestProfile && profileId && featureId) {
+        if (!retargetMode && !nearestProfile && profileId && featureId) {
             nearestProfile = {
                 type: 'profile',
                 distance: Number(hit?.distance) || 0,
@@ -410,6 +414,7 @@ function selectSketchProfile(hit, event) {
 function selectSolidFace(hit, event) {
     const currentFeatureId = properties.currentFeatureId || null;
     const currentFeature = currentFeatureId ? api.features.findById(currentFeatureId) : null;
+    const editingSketch = currentFeature?.type === 'sketch' && currentFeature?.id === currentFeatureId;
     const editingExtrude = currentFeature?.type === 'extrude' && currentFeature?.id === currentFeatureId;
     const editingBoolean = currentFeature?.type === 'boolean' && currentFeature?.id === currentFeatureId;
     const extrudeOp = String(currentFeature?.params?.operation || 'new');
@@ -442,7 +447,28 @@ function selectSolidFace(hit, event) {
         return splitAt > 0 ? String(key).substring(0, splitAt) : null;
     }).filter(Boolean)));
 
-    if (editingExtrude) {
+    if (editingSketch) {
+        const target = hit?.key ? api.solids?.getSketchTargetForFaceKey?.(hit.key) : null;
+        if (target?.frame) {
+            const updated = api.features.update(currentFeature.id, feature => {
+                const offset = Number(feature?.target?.offset || 0);
+                feature.target = feature.target || {};
+                feature.target.kind = 'face';
+                feature.target.id = target.id || null;
+                feature.target.name = target.name || 'Face';
+                feature.target.label = target.label || null;
+                feature.target.source = target.source || null;
+                feature.target.offset = offset;
+                feature.plane = api.solids?.applyOffsetToFrame?.(target.frame, offset) || target.frame;
+            }, {
+                opType: 'feature.update',
+                payload: { field: 'target.face', key: hit?.key || null }
+            });
+            if (updated) {
+                properties.onChanged?.();
+            }
+        }
+    } else if (editingExtrude) {
         const operation = String(currentFeature?.params?.operation || 'new');
         const pickRole = properties.getExtrudePickRole?.() || 'profiles';
         if ((operation === 'add' || operation === 'subtract') && pickRole === 'targets' && hitSolidId) {

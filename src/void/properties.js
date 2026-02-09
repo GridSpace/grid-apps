@@ -321,34 +321,30 @@ const properties = {
             const text = document.createElement('div');
             text.className = 'props-extrude-profile-text';
             text.textContent = currentText;
+            const clear = document.createElement('button');
+            clear.className = 'props-extrude-profile-remove';
+            clear.textContent = '×';
+            clear.title = 'Clear sketch plane target';
+            clear.onclick = () => {
+                const updated = api.features.update(feature.id, item => {
+                    item.target = item.target || {};
+                    item.target.kind = null;
+                    item.target.id = null;
+                    item.target.name = null;
+                    item.target.label = null;
+                    item.target.source = null;
+                }, {
+                    opType: 'feature.update',
+                    payload: { field: 'target.clear' }
+                });
+                if (updated) this.onChanged();
+            };
             row.appendChild(text);
+            row.appendChild(clear);
             targetArea.list.appendChild(row);
         } else {
             targetArea.showEmpty();
         }
-        const actionRow = document.createElement('div');
-        actionRow.className = 'props-inline-actions';
-        const pick = document.createElement('button');
-        pick.className = 'props-close';
-        pick.textContent = 'Use Selection';
-        pick.title = 'Use one selected plane or planar face';
-        pick.onclick = () => {
-            const nextTarget = api.interact?.resolveSketchTargetFromSelection?.();
-            if (!nextTarget?.frame) return;
-            const updated = api.features.update(feature.id, item => {
-                this.applySketchTargetToFeature(item, nextTarget);
-            }, {
-                opType: 'feature.update',
-                payload: {
-                    field: 'target',
-                    kind: nextTarget.kind || 'plane',
-                    id: nextTarget.id || null
-                }
-            });
-            if (updated) this.onChanged();
-        };
-        actionRow.appendChild(pick);
-        targetArea.wrap.appendChild(actionRow);
         this.body.appendChild(targetArea.wrap);
 
         const offsetValue = Number(target.offset ?? 0);
