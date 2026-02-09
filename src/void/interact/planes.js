@@ -127,30 +127,12 @@ function updateHandleScreenScales() {
 
 function handleHover(intersection, event, allIntersections) {
     if (!(this.isSketchEditing && this.isSketchEditing())) {
-        const solidFaceHit = api.solids?.getFaceHitFromIntersections?.(allIntersections || (intersection ? [intersection] : []));
-        if (solidFaceHit) {
-            if (this.hoveredSketchProfileKey) {
-                this.hoveredSketchProfileKey = null;
-                api.sketchRuntime?.setHoveredProfile(null);
-            }
-            this.hoveredSolidFaceKey = solidFaceHit.key;
-            api.solids?.setHoveredFace?.(solidFaceHit.key);
-            this.hoverIntersection = solidFaceHit.intersection || intersection || null;
-            this.setHoveredPoint(null);
-            if (this.hoveredPlane && !this.hoveredPlane.isSelected()) {
-                this.hoveredPlane.setHovered(false);
-                this.hoveredPlane = null;
-            }
-            window.dispatchEvent(new CustomEvent('void-state-change'));
-            return;
-        }
-        if (this.hoveredSolidFaceKey) {
-            this.hoveredSolidFaceKey = null;
-            api.solids?.setHoveredFace?.(null);
-            window.dispatchEvent(new CustomEvent('void-state-change'));
-        }
         const profileHit = this.getSketchProfileHitFromIntersections(allIntersections || (intersection ? [intersection] : []));
         if (profileHit) {
+            if (this.hoveredSolidFaceKey) {
+                this.hoveredSolidFaceKey = null;
+                api.solids?.setHoveredFace?.(null);
+            }
             const key = `${profileHit.featureId}:${profileHit.profileId}`;
             this.hoveredSketchProfileKey = key;
             api.sketchRuntime?.setHoveredProfile(key);
@@ -166,6 +148,23 @@ function handleHover(intersection, event, allIntersections) {
         if (this.hoveredSketchProfileKey) {
             this.hoveredSketchProfileKey = null;
             api.sketchRuntime?.setHoveredProfile(null);
+        }
+        const solidFaceHit = api.solids?.getFaceHitFromIntersections?.(allIntersections || (intersection ? [intersection] : []));
+        if (solidFaceHit) {
+            this.hoveredSolidFaceKey = solidFaceHit.key;
+            api.solids?.setHoveredFace?.(solidFaceHit.key);
+            this.hoverIntersection = solidFaceHit.intersection || intersection || null;
+            this.setHoveredPoint(null);
+            if (this.hoveredPlane && !this.hoveredPlane.isSelected()) {
+                this.hoveredPlane.setHovered(false);
+                this.hoveredPlane = null;
+            }
+            window.dispatchEvent(new CustomEvent('void-state-change'));
+            return;
+        }
+        if (this.hoveredSolidFaceKey) {
+            this.hoveredSolidFaceKey = null;
+            api.solids?.setHoveredFace?.(null);
             window.dispatchEvent(new CustomEvent('void-state-change'));
         }
     }
@@ -266,14 +265,14 @@ function handleMouseUp(intersection, event, allIntersections) {
     }
 
     if (!(this.isSketchEditing && this.isSketchEditing())) {
-        const solidFaceHit = api.solids?.getFaceHitFromIntersections?.(allIntersections || (intersection ? [intersection] : []));
-        if (solidFaceHit) {
-            this.selectSolidFace(solidFaceHit, event);
-            return;
-        }
         const profileHit = this.getSketchProfileHitFromIntersections(allIntersections || (intersection ? [intersection] : []));
         if (profileHit) {
             this.selectSketchProfile(profileHit, event);
+            return;
+        }
+        const solidFaceHit = api.solids?.getFaceHitFromIntersections?.(allIntersections || (intersection ? [intersection] : []));
+        if (solidFaceHit) {
+            this.selectSolidFace(solidFaceHit, event);
             return;
         }
     }

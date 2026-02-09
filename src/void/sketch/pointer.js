@@ -255,6 +255,11 @@ function handleSketchMouseUp(event, intersections) {
     if (wasDrag) return true;
 
     if (tool === 'select') {
+        const profileHit = this.getSketchProfileHitFromIntersections?.(intersections || []);
+        if (profileHit) {
+            this.selectSketchProfile?.(profileHit, event);
+            return true;
+        }
         const upHit = this.resolveSketchHit(event, intersections, feature);
         const hit = upHit || (pointerDown?.hitId ? { id: pointerDown.hitId } : null) || (this.hoveredSketchEntityId ? { id: this.hoveredSketchEntityId } : null);
         if (hit?.id) {

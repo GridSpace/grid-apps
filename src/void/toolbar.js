@@ -235,7 +235,7 @@ const toolbar = {
     updateSketchControls() {
         const editing = !!api.sketchRuntime?.editingId;
         const canCreate = !editing && !!api.interact.resolveSketchTargetFromSelection();
-        const canExtrude = !editing && (this.getSelectedExtrudeTargets().length > 0 || !!this.getSelectedSolidSourceExtrudeFeature());
+        const canExtrude = (this.getSelectedExtrudeTargets().length > 0) || (!editing && !!this.getSelectedSolidSourceExtrudeFeature());
         const canBoolean = !editing && (this.getSelectedBooleanTargets().length >= 2 || !!this.getSelectedSolidSourceBooleanFeature());
 
         if (this.sketchBtn) {
@@ -293,8 +293,7 @@ const toolbar = {
         return out;
     },
 
-    createExtrudeFeatureFromSelection() {
-        const targets = this.getSelectedExtrudeTargets();
+    createExtrudeFeatureFromTargets(targets) {
         if (!targets.length) return null;
         const doc = api.document.current;
         if (!doc) return null;
@@ -324,9 +323,18 @@ const toolbar = {
         api.features.add(feature);
         tree.selectedFeatureId = feature.id;
         tree.selectedFeatureIds = new Set([feature.id]);
+        tree.selectedSolidIds = new Set();
+        api.solids?.setSelected?.([]);
+        properties.showFeature(feature, {
+            onChange: () => tree.render()
+        });
         tree.render();
         window.dispatchEvent(new CustomEvent('void-state-change'));
         return feature;
+    },
+
+    createExtrudeFeatureFromSelection() {
+        return this.createExtrudeFeatureFromTargets(this.getSelectedExtrudeTargets());
     },
 
     getSelectedSolidSourceExtrudeFeature() {
@@ -405,7 +413,18 @@ const toolbar = {
         return feature;
     },
 
-    onExtrudeButton() {
+    async onExtrudeButton() {
+        const sketchEditingId = api.sketchRuntime?.editingId || null;
+        const selectedTargets = this.getSelectedExtrudeTargets();
+        if (sketchEditingId && selectedTargets.length) {
+            if (properties.currentFeatureId) {
+                await properties.hide('accept');
+            } else {
+                api.sketchRuntime?.setEditing(null);
+            }
+            this.createExtrudeFeatureFromTargets(selectedTargets);
+            return;
+        }
         const existing = this.getSelectedSolidSourceExtrudeFeature();
         if (existing) {
             tree.selectedSolidIds = new Set();

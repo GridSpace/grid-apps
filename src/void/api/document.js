@@ -490,6 +490,10 @@ function createDocumentApi(getApi, cfg) {
             return !!this._atomicEdit;
         },
 
+        getAtomicEditFeatureId() {
+            return this._atomicEdit?.feature_id || null;
+        },
+
         beginAtomicEdit(meta = {}) {
             this._atomicEdit = {
                 feature_id: meta.feature_id || null,
