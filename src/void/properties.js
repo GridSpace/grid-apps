@@ -406,6 +406,7 @@ const properties = {
     },
 
     renderExtrudeFields(feature) {
+        this.setExtrudeProfileHover(null);
         const params = feature?.params || {};
         const operation = ['new', 'add', 'subtract'].includes(String(params.operation || 'new'))
             ? String(params.operation || 'new')
@@ -495,6 +496,8 @@ const properties = {
                 const sketch = api.features.findById(profile?.sketchId);
                 const row = document.createElement('div');
                 row.className = 'props-extrude-profile-row';
+                row.onmouseenter = () => this.setExtrudeProfileHover(profile);
+                row.onmouseleave = () => this.setExtrudeProfileHover(null);
                 const text = document.createElement('div');
                 text.className = 'props-extrude-profile-text';
                 text.textContent = `${sketch?.name || profile?.sketchId || 'Sketch'} / ${profile?.profileId || 'region'}`;
@@ -713,6 +716,15 @@ const properties = {
             .filter(Boolean);
         api.interact.selectedSketchProfiles = new Set(keys);
         api.sketchRuntime?.setSelectedProfiles?.(keys);
+    },
+
+    setExtrudeProfileHover(profile) {
+        const key = (profile?.sketchId && profile?.profileId)
+            ? `${profile.sketchId}:${profile.profileId}`
+            : null;
+        api.interact.hoveredSketchProfileKey = key;
+        api.sketchRuntime?.setHoveredProfile?.(key);
+        window.dispatchEvent(new CustomEvent('void-state-change'));
     },
 
     syncExtrudeTargetSelection(feature) {
