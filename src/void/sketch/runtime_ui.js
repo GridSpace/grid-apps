@@ -293,15 +293,15 @@ function applyEntityStyle(rec, mode, colors) {
         }
         if (view.type === 'profile') {
             const activeSelected = selectedProfileIds.has(id);
-            const activeHovered = hoveredProfileId === id && !activeSelected;
+            const activeHovered = hoveredProfileId === id;
             const fill = view.object;
             if (fill?.material?.color) {
-                if (activeSelected) {
-                    fill.material.color.setHex(0x5a9fd4);
-                    fill.material.opacity = 0.28;
-                } else if (activeHovered) {
+                if (activeHovered) {
                     fill.material.color.setHex(0xff9933);
                     fill.material.opacity = 0.24;
+                } else if (activeSelected) {
+                    fill.material.color.setHex(0x5a9fd4);
+                    fill.material.opacity = 0.28;
                 } else {
                     fill.material.color.setHex(0x8f8f8f);
                     fill.material.opacity = 0.18;
