@@ -318,22 +318,41 @@ function getSketchProfileHitFromIntersections(intersections) {
 
 function getPrimarySurfaceHitFromIntersections(intersections) {
     if (!Array.isArray(intersections)) return null;
+    const SKETCH_FACE_EPSILON = 0.25;
+    let nearestProfile = null;
+    let nearestSolidFace = null;
     for (const hit of intersections) {
         const obj = hit?.object;
         if (!obj) continue;
         const profileId = obj.userData?.sketchProfileId || null;
         const featureId = obj.userData?.sketchFeatureId || null;
-        if (profileId && featureId) {
-            return {
+        if (!nearestProfile && profileId && featureId) {
+            nearestProfile = {
                 type: 'profile',
+                distance: Number(hit?.distance) || 0,
                 hit: { featureId, profileId, object: obj, intersection: hit }
             };
         }
-        const solidFaceHit = api.solids?.getFaceHitFromIntersections?.([hit]);
-        if (solidFaceHit) {
-            return { type: 'solid-face', hit: solidFaceHit };
+        if (!nearestSolidFace) {
+            const solidFaceHit = api.solids?.getFaceHitFromIntersections?.([hit]);
+            if (solidFaceHit) {
+                nearestSolidFace = {
+                    type: 'solid-face',
+                    distance: Number(hit?.distance) || 0,
+                    hit: solidFaceHit
+                };
+            }
+        }
+        if (nearestProfile && nearestSolidFace) {
+            const delta = nearestProfile.distance - nearestSolidFace.distance;
+            if (delta <= SKETCH_FACE_EPSILON) {
+                return nearestProfile;
+            }
+            return nearestSolidFace;
         }
     }
+    if (nearestProfile) return nearestProfile;
+    if (nearestSolidFace) return nearestSolidFace;
     return null;
 }
 

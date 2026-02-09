@@ -684,6 +684,34 @@ function createSolidsApi(getApi) {
             };
         },
 
+        applyOffsetToFrame(frame, offset = 0) {
+            const off = Number(offset || 0);
+            if (!frame || !Number.isFinite(off) || Math.abs(off) < 1e-12) {
+                return frame ? JSON.parse(JSON.stringify(frame)) : null;
+            }
+            const normal = frame.normal || {};
+            const nx = Number(normal.x || 0);
+            const ny = Number(normal.y || 0);
+            const nz = Number(normal.z || 0);
+            const nlen = Math.hypot(nx, ny, nz) || 1;
+            const ox = Number(frame.origin?.x || 0) + (nx / nlen) * off;
+            const oy = Number(frame.origin?.y || 0) + (ny / nlen) * off;
+            const oz = Number(frame.origin?.z || 0) + (nz / nlen) * off;
+            return {
+                origin: { x: ox, y: oy, z: oz },
+                normal: {
+                    x: nx / nlen,
+                    y: ny / nlen,
+                    z: nz / nlen
+                },
+                x_axis: {
+                    x: Number(frame.x_axis?.x || 1),
+                    y: Number(frame.x_axis?.y || 0),
+                    z: Number(frame.x_axis?.z || 0)
+                }
+            };
+        },
+
         resolveSketchFrameForSource(source, preferredFrame = null) {
             if (source?.type !== 'solid-face') return null;
             const solidId = String(source?.solid_id || '');
@@ -745,7 +773,7 @@ function createSolidsApi(getApi) {
                 if (source?.type !== 'solid-face') continue;
                 const resolved = this.resolveSketchFrameForSource(source, feature.plane || null);
                 if (!resolved?.frame) continue;
-                const frame = resolved.frame;
+                const frame = this.applyOffsetToFrame(resolved.frame, Number(feature?.target?.offset || 0));
                 const prev = feature.plane || {};
                 const same =
                     Math.abs((prev.origin?.x || 0) - frame.origin.x) < 1e-6 &&
@@ -803,38 +831,47 @@ function createSolidsApi(getApi) {
             this._rebuilding = true;
             const seq = ++this._rebuildSeq;
             try {
-                const snapshot = buildRebuildSnapshot(api);
-                let result;
-                try {
-                    const workerReply = await this.requestWorkerRebuild(snapshot, reason);
-                    result = {
-                        solids: workerReply?.solids || [],
-                        meshCache: meshCacheFromWorkerPayload(workerReply?.meshes || [])
-                    };
-                } catch (error) {
-                    console.warn('void.solids: worker rebuild failed, using main-thread fallback', error);
-                    result = await rebuildGeneratedSolids(api, { reason, persist: false });
-                }
-                if (seq !== this._rebuildSeq) {
-                    return this.list();
-                }
-                api.document.current.generated = api.document.current.generated || {};
-                api.document.current.generated.solids = result?.solids || [];
-                await api.document.save({
-                    kind: 'micro',
-                    opType: 'solid.rebuild',
-                    undoable: false,
-                    clearRedo: false,
-                    payload: {
-                        reason: reason || 'rebuild',
-                        solids: api.document.current.generated.solids.length
+                let result = null;
+                let passReason = reason;
+                for (let pass = 0; pass < 2; pass++) {
+                    const snapshot = buildRebuildSnapshot(api);
+                    try {
+                        const workerReply = await this.requestWorkerRebuild(snapshot, passReason);
+                        result = {
+                            solids: workerReply?.solids || [],
+                            meshCache: meshCacheFromWorkerPayload(workerReply?.meshes || [])
+                        };
+                    } catch (error) {
+                        console.warn('void.solids: worker rebuild failed, using main-thread fallback', error);
+                        result = await rebuildGeneratedSolids(api, { reason: passReason, persist: false });
                     }
-                });
-                this._meshCache = result?.meshCache || new Map();
-                this.syncRuntime();
-                if (this.refreshSketchFaceAttachments()) {
-                    api.sketchRuntime?.sync?.();
-                    this._pendingReason = this._pendingReason || 'sketch.face.rebind';
+                    if (seq !== this._rebuildSeq) {
+                        return this.list();
+                    }
+                    api.document.current.generated = api.document.current.generated || {};
+                    api.document.current.generated.solids = result?.solids || [];
+                    await api.document.save({
+                        kind: 'micro',
+                        opType: 'solid.rebuild',
+                        undoable: false,
+                        clearRedo: false,
+                        payload: {
+                            reason: passReason || 'rebuild',
+                            solids: api.document.current.generated.solids.length
+                        }
+                    });
+                    this._meshCache = result?.meshCache || new Map();
+                    this.syncRuntime();
+                    const rebound = this.refreshSketchFaceAttachments();
+                    if (rebound && pass === 0) {
+                        api.sketchRuntime?.sync?.();
+                        passReason = 'sketch.face.rebind';
+                        continue;
+                    }
+                    if (rebound) {
+                        api.sketchRuntime?.sync?.();
+                    }
+                    break;
                 }
                 return result?.solids || this.list();
             } finally {

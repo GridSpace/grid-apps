@@ -309,44 +309,104 @@ const properties = {
 
     renderSketchFields(feature) {
         const target = feature.target || {};
-
-        const planeSelect = this.createSelectField(
-            'Plane',
-            this.getPlaneOptionId(feature),
-            DATUM_OPTIONS.map(opt => ({ value: opt.id, label: opt.name })),
-            value => {
-                const updated = api.features.update(feature.id, item => {
-                    const option = DATUM_OPTIONS.find(o => o.id === value);
-                    if (!option) return;
-                    const plane = api.datum.getPlane(option.key);
-                    if (!plane) return;
-                    item.target = item.target || {};
-                    item.target.kind = 'plane';
-                    item.target.id = option.id;
-                    item.target.name = plane.name || option.name;
-                    item.target.label = plane.label || option.name;
-                    item.target.source = { type: 'plane', id: option.id };
-                    item.plane = plane.getFrame();
-                }, {
-                    opType: 'feature.update',
-                    payload: { field: 'plane', value }
-                });
-                if (updated) this.onChanged();
-            }
-        );
-        this.body.appendChild(planeSelect);
+        const targetArea = this.createSolidPickerArea({
+            title: 'Sketch Plane',
+            active: true,
+            emptyText: 'No sketch plane selected'
+        });
+        const currentText = this.getSketchTargetDisplay(feature);
+        if (currentText) {
+            const row = document.createElement('div');
+            row.className = 'props-extrude-profile-row';
+            const text = document.createElement('div');
+            text.className = 'props-extrude-profile-text';
+            text.textContent = currentText;
+            row.appendChild(text);
+            targetArea.list.appendChild(row);
+        } else {
+            targetArea.showEmpty();
+        }
+        const actionRow = document.createElement('div');
+        actionRow.className = 'props-inline-actions';
+        const pick = document.createElement('button');
+        pick.className = 'props-close';
+        pick.textContent = 'Use Selection';
+        pick.title = 'Use one selected plane or planar face';
+        pick.onclick = () => {
+            const nextTarget = api.interact?.resolveSketchTargetFromSelection?.();
+            if (!nextTarget?.frame) return;
+            const updated = api.features.update(feature.id, item => {
+                this.applySketchTargetToFeature(item, nextTarget);
+            }, {
+                opType: 'feature.update',
+                payload: {
+                    field: 'target',
+                    kind: nextTarget.kind || 'plane',
+                    id: nextTarget.id || null
+                }
+            });
+            if (updated) this.onChanged();
+        };
+        actionRow.appendChild(pick);
+        targetArea.wrap.appendChild(actionRow);
+        this.body.appendChild(targetArea.wrap);
 
         const offsetValue = Number(target.offset ?? 0);
         this.body.appendChild(this.createNumberField('Offset', offsetValue, value => {
             const updated = api.features.update(feature.id, item => {
                 item.target = item.target || {};
                 item.target.offset = value;
+                const sourceType = item?.target?.source?.type || null;
+                if (sourceType === 'solid-face') {
+                    const source = item.target.source;
+                    const resolved = api.solids?.resolveSketchFrameForSource?.(source, item.plane || null);
+                    if (resolved?.frame) {
+                        item.target.source.face_id = resolved.faceId;
+                        item.target.id = `${source.solid_id}:f${resolved.faceId}`;
+                        item.plane = api.solids?.applyOffsetToFrame?.(resolved.frame, value) || resolved.frame;
+                    }
+                } else if (sourceType === 'plane' && item.target?.source?.id) {
+                    const option = DATUM_OPTIONS.find(o => o.id === item.target.source.id);
+                    const plane = option ? api.datum.getPlane(option.key) : null;
+                    if (plane?.getFrame) {
+                        item.plane = api.solids?.applyOffsetToFrame?.(plane.getFrame(), value) || plane.getFrame();
+                    }
+                }
             }, {
                 opType: 'feature.update',
                 payload: { field: 'offset', value }
             });
             if (updated) this.onChanged();
         }));
+    },
+
+    applySketchTargetToFeature(item, target) {
+        if (!item || !target?.frame) return;
+        const offset = Number(item?.target?.offset || 0);
+        item.target = item.target || {};
+        item.target.kind = target.kind || 'plane';
+        item.target.id = target.id || null;
+        item.target.name = target.name || null;
+        item.target.label = target.label || null;
+        item.target.source = target.source || null;
+        item.target.offset = offset;
+        item.plane = api.solids?.applyOffsetToFrame?.(target.frame, offset) || target.frame;
+    },
+
+    getSketchTargetDisplay(feature) {
+        const target = feature?.target || {};
+        const source = target?.source || {};
+        if (source.type === 'solid-face') {
+            const solidId = String(source.solid_id || '');
+            const faceId = Number(source.face_id);
+            const solidName = this.getSolidDisplayName(solidId);
+            const faceText = Number.isFinite(faceId) ? `Face ${faceId + 1}` : 'Face';
+            return `${solidName} / ${faceText}`;
+        }
+        const planeId = source.id || target.id || null;
+        const datum = DATUM_OPTIONS.find(opt => opt.id === planeId);
+        if (datum) return datum.name;
+        return target.name || target.label || null;
     },
 
     renderExtrudeFields(feature) {
@@ -719,18 +779,6 @@ const properties = {
 
     getBooleanPickRole() {
         return this._booleanPickRole === 'tools' ? 'tools' : 'targets';
-    },
-
-    getPlaneOptionId(feature) {
-        const sourceId = feature?.target?.source?.id;
-        if (sourceId && DATUM_OPTIONS.some(o => o.id === sourceId)) {
-            return sourceId;
-        }
-        const targetId = feature?.target?.id;
-        if (targetId && DATUM_OPTIONS.some(o => o.id === targetId)) {
-            return targetId;
-        }
-        return 'datum-xy';
     },
 
     createTextField(label, value, onCommit) {

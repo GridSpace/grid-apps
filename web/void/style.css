@@ -945,6 +945,12 @@ html, body {
     background: rgba(90, 159, 212, 0.14);
 }
 
+.props-inline-actions {
+    margin-top: 6px;
+    display: flex;
+    justify-content: flex-end;
+}
+
 .props-field label {
     font-size: 12px;
     color: var(--text-secondary);

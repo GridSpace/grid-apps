@@ -23,7 +23,8 @@ function createSketchApi(getApi, idFactory) {
                     id: target.id || null,
                     name: target.name || null,
                     label: target.label || null,
-                    source: target.source || null
+                    source: target.source || null,
+                    offset: Number(target?.offset || 0)
                 }
             };
             api.features.add(feature);
