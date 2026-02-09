@@ -10,12 +10,6 @@ function profileLoopsFromRuntime(api, profileTarget) {
     const sketchId = profileTarget?.sketchId || null;
     const profileId = profileTarget?.profileId || null;
     if (!sketchId || !profileId) return null;
-    if (Array.isArray(profileTarget?.loops) && profileTarget.loops.length) {
-        const loops = profileTarget.loops
-            .filter(loop => Array.isArray(loop) && loop.length >= 3)
-            .map(loop => loop.map(p => ({ x: p?.x || 0, y: p?.y || 0 })));
-        if (loops.length) return loops;
-    }
     const rec = api.sketchRuntime?.getRecord?.(sketchId);
     const view = rec?.entityViews?.get?.(profileId);
     const loops = view?.object?.userData?.sketchProfileLoops || view?.entity?.loops || null;
@@ -24,7 +18,14 @@ function profileLoopsFromRuntime(api, profileTarget) {
         return out.length ? out : null;
     }
     const loop = view?.object?.userData?.sketchProfileLoop || view?.entity?.loop || null;
-    return Array.isArray(loop) && loop.length >= 3 ? [loop] : null;
+    if (Array.isArray(loop) && loop.length >= 3) return [loop];
+    if (Array.isArray(profileTarget?.loops) && profileTarget.loops.length) {
+        const cached = profileTarget.loops
+            .filter(item => Array.isArray(item) && item.length >= 3)
+            .map(item => item.map(p => ({ x: p?.x || 0, y: p?.y || 0 })));
+        if (cached.length) return cached;
+    }
+    return null;
 }
 
 function profileLoopsFromSnapshot(snapshot, profileTarget) {

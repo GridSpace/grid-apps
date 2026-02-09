@@ -11,12 +11,6 @@ function createSolidsApi(getApi) {
         const sketchId = profileTarget?.sketchId || null;
         const profileId = profileTarget?.profileId || null;
         if (!sketchId || !profileId) return null;
-        if (Array.isArray(profileTarget?.loops) && profileTarget.loops.length) {
-            const loops = profileTarget.loops
-                .filter(loop => Array.isArray(loop) && loop.length >= 3)
-                .map(loop => loop.map(p => ({ x: p?.x || 0, y: p?.y || 0 })));
-            if (loops.length) return loops;
-        }
         const rec = api.sketchRuntime?.getRecord?.(sketchId);
         const view = rec?.entityViews?.get?.(profileId);
         const loops = view?.object?.userData?.sketchProfileLoops || view?.entity?.loops || null;
@@ -25,7 +19,14 @@ function createSolidsApi(getApi) {
             return out.length ? out : null;
         }
         const loop = view?.object?.userData?.sketchProfileLoop || view?.entity?.loop || null;
-        return Array.isArray(loop) && loop.length >= 3 ? [loop] : null;
+        if (Array.isArray(loop) && loop.length >= 3) return [loop];
+        if (Array.isArray(profileTarget?.loops) && profileTarget.loops.length) {
+            const cached = profileTarget.loops
+                .filter(item => Array.isArray(item) && item.length >= 3)
+                .map(item => item.map(p => ({ x: p?.x || 0, y: p?.y || 0 })));
+            if (cached.length) return cached;
+        }
+        return null;
     }
 
     function buildRebuildSnapshot(api) {
@@ -67,6 +68,15 @@ function createSolidsApi(getApi) {
             map.set(id, { positions, indices });
         }
         return map;
+    }
+
+    function isObjectEffectivelyVisible(obj) {
+        let node = obj;
+        while (node) {
+            if (node.visible === false) return false;
+            node = node.parent;
+        }
+        return true;
     }
 
     function flattenMeshToTriangleVertexArray(meshData) {
@@ -562,6 +572,7 @@ function createSolidsApi(getApi) {
             if (!Array.isArray(intersections)) return null;
             for (const hit of intersections) {
                 const object = hit?.object;
+                if (!object || !isObjectEffectivelyVisible(object)) continue;
                 const solidId = object?.userData?.solidId;
                 const tri = hit?.faceIndex;
                 if (!solidId || tri === undefined || tri === null) continue;
@@ -623,36 +634,143 @@ function createSolidsApi(getApi) {
         getSketchTargetForFaceKey(key) {
             const face = this.getFaceByKey(key);
             if (!face) return null;
-            const { meta, view, solidId, faceId } = face;
+            const { meta, solidId, faceId } = face;
             if (!meta.planar) return null;
-            // Face regions are built in document-space coordinates; keep them in that
-            // space for sketch planes (do not apply WORLD scene rotation).
-            const center = meta.center.clone();
-            const normal = meta.normal.clone().normalize();
-            let xAxis = new THREE.Vector3(1, 0, 0);
-            if (Math.abs(xAxis.dot(normal)) > 0.95) {
-                xAxis.set(0, 1, 0);
-            }
-            xAxis.addScaledVector(normal, -xAxis.dot(normal));
-            if (xAxis.lengthSq() <= 1e-10) {
-                xAxis.set(0, 0, 1).addScaledVector(normal, -normal.z);
-            }
-            xAxis.normalize();
+            const frame = this.frameFromFaceMeta(meta, null);
+            if (!frame) return null;
             return {
                 kind: 'face',
                 id: `${solidId}:f${faceId}`,
                 name: 'Face',
-                frame: {
-                    origin: { x: center.x, y: center.y, z: center.z },
-                    normal: { x: normal.x, y: normal.y, z: normal.z },
-                    x_axis: { x: xAxis.x, y: xAxis.y, z: xAxis.z }
-                },
+                frame,
                 source: {
                     type: 'solid-face',
                     solid_id: solidId,
                     face_id: faceId
                 }
             };
+        },
+
+        frameFromFaceMeta(meta, preferredFrame = null) {
+            if (!meta?.planar || !meta?.center || !meta?.normal) return null;
+            const center = meta.center.clone();
+            const normal = meta.normal.clone().normalize();
+            let xAxis = preferredFrame?.x_axis
+                ? new THREE.Vector3(
+                    Number(preferredFrame.x_axis.x || 0),
+                    Number(preferredFrame.x_axis.y || 0),
+                    Number(preferredFrame.x_axis.z || 0)
+                )
+                : new THREE.Vector3(1, 0, 0);
+            if (xAxis.lengthSq() <= 1e-12) {
+                xAxis.set(1, 0, 0);
+            }
+            xAxis.addScaledVector(normal, -xAxis.dot(normal));
+            if (xAxis.lengthSq() <= 1e-10) {
+                xAxis.set(1, 0, 0);
+                if (Math.abs(xAxis.dot(normal)) > 0.95) {
+                    xAxis.set(0, 1, 0);
+                }
+                xAxis.addScaledVector(normal, -xAxis.dot(normal));
+            }
+            if (xAxis.lengthSq() <= 1e-10) {
+                xAxis.set(0, 0, 1).addScaledVector(normal, -normal.z);
+            }
+            xAxis.normalize();
+            return {
+                origin: { x: center.x, y: center.y, z: center.z },
+                normal: { x: normal.x, y: normal.y, z: normal.z },
+                x_axis: { x: xAxis.x, y: xAxis.y, z: xAxis.z }
+            };
+        },
+
+        resolveSketchFrameForSource(source, preferredFrame = null) {
+            if (source?.type !== 'solid-face') return null;
+            const solidId = String(source?.solid_id || '');
+            if (!solidId) return null;
+            const view = this._meshViews.get(solidId);
+            if (!view?.faceGroups?.size) return null;
+            const sourceFaceId = Number(source?.face_id);
+            const exactMeta = Number.isFinite(sourceFaceId) ? view.faceGroups.get(sourceFaceId) : null;
+            if (exactMeta?.planar) {
+                return { faceId: sourceFaceId, frame: this.frameFromFaceMeta(exactMeta, preferredFrame) };
+            }
+            let preferredOrigin = null;
+            let preferredNormal = null;
+            if (preferredFrame?.origin && preferredFrame?.normal) {
+                preferredOrigin = new THREE.Vector3(
+                    Number(preferredFrame.origin.x || 0),
+                    Number(preferredFrame.origin.y || 0),
+                    Number(preferredFrame.origin.z || 0)
+                );
+                preferredNormal = new THREE.Vector3(
+                    Number(preferredFrame.normal.x || 0),
+                    Number(preferredFrame.normal.y || 0),
+                    Number(preferredFrame.normal.z || 1)
+                ).normalize();
+            }
+            let best = null;
+            let bestScore = -Infinity;
+            for (const [faceId, meta] of view.faceGroups.entries()) {
+                if (!meta?.planar) continue;
+                const n = meta.normal.clone().normalize();
+                let align = 0;
+                let distPenalty = 0;
+                if (preferredNormal) {
+                    align = n.dot(preferredNormal);
+                }
+                if (preferredOrigin) {
+                    distPenalty = preferredOrigin.distanceTo(meta.center) * 0.01;
+                }
+                const score = align - distPenalty;
+                if (score > bestScore) {
+                    bestScore = score;
+                    best = { faceId, meta };
+                }
+            }
+            if (!best) return null;
+            return {
+                faceId: best.faceId,
+                frame: this.frameFromFaceMeta(best.meta, preferredFrame)
+            };
+        },
+
+        refreshSketchFaceAttachments() {
+            const api = getApi();
+            const features = api.features.list() || [];
+            let changed = false;
+            for (const feature of features) {
+                if (feature?.type !== 'sketch') continue;
+                const source = feature?.target?.source || null;
+                if (source?.type !== 'solid-face') continue;
+                const resolved = this.resolveSketchFrameForSource(source, feature.plane || null);
+                if (!resolved?.frame) continue;
+                const frame = resolved.frame;
+                const prev = feature.plane || {};
+                const same =
+                    Math.abs((prev.origin?.x || 0) - frame.origin.x) < 1e-6 &&
+                    Math.abs((prev.origin?.y || 0) - frame.origin.y) < 1e-6 &&
+                    Math.abs((prev.origin?.z || 0) - frame.origin.z) < 1e-6 &&
+                    Math.abs((prev.normal?.x || 0) - frame.normal.x) < 1e-6 &&
+                    Math.abs((prev.normal?.y || 0) - frame.normal.y) < 1e-6 &&
+                    Math.abs((prev.normal?.z || 0) - frame.normal.z) < 1e-6 &&
+                    Math.abs((prev.x_axis?.x || 0) - frame.x_axis.x) < 1e-6 &&
+                    Math.abs((prev.x_axis?.y || 0) - frame.x_axis.y) < 1e-6 &&
+                    Math.abs((prev.x_axis?.z || 0) - frame.x_axis.z) < 1e-6 &&
+                    Number(source?.face_id) === Number(resolved.faceId);
+                if (same) continue;
+                api.features.mutateTransient(feature.id, item => {
+                    item.plane = frame;
+                    item.target = item.target || {};
+                    item.target.source = item.target.source || {};
+                    item.target.source.type = 'solid-face';
+                    item.target.source.solid_id = source.solid_id;
+                    item.target.source.face_id = resolved.faceId;
+                    item.target.id = `${source.solid_id}:f${resolved.faceId}`;
+                });
+                changed = true;
+            }
+            return changed;
         },
 
         syncFaceOverlays() {
@@ -714,6 +832,10 @@ function createSolidsApi(getApi) {
                 });
                 this._meshCache = result?.meshCache || new Map();
                 this.syncRuntime();
+                if (this.refreshSketchFaceAttachments()) {
+                    api.sketchRuntime?.sync?.();
+                    this._pendingReason = this._pendingReason || 'sketch.face.rebind';
+                }
                 return result?.solids || this.list();
             } finally {
                 this._rebuilding = false;

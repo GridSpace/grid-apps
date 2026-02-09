@@ -734,6 +734,27 @@ function renderSolidsSection() {
                 this.render();
                 window.dispatchEvent(new CustomEvent('void-state-change'));
             },
+            onEdit: item => {
+                const id = item?.id || null;
+                if (!id) return;
+                const doc = api.document.current;
+                if (!doc?.generated?.solids) return;
+                const target = doc.generated.solids.find(s => s?.id === id);
+                if (!target) return;
+                const next = window.prompt('Rename solid', target.name || 'Solid');
+                if (next === null) return;
+                const name = String(next || '').trim();
+                if (!name || name === target.name) return;
+                target.name = name;
+                api.document.save({
+                    kind: 'micro',
+                    opType: 'solid.update',
+                    undoable: false,
+                    payload: { id: target.id, field: 'name', value: name }
+                });
+                this.render();
+                window.dispatchEvent(new CustomEvent('void-state-change'));
+            },
             onHoverEnter: item => {
                 const id = item?.id || null;
                 if (!id) return;

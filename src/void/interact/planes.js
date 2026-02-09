@@ -127,8 +127,9 @@ function updateHandleScreenScales() {
 
 function handleHover(intersection, event, allIntersections) {
     if (!(this.isSketchEditing && this.isSketchEditing())) {
-        const profileHit = this.getSketchProfileHitFromIntersections(allIntersections || (intersection ? [intersection] : []));
-        if (profileHit) {
+        const primaryHit = this.getPrimarySurfaceHitFromIntersections(allIntersections || (intersection ? [intersection] : []));
+        if (primaryHit?.type === 'profile') {
+            const profileHit = primaryHit.hit;
             if (this.hoveredSolidFaceKey) {
                 this.hoveredSolidFaceKey = null;
                 api.solids?.setHoveredFace?.(null);
@@ -149,8 +150,8 @@ function handleHover(intersection, event, allIntersections) {
             this.hoveredSketchProfileKey = null;
             api.sketchRuntime?.setHoveredProfile(null);
         }
-        const solidFaceHit = api.solids?.getFaceHitFromIntersections?.(allIntersections || (intersection ? [intersection] : []));
-        if (solidFaceHit) {
+        if (primaryHit?.type === 'solid-face') {
+            const solidFaceHit = primaryHit.hit;
             this.hoveredSolidFaceKey = solidFaceHit.key;
             api.solids?.setHoveredFace?.(solidFaceHit.key);
             this.hoverIntersection = solidFaceHit.intersection || intersection || null;
@@ -265,14 +266,13 @@ function handleMouseUp(intersection, event, allIntersections) {
     }
 
     if (!(this.isSketchEditing && this.isSketchEditing())) {
-        const profileHit = this.getSketchProfileHitFromIntersections(allIntersections || (intersection ? [intersection] : []));
-        if (profileHit) {
-            this.selectSketchProfile(profileHit, event);
+        const primaryHit = this.getPrimarySurfaceHitFromIntersections(allIntersections || (intersection ? [intersection] : []));
+        if (primaryHit?.type === 'profile') {
+            this.selectSketchProfile(primaryHit.hit, event);
             return;
         }
-        const solidFaceHit = api.solids?.getFaceHitFromIntersections?.(allIntersections || (intersection ? [intersection] : []));
-        if (solidFaceHit) {
-            this.selectSolidFace(solidFaceHit, event);
+        if (primaryHit?.type === 'solid-face') {
+            this.selectSolidFace(primaryHit.hit, event);
             return;
         }
     }
@@ -311,6 +311,27 @@ function getSketchProfileHitFromIntersections(intersections) {
         const featureId = obj?.userData?.sketchFeatureId || null;
         if (profileId && featureId) {
             return { featureId, profileId, object: obj };
+        }
+    }
+    return null;
+}
+
+function getPrimarySurfaceHitFromIntersections(intersections) {
+    if (!Array.isArray(intersections)) return null;
+    for (const hit of intersections) {
+        const obj = hit?.object;
+        if (!obj) continue;
+        const profileId = obj.userData?.sketchProfileId || null;
+        const featureId = obj.userData?.sketchFeatureId || null;
+        if (profileId && featureId) {
+            return {
+                type: 'profile',
+                hit: { featureId, profileId, object: obj, intersection: hit }
+            };
+        }
+        const solidFaceHit = api.solids?.getFaceHitFromIntersections?.([hit]);
+        if (solidFaceHit) {
+            return { type: 'solid-face', hit: solidFaceHit };
         }
     }
     return null;
@@ -784,6 +805,7 @@ export {
     getBestPlaneFromIntersections,
     handleMouseUp,
     getSketchProfileHitFromIntersections,
+    getPrimarySurfaceHitFromIntersections,
     selectSketchProfile,
     selectSolidFace,
     startHandleDrag,
