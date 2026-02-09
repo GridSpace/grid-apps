@@ -843,6 +843,20 @@ html, body {
     gap: 4px;
 }
 
+.props-picker-area {
+    padding: 6px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.02);
+    transition: border-color 0.12s, background-color 0.12s;
+    cursor: pointer;
+}
+
+.props-picker-area.active {
+    border-color: var(--accent);
+    background: rgba(90, 159, 212, 0.14);
+}
+
 .props-field label {
     font-size: 12px;
     color: var(--text-secondary);

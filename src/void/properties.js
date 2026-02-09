@@ -354,6 +354,11 @@ const properties = {
         const operation = ['new', 'add', 'subtract'].includes(String(params.operation || 'new'))
             ? String(params.operation || 'new')
             : 'new';
+        if (operation === 'new') {
+            this._extrudePickRole = 'profiles';
+        } else if (this._extrudePickRole !== 'profiles' && this._extrudePickRole !== 'targets') {
+            this._extrudePickRole = 'targets';
+        }
 
         this.body.appendChild(this.createSelectField('Mode', operation, [
             { value: 'new', label: 'New' },
@@ -372,7 +377,10 @@ const properties = {
                 opType: 'feature.update',
                 payload: { field: 'operation', value: next }
             });
-            if (updated) this.onChanged();
+            if (updated) {
+                this._extrudePickRole = next === 'new' ? 'profiles' : 'targets';
+                this.onChanged();
+            }
         }));
 
         const depthValue = Number(params.depth ?? params.distance ?? 10);
@@ -416,20 +424,17 @@ const properties = {
             if (updated) this.onChanged();
         }));
 
-        const wrap = document.createElement('div');
-        wrap.className = 'props-field';
-        const label = document.createElement('label');
-        label.textContent = 'Profiles';
-        wrap.appendChild(label);
-        const list = document.createElement('div');
-        list.className = 'props-extrude-profiles';
         const profiles = Array.isArray(feature?.input?.profiles) ? feature.input.profiles : [];
-        if (!profiles.length) {
-            const empty = document.createElement('div');
-            empty.className = 'props-extrude-profile-empty';
-            empty.textContent = 'No profiles selected';
-            list.appendChild(empty);
-        } else {
+        const profilesArea = this.createSolidPickerArea({
+            title: 'Profiles',
+            active: this._extrudePickRole === 'profiles',
+            onActivate: () => {
+                this._extrudePickRole = 'profiles';
+                this.onChanged();
+            },
+            emptyText: 'No profiles selected'
+        });
+        if (profiles.length) {
             for (const profile of profiles) {
                 const sketch = api.features.findById(profile?.sketchId);
                 const row = document.createElement('div');
@@ -456,35 +461,33 @@ const properties = {
                 };
                 row.appendChild(text);
                 row.appendChild(remove);
-                list.appendChild(row);
+                profilesArea.list.appendChild(row);
             }
+        } else {
+            profilesArea.showEmpty();
         }
-        wrap.appendChild(list);
-        this.body.appendChild(wrap);
+        this.body.appendChild(profilesArea.wrap);
 
         if (operation !== 'new') {
-            const targetsWrap = document.createElement('div');
-            targetsWrap.className = 'props-field';
-            const targetsLabel = document.createElement('label');
-            targetsLabel.textContent = 'Targets';
-            targetsWrap.appendChild(targetsLabel);
-            const targetsList = document.createElement('div');
-            targetsList.className = 'props-extrude-profiles';
             const solids = api.solids?.list?.() || [];
             const targetIds = Array.isArray(feature?.input?.targets) ? feature.input.targets.filter(Boolean) : [];
-            if (!targetIds.length) {
-                const empty = document.createElement('div');
-                empty.className = 'props-extrude-profile-empty';
-                empty.textContent = 'No targets selected';
-                targetsList.appendChild(empty);
-            } else {
+            const targetsArea = this.createSolidPickerArea({
+                title: 'Targets',
+                active: this._extrudePickRole === 'targets',
+                onActivate: () => {
+                    this._extrudePickRole = 'targets';
+                    this.onChanged();
+                },
+                emptyText: 'No targets selected'
+            });
+            if (targetIds.length) {
                 for (const solidId of targetIds) {
                     const solid = solids.find(item => item?.id === solidId);
                     const row = document.createElement('div');
                     row.className = 'props-extrude-profile-row';
                     const text = document.createElement('div');
                     text.className = 'props-extrude-profile-text';
-                    text.textContent = solid?.name || solidId;
+                    text.textContent = this.getSolidDisplayName(solidId, solid);
                     const remove = document.createElement('button');
                     remove.className = 'props-extrude-profile-remove';
                     remove.textContent = '×';
@@ -502,11 +505,12 @@ const properties = {
                     };
                     row.appendChild(text);
                     row.appendChild(remove);
-                    targetsList.appendChild(row);
+                    targetsArea.list.appendChild(row);
                 }
+            } else {
+                targetsArea.showEmpty();
             }
-            targetsWrap.appendChild(targetsList);
-            this.body.appendChild(targetsWrap);
+            this.body.appendChild(targetsArea.wrap);
         }
     },
 
@@ -530,12 +534,12 @@ const properties = {
                 if (!Array.isArray(item.input.tools)) {
                     item.input.tools = [];
                 }
-        }, {
-            opType: 'feature.update',
-            payload: { field: 'mode', value: next }
-        });
-        if (updated) this.onChanged();
-    }));
+            }, {
+                opType: 'feature.update',
+                payload: { field: 'mode', value: next }
+            });
+            if (updated) this.onChanged();
+        }));
 
         if (mode === 'subtract') {
             if (this._booleanPickRole !== 'tools' && this._booleanPickRole !== 'targets') {
@@ -545,81 +549,97 @@ const properties = {
             this._booleanPickRole = 'targets';
         }
 
-        const wrap = document.createElement('div');
-        wrap.className = 'props-field';
-        const label = document.createElement('label');
-        label.textContent = mode === 'subtract' ? 'Targets / Tools' : 'Solids';
-        wrap.appendChild(label);
-        const list = document.createElement('div');
-        list.className = 'props-extrude-profiles';
         const solids = api.solids?.list?.() || [];
         const targets = Array.isArray(input.targets) ? input.targets.filter(Boolean) : [];
         const tools = Array.isArray(input.tools) ? input.tools.filter(Boolean) : [];
-        const sections = mode === 'subtract'
-            ? [
-                { key: 'targets', title: 'Targets', ids: targets },
-                { key: 'tools', title: 'Tools', ids: tools }
-            ]
-            : [
-                { key: 'targets', title: 'Solids', ids: targets }
-            ];
-        const total = sections.reduce((sum, section) => sum + section.ids.length, 0);
-        if (!total) {
-            const empty = document.createElement('div');
-            empty.className = 'props-extrude-profile-empty';
-            empty.textContent = 'No solids selected';
-            list.appendChild(empty);
-        } else {
-            for (const section of sections) {
-                if (!section.ids.length) continue;
-                const title = document.createElement('div');
-                title.className = 'props-extrude-profile-empty';
-                if (mode === 'subtract') {
-                    const active = this._booleanPickRole === section.key;
-                    title.textContent = `${active ? '● ' : '○ '}${section.title}`;
-                    title.style.cursor = 'pointer';
-                    title.onclick = () => {
-                        this._booleanPickRole = section.key;
+
+        const buildSection = (sectionKey, title, ids, emptyText) => {
+            const active = mode === 'subtract' ? this._booleanPickRole === sectionKey : true;
+            const area = this.createSolidPickerArea({
+                title,
+                active,
+                onActivate: () => {
+                    if (mode === 'subtract') {
+                        this._booleanPickRole = sectionKey;
                         this.onChanged();
-                    };
-                } else {
-                    title.textContent = section.title;
-                }
-                list.appendChild(title);
-                for (const solidId of section.ids) {
+                    }
+                },
+                emptyText
+            });
+            if (ids.length) {
+                for (const solidId of ids) {
                     const solid = solids.find(item => item?.id === solidId);
                     const row = document.createElement('div');
                     row.className = 'props-extrude-profile-row';
                     const text = document.createElement('div');
                     text.className = 'props-extrude-profile-text';
-                    text.textContent = solid?.name || solidId;
+                    text.textContent = this.getSolidDisplayName(solidId, solid);
                     const remove = document.createElement('button');
                     remove.className = 'props-extrude-profile-remove';
                     remove.textContent = '×';
-                    remove.title = 'Remove solid';
+                    remove.title = `Remove ${sectionKey === 'tools' ? 'tool' : 'target'}`;
                     remove.onclick = () => {
                         const updated = api.features.update(feature.id, item => {
                             item.input = item.input || {};
                             const legacy = Array.isArray(item.input.solids) ? item.input.solids : [];
                             const currentTargets = Array.isArray(item.input.targets) ? item.input.targets : legacy;
                             const currentTools = Array.isArray(item.input.tools) ? item.input.tools : [];
-                            item.input.targets = currentTargets.filter(id => id && !(section.key === 'targets' && id === solidId));
-                            item.input.tools = currentTools.filter(id => id && !(section.key === 'tools' && id === solidId));
+                            item.input.targets = currentTargets.filter(id => id && !(sectionKey === 'targets' && id === solidId));
+                            item.input.tools = currentTools.filter(id => id && !(sectionKey === 'tools' && id === solidId));
                             delete item.input.solids;
                         }, {
                             opType: 'feature.update',
-                            payload: { field: `${section.key}.remove`, solidId }
+                            payload: { field: `${sectionKey}.remove`, solidId }
                         });
                         if (updated) this.onChanged();
                     };
                     row.appendChild(text);
                     row.appendChild(remove);
-                    list.appendChild(row);
+                    area.list.appendChild(row);
                 }
+            } else {
+                area.showEmpty();
             }
+            this.body.appendChild(area.wrap);
+        };
+
+        buildSection('targets', 'Targets', targets, 'No targets selected');
+        if (mode === 'subtract') {
+            buildSection('tools', 'Tools', tools, 'No tools selected');
         }
+    },
+
+    createSolidPickerArea({ title, active = false, onActivate = null, emptyText = 'Nothing selected' }) {
+        const wrap = document.createElement('div');
+        wrap.className = `props-field props-picker-area${active ? ' active' : ''}`;
+        const label = document.createElement('label');
+        label.textContent = title;
+        wrap.appendChild(label);
+        const list = document.createElement('div');
+        list.className = 'props-extrude-profiles';
         wrap.appendChild(list);
-        this.body.appendChild(wrap);
+        if (typeof onActivate === 'function') {
+            wrap.onclick = event => {
+                if (event?.target?.closest?.('.props-extrude-profile-remove')) {
+                    return;
+                }
+                onActivate();
+            };
+        }
+        return {
+            wrap,
+            list,
+            showEmpty() {
+                const empty = document.createElement('div');
+                empty.className = 'props-extrude-profile-empty';
+                empty.textContent = emptyText;
+                list.appendChild(empty);
+            }
+        };
+    },
+
+    getExtrudePickRole() {
+        return this._extrudePickRole === 'targets' ? 'targets' : 'profiles';
     },
 
     syncExtrudeProfileSelection(feature) {
@@ -675,6 +695,26 @@ const properties = {
             targets: targets.filter(Boolean),
             tools: tools.filter(Boolean)
         };
+    },
+
+    getSolidDisplayName(solidId, solid = null) {
+        const sid = String(solidId || '').trim();
+        if (!sid) return 'Solid';
+        if (solid?.name && !solid.name.includes(':body:')) {
+            return solid.name;
+        }
+        const match = sid.match(/^(.+):body:(\d+)$/);
+        if (match) {
+            const featureId = match[1];
+            const bodyIndex = Number(match[2]);
+            const feature = api.features.findById(featureId);
+            const base = feature?.name || feature?.type || 'Solid';
+            if (Number.isFinite(bodyIndex)) {
+                return `${base} / Body ${bodyIndex + 1}`;
+            }
+            return base;
+        }
+        return sid;
     },
 
     getBooleanPickRole() {
