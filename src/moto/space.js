@@ -36,6 +36,7 @@ let WIN = self.window || {},
     refreshRequested = false,
     selectRecurse = false,
     defaultKeys = true,
+    fitVisibleOnly = false,
     initialized = false,
     alignedTracking = false,
     trackingMode = 'platform',  // 'platform', 'camera-aligned', 'world-xy'
@@ -169,6 +170,15 @@ function delayed(key, time, fn) {
 
 function valueOr(val, def) {
     return val !== undefined ? val : def;
+}
+
+function isEffectivelyVisible(obj) {
+    let node = obj;
+    while (node) {
+        if (!node.visible) return false;
+        node = node.parent;
+    }
+    return true;
 }
 
 WORLD.contains = (obj) => {
@@ -1389,10 +1399,13 @@ let Space = {
             // Calculate bounding box of all objects in the workspace
             const box = new THREE.Box3();
             let hasObjects = false;
+            const visibleOnly = opts.visibleOnly !== undefined ? !!opts.visibleOnly : fitVisibleOnly;
 
             // Recursively expand box for all visible objects with geometry
             WORLD.traverse(obj => {
-                if (obj.visible && obj.geometry) {
+                if (!obj.geometry) return;
+                if (visibleOnly && !isEffectivelyVisible(obj)) return;
+                if (obj.visible) {
                     box.expandByObject(obj);
                     hasObjects = true;
                 }
@@ -1494,6 +1507,9 @@ let Space = {
             } else {
                 viewControl.setMouse(viewControl.mouseDefault);
             }
+        },
+        setFitVisibleOnly: (enabled) => {
+            fitVisibleOnly = !!enabled;
         },
         getFPS () { return fps },
         getRMS() { return renderTime },
