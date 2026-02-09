@@ -3,11 +3,25 @@
 import { buildSeedProvenance } from './provenance.js';
 import { extrudePolygons, booleanMeshes } from './kernel.js';
 
-function profileLoopFromRuntime(api, sketchId, profileId) {
+function profileLoopsFromRuntime(api, profileTarget) {
+    const sketchId = profileTarget?.sketchId || null;
+    const profileId = profileTarget?.profileId || null;
+    if (!sketchId || !profileId) return null;
+    if (Array.isArray(profileTarget?.loops) && profileTarget.loops.length) {
+        const loops = profileTarget.loops
+            .filter(loop => Array.isArray(loop) && loop.length >= 3)
+            .map(loop => loop.map(p => ({ x: p?.x || 0, y: p?.y || 0 })));
+        if (loops.length) return loops;
+    }
     const rec = api.sketchRuntime?.getRecord?.(sketchId);
     const view = rec?.entityViews?.get?.(profileId);
+    const loops = view?.object?.userData?.sketchProfileLoops || view?.entity?.loops || null;
+    if (Array.isArray(loops) && loops.length) {
+        const out = loops.filter(loop => Array.isArray(loop) && loop.length >= 3);
+        return out.length ? out : null;
+    }
     const loop = view?.object?.userData?.sketchProfileLoop || view?.entity?.loop || null;
-    return Array.isArray(loop) && loop.length >= 3 ? loop : null;
+    return Array.isArray(loop) && loop.length >= 3 ? [loop] : null;
 }
 
 function makeBodyId(featureId, index) {
@@ -124,7 +138,7 @@ async function rebuildGeneratedSolids(api, options = {}) {
                 const sketchId = profileTarget?.sketchId || null;
                 const profileId = profileTarget?.profileId || null;
                 if (!sketchId || !profileId) continue;
-                const loop = profileLoopFromRuntime(api, sketchId, profileId);
+                const profileLoops = profileLoopsFromRuntime(api, profileTarget);
                 const sketchFeature = api.features.findById(sketchId);
                 const basis = basisFromPlaneFrame(sketchFeature?.plane || {});
                 const bodyIndex = bodySeq++;
@@ -140,12 +154,13 @@ async function rebuildGeneratedSolids(api, options = {}) {
                     },
                     provenance: buildSeedProvenance(feature, profileTarget, bodyIndex),
                     mesh: null,
-                    status: loop ? 'pending_manifold' : 'missing_profile_loop'
+                    status: profileLoops ? 'pending_manifold' : 'missing_profile_loop'
                 };
 
-                if (loop) {
+                if (profileLoops) {
                     // Initial direct-manifold path. Full boolean/replay topology comes next.
-                    const result = await extrudePolygons([loop.map(p => [p.x || 0, p.y || 0])], depth);
+                    const polygons = profileLoops.map(loop => loop.map(p => [p.x || 0, p.y || 0]));
+                    const result = await extrudePolygons(polygons, depth);
                     if (result?.mesh) {
                         const meshWorld = transformMeshToWorld(result.mesh, basis, localZShift);
                         body.status = 'manifold_mesh_ready';

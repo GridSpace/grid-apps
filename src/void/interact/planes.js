@@ -320,15 +320,26 @@ function selectSketchProfile(hit, event) {
     const currentFeatureId = properties.currentFeatureId || null;
     const currentFeature = currentFeatureId ? api.features.findById(currentFeatureId) : null;
     if (currentFeature?.type === 'extrude') {
+        const rawLoops = hit?.object?.userData?.sketchProfileLoops
+            || (hit?.object?.userData?.sketchProfileLoop ? [hit.object.userData.sketchProfileLoop] : null);
+        const loops = Array.isArray(rawLoops)
+            ? rawLoops
+                .filter(loop => Array.isArray(loop) && loop.length >= 3)
+                .map(loop => loop.map(p => ({ x: p?.x || 0, y: p?.y || 0 })))
+            : [];
         const profile = { sketchId: hit.featureId, profileId: hit.profileId };
+        if (loops.length) {
+            profile.loops = loops;
+        }
         const updated = api.features.update(currentFeature.id, feature => {
             feature.input = feature.input || {};
             const current = Array.isArray(feature.input.profiles) ? feature.input.profiles : [];
             const key = `${profile.sketchId}:${profile.profileId}`;
             const has = current.some(p => `${p?.sketchId}:${p?.profileId}` === key);
-            feature.input.profiles = has
+            const next = has
                 ? current.filter(p => `${p?.sketchId}:${p?.profileId}` !== key)
                 : [...current, profile];
+            feature.input.profiles = next;
         }, {
             opType: 'feature.update',
             payload: { field: 'profiles.toggle', profile }

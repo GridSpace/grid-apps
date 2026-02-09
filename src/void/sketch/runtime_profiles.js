@@ -8,15 +8,18 @@ const CLIPPER_SCALE = 100000;
 
 function addClosedProfileFills(rec, entities, pointById) {
     const loops = this.findClosedCurveLoops(rec.feature, entities, pointById);
-    for (let index = 0; index < loops.length; index++) {
-        const loop = loops[index];
-        if (!Array.isArray(loop) || loop.length < 3) continue;
-        const shape = new THREE.Shape();
-        shape.moveTo(loop[0].x, loop[0].y);
-        for (let i = 1; i < loop.length; i++) {
-            shape.lineTo(loop[i].x, loop[i].y);
+    const regions = buildProfileRegions(loops);
+    for (let index = 0; index < regions.length; index++) {
+        const region = regions[index];
+        const outer = region?.outer;
+        const holes = Array.isArray(region?.holes) ? region.holes : [];
+        if (!Array.isArray(outer) || outer.length < 3) continue;
+        const shape = loopToShapePath(ensureLoopWinding(outer, true), THREE.Shape);
+        if (!shape) continue;
+        for (const hole of holes) {
+            const path = loopToShapePath(ensureLoopWinding(hole, false), THREE.Path);
+            if (path) shape.holes.push(path);
         }
-        shape.closePath();
         const geom = new THREE.ShapeGeometry(shape);
         const mat = new THREE.MeshBasicMaterial({
             color: 0x8f8f8f,
@@ -36,14 +39,37 @@ function addClosedProfileFills(rec, entities, pointById) {
         fill.userData.sketchEntityType = 'profile';
         fill.userData.sketchProfileId = profileId;
         fill.userData.sketchFeatureId = rec.feature?.id || null;
-        fill.userData.sketchProfileLoop = loop.map(p => ({ x: p.x || 0, y: p.y || 0 }));
+        const profileLoops = [
+            ensureLoopWinding(outer, true),
+            ...holes.map(loop => ensureLoopWinding(loop, false))
+        ]
+            .map(loop => (Array.isArray(loop) ? loop.map(p => ({ x: p.x || 0, y: p.y || 0 })) : null))
+            .filter(loop => Array.isArray(loop) && loop.length >= 3);
+        fill.userData.sketchProfileLoops = profileLoops;
+        fill.userData.sketchProfileLoop = profileLoops[0] || null;
         rec.entitiesGroup.add(fill);
         rec.entityViews.set(profileId, {
-            entity: { id: profileId, type: 'profile', loop: fill.userData.sketchProfileLoop },
+            entity: {
+                id: profileId,
+                type: 'profile',
+                loop: fill.userData.sketchProfileLoop,
+                loops: profileLoops
+            },
             object: fill,
             type: 'profile'
         });
     }
+}
+
+function loopToShapePath(loop, Ctor = THREE.Path) {
+    if (!Array.isArray(loop) || loop.length < 3) return null;
+    const path = new Ctor();
+    path.moveTo(loop[0].x || 0, loop[0].y || 0);
+    for (let i = 1; i < loop.length; i++) {
+        path.lineTo(loop[i].x || 0, loop[i].y || 0);
+    }
+    path.closePath();
+    return path;
 }
 
 function simplifyLoopsWithClipper(loops) {
@@ -259,6 +285,121 @@ function segmentIntersectionParams(a, b, c, d, eps = 1e-9) {
 
 function findClosedLineLoops(feature, entities, pointById) {
     return this.findClosedCurveLoops(feature, entities, pointById);
+}
+
+function polygonAbsArea(loop) {
+    if (!Array.isArray(loop) || loop.length < 3) return 0;
+    let area2 = 0;
+    for (let i = 0; i < loop.length; i++) {
+        const a = loop[i];
+        const b = loop[(i + 1) % loop.length];
+        area2 += (a.x || 0) * (b.y || 0) - (b.x || 0) * (a.y || 0);
+    }
+    return Math.abs(area2 * 0.5);
+}
+
+function polygonSignedArea(loop) {
+    if (!Array.isArray(loop) || loop.length < 3) return 0;
+    let area2 = 0;
+    for (let i = 0; i < loop.length; i++) {
+        const a = loop[i];
+        const b = loop[(i + 1) % loop.length];
+        area2 += (a.x || 0) * (b.y || 0) - (b.x || 0) * (a.y || 0);
+    }
+    return area2 * 0.5;
+}
+
+function ensureLoopWinding(loop, ccw = true) {
+    if (!Array.isArray(loop)) return loop;
+    const signed = polygonSignedArea(loop);
+    const isCCW = signed > 0;
+    if ((ccw && isCCW) || (!ccw && !isCCW)) return loop;
+    return loop.slice().reverse();
+}
+
+function pointOnSegment(p, a, b, eps = 1e-8) {
+    const px = p.x || 0;
+    const py = p.y || 0;
+    const ax = a.x || 0;
+    const ay = a.y || 0;
+    const bx = b.x || 0;
+    const by = b.y || 0;
+    const abx = bx - ax;
+    const aby = by - ay;
+    const apx = px - ax;
+    const apy = py - ay;
+    const cross = abx * apy - aby * apx;
+    if (Math.abs(cross) > eps) return false;
+    const dot = apx * abx + apy * aby;
+    if (dot < -eps) return false;
+    const len2 = abx * abx + aby * aby;
+    if (dot - len2 > eps) return false;
+    return true;
+}
+
+// returns 1 = inside, 0 = boundary, -1 = outside
+function pointInPolygonState(point, loop) {
+    if (!Array.isArray(loop) || loop.length < 3) return -1;
+    const p = { x: point.x || 0, y: point.y || 0 };
+    let inside = false;
+    for (let i = 0, j = loop.length - 1; i < loop.length; j = i++) {
+        const a = loop[i];
+        const b = loop[j];
+        if (pointOnSegment(p, a, b)) return 0;
+        const yi = a.y || 0;
+        const yj = b.y || 0;
+        const xi = a.x || 0;
+        const xj = b.x || 0;
+        const intersect = ((yi > p.y) !== (yj > p.y))
+            && (p.x < ((xj - xi) * (p.y - yi)) / ((yj - yi) || 1e-12) + xi);
+        if (intersect) inside = !inside;
+    }
+    return inside ? 1 : -1;
+}
+
+function loopContainsLoop(outer, inner) {
+    if (!Array.isArray(outer) || !Array.isArray(inner) || outer.length < 3 || inner.length < 3) return false;
+    let sawInside = false;
+    for (const p of inner) {
+        const state = pointInPolygonState(p, outer);
+        if (state < 0) return false;
+        if (state > 0) sawInside = true;
+    }
+    return sawInside;
+}
+
+function buildProfileRegions(loops) {
+    const valid = (loops || [])
+        .filter(loop => Array.isArray(loop) && loop.length >= 3 && polygonAbsArea(loop) > 1e-10)
+        .map((loop, index) => ({
+            id: index,
+            loop,
+            area: polygonAbsArea(loop),
+            parent: null,
+            children: []
+        }));
+    if (!valid.length) return [];
+    valid.sort((a, b) => a.area - b.area);
+    for (let i = 0; i < valid.length; i++) {
+        const child = valid[i];
+        for (let j = i + 1; j < valid.length; j++) {
+            const parent = valid[j];
+            if (loopContainsLoop(parent.loop, child.loop)) {
+                child.parent = parent;
+                parent.children.push(child);
+                break;
+            }
+        }
+    }
+    // Every loop yields one selectable region: itself minus immediate children.
+    const regions = [];
+    for (const node of valid) {
+        regions.push({
+            outer: node.loop,
+            holes: node.children.map(c => c.loop)
+        });
+    }
+    return regions;
 }
 
 export {
