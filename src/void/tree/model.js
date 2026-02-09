@@ -203,6 +203,14 @@ function onFeatureEdit(feature) {
         api.sketchRuntime?.setEditing(feature.id);
         api.interact?.clearSketchSelection?.();
         api.interact?.setSketchTool?.('select');
+    } else if (feature?.type === 'extrude') {
+        const operation = String(feature?.params?.operation || 'new');
+        const targets = Array.isArray(feature?.input?.targets) ? feature.input.targets.filter(Boolean) : [];
+        const solids = (operation === 'add' || operation === 'subtract') ? targets : [];
+        this.selectedSolidIds = new Set(solids);
+        api.solids?.setSelected?.(solids);
+        api.sketchRuntime?.setEditing(null);
+        api.interact?.clearSketchSelection?.();
     } else if (feature?.type === 'boolean') {
         const mode = String(feature?.params?.mode || 'add');
         const legacy = Array.isArray(feature?.input?.solids) ? feature.input.solids.filter(Boolean) : [];
@@ -657,7 +665,10 @@ function renderSolidsSection() {
                 if (!this.selectedSolidIds) this.selectedSolidIds = new Set();
                 const currentFeature = properties.currentFeatureId ? api.features.findById(properties.currentFeatureId) : null;
                 const editingBoolean = currentFeature?.type === 'boolean' && currentFeature?.id === properties.currentFeatureId;
-                const multi = editingBoolean || !!(event?.ctrlKey || event?.metaKey);
+                const editingExtrude = currentFeature?.type === 'extrude' && currentFeature?.id === properties.currentFeatureId;
+                const extrudeOperation = String(currentFeature?.params?.operation || 'new');
+                const editingExtrudeTargets = editingExtrude && (extrudeOperation === 'add' || extrudeOperation === 'subtract');
+                const multi = editingBoolean || editingExtrudeTargets || !!(event?.ctrlKey || event?.metaKey);
                 if (!multi) {
                     if (this.selectedSolidIds.size === 1 && this.selectedSolidIds.has(id)) {
                         this.selectedSolidIds.clear();
@@ -670,51 +681,63 @@ function renderSolidsSection() {
                 } else {
                     this.selectedSolidIds.add(id);
                 }
-                if (!editingBoolean) {
+                if (!editingBoolean && !editingExtrudeTargets) {
                     this.selectedFeatureIds?.clear?.();
                     this.selectedFeatureId = null;
                 } else {
-                    const mode = String(currentFeature?.params?.mode || 'add');
-                    const role = properties.getBooleanPickRole?.() || 'targets';
-                    const input = currentFeature?.input || {};
-                    const legacy = Array.isArray(input.solids) ? input.solids.filter(Boolean) : [];
-                    const targets = Array.isArray(input.targets) ? input.targets.filter(Boolean) : legacy;
-                    const tools = Array.isArray(input.tools) ? input.tools.filter(Boolean) : [];
-                    let nextTargets = targets.slice();
-                    let nextTools = tools.slice();
-                    if (mode === 'subtract') {
-                        if (role === 'tools') {
-                            nextTargets = nextTargets.filter(sid => sid !== id);
-                            if (this.selectedSolidIds.has(id)) {
-                                if (!nextTools.includes(id)) nextTools.push(id);
+                    if (editingBoolean) {
+                        const mode = String(currentFeature?.params?.mode || 'add');
+                        const role = properties.getBooleanPickRole?.() || 'targets';
+                        const input = currentFeature?.input || {};
+                        const legacy = Array.isArray(input.solids) ? input.solids.filter(Boolean) : [];
+                        const targets = Array.isArray(input.targets) ? input.targets.filter(Boolean) : legacy;
+                        const tools = Array.isArray(input.tools) ? input.tools.filter(Boolean) : [];
+                        let nextTargets = targets.slice();
+                        let nextTools = tools.slice();
+                        if (mode === 'subtract') {
+                            if (role === 'tools') {
+                                nextTargets = nextTargets.filter(sid => sid !== id);
+                                if (this.selectedSolidIds.has(id)) {
+                                    if (!nextTools.includes(id)) nextTools.push(id);
+                                } else {
+                                    nextTools = nextTools.filter(sid => sid !== id);
+                                }
                             } else {
                                 nextTools = nextTools.filter(sid => sid !== id);
+                                if (this.selectedSolidIds.has(id)) {
+                                    if (!nextTargets.includes(id)) nextTargets.push(id);
+                                } else {
+                                    nextTargets = nextTargets.filter(sid => sid !== id);
+                                }
                             }
                         } else {
-                            nextTools = nextTools.filter(sid => sid !== id);
-                            if (this.selectedSolidIds.has(id)) {
-                                if (!nextTargets.includes(id)) nextTargets.push(id);
-                            } else {
-                                nextTargets = nextTargets.filter(sid => sid !== id);
-                            }
+                            nextTargets = Array.from(this.selectedSolidIds);
+                            nextTools = [];
                         }
-                    } else {
-                        nextTargets = Array.from(this.selectedSolidIds);
-                        nextTools = [];
+                        const next = mode === 'subtract'
+                            ? Array.from(new Set([...nextTargets, ...nextTools]))
+                            : nextTargets.slice();
+                        api.features.update(currentFeature.id, feature => {
+                            feature.input = feature.input || {};
+                            feature.input.targets = nextTargets;
+                            feature.input.tools = nextTools;
+                            delete feature.input.solids;
+                        }, {
+                            opType: 'feature.update',
+                            payload: { field: 'boolean.inputs', targets: nextTargets, tools: nextTools }
+                        });
+                        this.selectedSolidIds = new Set(next);
+                    } else if (editingExtrudeTargets) {
+                        const nextTargets = Array.from(this.selectedSolidIds);
+                        api.features.update(currentFeature.id, feature => {
+                            feature.input = feature.input || {};
+                            feature.input.targets = nextTargets;
+                        }, {
+                            opType: 'feature.update',
+                            payload: { field: 'targets', value: nextTargets }
+                        });
+                        this.selectedSolidIds = new Set(nextTargets);
                     }
-                    const next = mode === 'subtract'
-                        ? Array.from(new Set([...nextTargets, ...nextTools]))
-                        : nextTargets.slice();
-                    api.features.update(currentFeature.id, feature => {
-                        feature.input = feature.input || {};
-                        feature.input.targets = nextTargets;
-                        feature.input.tools = nextTools;
-                        delete feature.input.solids;
-                    }, {
-                        opType: 'feature.update',
-                        payload: { field: 'boolean.inputs', targets: nextTargets, tools: nextTools }
-                    });
-                    this.selectedSolidIds = new Set(next);
                     properties.onChanged?.();
                 }
                 api.solids?.setSelected?.(Array.from(this.selectedSolidIds));

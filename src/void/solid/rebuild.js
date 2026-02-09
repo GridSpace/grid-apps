@@ -114,7 +114,11 @@ async function rebuildGeneratedSolids(api, options = {}) {
             const depth = Math.max(0.0001, Math.abs(Number(params.depth ?? params.distance ?? 1)));
             const symmetric = params.symmetric === true;
             const direction = params.direction === 'reverse' ? 'reverse' : 'normal';
+            const operation = ['new', 'add', 'subtract'].includes(String(params.operation || 'new'))
+                ? String(params.operation || 'new')
+                : 'new';
             const localZShift = symmetric ? (-depth / 2) : (direction === 'reverse' ? -depth : 0);
+            const createdBodyIds = [];
 
             for (const profileTarget of profiles) {
                 const sketchId = profileTarget?.sketchId || null;
@@ -156,12 +160,86 @@ async function rebuildGeneratedSolids(api, options = {}) {
                         };
                         if (meshWorld) {
                             meshCache.set(id, meshWorld);
+                            createdBodyIds.push(id);
                         }
                         result.manifold?.delete?.();
                     }
                 }
 
                 solids.push(body);
+            }
+            if ((operation === 'add' || operation === 'subtract') && createdBodyIds.length) {
+                const targetIds = Array.isArray(feature?.input?.targets)
+                    ? feature.input.targets.map(id => String(id || '')).filter(Boolean)
+                    : [];
+                const createdSolids = createdBodyIds
+                    .map(id => solids.find(s => s?.id === id))
+                    .filter(Boolean);
+                const targetSolids = targetIds
+                    .map(id => solids.find(s => s?.id === id))
+                    .filter(Boolean);
+                const toolMeshes = createdSolids
+                    .map(s => meshCache.get(s.id))
+                    .filter(mesh => mesh?.positions?.length && mesh?.indices?.length);
+                const targetMeshes = targetSolids
+                    .map(s => meshCache.get(s.id))
+                    .filter(mesh => mesh?.positions?.length && mesh?.indices?.length);
+                let merge = null;
+                if (operation === 'add') {
+                    const meshes = [...targetMeshes, ...toolMeshes];
+                    if (meshes.length >= 2) {
+                        merge = await booleanMeshes(meshes, 'add');
+                    }
+                } else if (operation === 'subtract') {
+                    if (targetMeshes.length && toolMeshes.length) {
+                        merge = await booleanMeshes({ mode: 'subtract', targets: targetMeshes, tools: toolMeshes });
+                    }
+                }
+                if (merge?.mesh?.positions?.length && merge?.mesh?.indices?.length) {
+                    const consumed = new Set([...targetSolids.map(s => s.id), ...createdSolids.map(s => s.id)]);
+                    const sketchIds = new Set();
+                    for (const solid of [...targetSolids, ...createdSolids]) {
+                        for (const sid of getSketchIdsForSolid(solid)) {
+                            sketchIds.add(sid);
+                        }
+                        meshCache.delete(solid?.id);
+                    }
+                    const kept = solids.filter(s => !consumed.has(s?.id));
+                    solids.length = 0;
+                    solids.push(...kept);
+                    const bodyIndex = bodySeq++;
+                    const id = makeBodyId(feature.id, bodyIndex);
+                    const body = {
+                        id,
+                        name: `${feature.name || 'Extrude'}-${bodyIndex + 1}`,
+                        visible: feature.visible !== false,
+                        source: {
+                            feature_id: feature.id,
+                            feature_type: feature.type,
+                            operation,
+                            targets: targetIds,
+                            tools: createdBodyIds,
+                            sketch_ids: Array.from(sketchIds)
+                        },
+                        provenance: {
+                            source: {
+                                feature_id: feature.id,
+                                feature_type: feature.type,
+                                operation,
+                                targets: targetIds,
+                                tools: createdBodyIds
+                            },
+                            parents: [...targetIds, ...createdBodyIds]
+                        },
+                        mesh: {
+                            tri_count: (merge.mesh?.indices?.length || 0) / 3,
+                            vert_count: (merge.mesh?.positions?.length || 0) / 3
+                        },
+                        status: 'manifold_extrude_boolean_ready'
+                    };
+                    meshCache.set(id, merge.mesh);
+                    solids.push(body);
+                }
             }
             continue;
         }

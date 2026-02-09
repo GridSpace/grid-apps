@@ -21,6 +21,7 @@ const properties = {
     _savedPos: null,
     _loadingPos: false,
     _booleanPickRole: 'targets',
+    _extrudePickRole: 'profiles',
     _sessionStartRev: null,
     _sessionFeatureId: null,
     _sessionFeatureType: null,
@@ -269,6 +270,7 @@ const properties = {
         api.sketchRuntime?.setEditing(null);
         api.interact?.clearSketchSelection?.();
         this.syncExtrudeProfileSelection(null);
+        this.syncExtrudeTargetSelection(null);
         this.syncBooleanSolidSelection(null);
         this.currentFeatureId = null;
         this._sessionFeatureId = null;
@@ -301,6 +303,7 @@ const properties = {
             this.renderBooleanFields(feature);
         }
         this.syncExtrudeProfileSelection(feature);
+        this.syncExtrudeTargetSelection(feature);
         this.syncBooleanSolidSelection(feature);
     },
 
@@ -348,6 +351,30 @@ const properties = {
 
     renderExtrudeFields(feature) {
         const params = feature?.params || {};
+        const operation = ['new', 'add', 'subtract'].includes(String(params.operation || 'new'))
+            ? String(params.operation || 'new')
+            : 'new';
+
+        this.body.appendChild(this.createSelectField('Mode', operation, [
+            { value: 'new', label: 'New' },
+            { value: 'add', label: 'Add' },
+            { value: 'subtract', label: 'Subtract' }
+        ], value => {
+            const next = ['new', 'add', 'subtract'].includes(value) ? value : 'new';
+            const updated = api.features.update(feature.id, item => {
+                item.params = item.params || {};
+                item.params.operation = next;
+                item.input = item.input || {};
+                if (!Array.isArray(item.input.targets)) {
+                    item.input.targets = [];
+                }
+            }, {
+                opType: 'feature.update',
+                payload: { field: 'operation', value: next }
+            });
+            if (updated) this.onChanged();
+        }));
+
         const depthValue = Number(params.depth ?? params.distance ?? 10);
         this.body.appendChild(this.createNumberField('Depth', depthValue, value => {
             const next = Math.max(0.0001, Math.abs(value));
@@ -434,6 +461,53 @@ const properties = {
         }
         wrap.appendChild(list);
         this.body.appendChild(wrap);
+
+        if (operation !== 'new') {
+            const targetsWrap = document.createElement('div');
+            targetsWrap.className = 'props-field';
+            const targetsLabel = document.createElement('label');
+            targetsLabel.textContent = 'Targets';
+            targetsWrap.appendChild(targetsLabel);
+            const targetsList = document.createElement('div');
+            targetsList.className = 'props-extrude-profiles';
+            const solids = api.solids?.list?.() || [];
+            const targetIds = Array.isArray(feature?.input?.targets) ? feature.input.targets.filter(Boolean) : [];
+            if (!targetIds.length) {
+                const empty = document.createElement('div');
+                empty.className = 'props-extrude-profile-empty';
+                empty.textContent = 'No targets selected';
+                targetsList.appendChild(empty);
+            } else {
+                for (const solidId of targetIds) {
+                    const solid = solids.find(item => item?.id === solidId);
+                    const row = document.createElement('div');
+                    row.className = 'props-extrude-profile-row';
+                    const text = document.createElement('div');
+                    text.className = 'props-extrude-profile-text';
+                    text.textContent = solid?.name || solidId;
+                    const remove = document.createElement('button');
+                    remove.className = 'props-extrude-profile-remove';
+                    remove.textContent = '×';
+                    remove.title = 'Remove target';
+                    remove.onclick = () => {
+                        const updated = api.features.update(feature.id, item => {
+                            item.input = item.input || {};
+                            const current = Array.isArray(item.input.targets) ? item.input.targets : [];
+                            item.input.targets = current.filter(id => id !== solidId);
+                        }, {
+                            opType: 'feature.update',
+                            payload: { field: 'targets.remove', solidId }
+                        });
+                        if (updated) this.onChanged();
+                    };
+                    row.appendChild(text);
+                    row.appendChild(remove);
+                    targetsList.appendChild(row);
+                }
+            }
+            targetsWrap.appendChild(targetsList);
+            this.body.appendChild(targetsWrap);
+        }
     },
 
     renderBooleanFields(feature) {
@@ -456,22 +530,17 @@ const properties = {
                 if (!Array.isArray(item.input.tools)) {
                     item.input.tools = [];
                 }
-            }, {
-                opType: 'feature.update',
-                payload: { field: 'mode', value: next }
-            });
-            if (updated) this.onChanged();
-        }));
+        }, {
+            opType: 'feature.update',
+            payload: { field: 'mode', value: next }
+        });
+        if (updated) this.onChanged();
+    }));
 
         if (mode === 'subtract') {
-            const role = this._booleanPickRole === 'tools' ? 'tools' : 'targets';
-            this.body.appendChild(this.createSelectField('Pick Set', role, [
-                { value: 'targets', label: 'Targets' },
-                { value: 'tools', label: 'Tools' }
-            ], value => {
-                this._booleanPickRole = value === 'tools' ? 'tools' : 'targets';
-                this.onChanged();
-            }));
+            if (this._booleanPickRole !== 'tools' && this._booleanPickRole !== 'targets') {
+                this._booleanPickRole = 'targets';
+            }
         } else {
             this._booleanPickRole = 'targets';
         }
@@ -505,7 +574,17 @@ const properties = {
                 if (!section.ids.length) continue;
                 const title = document.createElement('div');
                 title.className = 'props-extrude-profile-empty';
-                title.textContent = section.title;
+                if (mode === 'subtract') {
+                    const active = this._booleanPickRole === section.key;
+                    title.textContent = `${active ? '● ' : '○ '}${section.title}`;
+                    title.style.cursor = 'pointer';
+                    title.onclick = () => {
+                        this._booleanPickRole = section.key;
+                        this.onChanged();
+                    };
+                } else {
+                    title.textContent = section.title;
+                }
                 list.appendChild(title);
                 for (const solidId of section.ids) {
                     const solid = solids.find(item => item?.id === solidId);
@@ -558,6 +637,20 @@ const properties = {
             .filter(Boolean);
         api.interact.selectedSketchProfiles = new Set(keys);
         api.sketchRuntime?.setSelectedProfiles?.(keys);
+    },
+
+    syncExtrudeTargetSelection(feature) {
+        const isExtrude = feature?.type === 'extrude' && this.currentFeatureId === feature?.id;
+        if (!isExtrude) {
+            return;
+        }
+        const operation = String(feature?.params?.operation || 'new');
+        const targets = Array.isArray(feature?.input?.targets) ? feature.input.targets.filter(Boolean) : [];
+        if (operation === 'add' || operation === 'subtract') {
+            api.solids?.setSelected?.(targets);
+        } else {
+            api.solids?.setSelected?.([]);
+        }
     },
 
     syncBooleanSolidSelection(feature) {
