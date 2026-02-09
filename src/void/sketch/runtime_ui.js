@@ -743,7 +743,7 @@ function updateConstraintGlyphs(getApi, opts = {}) {
                 ? (mode === 'driven' ? formatMeasuredValue(measured) : formatDimensionLabel(c))
                 : this.constraintGlyphLabel(c.type);
             glyph.style.left = `${Math.round(pos.x)}px`;
-            glyph.style.top = `${Math.round(pos.y + (isDimension ? 4 : 0))}px`;
+            glyph.style.top = `${Math.round(pos.y)}px`;
             if (isDimension) {
                 glyph.classList.add('dimension');
                 glyph.classList.toggle('driven', mode === 'driven');
@@ -812,8 +812,18 @@ function updateConstraintGlyphs(getApi, opts = {}) {
                     base: c?.ui?.offset_px ? { x: c.ui.offset_px.x || 0, y: c.ui.offset_px.y || 0 } : { x: 0, y: -18 },
                     current: c?.ui?.offset_px ? { x: c.ui.offset_px.x || 0, y: c.ui.offset_px.y || 0 } : { x: 0, y: -18 },
                     currentLocal: getDimensionCenterLocal.call(this, rec, rec.feature, c, null),
+                    localDelta: null,
                     moved: false
                 };
+                if (isDimension) {
+                    const mouseLocal = screenToSketchLocal(rec, event.clientX, event.clientY);
+                    if (mouseLocal && this._glyphDrag.currentLocal) {
+                        this._glyphDrag.localDelta = {
+                            x: (this._glyphDrag.currentLocal.x || 0) - (mouseLocal.x || 0),
+                            y: (this._glyphDrag.currentLocal.y || 0) - (mouseLocal.y || 0)
+                        };
+                    }
+                }
             };
             layer.appendChild(glyph);
         }
@@ -831,9 +841,13 @@ function updateConstraintDrag(event, done = false, getApi) {
     drag.current = next;
     if (drag.isDimension) {
         const rec = this.getRecord?.(drag.featureId) || null;
-        const local = rec ? screenToSketchLocal(rec, event?.clientX || 0, event?.clientY || 0) : null;
-        if (local) {
-            drag.currentLocal = local;
+        const mouseLocal = rec ? screenToSketchLocal(rec, event?.clientX || 0, event?.clientY || 0) : null;
+        if (mouseLocal) {
+            const delta = drag.localDelta || { x: 0, y: 0 };
+            drag.currentLocal = {
+                x: (mouseLocal.x || 0) + (delta.x || 0),
+                y: (mouseLocal.y || 0) + (delta.y || 0)
+            };
         }
     }
     this.updateConstraintGlyphs(getApi);

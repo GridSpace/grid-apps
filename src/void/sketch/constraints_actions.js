@@ -376,12 +376,19 @@ function toggleSketchDimensionMode(constraintId) {
     let changed = false;
     api.features.update(feature.id, sketch => {
         sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
+        sketch.entities = Array.isArray(sketch.entities) ? sketch.entities : [];
         const c = sketch.constraints.find(k => k?.id === constraintId && k?.type === 'dimension');
         if (!c) return;
         c.data = c.data || {};
         const prev = getConstraintMode(c);
         const next = prev === 'driving' ? 'driven' : 'driving';
         if (next === prev) return;
+        if (next === 'driving') {
+            const measured = measureDimensionValue(sketch.entities, Array.isArray(c.refs) ? c.refs : []);
+            if (Number.isFinite(measured) && measured > 0) {
+                c.data.value = measured;
+            }
+        }
         c.data.mode = next;
         changed = true;
         if (next === 'driving') {
