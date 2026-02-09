@@ -1,15 +1,24 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 function createFeaturesApi(getApi) {
-    function getEffectiveTimelineCount(doc) {
+    function getEffectiveTimelineCount(doc, editFeatureId = null) {
         const features = Array.isArray(doc?.features) ? doc.features : [];
         if (!features.length) return 0;
         const raw = doc?.timeline?.index;
+        let count;
         if (raw === null || raw === undefined) {
-            return features.length;
+            count = features.length;
+        } else {
+            const index = Math.max(-1, Math.min(features.length - 1, Math.floor(raw)));
+            count = index + 1;
         }
-        const index = Math.max(-1, Math.min(features.length - 1, Math.floor(raw)));
-        return index + 1;
+        if (editFeatureId) {
+            const editIndex = features.findIndex(feature => feature?.id === editFeatureId);
+            if (editIndex >= 0) {
+                count = Math.min(count, editIndex + 1);
+            }
+        }
+        return count;
     }
 
     return {
@@ -24,7 +33,8 @@ function createFeaturesApi(getApi) {
             const doc = api.document.current;
             if (!doc) return [];
             const features = Array.isArray(doc.features) ? doc.features : [];
-            const timelineCount = getEffectiveTimelineCount(doc);
+            const editFeatureId = api.document?.getAtomicEditFeatureId?.() || null;
+            const timelineCount = getEffectiveTimelineCount(doc, editFeatureId);
             return features.filter((feature, index) => index < timelineCount && feature?.suppressed !== true);
         },
 
@@ -32,7 +42,8 @@ function createFeaturesApi(getApi) {
             const api = getApi();
             const doc = api.document.current;
             if (!doc || !Array.isArray(doc.features)) return false;
-            const timelineCount = getEffectiveTimelineCount(doc);
+            const editFeatureId = api.document?.getAtomicEditFeatureId?.() || null;
+            const timelineCount = getEffectiveTimelineCount(doc, editFeatureId);
             return index >= 0 && index < timelineCount;
         },
 

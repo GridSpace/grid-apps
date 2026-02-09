@@ -101,18 +101,7 @@ async function rebuildGeneratedSolids(api, options = {}) {
     const doc = api.document.current;
     if (!doc) return { solids: [], meshCache: new Map() };
 
-    const allFeatures = api.features.list();
-    let buildCount = api.document?.getTimelineCount?.() ?? allFeatures.length;
-    const editFeatureId = api.document?.getAtomicEditFeatureId?.();
-    if (editFeatureId) {
-        const editIndex = allFeatures.findIndex(feature => feature?.id === editFeatureId);
-        if (editIndex >= 0) {
-            buildCount = Math.min(buildCount, editIndex + 1);
-        }
-    }
-    const builtFeatures = allFeatures.filter((feature, index) => {
-        return index < buildCount && feature?.suppressed !== true;
-    });
+    const builtFeatures = api.features.listBuilt();
     const solids = [];
     const meshCache = new Map();
     let bodySeq = 0;

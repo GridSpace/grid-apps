@@ -232,6 +232,7 @@ const properties = {
         this.panel.classList.remove('hidden');
         this.renderFeature(feature);
         this.syncExtrudeProfileSelection(feature);
+        api.sketchRuntime?.sync?.();
         api.solids?.scheduleRebuild?.('feature.edit.enter');
         window.dispatchEvent(new CustomEvent('void-state-change'));
     },
@@ -274,6 +275,7 @@ const properties = {
         this._sessionFeatureType = null;
         this._sessionStartRev = null;
         this._onChange = null;
+        api.sketchRuntime?.sync?.();
         api.solids?.scheduleRebuild?.('feature.edit.exit');
         window.dispatchEvent(new CustomEvent('void-state-change'));
     },

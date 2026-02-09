@@ -163,7 +163,7 @@ function getSketchEntityHitFromIntersections(intersections, feature) {
 function resolveSketchHit(event, intersections, feature) {
     const rayHit = this.getSketchEntityHitFromIntersections(intersections, feature);
     const screenHit = this.hitTestSketchEntity(event, feature);
-    if (screenHit?.type === 'point') {
+    if (screenHit?.type === 'point' || screenHit?.type === 'arc-center') {
         return screenHit;
     }
     if (rayHit?.type === 'point') {
