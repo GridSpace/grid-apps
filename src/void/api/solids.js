@@ -531,6 +531,19 @@ function createSolidsApi(getApi) {
                     const edgesGeom = new THREE.EdgesGeometry(built.render, SOLID_CREASE_ANGLE_DEG);
                     const edges = new THREE.LineSegments(edgesGeom, this._edgeMaterial.clone());
                     edges.userData.solidId = id;
+                    edges.userData.solidEdge = true;
+                    // Edge picking needs a small tolerance bump over global line picks.
+                    const baseRaycast = edges.raycast.bind(edges);
+                    edges.raycast = function(raycaster, intersects) {
+                        const prev = Number(raycaster?.params?.Line?.threshold || 0);
+                        if (raycaster?.params?.Line) {
+                            raycaster.params.Line.threshold = Math.max(prev, 1);
+                        }
+                        baseRaycast(raycaster, intersects);
+                        if (raycaster?.params?.Line) {
+                            raycaster.params.Line.threshold = prev;
+                        }
+                    };
                     const overlays = new THREE.Group();
                     overlays.name = `solid-${id}-face-overlays`;
                     const group = new THREE.Group();
@@ -595,6 +608,116 @@ function createSolidsApi(getApi) {
                 }
             }
             return out;
+        },
+
+        getPickEdges() {
+            const out = [];
+            for (const view of this._meshViews.values()) {
+                if (view?.group?.visible === false) continue;
+                if (view?.edges?.visible === false) continue;
+                if (view?.mesh?.visible === false) continue;
+                out.push(view.edges);
+            }
+            return out;
+        },
+
+        getEdgeSegmentWorld(object, segmentIndex) {
+            if (!object?.geometry || segmentIndex < 0) return null;
+            object.updateMatrixWorld?.(true);
+            const pos = object.geometry.getAttribute?.('position');
+            if (!pos) return null;
+            const idx = object.geometry.getIndex?.();
+            const ai = segmentIndex * 2;
+            const bi = ai + 1;
+            let ia = ai;
+            let ib = bi;
+            if (idx?.array?.length) {
+                if (bi >= idx.array.length) return null;
+                ia = idx.array[ai];
+                ib = idx.array[bi];
+            } else if (bi >= pos.count) {
+                return null;
+            }
+            const a = new THREE.Vector3().fromBufferAttribute(pos, ia).applyMatrix4(object.matrixWorld);
+            const b = new THREE.Vector3().fromBufferAttribute(pos, ib).applyMatrix4(object.matrixWorld);
+            return { a, b };
+        },
+
+        getEdgeHitFromIntersections(intersections = []) {
+            if (!Array.isArray(intersections)) return null;
+            for (const hit of intersections) {
+                const object = hit?.object;
+                if (!object || !isObjectEffectivelyVisible(object)) continue;
+                if (object?.userData?.solidEdge !== true) continue;
+                const solidId = String(object?.userData?.solidId || '');
+                const segIndex = Number(hit?.index);
+                if (!solidId || !Number.isFinite(segIndex)) continue;
+                const seg = this.getEdgeSegmentWorld(object, segIndex);
+                if (!seg) continue;
+                const mid = seg.a.clone().add(seg.b).multiplyScalar(0.5);
+                return {
+                    solidId,
+                    index: segIndex,
+                    aWorld: seg.a,
+                    bWorld: seg.b,
+                    midWorld: mid,
+                    intersection: hit
+                };
+            }
+            return null;
+        },
+
+        resolveEdgeFromSource(source = {}) {
+            if (source?.type !== 'solid-edge') return null;
+            const targetSolidId = String(source?.solid_id || '');
+            const targetFeatureId = String(source?.solid_feature_id || '');
+            const sa = source?.a;
+            const sb = source?.b;
+            if (!sa || !sb) return null;
+            const srcA = new THREE.Vector3(Number(sa.x || 0), Number(sa.y || 0), Number(sa.z || 0));
+            const srcB = new THREE.Vector3(Number(sb.x || 0), Number(sb.y || 0), Number(sb.z || 0));
+            const solids = this.list() || [];
+            const wanted = [];
+            if (targetSolidId) {
+                wanted.push(targetSolidId);
+            } else if (targetFeatureId) {
+                for (const solid of solids) {
+                    if (String(solid?.source?.feature_id || '') === targetFeatureId && solid?.id) {
+                        wanted.push(String(solid.id));
+                    }
+                }
+            } else {
+                for (const solid of solids) {
+                    if (solid?.id) wanted.push(String(solid.id));
+                }
+            }
+            let best = null;
+            let bestScore = Infinity;
+            for (const solidId of wanted) {
+                const view = this._meshViews.get(solidId);
+                const edgesObj = view?.edges;
+                if (!edgesObj?.geometry) continue;
+                const pos = edgesObj.geometry.getAttribute?.('position');
+                const idx = edgesObj.geometry.getIndex?.();
+                if (!pos) continue;
+                const segCount = idx?.array?.length
+                    ? Math.floor(idx.array.length / 2)
+                    : Math.floor(pos.count / 2);
+                for (let i = 0; i < segCount; i++) {
+                    const seg = this.getEdgeSegmentWorld(edgesObj, i);
+                    if (!seg) continue;
+                    const d1 = seg.a.distanceTo(srcA) + seg.b.distanceTo(srcB);
+                    const d2 = seg.a.distanceTo(srcB) + seg.b.distanceTo(srcA);
+                    const score = Math.min(d1, d2);
+                    if (score < bestScore) {
+                        bestScore = score;
+                        best = { solidId, index: i, aWorld: seg.a, bWorld: seg.b };
+                    }
+                }
+            }
+            if (!best) return null;
+            best.midWorld = best.aWorld.clone().add(best.bWorld).multiplyScalar(0.5);
+            return best;
         },
 
         getFaceHitFromIntersections(intersections = []) {
@@ -1011,13 +1134,20 @@ function createSolidsApi(getApi) {
                     });
                     this._meshCache = result?.meshCache || new Map();
                     this.syncRuntime();
+                    let derivedChanged = false;
+                    for (const feature of (api.features.list() || [])) {
+                        if (feature?.type !== 'sketch') continue;
+                        if (api.interact?.refreshDerivedSketchGeometry?.(feature)) {
+                            derivedChanged = true;
+                        }
+                    }
                     const rebound = this.refreshSketchFaceAttachments();
                     if (rebound && pass === 0) {
                         api.sketchRuntime?.sync?.();
                         passReason = 'sketch.face.rebind';
                         continue;
                     }
-                    if (rebound) {
+                    if (rebound || derivedChanged) {
                         api.sketchRuntime?.sync?.();
                     }
                     break;

@@ -102,6 +102,7 @@ function clearSketchSelection() {
     api.sketchRuntime?.setSelectedProfiles?.([]);
     api.sketchRuntime?.setHoveredProfile?.(null);
     this.hoveredSketchEntityId = null;
+    this.hoveredDerivedCandidate = null;
     this.hoveredSketchConstraintId = null;
     this.sketchLinePreview = null;
     this.sketchArcPreview = null;
@@ -170,6 +171,12 @@ function handleSketchKeyDown(event) {
     }
     if (event.code === 'KeyQ') {
         return this.toggleSelectedConstruction();
+    }
+    if (event.code === 'KeyU') {
+        if (event.shiftKey) {
+            return this.useHoveredDerivedPoint();
+        }
+        return this.useHoveredDerivedEdge();
     }
     if (event.code === 'KeyH') {
         return this.applySketchConstraint('horizontal');
@@ -240,6 +247,35 @@ function setHoveredSketchConstraint(constraintId) {
     return true;
 }
 
+function useHoveredDerivedEdge() {
+    const feature = this.getEditingSketchFeature();
+    const candidate = this.hoveredDerivedCandidate || null;
+    if (!feature || !candidate?.aLocal || !candidate?.bLocal) {
+        return false;
+    }
+    const created = this.createDerivedSketchLine(feature, candidate);
+    if (!created) return false;
+    this.updateSketchInteractionVisuals();
+    return true;
+}
+
+function useHoveredDerivedPoint() {
+    const feature = this.getEditingSketchFeature();
+    const candidate = this.hoveredDerivedCandidate || null;
+    if (!feature || !candidate) {
+        return false;
+    }
+    const local = candidate?.hoverPoint?.local || candidate?.midLocal || null;
+    if (!local) return false;
+    const created = this.createDerivedSketchPoint(feature, local, {
+        ...(candidate.source || {}),
+        point_kind: candidate?.hoverPoint?.kind || 'mid'
+    });
+    if (!created) return false;
+    this.updateSketchInteractionVisuals();
+    return true;
+}
+
 export {
     getEditingSketchFeature,
     isSketchEditing,
@@ -252,5 +288,7 @@ export {
     clearSketchSelection,
     handleSketchKeyDown,
     selectSketchConstraint,
-    setHoveredSketchConstraint
+    setHoveredSketchConstraint,
+    useHoveredDerivedEdge,
+    useHoveredDerivedPoint
 };

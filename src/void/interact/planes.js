@@ -31,13 +31,14 @@ function getInteractiveObjects() {
             }
         }
     }
-    if (!(this.isSketchEditing && this.isSketchEditing()) || (this.isSketchRetargetMode && this.isSketchRetargetMode())) {
-        for (const mesh of api.solids?.getPickMeshes?.() || []) {
-            objects.push(mesh);
-        }
+    for (const mesh of api.solids?.getPickMeshes?.() || []) {
+        objects.push(mesh);
     }
 
     if (this.isSketchEditing && this.isSketchEditing() && !(this.isSketchRetargetMode && this.isSketchRetargetMode())) {
+        for (const edgeObj of api.solids?.getPickEdges?.() || []) {
+            objects.push(edgeObj);
+        }
         const sketch = this.getEditingSketchFeature && this.getEditingSketchFeature();
         const rec = sketch?.id ? api.sketchRuntime?.getRecord?.(sketch.id) : null;
         if (rec?.entityViews) {

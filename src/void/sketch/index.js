@@ -19,7 +19,9 @@ import {
     clearSketchSelection,
     handleSketchKeyDown,
     selectSketchConstraint,
-    setHoveredSketchConstraint
+    setHoveredSketchConstraint,
+    useHoveredDerivedEdge,
+    useHoveredDerivedPoint
 } from './tools.js';
 import {
     deleteSelectedSketchConstraints,
@@ -98,6 +100,18 @@ function createSketchRectangle(feature, start, end, options = {}) {
     return sketchCreate.createSketchRectangle.call(this, feature, start, end, options);
 }
 
+function createDerivedSketchPoint(feature, local, source = {}) {
+    return sketchCreate.createDerivedSketchPoint.call(this, feature, local, source);
+}
+
+function createDerivedSketchLine(feature, candidate) {
+    return sketchCreate.createDerivedSketchLine.call(this, feature, candidate);
+}
+
+function refreshDerivedSketchGeometry(feature) {
+    return sketchCreate.refreshDerivedSketchGeometry.call(this, feature);
+}
+
 function createSketchPolygonFromSelectedCircle(mode = 'inscribed') {
     return sketchCreate.createSketchPolygonFromSelectedCircle.call(this, mode);
 }
@@ -136,14 +150,42 @@ function updateSketchInteractionVisuals() {
         return;
     }
     const dragHoverId = this.sketchDrag?.snapPointId || null;
+    const external = this.hoveredDerivedCandidate || null;
+    const canShowExternalPreview = !this.sketchDrag
+        && !this.sketchLineStart
+        && !this.sketchArcStart
+        && !this.sketchCircleCenter
+        && !this.sketchRectStart;
+    const externalLine = canShowExternalPreview && external?.aLocal && external?.bLocal
+        ? { a: external.aLocal, b: external.bLocal, forceHover: true }
+        : null;
+    const externalStart = canShowExternalPreview && external?.aLocal ? external.aLocal : null;
+    const externalEnd = canShowExternalPreview && external?.bLocal ? external.bLocal : null;
+    const externalMid = canShowExternalPreview ? (external?.hoverPoint?.local || external?.midLocal || null) : null;
+    const renderDbgKey = external
+        ? `${external.solidId}:${external.index}:${external?.hoverPoint?.kind || 'edge'}:${!!externalLine}`
+        : 'none';
+    if (this._debugDerivedRenderKey !== renderDbgKey) {
+        this._debugDerivedRenderKey = renderDbgKey;
+        console.log('void.sketch.derived.render', {
+            key: renderDbgKey,
+            canShowExternalPreview,
+            hasExternal: !!external,
+            hasLine: !!externalLine,
+            hasStart: !!externalStart,
+            hasEnd: !!externalEnd,
+            hasMid: !!externalMid
+        });
+    }
     api.sketchRuntime?.setEntityInteraction(feature.id, {
         hoveredId: this.sketchDrag ? dragHoverId : this.hoveredSketchEntityId,
         selectedIds: Array.from(this.selectedSketchEntities),
         hoveredConstraintId: this.hoveredSketchConstraintId || null,
         selectedConstraintIds: Array.from(this.selectedSketchConstraints || []),
-        previewLine: this.sketchLinePreview,
-        previewStart: this.sketchLineStart || this.sketchArcStart || this.sketchCircleCenter || this.sketchRectStart,
-        previewEnd: this.sketchArcEnd || this.sketchCircleSecond || null,
+        previewLine: this.sketchLinePreview || externalLine,
+        previewStart: this.sketchLineStart || this.sketchArcStart || this.sketchCircleCenter || this.sketchRectStart || externalStart,
+        previewEnd: this.sketchArcEnd || this.sketchCircleSecond || externalEnd || null,
+        previewMid: externalMid,
         previewArc: this.sketchArcPreview,
         previewRect: this.sketchRectPreview
     });
@@ -173,6 +215,10 @@ function getSketchEntityHitFromIntersections(intersections, feature) {
 
 function resolveSketchHit(event, intersections, feature) {
     return sketchGeom.resolveSketchHit.call(this, event, intersections, feature);
+}
+
+function resolveDerivedEdgeCandidate(event, intersections, feature) {
+    return sketchGeom.resolveDerivedEdgeCandidate.call(this, event, intersections, feature);
 }
 
 function isSketchEventInViewport(event) {
@@ -235,6 +281,10 @@ function sketchLocalToWorld(local, basis) {
     return sketchGeom.sketchLocalToWorld.call(this, local, basis);
 }
 
+function worldToSketchLocal(world, basis) {
+    return sketchGeom.worldToSketchLocal.call(this, world, basis);
+}
+
 function projectEventToSketchLocal(event, feature) {
     return sketchGeom.projectEventToSketchLocal.call(this, event, feature);
 }
@@ -251,6 +301,8 @@ export {
     clearSketchSelection,
     selectSketchConstraint,
     setHoveredSketchConstraint,
+    useHoveredDerivedEdge,
+    useHoveredDerivedPoint,
     handleSketchKeyDown,
     applySketchConstraint,
     editSketchDimensionConstraint,
@@ -271,6 +323,7 @@ export {
     hitTestSketchEntity,
     getSketchEntityHitFromIntersections,
     resolveSketchHit,
+    resolveDerivedEdgeCandidate,
     isSketchEventInViewport,
     getSketchHitLocalPoint,
     getSketchDragSnapTarget,
@@ -278,6 +331,7 @@ export {
     getEventViewportXY,
     getSketchBasis,
     sketchLocalToWorld,
+    worldToSketchLocal,
     projectEventToSketchLocal,
     viewportPointFromClient,
     startSketchMarquee,
@@ -317,6 +371,9 @@ export {
     sampleArcPolyline,
     createSketchPoint,
     createSketchLine,
+    createDerivedSketchPoint,
+    createDerivedSketchLine,
+    refreshDerivedSketchGeometry,
     createSketchPolygonFromSelectedCircle,
     deleteSelectedSketchEntities,
     deleteSelectedSketchConstraints,

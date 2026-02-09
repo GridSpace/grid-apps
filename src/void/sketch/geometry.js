@@ -172,6 +172,105 @@ function resolveSketchHit(event, intersections, feature) {
     return rayHit || screenHit || null;
 }
 
+function worldToSketchLocal(world, basis) {
+    if (!world || !basis) return null;
+    const rel = world.clone().sub(basis.origin);
+    return {
+        x: rel.dot(basis.xAxis),
+        y: rel.dot(basis.yAxis)
+    };
+}
+
+function resolveDerivedEdgeCandidate(event, intersections, feature) {
+    if (!event || !feature) return null;
+    const basis = this.getSketchBasis(feature);
+    if (!basis) return null;
+    const ints = Array.isArray(intersections) ? intersections : [];
+    const vp = this.getEventViewportXY(event);
+    if (!vp) return null;
+    const faceHit = api.solids?.getFaceHitFromIntersections?.(ints) || null;
+    let frontSolidId = faceHit?.solidId || null;
+    if (!frontSolidId) {
+        for (const hit of ints) {
+            const obj = hit?.object;
+            if (!obj?.userData?.solid || obj?.userData?.solidEdge) continue;
+            const sid = String(obj?.userData?.solidId || '');
+            if (sid) {
+                frontSolidId = sid;
+                break;
+            }
+        }
+    }
+    const toScreen = local => {
+        const world = this.sketchLocalToWorld(local, basis);
+        return api.overlay.project3Dto2D(world);
+    };
+    let best = null;
+    let bestSegDist = Infinity;
+    const maxSegDist = Math.max(14, SKETCH_HIT_LINE_PX * 2.5);
+    const considerSegment = (solidId, segIndex, aWorld, bWorld) => {
+        if (!solidId || !aWorld || !bWorld) return;
+        if (frontSolidId && solidId !== frontSolidId) return;
+        const mid = aWorld.clone().add(bWorld).multiplyScalar(0.5);
+        const aLocal = this.worldToSketchLocal(aWorld, basis);
+        const bLocal = this.worldToSketchLocal(bWorld, basis);
+        const midLocal = this.worldToSketchLocal(mid, basis);
+        if (!aLocal || !bLocal || !midLocal) return;
+        const pa = toScreen(aLocal);
+        const pb = toScreen(bLocal);
+        if (!pa?.visible || !pb?.visible) return;
+        const segDist = this.distanceToSegmentPx(vp.x, vp.y, pa.x, pa.y, pb.x, pb.y);
+        if (!Number.isFinite(segDist) || segDist > maxSegDist) return;
+        if (segDist < bestSegDist) {
+            bestSegDist = segDist;
+            best = { solidId, segIndex, a: aWorld, b: bWorld, mid, aLocal, bLocal, midLocal, pa, pb };
+        }
+    };
+    for (const edgeObj of api.solids?.getPickEdges?.() || []) {
+        const solidId = String(edgeObj?.userData?.solidId || '');
+        if (!solidId) continue;
+        if (frontSolidId && solidId !== frontSolidId) continue;
+        const pos = edgeObj?.geometry?.getAttribute?.('position');
+        const idx = edgeObj?.geometry?.getIndex?.();
+        if (!pos) continue;
+        const segCount = idx?.array?.length
+            ? Math.floor(idx.array.length / 2)
+            : Math.floor(pos.count / 2);
+        for (let segIndex = 0; segIndex < segCount; segIndex++) {
+            const seg = api.solids?.getEdgeSegmentWorld?.(edgeObj, segIndex);
+            if (!seg?.a || !seg?.b) continue;
+            considerSegment(solidId, segIndex, seg.a, seg.b);
+        }
+    }
+    if (!best) return null;
+    const pm = toScreen(best.midLocal);
+    const pointHits = [];
+    pointHits.push({ kind: 'a', local: best.aLocal, dist: Math.hypot(vp.x - best.pa.x, vp.y - best.pa.y) });
+    pointHits.push({ kind: 'b', local: best.bLocal, dist: Math.hypot(vp.x - best.pb.x, vp.y - best.pb.y) });
+    if (pm?.visible) pointHits.push({ kind: 'mid', local: best.midLocal, dist: Math.hypot(vp.x - pm.x, vp.y - pm.y) });
+    pointHits.sort((l, r) => l.dist - r.dist);
+    const hoverPoint = pointHits[0] && pointHits[0].dist <= SKETCH_HIT_POINT_PX * 1.8 ? pointHits[0] : null;
+    const solid = api.solids?.list?.().find?.(item => item?.id === best.solidId) || null;
+    return {
+        type: 'solid-edge',
+        solidId: best.solidId,
+        solidFeatureId: solid?.source?.feature_id || null,
+        index: best.segIndex,
+        aLocal: best.aLocal,
+        bLocal: best.bLocal,
+        midLocal: best.midLocal,
+        hoverPoint,
+        source: {
+            type: 'solid-edge',
+            solid_id: best.solidId,
+            solid_feature_id: solid?.source?.feature_id || null,
+            edge_index: best.segIndex,
+            a: { x: best.a.x, y: best.a.y, z: best.a.z },
+            b: { x: best.b.x, y: best.b.y, z: best.b.z }
+        }
+    };
+}
+
 function isSketchEventInViewport(event) {
     if (!event) return true;
     const { container } = space.internals();
@@ -684,6 +783,8 @@ export {
     getArcCenterLocalFromEntity,
     getSketchEntityHitFromIntersections,
     resolveSketchHit,
+    resolveDerivedEdgeCandidate,
+    worldToSketchLocal,
     isSketchEventInViewport,
     getSketchHitLocalPoint,
     getSketchDragSnapTarget,

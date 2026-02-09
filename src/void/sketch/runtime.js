@@ -223,7 +223,8 @@ function createSketchRuntimeApi(getApi) {
                     previewArc: null,
                     previewRect: null,
                     previewStart: null,
-                    previewEnd: null
+                    previewEnd: null,
+                    previewMid: null
                 },
                 labelId: `sketch-label-${feature.id}`
             };
@@ -587,6 +588,7 @@ function createSketchRuntimeApi(getApi) {
             rec.interaction.previewRect = interaction.previewRect || null;
             rec.interaction.previewStart = interaction.previewStart || null;
             rec.interaction.previewEnd = interaction.previewEnd || null;
+            rec.interaction.previewMid = interaction.previewMid || null;
             this.applySketchState(rec);
             this.updateConstraintGlyphs();
         },
@@ -605,6 +607,7 @@ function createSketchRuntimeApi(getApi) {
             rec.interaction.previewRect = null;
             rec.interaction.previewStart = null;
             rec.interaction.previewEnd = null;
+            rec.interaction.previewMid = null;
             this.applySketchState(rec);
             this.updateConstraintGlyphs();
         },

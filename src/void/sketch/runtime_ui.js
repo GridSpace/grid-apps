@@ -384,7 +384,8 @@ function getConstraintHoverHighlight(rec) {
 function applyPreviewLine(rec, mode, editing, colors) {
     if (!rec.previewLine) return;
     const preview = rec.interaction?.previewLine;
-    if (!editing || !preview?.a || !preview?.b) {
+    const forceHover = !!preview?.forceHover;
+    if (!(editing || forceHover) || !preview?.a || !preview?.b) {
         rec.previewLine.visible = false;
         return;
     }
@@ -392,14 +393,18 @@ function applyPreviewLine(rec, mode, editing, colors) {
     const b = new THREE.Vector3(preview.b.x || 0, preview.b.y || 0, 0);
     rec.previewLine.geometry.dispose();
     rec.previewLine.geometry = new THREE.BufferGeometry().setFromPoints([a, b]);
-    rec.previewLine.material.color.setHex(mode === 'edit' ? colors.linesEdit : colors.linesHover);
+    const useHover = !!preview.forceHover;
+    rec.previewLine.material.color.setHex(useHover ? colors.linesHover : (mode === 'edit' ? colors.linesEdit : colors.linesHover));
+    rec.previewLine.material.depthTest = false;
     rec.previewLine.visible = true;
+    rec.previewLine.renderOrder = 60;
 }
 
 function applyPreviewStart(rec, mode, editing, colors) {
     if (!rec.previewStart) return;
     const start = rec.interaction?.previewStart;
-    if (!editing || !start) {
+    const forceHover = !!rec.interaction?.previewLine?.forceHover;
+    if (!(editing || forceHover) || !start) {
         rec.previewStart.visible = false;
         return;
     }
@@ -407,20 +412,32 @@ function applyPreviewStart(rec, mode, editing, colors) {
     const parts = rec.previewStart.userData?._markerParts || {};
     if (parts.core?.material?.color) {
         parts.core.material.color.setHex(colors.pointsGray);
+        parts.core.material.depthTest = false;
     }
     if (parts.ringHighlight) {
         parts.ringHighlight.visible = true;
         if (parts.ringHighlight.material?.color) {
             parts.ringHighlight.material.color.setHex(colors.pointsHover);
         }
+        if (parts.ringHighlight.material) {
+            parts.ringHighlight.material.depthTest = false;
+        }
     }
+    if (parts.ringOuter?.material) {
+        parts.ringOuter.material.depthTest = false;
+    }
+    if (parts.ringInner?.material) {
+        parts.ringInner.material.depthTest = false;
+    }
+    rec.previewStart.renderOrder = 60;
     rec.previewStart.visible = true;
 }
 
 function applyPreviewEnd(rec, mode, editing, colors) {
     if (!rec.previewEnd) return;
     const end = rec.interaction?.previewEnd;
-    if (!editing || !end) {
+    const forceHover = !!rec.interaction?.previewLine?.forceHover;
+    if (!(editing || forceHover) || !end) {
         rec.previewEnd.visible = false;
         return;
     }
@@ -428,23 +445,55 @@ function applyPreviewEnd(rec, mode, editing, colors) {
     const parts = rec.previewEnd.userData?._markerParts || {};
     if (parts.core?.material?.color) {
         parts.core.material.color.setHex(colors.pointsGray);
+        parts.core.material.depthTest = false;
     }
     if (parts.ringHighlight) {
         parts.ringHighlight.visible = true;
         if (parts.ringHighlight.material?.color) {
             parts.ringHighlight.material.color.setHex(colors.pointsHover);
         }
+        if (parts.ringHighlight.material) {
+            parts.ringHighlight.material.depthTest = false;
+        }
     }
+    if (parts.ringOuter?.material) {
+        parts.ringOuter.material.depthTest = false;
+    }
+    if (parts.ringInner?.material) {
+        parts.ringInner.material.depthTest = false;
+    }
+    rec.previewEnd.renderOrder = 60;
     rec.previewEnd.visible = true;
 }
 
 function applyPreviewArc(rec, mode, editing, colors) {
     if (!rec.previewArc) return;
     const preview = rec.interaction?.previewArc;
-    if (!editing || !preview) {
+    const previewMid = rec.interaction?.previewMid;
+    const forceHover = !!rec.interaction?.previewLine?.forceHover;
+    if (!(editing || forceHover) || !preview) {
         rec.previewArc.visible = false;
         if (rec.previewArcCenter) {
-            rec.previewArcCenter.visible = false;
+            if ((editing || forceHover) && previewMid) {
+                rec.previewArcCenter.position.set(previewMid.x || 0, previewMid.y || 0, 0);
+                const parts = rec.previewArcCenter.userData?._markerParts || {};
+                if (parts.core?.material?.color) {
+                    parts.core.material.color.setHex(colors.pointsHover);
+                    parts.core.material.depthTest = false;
+                }
+                if (parts.ringHighlight) {
+                    parts.ringHighlight.visible = true;
+                    if (parts.ringHighlight.material) {
+                        parts.ringHighlight.material.depthTest = false;
+                    }
+                }
+                if (parts.ringOuter?.material) parts.ringOuter.material.depthTest = false;
+                if (parts.ringInner?.material) parts.ringInner.material.depthTest = false;
+                rec.previewArcCenter.renderOrder = 60;
+                rec.previewArcCenter.visible = true;
+            } else {
+                rec.previewArcCenter.visible = false;
+            }
         }
         return;
     }
@@ -466,13 +515,22 @@ function applyPreviewArc(rec, mode, editing, colors) {
             rec.previewArc.geometry.dispose();
             rec.previewArc.geometry = new THREE.BufferGeometry().setFromPoints(pts.map(p => new THREE.Vector3(p.x, p.y, 0)));
             rec.previewArc.material.color.setHex(mode === 'edit' ? colors.linesEdit : colors.linesHover);
+            rec.previewArc.material.depthTest = false;
             rec.previewArc.visible = true;
+            rec.previewArc.renderOrder = 60;
             if (rec.previewArcCenter) {
                 rec.previewArcCenter.position.set(preview.cx || 0, preview.cy || 0, 0);
                 const parts = rec.previewArcCenter.userData?._markerParts || {};
                 if (parts.ringHighlight) {
                     parts.ringHighlight.visible = true;
+                    if (parts.ringHighlight.material) {
+                        parts.ringHighlight.material.depthTest = false;
+                    }
                 }
+                if (parts.core?.material) parts.core.material.depthTest = false;
+                if (parts.ringOuter?.material) parts.ringOuter.material.depthTest = false;
+                if (parts.ringInner?.material) parts.ringInner.material.depthTest = false;
+                rec.previewArcCenter.renderOrder = 60;
                 rec.previewArcCenter.visible = true;
             }
             return;

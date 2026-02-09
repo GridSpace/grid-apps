@@ -210,8 +210,31 @@ function handleSketchHover(event, intersections) {
     }
 
     const hit = this.resolveSketchHit(event, intersections, feature);
+    const derived = this.resolveDerivedEdgeCandidate(event, intersections, feature);
+    const prevDerived = this.hoveredDerivedCandidate || null;
+    this.hoveredDerivedCandidate = derived || null;
+    const dbgKey = derived
+        ? `${derived.solidId}:${derived.index}:${derived.hoverPoint?.kind || 'edge'}`
+        : 'none';
+    if (this._debugDerivedHoverKey !== dbgKey) {
+        this._debugDerivedHoverKey = dbgKey;
+        console.log('void.sketch.derived.hover', {
+            key: dbgKey,
+            hasCandidate: !!derived,
+            solidId: derived?.solidId || null,
+            edgeIndex: Number.isFinite(derived?.index) ? derived.index : null,
+            hoverPoint: derived?.hoverPoint?.kind || null,
+            aLocal: derived?.aLocal || null,
+            bLocal: derived?.bLocal || null,
+            midLocal: derived?.midLocal || null
+        });
+    }
+    const derivedChanged = (!!prevDerived) !== (!!derived)
+        || (prevDerived?.solidId !== derived?.solidId)
+        || (prevDerived?.index !== derived?.index)
+        || (prevDerived?.hoverPoint?.kind !== derived?.hoverPoint?.kind);
     const hoveredId = hit && !this.selectedSketchEntities.has(hit.id) ? hit.id : null;
-    if (this.hoveredSketchEntityId !== hoveredId || previewChanged) {
+    if (this.hoveredSketchEntityId !== hoveredId || previewChanged || derivedChanged) {
         this.hoveredSketchEntityId = hoveredId;
         this.updateSketchInteractionVisuals();
     }
@@ -272,6 +295,21 @@ function handleSketchMouseUp(event, intersections) {
                 else this.selectedSketchArcCenters?.delete?.(hit.id);
             }
         } else {
+            const derived = this.hoveredDerivedCandidate || this.resolveDerivedEdgeCandidate(event, intersections, feature);
+            if (derived?.aLocal && derived?.bLocal) {
+                const localPoint = derived?.hoverPoint?.local || derived?.midLocal || null;
+                if (localPoint) {
+                    this.createDerivedSketchPoint(feature, localPoint, {
+                        ...(derived.source || {}),
+                        point_kind: derived?.hoverPoint?.kind || 'mid'
+                    });
+                } else {
+                    this.createDerivedSketchLine(feature, derived);
+                }
+                this.hoveredDerivedCandidate = null;
+                this.updateSketchInteractionVisuals();
+                return true;
+            }
             const profileHit = this.getSketchProfileHitFromIntersections?.(intersections || []);
             if (profileHit) {
                 this.selectSketchProfile?.(profileHit, event);
