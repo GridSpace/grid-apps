@@ -768,7 +768,7 @@ function updateConstraintGlyphs(getApi, opts = {}) {
                 ? `dimension (${mode}) - double-click edit, alt-click toggle driving/reference`
                 : (c.type || 'constraint');
             glyph.ondblclick = event => {
-                if (!isDimension) return;
+                if (!isDimension || mode !== 'driving') return;
                 event.preventDefault();
                 event.stopPropagation();
                 const api = getApi();
@@ -793,7 +793,7 @@ function updateConstraintGlyphs(getApi, opts = {}) {
                 if (isDimension) {
                     const now = performance.now();
                     const prev = this._glyphClick;
-                    if (prev && prev.id === c.id && (now - prev.time) < 360) {
+                    if (mode === 'driving' && prev && prev.id === c.id && (now - prev.time) < 360) {
                         this._glyphClick = null;
                         api.interact?.editSketchDimensionConstraint?.(c.id);
                         return;
