@@ -430,6 +430,35 @@ function createSolidsApi(getApi) {
                 : [];
         },
 
+        getSolidDependencySignature(solidId) {
+            const id = String(solidId || '');
+            if (!id) return null;
+            const meshData = this._meshCache?.get?.(id);
+            const pos = meshData?.positions;
+            const idx = meshData?.indices;
+            if (!pos?.length || !idx?.length) return null;
+            let minX = Infinity, minY = Infinity, minZ = Infinity;
+            let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+            for (let i = 0; i < pos.length; i += 3) {
+                const x = pos[i];
+                const y = pos[i + 1];
+                const z = pos[i + 2];
+                if (x < minX) minX = x;
+                if (y < minY) minY = y;
+                if (z < minZ) minZ = z;
+                if (x > maxX) maxX = x;
+                if (y > maxY) maxY = y;
+                if (z > maxZ) maxZ = z;
+            }
+            const q = v => Math.round(Number(v || 0) * 1000) / 1000;
+            return [
+                pos.length,
+                idx.length,
+                q(minX), q(minY), q(minZ),
+                q(maxX), q(maxY), q(maxZ)
+            ].join('|');
+        },
+
         getExportRecords(ids = []) {
             const requested = Array.isArray(ids) ? ids.filter(Boolean) : [];
             const wanted = requested.length ? new Set(requested) : null;
@@ -649,6 +678,7 @@ function createSolidsApi(getApi) {
                     solid_id: solidId,
                     face_id: faceId,
                     solid_feature_id: solid?.source?.feature_id || null,
+                    dep_sig: this.getSolidDependencySignature(solidId),
                     anchor: {
                         x: Number(meta.center?.x || 0),
                         y: Number(meta.center?.y || 0),
@@ -865,6 +895,11 @@ function createSolidsApi(getApi) {
                 if (feature?.type !== 'sketch') continue;
                 const source = feature?.target?.source || null;
                 if (source?.type !== 'solid-face' && source?.type !== 'face') continue;
+                const sourceSolidId = String(source?.solid_id || '');
+                const currentDepSig = sourceSolidId ? this.getSolidDependencySignature(sourceSolidId) : null;
+                if (sourceSolidId && currentDepSig && source?.dep_sig && source.dep_sig === currentDepSig) {
+                    continue;
+                }
                 const resolved = this.resolveSketchFrameForSource(source, feature.plane || null);
                 if (!resolved?.frame) continue;
                 const frame = this.applyOffsetToFrame(resolved.frame, Number(feature?.target?.offset || 0));
@@ -895,6 +930,7 @@ function createSolidsApi(getApi) {
                         const solid = this.list().find(s => s?.id === nextSolidId);
                         item.target.source.solid_feature_id = solid?.source?.feature_id || null;
                     }
+                    item.target.source.dep_sig = this.getSolidDependencySignature(nextSolidId);
                     item.target.source.anchor = {
                         x: Number(resolved.frame.origin.x || 0),
                         y: Number(resolved.frame.origin.y || 0),
