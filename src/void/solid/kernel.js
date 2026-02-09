@@ -81,29 +81,60 @@ function fromKernelMesh(mesh) {
     };
 }
 
-async function booleanMeshes(meshes, mode = 'add') {
+async function booleanMeshes(input, mode = 'add') {
     const inst = await ensureKernel();
-    if (!inst?.Manifold || !Array.isArray(meshes) || meshes.length < 2) {
+    if (!inst?.Manifold) {
         return null;
     }
+    const options = Array.isArray(input)
+        ? { meshes: input, mode }
+        : { ...(input || {}), mode: String((input || {}).mode || mode || 'add') };
+    const op = String(options.mode || 'add');
+    const meshes = Array.isArray(options.meshes) ? options.meshes : [];
+    const targetMeshes = Array.isArray(options.targets) ? options.targets : null;
+    const toolMeshes = Array.isArray(options.tools) ? options.tools : null;
     const manifolds = [];
     let result = null;
     try {
-        for (const meshData of meshes) {
+        const toManifold = meshData => {
             const kernelMesh = toKernelMesh(inst, meshData);
-            if (!kernelMesh) continue;
-            manifolds.push(new inst.Manifold(kernelMesh));
-        }
-        if (manifolds.length < 2) {
-            return null;
-        }
-        const op = String(mode || 'add');
-        if (op === 'subtract') {
-            result = inst.Manifold.difference(manifolds);
-        } else if (op === 'intersect') {
-            result = inst.Manifold.intersection(manifolds);
+            return kernelMesh ? new inst.Manifold(kernelMesh) : null;
+        };
+        const combine = (list, kind = 'add') => {
+            if (!Array.isArray(list) || !list.length) return null;
+            if (list.length === 1) return list[0];
+            if (kind === 'intersect') return inst.Manifold.intersection(list);
+            if (kind === 'subtract') return inst.Manifold.difference(list);
+            return inst.Manifold.union(list);
+        };
+
+        if (op === 'subtract' && targetMeshes && toolMeshes) {
+            const targetMfs = targetMeshes.map(toManifold).filter(Boolean);
+            const toolMfs = toolMeshes.map(toManifold).filter(Boolean);
+            manifolds.push(...targetMfs, ...toolMfs);
+            if (!targetMfs.length || !toolMfs.length) {
+                return null;
+            }
+            const targetUnion = combine(targetMfs, 'add');
+            const toolUnion = combine(toolMfs, 'add');
+            if (!targetUnion || !toolUnion) return null;
+            if (!targetMfs.includes(targetUnion)) manifolds.push(targetUnion);
+            if (!toolMfs.includes(toolUnion)) manifolds.push(toolUnion);
+            result = inst.Manifold.difference([targetUnion, toolUnion]);
         } else {
-            result = inst.Manifold.union(manifolds);
+            for (const meshData of meshes) {
+                const manifold = toManifold(meshData);
+                if (!manifold) continue;
+                manifolds.push(manifold);
+            }
+            if (manifolds.length < 2) {
+                return null;
+            }
+            if (op === 'intersect') {
+                result = inst.Manifold.intersection(manifolds);
+            } else {
+                result = inst.Manifold.union(manifolds);
+            }
         }
         const mesh = result?.getMesh?.();
         return mesh ? { mesh: fromKernelMesh(mesh) } : null;

@@ -381,7 +381,8 @@ const toolbar = {
             suppressed: false,
             visible: true,
             input: {
-                solids: targets
+                targets: targets.slice(),
+                tools: []
             },
             params: {
                 mode: 'add'
@@ -443,11 +444,16 @@ const toolbar = {
     onBooleanButton() {
         const existing = this.getSelectedSolidSourceBooleanFeature();
         if (existing) {
-            const targets = Array.isArray(existing?.input?.solids) ? existing.input.solids.filter(Boolean) : [];
-            tree.selectedSolidIds = new Set(targets);
+            const mode = String(existing?.params?.mode || 'add');
+            const targets = Array.isArray(existing?.input?.targets)
+                ? existing.input.targets.filter(Boolean)
+                : (Array.isArray(existing?.input?.solids) ? existing.input.solids.filter(Boolean) : []);
+            const tools = Array.isArray(existing?.input?.tools) ? existing.input.tools.filter(Boolean) : [];
+            const selected = mode === 'subtract' ? Array.from(new Set([...targets, ...tools])) : targets;
+            tree.selectedSolidIds = new Set(selected);
             tree.selectedFeatureIds = new Set([existing.id]);
             tree.selectedFeatureId = existing.id;
-            api.solids?.setSelected?.(targets);
+            api.solids?.setSelected?.(selected);
             properties.showFeature(existing, {
                 onChange: () => tree.render()
             });

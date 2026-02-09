@@ -204,7 +204,11 @@ function onFeatureEdit(feature) {
         api.interact?.clearSketchSelection?.();
         api.interact?.setSketchTool?.('select');
     } else if (feature?.type === 'boolean') {
-        const solids = Array.isArray(feature?.input?.solids) ? feature.input.solids.filter(Boolean) : [];
+        const mode = String(feature?.params?.mode || 'add');
+        const legacy = Array.isArray(feature?.input?.solids) ? feature.input.solids.filter(Boolean) : [];
+        const targets = Array.isArray(feature?.input?.targets) ? feature.input.targets.filter(Boolean) : legacy;
+        const tools = Array.isArray(feature?.input?.tools) ? feature.input.tools.filter(Boolean) : [];
+        const solids = mode === 'subtract' ? Array.from(new Set([...targets, ...tools])) : targets;
         this.selectedSolidIds = new Set(solids);
         api.solids?.setSelected?.(solids);
         api.sketchRuntime?.setEditing(null);
@@ -670,14 +674,47 @@ function renderSolidsSection() {
                     this.selectedFeatureIds?.clear?.();
                     this.selectedFeatureId = null;
                 } else {
-                    const next = Array.from(this.selectedSolidIds);
+                    const mode = String(currentFeature?.params?.mode || 'add');
+                    const role = properties.getBooleanPickRole?.() || 'targets';
+                    const input = currentFeature?.input || {};
+                    const legacy = Array.isArray(input.solids) ? input.solids.filter(Boolean) : [];
+                    const targets = Array.isArray(input.targets) ? input.targets.filter(Boolean) : legacy;
+                    const tools = Array.isArray(input.tools) ? input.tools.filter(Boolean) : [];
+                    let nextTargets = targets.slice();
+                    let nextTools = tools.slice();
+                    if (mode === 'subtract') {
+                        if (role === 'tools') {
+                            nextTargets = nextTargets.filter(sid => sid !== id);
+                            if (this.selectedSolidIds.has(id)) {
+                                if (!nextTools.includes(id)) nextTools.push(id);
+                            } else {
+                                nextTools = nextTools.filter(sid => sid !== id);
+                            }
+                        } else {
+                            nextTools = nextTools.filter(sid => sid !== id);
+                            if (this.selectedSolidIds.has(id)) {
+                                if (!nextTargets.includes(id)) nextTargets.push(id);
+                            } else {
+                                nextTargets = nextTargets.filter(sid => sid !== id);
+                            }
+                        }
+                    } else {
+                        nextTargets = Array.from(this.selectedSolidIds);
+                        nextTools = [];
+                    }
+                    const next = mode === 'subtract'
+                        ? Array.from(new Set([...nextTargets, ...nextTools]))
+                        : nextTargets.slice();
                     api.features.update(currentFeature.id, feature => {
                         feature.input = feature.input || {};
-                        feature.input.solids = next;
+                        feature.input.targets = nextTargets;
+                        feature.input.tools = nextTools;
+                        delete feature.input.solids;
                     }, {
                         opType: 'feature.update',
-                        payload: { field: 'solids', value: next }
+                        payload: { field: 'boolean.inputs', targets: nextTargets, tools: nextTools }
                     });
+                    this.selectedSolidIds = new Set(next);
                     properties.onChanged?.();
                 }
                 api.solids?.setSelected?.(Array.from(this.selectedSolidIds));

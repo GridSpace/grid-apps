@@ -20,6 +20,7 @@ const properties = {
     _drag: null,
     _savedPos: null,
     _loadingPos: false,
+    _booleanPickRole: 'targets',
     _sessionStartRev: null,
     _sessionFeatureId: null,
     _sessionFeatureType: null,
@@ -434,6 +435,7 @@ const properties = {
     },
 
     renderBooleanFields(feature) {
+        const input = this.getBooleanInput(feature);
         const mode = String(feature?.params?.mode || 'add');
         this.body.appendChild(this.createSelectField('Mode', mode, [
             { value: 'add', label: 'Add' },
@@ -444,6 +446,14 @@ const properties = {
             const updated = api.features.update(feature.id, item => {
                 item.params = item.params || {};
                 item.params.mode = next;
+                item.input = item.input || {};
+                if (!Array.isArray(item.input.targets)) {
+                    const legacy = Array.isArray(item.input.solids) ? item.input.solids : [];
+                    item.input.targets = legacy.filter(Boolean);
+                }
+                if (!Array.isArray(item.input.tools)) {
+                    item.input.tools = [];
+                }
             }, {
                 opType: 'feature.update',
                 payload: { field: 'mode', value: next }
@@ -451,46 +461,80 @@ const properties = {
             if (updated) this.onChanged();
         }));
 
+        if (mode === 'subtract') {
+            const role = this._booleanPickRole === 'tools' ? 'tools' : 'targets';
+            this.body.appendChild(this.createSelectField('Pick Set', role, [
+                { value: 'targets', label: 'Targets' },
+                { value: 'tools', label: 'Tools' }
+            ], value => {
+                this._booleanPickRole = value === 'tools' ? 'tools' : 'targets';
+                this.onChanged();
+            }));
+        } else {
+            this._booleanPickRole = 'targets';
+        }
+
         const wrap = document.createElement('div');
         wrap.className = 'props-field';
         const label = document.createElement('label');
-        label.textContent = 'Solids';
+        label.textContent = mode === 'subtract' ? 'Targets / Tools' : 'Solids';
         wrap.appendChild(label);
         const list = document.createElement('div');
         list.className = 'props-extrude-profiles';
-        const solidIds = Array.isArray(feature?.input?.solids) ? feature.input.solids : [];
-        if (!solidIds.length) {
+        const solids = api.solids?.list?.() || [];
+        const targets = Array.isArray(input.targets) ? input.targets.filter(Boolean) : [];
+        const tools = Array.isArray(input.tools) ? input.tools.filter(Boolean) : [];
+        const sections = mode === 'subtract'
+            ? [
+                { key: 'targets', title: 'Targets', ids: targets },
+                { key: 'tools', title: 'Tools', ids: tools }
+            ]
+            : [
+                { key: 'targets', title: 'Solids', ids: targets }
+            ];
+        const total = sections.reduce((sum, section) => sum + section.ids.length, 0);
+        if (!total) {
             const empty = document.createElement('div');
             empty.className = 'props-extrude-profile-empty';
             empty.textContent = 'No solids selected';
             list.appendChild(empty);
         } else {
-            const solids = api.solids?.list?.() || [];
-            for (const solidId of solidIds) {
-                const solid = solids.find(item => item?.id === solidId);
-                const row = document.createElement('div');
-                row.className = 'props-extrude-profile-row';
-                const text = document.createElement('div');
-                text.className = 'props-extrude-profile-text';
-                text.textContent = solid?.name || solidId;
-                const remove = document.createElement('button');
-                remove.className = 'props-extrude-profile-remove';
-                remove.textContent = '×';
-                remove.title = 'Remove solid';
-                remove.onclick = () => {
-                    const updated = api.features.update(feature.id, item => {
-                        item.input = item.input || {};
-                        const current = Array.isArray(item.input.solids) ? item.input.solids : [];
-                        item.input.solids = current.filter(id => id !== solidId);
-                    }, {
-                        opType: 'feature.update',
-                        payload: { field: 'solids.remove', solidId }
-                    });
-                    if (updated) this.onChanged();
-                };
-                row.appendChild(text);
-                row.appendChild(remove);
-                list.appendChild(row);
+            for (const section of sections) {
+                if (!section.ids.length) continue;
+                const title = document.createElement('div');
+                title.className = 'props-extrude-profile-empty';
+                title.textContent = section.title;
+                list.appendChild(title);
+                for (const solidId of section.ids) {
+                    const solid = solids.find(item => item?.id === solidId);
+                    const row = document.createElement('div');
+                    row.className = 'props-extrude-profile-row';
+                    const text = document.createElement('div');
+                    text.className = 'props-extrude-profile-text';
+                    text.textContent = solid?.name || solidId;
+                    const remove = document.createElement('button');
+                    remove.className = 'props-extrude-profile-remove';
+                    remove.textContent = '×';
+                    remove.title = 'Remove solid';
+                    remove.onclick = () => {
+                        const updated = api.features.update(feature.id, item => {
+                            item.input = item.input || {};
+                            const legacy = Array.isArray(item.input.solids) ? item.input.solids : [];
+                            const currentTargets = Array.isArray(item.input.targets) ? item.input.targets : legacy;
+                            const currentTools = Array.isArray(item.input.tools) ? item.input.tools : [];
+                            item.input.targets = currentTargets.filter(id => id && !(section.key === 'targets' && id === solidId));
+                            item.input.tools = currentTools.filter(id => id && !(section.key === 'tools' && id === solidId));
+                            delete item.input.solids;
+                        }, {
+                            opType: 'feature.update',
+                            payload: { field: `${section.key}.remove`, solidId }
+                        });
+                        if (updated) this.onChanged();
+                    };
+                    row.appendChild(text);
+                    row.appendChild(remove);
+                    list.appendChild(row);
+                }
             }
         }
         wrap.appendChild(list);
@@ -519,8 +563,27 @@ const properties = {
         if (!isBoolean) {
             return;
         }
-        const solids = Array.isArray(feature?.input?.solids) ? feature.input.solids.filter(Boolean) : [];
-        api.solids?.setSelected?.(solids);
+        const input = this.getBooleanInput(feature);
+        const mode = String(feature?.params?.mode || 'add');
+        const targets = Array.isArray(input.targets) ? input.targets.filter(Boolean) : [];
+        const tools = Array.isArray(input.tools) ? input.tools.filter(Boolean) : [];
+        const selected = mode === 'subtract' ? Array.from(new Set([...targets, ...tools])) : targets;
+        api.solids?.setSelected?.(selected);
+    },
+
+    getBooleanInput(feature) {
+        const input = feature?.input || {};
+        const legacy = Array.isArray(input.solids) ? input.solids : [];
+        const targets = Array.isArray(input.targets) ? input.targets : legacy;
+        const tools = Array.isArray(input.tools) ? input.tools : [];
+        return {
+            targets: targets.filter(Boolean),
+            tools: tools.filter(Boolean)
+        };
+    },
+
+    getBooleanPickRole() {
+        return this._booleanPickRole === 'tools' ? 'tools' : 'targets';
     },
 
     getPlaneOptionId(feature) {

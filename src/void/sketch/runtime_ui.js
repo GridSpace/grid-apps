@@ -103,6 +103,11 @@ function applyEntityStyle(rec, mode, colors) {
                     fill.material.color.setHex(0x8f8f8f);
                     fill.material.opacity = 0.18;
                 }
+                // Active sketch profile picks must draw above coplanar solid faces.
+                const overlay = activeSelected || activeHovered;
+                fill.material.depthTest = !overlay;
+                fill.material.depthWrite = false;
+                fill.renderOrder = overlay ? 55 : 6;
             }
             continue;
         }

@@ -178,30 +178,55 @@ async function rebuildGeneratedSolids(api, options = {}) {
         }
 
         if (feature?.type === 'boolean') {
-            const targets = Array.isArray(feature?.input?.solids)
+            const mode = String(feature?.params?.mode || 'add');
+            const legacyTargets = Array.isArray(feature?.input?.solids)
                 ? feature.input.solids.map(id => String(id || '')).filter(Boolean)
                 : [];
-            if (targets.length < 2) continue;
-            const targetSet = new Set(targets);
+            const targets = Array.isArray(feature?.input?.targets)
+                ? feature.input.targets.map(id => String(id || '')).filter(Boolean)
+                : legacyTargets;
+            const tools = Array.isArray(feature?.input?.tools)
+                ? feature.input.tools.map(id => String(id || '')).filter(Boolean)
+                : [];
+            const selectedIds = mode === 'subtract'
+                ? Array.from(new Set([...targets, ...tools]))
+                : targets.slice();
+            if (!selectedIds.length) continue;
+            const selectedSet = new Set(selectedIds);
             const targetSolids = targets
                 .map(id => solids.find(s => s?.id === id))
                 .filter(Boolean);
-            if (targetSolids.length < 2) continue;
-            const meshes = targetSolids
+            const toolSolids = tools
+                .map(id => solids.find(s => s?.id === id))
+                .filter(Boolean);
+            if (mode === 'subtract') {
+                if (!targetSolids.length || !toolSolids.length) continue;
+            } else if (targetSolids.length < 2) {
+                continue;
+            }
+            const targetMeshes = targetSolids
                 .map(s => meshCache.get(s.id))
                 .filter(mesh => mesh?.positions?.length && mesh?.indices?.length);
-            if (meshes.length < 2) continue;
-            const mode = String(feature?.params?.mode || 'add');
+            const toolMeshes = toolSolids
+                .map(s => meshCache.get(s.id))
+                .filter(mesh => mesh?.positions?.length && mesh?.indices?.length);
+            if (mode === 'subtract') {
+                if (!targetMeshes.length || !toolMeshes.length) continue;
+            } else if (targetMeshes.length < 2) {
+                continue;
+            }
             const sketchIds = new Set();
-            for (const solid of targetSolids) {
+            for (const solid of [...targetSolids, ...toolSolids]) {
                 for (const sid of getSketchIdsForSolid(solid)) {
                     sketchIds.add(sid);
                 }
             }
-            const result = await booleanMeshes(meshes, mode);
-            const kept = solids.filter(s => !targetSet.has(s?.id));
-            for (const target of targetSolids) {
-                meshCache.delete(target.id);
+            const result = mode === 'subtract'
+                ? await booleanMeshes({ mode, targets: targetMeshes, tools: toolMeshes })
+                : await booleanMeshes(targetMeshes, mode);
+            const kept = solids.filter(s => !selectedSet.has(s?.id));
+            for (const target of [...targetSolids, ...toolSolids]) {
+                meshCache.delete(target?.id);
             }
             solids.length = 0;
             solids.push(...kept);
@@ -215,7 +240,9 @@ async function rebuildGeneratedSolids(api, options = {}) {
                     source: {
                         feature_id: feature.id,
                         feature_type: feature.type,
-                        solids: targets,
+                        targets,
+                        tools,
+                        solids: selectedIds,
                         mode,
                         sketch_ids: Array.from(sketchIds)
                     },
@@ -223,10 +250,12 @@ async function rebuildGeneratedSolids(api, options = {}) {
                         source: {
                             feature_id: feature.id,
                             feature_type: feature.type,
-                            solids: targets,
+                            targets,
+                            tools,
+                            solids: selectedIds,
                             mode
                         },
-                        parents: targets
+                        parents: selectedIds
                     },
                     mesh: {
                         tri_count: (result.mesh?.indices?.length || 0) / 3,

@@ -23,10 +23,13 @@ function addClosedProfileFills(rec, entities, pointById) {
             transparent: true,
             opacity: 0.18,
             depthWrite: false,
+            polygonOffset: true,
+            polygonOffsetFactor: -1,
+            polygonOffsetUnits: -1,
             side: THREE.DoubleSide
         });
         const fill = new THREE.Mesh(geom, mat);
-        fill.position.z = -0.005;
+        fill.position.z = 0;
         fill.renderOrder = 6;
         const profileId = `profile-${index}`;
         fill.userData.sketchEntityId = profileId;
