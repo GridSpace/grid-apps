@@ -1074,7 +1074,7 @@ function deriveSelectionsAtomic(feature, selection = {}) {
                 ensureLine(aLocal, bLocal, {
                     type: 'solid-edge',
                     solid_id: solidId,
-                    solid_feature_id: null,
+                    solid_feature_id: faceTarget?.source?.solid_feature_id || null,
                     face_id: Number.isFinite(faceId) ? faceId : null,
                     face_frame: faceFrame || null,
                     local_a: worldToFaceLocal(seg.a) || null,

@@ -240,6 +240,7 @@ const properties = {
 
     async hide(mode = 'accept') {
         if (!this.panel) return;
+        const editedFeatureId = this._sessionFeatureId || null;
         if (mode === 'cancel') {
             const startRev = this._sessionStartRev || null;
             const currentRev = api.document.current?.head_rev || null;
@@ -278,7 +279,11 @@ const properties = {
         this._sessionStartRev = null;
         this._onChange = null;
         api.sketchRuntime?.sync?.();
-        api.solids?.scheduleRebuild?.('feature.edit.exit');
+        if (editedFeatureId) {
+            await api.solids?.rebuildDownstreamFrom?.(editedFeatureId, 'feature.edit.exit');
+        } else {
+            await api.solids?.rebuild?.('feature.edit.exit');
+        }
         window.dispatchEvent(new CustomEvent('void-state-change'));
     },
 

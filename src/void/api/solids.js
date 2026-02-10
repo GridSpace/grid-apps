@@ -1039,14 +1039,6 @@ function createSolidsApi(getApi) {
             const preferredSolidId = solidId || null;
             const view = solidId ? this._meshViews.get(solidId) : null;
             const sourceFaceId = Number(source?.face_id);
-            const exactMeta = Number.isFinite(sourceFaceId) ? view?.faceGroups?.get?.(sourceFaceId) : null;
-            if (exactMeta?.planar) {
-                return {
-                    solidId,
-                    faceId: sourceFaceId,
-                    frame: this.frameFromFaceMeta(exactMeta, preferredFrame)
-                };
-            }
             const sourceFeatureId = String(source?.solid_feature_id || '');
             const anchor = source?.anchor
                 ? new THREE.Vector3(
@@ -1132,15 +1124,18 @@ function createSolidsApi(getApi) {
                     }
                 }
             };
+            // Always attempt the referenced solid first for stability.
             if (view) {
-                // Keep attachment stable: when the referenced solid still exists,
-                // only search faces on that solid.
                 evalView(solidId, view, 0.1);
-            } else {
-                // Fallback only when referenced solid no longer exists.
+            }
+
+            // If nothing matched on the referenced solid (or it no longer exists),
+            // fall back to same-feature solids, then all solids.
+            if (!best) {
                 const solidsById = new Map((this.list() || []).map(item => [String(item?.id || ''), item]));
                 const candidates = [];
                 for (const [sid, meshView] of this._meshViews.entries()) {
+                    if (view && sid === solidId) continue;
                     const solid = solidsById.get(String(sid));
                     const sameFeature = sourceFeatureId && String(solid?.source?.feature_id || '') === sourceFeatureId;
                     candidates.push({ sid, meshView, sameFeature });
@@ -1150,7 +1145,8 @@ function createSolidsApi(getApi) {
                         if (!c.sameFeature) continue;
                         evalView(c.sid, c.meshView, 0.06);
                     }
-                } else {
+                }
+                if (!best) {
                     for (const c of candidates) {
                         const bias = preferredSolidId && c.sid === preferredSolidId ? 0.02 : 0;
                         evalView(c.sid, c.meshView, bias);
@@ -1165,21 +1161,86 @@ function createSolidsApi(getApi) {
             };
         },
 
-        refreshSketchFaceAttachments() {
+        refreshSketchFaceAttachments(debug = false) {
             const api = getApi();
             const features = api.features.list() || [];
             let changed = false;
             for (const feature of features) {
                 if (feature?.type !== 'sketch') continue;
-                const source = feature?.target?.source || null;
-                if (source?.type !== 'solid-face' && source?.type !== 'face') continue;
-                const sourceSolidId = String(source?.solid_id || '');
-                const currentDepSig = sourceSolidId ? this.getSolidDependencySignature(sourceSolidId) : null;
-                if (sourceSolidId && currentDepSig && source?.dep_sig && source.dep_sig === currentDepSig) {
+                const target = feature?.target || {};
+                let source = target?.source || null;
+                let resolved = null;
+
+                // Preferred path: if target.id already references an existing face key,
+                // resolve directly from current runtime face data.
+                if (target?.kind === 'face' && typeof target?.id === 'string') {
+                    const m = target.id.match(/^(.*):f(\d+)$/);
+                    if (m) {
+                        const directKey = `${String(m[1] || '')}:${Number(m[2])}`;
+                        const directTarget = this.getSketchTargetForFaceKey(directKey);
+                        if (directTarget?.frame) {
+                            resolved = {
+                                solidId: String(m[1] || ''),
+                                faceId: Number(m[2]),
+                                frame: directTarget.frame
+                            };
+                            source = {
+                                ...(source || {}),
+                                ...(directTarget.source || {}),
+                                type: 'solid-face',
+                                solid_id: String(m[1] || ''),
+                                face_id: Number(m[2])
+                            };
+                        }
+                    }
+                }
+
+                // Backfill missing/incomplete face source metadata from target.id
+                // (format: "<solidId>:f<faceId>") so attachments can rebind without
+                // requiring manual sketch edit.
+                if ((!source || (!source.type && target?.kind === 'face')) && typeof target?.id === 'string') {
+                    const m = target.id.match(/^(.*):f(\d+)$/);
+                    if (m) {
+                        source = {
+                            ...(source || {}),
+                            type: 'solid-face',
+                            solid_id: String(m[1] || ''),
+                            face_id: Number(m[2])
+                        };
+                        api.features.mutateTransient(feature.id, item => {
+                            item.target = item.target || {};
+                            item.target.source = {
+                                ...(item.target.source || {}),
+                                type: 'solid-face',
+                                solid_id: source.solid_id,
+                                face_id: source.face_id
+                            };
+                        });
+                    }
+                }
+                if (source?.type !== 'solid-face' && source?.type !== 'face') {
+                    if (debug && target?.kind === 'face') {
+                        console.log('void.rebind.skip_source', {
+                            sketchId: feature.id,
+                            targetId: target?.id || null,
+                            sourceType: source?.type || null
+                        });
+                    }
                     continue;
                 }
-                const resolved = this.resolveSketchFrameForSource(source, feature.plane || null);
-                if (!resolved?.frame) continue;
+                if (!resolved) {
+                    resolved = this.resolveSketchFrameForSource(source, feature.plane || null);
+                }
+                if (!resolved?.frame) {
+                    if (debug) {
+                        console.log('void.rebind.no_resolve', {
+                            sketchId: feature.id,
+                            targetId: target?.id || null,
+                            source: source || null
+                        });
+                    }
+                    continue;
+                }
                 const frame = this.applyOffsetToFrame(resolved.frame, Number(feature?.target?.offset || 0));
                 const prev = feature.plane || {};
                 const nextSolidId = String(resolved.solidId || source?.solid_id || '');
@@ -1196,6 +1257,19 @@ function createSolidsApi(getApi) {
                     Number(source?.face_id) === Number(resolved.faceId) &&
                     String(source?.solid_id || '') === nextSolidId &&
                     source?.type === 'solid-face';
+                if (debug) {
+                    console.log('void.rebind.check', {
+                        sketchId: feature.id,
+                        same,
+                        targetId: target?.id || null,
+                        sourceSolid: String(source?.solid_id || ''),
+                        sourceFace: Number(source?.face_id),
+                        nextSolidId,
+                        nextFaceId: Number(resolved.faceId),
+                        prevOrigin: prev?.origin || null,
+                        nextOrigin: frame?.origin || null
+                    });
+                }
                 if (same) continue;
                 api.features.mutateTransient(feature.id, item => {
                     item.plane = frame;
@@ -1223,6 +1297,12 @@ function createSolidsApi(getApi) {
                     item.target.kind = 'face';
                     item.target.name = 'Face';
                 });
+                if (debug) {
+                    console.log('void.rebind.apply', {
+                        sketchId: feature.id,
+                        targetId: `${nextSolidId}:f${resolved.faceId}`
+                    });
+                }
                 changed = true;
             }
             return changed;
@@ -1249,8 +1329,9 @@ function createSolidsApi(getApi) {
             }, delay);
         },
 
-        async rebuild(reason = 'manual') {
+        async rebuild(reason = 'manual', options = {}) {
             const api = getApi();
+            const persist = options?.persist !== false;
             if (this._rebuilding) {
                 this._pendingReason = reason;
                 return this.list();
@@ -1263,31 +1344,38 @@ function createSolidsApi(getApi) {
                 for (let pass = 0; pass < 3; pass++) {
                     api.sketchRuntime?.sync?.();
                     const snapshot = buildRebuildSnapshot(api);
-                    try {
-                        const workerReply = await this.requestWorkerRebuild(snapshot, passReason);
-                        result = {
-                            solids: workerReply?.solids || [],
-                            meshCache: meshCacheFromWorkerPayload(workerReply?.meshes || [])
-                        };
-                    } catch (error) {
-                        console.warn('void.solids: worker rebuild failed, using main-thread fallback', error);
+                    const forceMainThread = String(passReason || '').startsWith('feature.edit.exit');
+                    if (forceMainThread) {
                         result = await rebuildGeneratedSolids(api, { reason: passReason, persist: false });
+                    } else {
+                        try {
+                            const workerReply = await this.requestWorkerRebuild(snapshot, passReason);
+                            result = {
+                                solids: workerReply?.solids || [],
+                                meshCache: meshCacheFromWorkerPayload(workerReply?.meshes || [])
+                            };
+                        } catch (error) {
+                            console.warn('void.solids: worker rebuild failed, using main-thread fallback', error);
+                            result = await rebuildGeneratedSolids(api, { reason: passReason, persist: false });
+                        }
                     }
                     if (seq !== this._rebuildSeq) {
                         return this.list();
                     }
                     api.document.current.generated = api.document.current.generated || {};
                     api.document.current.generated.solids = result?.solids || [];
-                    await api.document.save({
-                        kind: 'micro',
-                        opType: 'solid.rebuild',
-                        undoable: false,
-                        clearRedo: false,
-                        payload: {
-                            reason: passReason || 'rebuild',
-                            solids: api.document.current.generated.solids.length
-                        }
-                    });
+                    if (persist) {
+                        await api.document.save({
+                            kind: 'micro',
+                            opType: 'solid.rebuild',
+                            undoable: false,
+                            clearRedo: false,
+                            payload: {
+                                reason: passReason || 'rebuild',
+                                solids: api.document.current.generated.solids.length
+                            }
+                        });
+                    }
                     this._meshCache = result?.meshCache || new Map();
                     this.syncRuntime();
                     let derivedChanged = false;
@@ -1297,18 +1385,21 @@ function createSolidsApi(getApi) {
                             derivedChanged = true;
                         }
                     }
-                    const rebound = this.refreshSketchFaceAttachments();
+                    const debugRebind = String(passReason || '').startsWith('feature.edit.exit');
+                    const rebound = this.refreshSketchFaceAttachments(debugRebind);
                     if (rebound || derivedChanged) {
-                        await api.document.save({
-                            kind: 'micro',
-                            opType: 'feature.auto.refresh',
-                            undoable: false,
-                            clearRedo: false,
-                            payload: {
-                                rebound: !!rebound,
-                                derived: !!derivedChanged
-                            }
-                        });
+                        if (persist) {
+                            await api.document.save({
+                                kind: 'micro',
+                                opType: 'feature.auto.refresh',
+                                undoable: false,
+                                clearRedo: false,
+                                payload: {
+                                    rebound: !!rebound,
+                                    derived: !!derivedChanged
+                                }
+                            });
+                        }
                     }
                     if (rebound && pass < 2) {
                         api.sketchRuntime?.sync?.();
@@ -1334,6 +1425,28 @@ function createSolidsApi(getApi) {
                     this.scheduleRebuild(next, 10);
                 }
             }
+        },
+
+        async rebuildDownstreamFrom(featureId, reason = 'feature.edit.exit') {
+            const api = getApi();
+            const doc = api.document.current;
+            const features = api.features.list() || [];
+            const idx = features.findIndex(feature => feature?.id === featureId);
+            if (!doc || idx < 0) {
+                return this.rebuild(reason);
+            }
+            doc.timeline = doc.timeline || { index: null };
+            const originalTimeline = doc.timeline.index ?? null;
+            try {
+                const max = features.length;
+                for (let count = idx + 1; count <= max; count++) {
+                    doc.timeline.index = count >= max ? null : (count - 1);
+                    await this.rebuild(`${reason}.step.${count}`, { persist: false });
+                }
+            } finally {
+                doc.timeline.index = originalTimeline;
+            }
+            return this.rebuild(`${reason}.final`);
         }
     };
 }
