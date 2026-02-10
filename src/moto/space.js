@@ -317,6 +317,57 @@ function tweenCam(pos) {
         start();
 }
 
+function snapUpForViewDirection(dir, currentUp) {
+    const viewDir = dir.clone().normalize();
+    const upRef = (currentUp || new THREE.Vector3(0, 1, 0)).clone();
+    let projectedUp = upRef.projectOnPlane(viewDir);
+    if (projectedUp.lengthSq() < 1e-8) {
+        projectedUp = new THREE.Vector3(0, 1, 0).projectOnPlane(viewDir);
+    }
+    if (projectedUp.lengthSq() < 1e-8) {
+        return null;
+    }
+    projectedUp.normalize();
+
+    const axes = [
+        new THREE.Vector3(1, 0, 0),
+        new THREE.Vector3(-1, 0, 0),
+        new THREE.Vector3(0, 1, 0),
+        new THREE.Vector3(0, -1, 0),
+        new THREE.Vector3(0, 0, 1),
+        new THREE.Vector3(0, 0, -1)
+    ];
+
+    let best = null;
+    let bestScore = -Infinity;
+    for (const axis of axes) {
+        const p = axis.clone().projectOnPlane(viewDir);
+        if (p.lengthSq() < 1e-8) continue;
+        p.normalize();
+        const score = p.dot(projectedUp);
+        if (score > bestScore) {
+            bestScore = score;
+            best = p;
+        }
+    }
+    return best;
+}
+
+function viewDirectionFromAngles(left, upAngle) {
+    return new THREE.Vector3(
+        Math.sin(upAngle) * Math.sin(left),
+        Math.cos(upAngle),
+        Math.sin(upAngle) * Math.cos(left)
+    ).normalize();
+}
+
+function tweenPreset(left, upAngle, then) {
+    const upVec = camera
+        ? snapUpForViewDirection(viewDirectionFromAngles(left, upAngle), camera.up)
+        : null;
+    tweenCam({ left, up: upAngle, panX, panY, panZ, upVec: upVec || undefined, then });
+}
+
 /** ******************************************************************
  * Utility Functions
  ******************************************************************* */
@@ -1462,13 +1513,13 @@ let Space = {
     },
 
     view: {
-        top:    (then) => { tweenCam({left: 0,    up: 0,   panX, panY, panZ, then}) },
-        bottom: (then) => { tweenCam({left: home, up: PI,  panX, panY, panZ, then}) },
-        back:   (then) => { tweenCam({left: PI,   up: PI2, panX, panY, panZ, then}) },
-        home:   (then) => { tweenCam({left: home, up,      panX, panY, panZ, then}) },
-        front:  (then) => { tweenCam({left: 0,    up: PI2, panX, panY, panZ, then}) },
-        right:  (then) => { tweenCam({left: PI2,  up: PI2, panX, panY, panZ, then}) },
-        left:   (then) => { tweenCam({left: -PI2, up: PI2, panX, panY, panZ, then}) },
+        top:    (then) => { tweenPreset(0,     0,   then) },
+        bottom: (then) => { tweenPreset(home,  PI,  then) },
+        back:   (then) => { tweenPreset(PI,    PI2, then) },
+        home:   (then) => { tweenPreset(home,  up,  then) },
+        front:  (then) => { tweenPreset(0,     PI2, then) },
+        right:  (then) => { tweenPreset(PI2,   PI2, then) },
+        left:   (then) => { tweenPreset(-PI2,  PI2, then) },
         reset:  ()     => { viewControl.reset(); requestRefresh() },
         load:   (cam)  => { viewControl.setPosition(cam); requestRefresh() },
         save:   ()     => { return viewControl.getPosition(true) },

@@ -48,7 +48,9 @@ async function init() {
     space.setAntiAlias(true);
     // Void owns its own keymap (Onshape-style); disable space.js defaults.
     space.useDefaultKeys(false);
-    space.init($('container'), delta => {}, false);
+    // Default void to orthographic (CAD-like), while saved camera projection
+    // restoration below can still override per-document/session.
+    space.init($('container'), delta => {}, true);
     api.sketchRuntime.init(space.world);
     api.solids.attach(space.world);
 

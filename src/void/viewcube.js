@@ -30,7 +30,7 @@ class ViewCube {
 
         // State
         this.hoveredFace = null;
-        this.viewport = { x: 0, y: 0, width: this.size, height: this.size };
+        this.viewport = { x: 0, y: 0, width: this.size, height: this.size }; // CSS pixels, top-left origin
         this.enabled = true;
 
         // Face colors
@@ -90,7 +90,6 @@ class ViewCube {
         this.group.add(this.edges);
         this.scene.add(this.group);
 
-        console.log({ viewcube_built: true });
     }
 
     /**
@@ -180,8 +179,6 @@ class ViewCube {
         const views = ['right', 'left', 'top', 'bottom', 'front', 'back'];
         const view = views[faceIndex];
 
-        console.log({ viewcube_click: view, faceIndex });
-
         // Call space.view preset methods
         switch(view) {
             case 'front':
@@ -262,17 +259,23 @@ class ViewCube {
         renderer.getViewport(currentViewport);
         const currentAutoClear = renderer.autoClear;
 
-        // Calculate viewport position (top-right corner)
+        // Calculate viewport position using CSS pixels for hit-testing
         const canvas = renderer.domElement;
-        const x = canvas.width - this.size - this.padding;
-        const y = this.padding;
+        const cssW = canvas.clientWidth || this.size;
+        const cssH = canvas.clientHeight || this.size;
+        const cssX = cssW - this.size - this.padding;
+        const cssY = this.padding;
+        this.viewport = { x: cssX, y: cssY, width: this.size, height: this.size };
 
-        // Update viewport for future mouse calculations
-        this.viewport = { x, y, width: this.size, height: this.size };
+        // Convert CSS pixels to renderer drawing-buffer pixels (bottom-left origin)
+        const dpr = canvas.width / Math.max(1, cssW);
+        const vpX = Math.round(cssX * dpr);
+        const vpY = Math.round((cssH - cssY - this.size) * dpr);
+        const vpS = Math.round(this.size * dpr);
 
         // Set viewcube viewport
-        renderer.setViewport(x, y, this.size, this.size);
-        renderer.setScissor(x, y, this.size, this.size);
+        renderer.setViewport(vpX, vpY, vpS, vpS);
+        renderer.setScissor(vpX, vpY, vpS, vpS);
         renderer.setScissorTest(true);
         renderer.autoClear = false;
 
