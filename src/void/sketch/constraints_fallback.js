@@ -89,6 +89,9 @@ function enforceWithFallback(sketch, opts = {}) {
                 case 'arc_center_on_line':
                     iterChanged = applyArcCenterOnLine(c, points, lines, arcs, fixed) || iterChanged;
                     break;
+                case 'arc_center_on_arc':
+                    iterChanged = applyArcCenterOnArc(c, points, lines, arcs, fixed) || iterChanged;
+                    break;
                 case 'arc_center_fixed_origin':
                     iterChanged = applyArcCenterFixedOrigin(c, points, lines, arcs, fixed) || iterChanged;
                     break;
@@ -1135,6 +1138,67 @@ function applyArcCenterOnLine(constraint, points, lines, arcs, fixed) {
     const fa = !!(aId && fixed.has(aId));
     const fb = !!(bId && fixed.has(bId));
     return enforceArcFromCenter(arc, a, b, tx, ty, fa, fb);
+}
+
+function applyArcCenterOnArc(constraint, points, lines, arcs, fixed) {
+    const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
+    if (refs.length < 2) return false;
+    const sourceArcId = refs.find(id => arcs.has(id)) || null;
+    const targetArcId = refs.find(id => id !== sourceArcId && arcs.has(id)) || null;
+    if (!sourceArcId || !targetArcId) return false;
+    const sourceArc = arcs.get(sourceArcId);
+    const targetArc = arcs.get(targetArcId);
+    if (!sourceArc || !targetArc) return false;
+
+    const [sa, sb] = getLineEndpoints(sourceArc, points);
+    const [ta, tb] = getLineEndpoints(targetArc, points);
+    if (!sa || !sb || !ta || !tb) return false;
+    const sourceCenter = getArcCenter(sourceArc, sa, sb);
+    if (!sourceCenter) return false;
+
+    const targetCirc = getArcCircleData(targetArc, points);
+    if (!targetCirc) return false;
+
+    let tx;
+    let ty;
+    if (isCircleCurve(targetArc)) {
+        const vx = (sourceCenter.x || 0) - targetCirc.cx;
+        const vy = (sourceCenter.y || 0) - targetCirc.cy;
+        const vlen = Math.hypot(vx, vy);
+        if (!Number.isFinite(vlen) || vlen < EPS) {
+            tx = targetCirc.cx + targetCirc.radius;
+            ty = targetCirc.cy;
+        } else {
+            tx = targetCirc.cx + (vx / vlen) * targetCirc.radius;
+            ty = targetCirc.cy + (vy / vlen) * targetCirc.radius;
+        }
+    } else {
+        const samples = sampleArcPolylineForConstraint(targetArc, ta, tb, 64);
+        if (samples.length < 2) return false;
+        let best = null;
+        for (let i = 0; i < samples.length - 1; i++) {
+            const p1 = samples[i];
+            const p2 = samples[i + 1];
+            const cand = nearestPointOnSegment(
+                sourceCenter.x || 0,
+                sourceCenter.y || 0,
+                p1.x || 0,
+                p1.y || 0,
+                p2.x || 0,
+                p2.y || 0
+            );
+            if (!best || cand.d2 < best.d2) best = cand;
+        }
+        if (!best) return false;
+        tx = best.x;
+        ty = best.y;
+    }
+
+    const aId = getLineEndpointId(sourceArc, 'a');
+    const bId = getLineEndpointId(sourceArc, 'b');
+    const fa = !!(aId && fixed.has(aId));
+    const fb = !!(bId && fixed.has(bId));
+    return enforceArcFromCenter(sourceArc, sa, sb, tx, ty, fa, fb);
 }
 
 function applyArcCenterFixedOrigin(constraint, points, lines, arcs, fixed) {

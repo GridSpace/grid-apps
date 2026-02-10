@@ -336,6 +336,13 @@ function applySketchConstraint(type) {
             specs.push({ type: 'point_on_arc', refs: [points[0].id, arcs[0].id] });
         } else if (points.length === 1 && arcCenters.length === 1) {
             specs.push({ type: 'arc_center_coincident', refs: [arcCenters[0].id, points[0].id] });
+        } else if (arcCenters.length === 1 && arcs.length === 1 && points.length === 0 && lines.length === 0) {
+            const sourceArcId = arcCenters[0].id;
+            const targetArcId = arcs[0].id;
+            if (!sourceArcId || !targetArcId || sourceArcId === targetArcId) {
+                return false;
+            }
+            specs.push({ type: 'arc_center_on_arc', refs: [sourceArcId, targetArcId] });
         } else if (points.length === 1 && hasOriginSelected && lines.length === 0 && arcs.length === 0 && arcCenters.length === 0) {
             specs.push({
                 type: 'fixed',
@@ -613,6 +620,9 @@ function normalizeConstraintRefs(type, refs) {
         return out.slice(0, 2).sort();
     }
     if (type === 'arc_center_on_line') {
+        return out.slice(0, 2).sort();
+    }
+    if (type === 'arc_center_on_arc') {
         return out.slice(0, 2).sort();
     }
     if (type === 'arc_center_fixed_origin') {

@@ -16,6 +16,7 @@ function constraintGlyphLabel(type) {
         point_on_arc: 'PA',
         arc_center_coincident: 'C',
         arc_center_on_line: 'PL',
+        arc_center_on_arc: 'PA',
         arc_center_fixed_origin: 'C',
         fixed: 'F',
         tangent: 'T',
@@ -457,6 +458,14 @@ function getConstraintHoverHighlight(rec) {
         if (lineId) out.add(lineId);
         return out;
     }
+    if (c?.type === 'arc_center_on_arc' && refs.length >= 2) {
+        const arcs = refs.filter(ref => byId.get(ref)?.type === 'arc');
+        if (arcs.length >= 2) {
+            out.add(`arc-center:${arcs[0]}`);
+            out.add(arcs[1]);
+            return out;
+        }
+    }
     if (c?.type === 'arc_center_fixed_origin' && refs.length >= 1) {
         const arcId = refs[0];
         if (typeof arcId === 'string' && arcId) out.add(`arc-center:${arcId}`);
@@ -811,7 +820,7 @@ function getConstraintAnchorLocal(feature, constraint) {
     const entities = Array.isArray(feature?.entities) ? feature.entities : [];
     const byId = new Map(entities.map(e => [e?.id, e]));
     const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
-    const lineTypes = new Set(['horizontal', 'vertical', 'horizontal_points', 'vertical_points', 'tangent', 'equal', 'collinear', 'dimension', 'arc_center_on_line']);
+    const lineTypes = new Set(['horizontal', 'vertical', 'horizontal_points', 'vertical_points', 'tangent', 'equal', 'collinear', 'dimension', 'arc_center_on_line', 'arc_center_on_arc']);
     const pointLike = ref => {
         if (!ref) return null;
         if (ref === '__sketch-origin__') return { x: 0, y: 0 };
@@ -869,6 +878,22 @@ function getConstraintAnchorLocal(feature, constraint) {
                 if (c1 && c2) {
                     return { x: (c1.x + c2.x) * 0.5, y: (c1.y + c2.y) * 0.5 };
                 }
+            }
+        }
+        if (constraint?.type === 'arc_center_on_arc') {
+            const arcRefs = refs.map(id => byId.get(id)).filter(e => e?.type === 'arc');
+            if (arcRefs.length >= 2) {
+                const src = arcRefs[0];
+                const dst = arcRefs[1];
+                const [sa, sb] = this.getArcEndpoints(src, byId);
+                const [da, db] = this.getArcEndpoints(dst, byId);
+                const sc = this.getArcCenterLocal(src, sa, sb);
+                const dc = this.getArcCenterLocal(dst, da, db);
+                if (sc && dc) {
+                    return { x: (sc.x + dc.x) * 0.5, y: (sc.y + dc.y) * 0.5 };
+                }
+                if (sc) return sc;
+                if (dc) return dc;
             }
         }
     }
@@ -995,6 +1020,19 @@ function updateConstraintGlyphs(getApi, opts = {}) {
             byHover = !!(
                 (arcCenterKey && hoveredEntityId === arcCenterKey) ||
                 refs.includes(hoveredEntityId)
+            );
+        }
+        if (constraint?.type === 'arc_center_on_arc' && refs.length >= 2) {
+            const arcIds = refs.filter(ref => entityById.get(ref)?.type === 'arc');
+            const sourceArcId = arcIds[0] || null;
+            const sourceCenterKey = typeof sourceArcId === 'string' ? `arc-center:${sourceArcId}` : null;
+            byEntity = !!(
+                (sourceCenterKey && selectedEntityIds.has(sourceCenterKey)) ||
+                arcIds.some(ref => selectedEntityIds.has(ref))
+            );
+            byHover = !!(
+                (sourceCenterKey && hoveredEntityId === sourceCenterKey) ||
+                arcIds.includes(hoveredEntityId)
             );
         }
         if (constraint?.type === 'arc_center_fixed_origin' && refs.length >= 1) {
