@@ -15,6 +15,8 @@ function constraintGlyphLabel(type) {
         point_on_line: 'PL',
         point_on_arc: 'PA',
         arc_center_coincident: 'C',
+        arc_center_on_line: 'PL',
+        arc_center_fixed_origin: 'C',
         fixed: 'F',
         tangent: 'T',
         equal: '=',
@@ -375,6 +377,18 @@ function getConstraintHoverHighlight(rec) {
         if (pointId) out.add(pointId);
         return out;
     }
+    if (c?.type === 'arc_center_on_line' && refs.length >= 2) {
+        const arcId = refs.find(ref => byId.get(ref)?.type === 'arc') || refs[0];
+        const lineId = refs.find(ref => byId.get(ref)?.type === 'line') || refs[1];
+        if (typeof arcId === 'string' && arcId) out.add(`arc-center:${arcId}`);
+        if (lineId) out.add(lineId);
+        return out;
+    }
+    if (c?.type === 'arc_center_fixed_origin' && refs.length >= 1) {
+        const arcId = refs[0];
+        if (typeof arcId === 'string' && arcId) out.add(`arc-center:${arcId}`);
+        return out;
+    }
     const pointRefs = [];
     for (const ref of refs) {
         if (!ref) continue;
@@ -724,7 +738,7 @@ function getConstraintAnchorLocal(feature, constraint) {
     const entities = Array.isArray(feature?.entities) ? feature.entities : [];
     const byId = new Map(entities.map(e => [e?.id, e]));
     const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
-    const lineTypes = new Set(['horizontal', 'vertical', 'horizontal_points', 'vertical_points', 'tangent', 'equal', 'collinear', 'dimension']);
+    const lineTypes = new Set(['horizontal', 'vertical', 'horizontal_points', 'vertical_points', 'tangent', 'equal', 'collinear', 'dimension', 'arc_center_on_line']);
 
     if (lineTypes.has(constraint?.type)) {
         const line = refs.map(id => byId.get(id)).find(e => e?.type === 'line');
@@ -764,6 +778,9 @@ function getConstraintAnchorLocal(feature, constraint) {
     }
     if (points.length === 1) {
         return { x: points[0].x || 0, y: points[0].y || 0 };
+    }
+    if (constraint?.type === 'arc_center_fixed_origin') {
+        return { x: 0, y: 0 };
     }
     return null;
 }
@@ -819,6 +836,8 @@ function updateConstraintGlyphs(getApi, opts = {}) {
     }
 
     const constraints = Array.isArray(rec.feature.constraints) ? rec.feature.constraints : [];
+    const entities = Array.isArray(rec.feature.entities) ? rec.feature.entities : [];
+    const entityById = new Map(entities.filter(e => e?.id).map(e => [e.id, e]));
     if (!constraints.length) {
         return;
     }
@@ -844,6 +863,28 @@ function updateConstraintGlyphs(getApi, opts = {}) {
             );
             byHover = !!(
                 (pointId && hoveredEntityId === pointId) ||
+                (arcCenterKey && hoveredEntityId === arcCenterKey)
+            );
+        }
+        if (constraint?.type === 'arc_center_on_line' && refs.length >= 2) {
+            const arcId = refs.find(ref => entityById.get(ref)?.type === 'arc') || null;
+            const arcCenterKey = typeof arcId === 'string' ? `arc-center:${arcId}` : null;
+            byEntity = !!(
+                (arcCenterKey && selectedEntityIds.has(arcCenterKey)) ||
+                refs.some(ref => selectedEntityIds.has(ref))
+            );
+            byHover = !!(
+                (arcCenterKey && hoveredEntityId === arcCenterKey) ||
+                refs.includes(hoveredEntityId)
+            );
+        }
+        if (constraint?.type === 'arc_center_fixed_origin' && refs.length >= 1) {
+            const arcId = refs[0];
+            const arcCenterKey = typeof arcId === 'string' ? `arc-center:${arcId}` : null;
+            byEntity = !!(
+                (arcCenterKey && selectedEntityIds.has(arcCenterKey))
+            );
+            byHover = !!(
                 (arcCenterKey && hoveredEntityId === arcCenterKey)
             );
         }

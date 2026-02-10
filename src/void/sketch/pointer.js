@@ -295,10 +295,6 @@ function handleSketchMouseUp(event, intersections) {
             || (pointerDown?.hitId ? { id: pointerDown.hitId, type: pointerDown?.hitType || null } : null)
             || (this.hoveredSketchEntityId ? { id: this.hoveredSketchEntityId } : null);
         if (hit?.id) {
-            if (hit.id === SKETCH_VIRTUAL_ORIGIN_ID) {
-                this.updateSketchInteractionVisuals();
-                return true;
-            }
             const isArcCenter = hit.type === 'arc-center';
             const arcCenterEntityId = isArcCenter
                 ? (String(hit.id).startsWith('arc-center:') ? String(hit.id).substring('arc-center:'.length) : String(hit.id))

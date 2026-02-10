@@ -3,6 +3,7 @@
 import { api } from '../api.js';
 import { enforceSketchConstraintsInPlace } from './constraints.js';
 import * as sketchCreate from './create.js';
+import { SKETCH_VIRTUAL_ORIGIN_ID } from './constants.js';
 
 function getConstraintMode(constraint) {
     const mode = constraint?.data?.mode;
@@ -185,7 +186,8 @@ function applySketchConstraint(type) {
     }
     const entities = Array.isArray(feature.entities) ? feature.entities : [];
     const selected = entities.filter(entity => this.selectedSketchEntities.has(entity.id));
-    if (!selected.length) {
+    const hasOriginSelected = this.selectedSketchEntities.has(SKETCH_VIRTUAL_ORIGIN_ID);
+    if (!selected.length && !hasOriginSelected) {
         return false;
     }
 
@@ -265,6 +267,16 @@ function applySketchConstraint(type) {
             specs.push({ type: 'point_on_arc', refs: [points[0].id, arcs[0].id] });
         } else if (points.length === 1 && arcCenters.length === 1) {
             specs.push({ type: 'arc_center_coincident', refs: [arcCenters[0].id, points[0].id] });
+        } else if (points.length === 1 && hasOriginSelected && lines.length === 0 && arcs.length === 0 && arcCenters.length === 0) {
+            specs.push({
+                type: 'fixed',
+                refs: [points[0].id],
+                data: { anchors: { [points[0].id]: { x: 0, y: 0 } } }
+            });
+        } else if (arcCenters.length === 1 && lines.length === 1 && points.length === 0 && arcs.length === 0) {
+            specs.push({ type: 'arc_center_on_line', refs: [arcCenters[0].id, lines[0].id] });
+        } else if (arcCenters.length === 1 && hasOriginSelected && points.length === 0 && lines.length === 0 && arcs.length === 0) {
+            specs.push({ type: 'arc_center_fixed_origin', refs: [arcCenters[0].id] });
         } else {
             return false;
         }
@@ -453,19 +465,50 @@ function toggleSketchConstraintInList(sketch, list, type, refs, dataIn = null) {
                 existing.data.value = next;
                 return true;
             }
+            if (type === 'fixed' && dataIn?.anchors && typeof dataIn.anchors === 'object') {
+                existing.data = existing.data || {};
+                existing.data.anchors = existing.data.anchors || {};
+                let changed = false;
+                for (const id of this.normalizeConstraintRefs(type, refs)) {
+                    const anchor = dataIn.anchors[id];
+                    if (!anchor) continue;
+                    const x = Number(anchor.x);
+                    const y = Number(anchor.y);
+                    if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+                    const prev = existing.data.anchors[id];
+                    if (!prev || Math.abs((prev.x || 0) - x) > 1e-9 || Math.abs((prev.y || 0) - y) > 1e-9) {
+                        existing.data.anchors[id] = { x, y };
+                        changed = true;
+                    }
+                }
+                return changed;
+            }
             list.splice(i, 1);
             return true;
         }
     }
     const data = {};
     if (type === 'fixed') {
+        const provided = dataIn?.anchors && typeof dataIn.anchors === 'object' ? dataIn.anchors : null;
         data.anchors = {};
-        const entities = Array.isArray(sketch?.entities) ? sketch.entities : [];
-        const pointById = new Map(entities.filter(e => e?.type === 'point' && e.id).map(e => [e.id, e]));
-        for (const id of this.normalizeConstraintRefs(type, refs)) {
-            const p = pointById.get(id);
-            if (p) {
-                data.anchors[id] = { x: p.x || 0, y: p.y || 0 };
+        if (provided) {
+            for (const id of this.normalizeConstraintRefs(type, refs)) {
+                const anchor = provided[id];
+                if (!anchor) continue;
+                const x = Number(anchor.x);
+                const y = Number(anchor.y);
+                if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+                data.anchors[id] = { x, y };
+            }
+        }
+        if (!Object.keys(data.anchors).length) {
+            const entities = Array.isArray(sketch?.entities) ? sketch.entities : [];
+            const pointById = new Map(entities.filter(e => e?.type === 'point' && e.id).map(e => [e.id, e]));
+            for (const id of this.normalizeConstraintRefs(type, refs)) {
+                const p = pointById.get(id);
+                if (p) {
+                    data.anchors[id] = { x: p.x || 0, y: p.y || 0 };
+                }
             }
         }
     }
@@ -497,6 +540,12 @@ function normalizeConstraintRefs(type, refs) {
     }
     if (type === 'point_on_line' || type === 'point_on_arc') {
         return out.slice(0, 2).sort();
+    }
+    if (type === 'arc_center_on_line') {
+        return out.slice(0, 2).sort();
+    }
+    if (type === 'arc_center_fixed_origin') {
+        return out.slice(0, 1);
     }
     if (type === 'midpoint') {
         return out.slice(0, 3);

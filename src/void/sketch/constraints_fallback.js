@@ -85,6 +85,12 @@ function enforceWithFallback(sketch, opts = {}) {
                 case 'arc_center_coincident':
                     iterChanged = applyArcCenterCoincident(c, points, lines, arcs, fixed) || iterChanged;
                     break;
+                case 'arc_center_on_line':
+                    iterChanged = applyArcCenterOnLine(c, points, lines, arcs, fixed) || iterChanged;
+                    break;
+                case 'arc_center_fixed_origin':
+                    iterChanged = applyArcCenterFixedOrigin(c, points, lines, arcs, fixed) || iterChanged;
+                    break;
                 case 'midpoint':
                     iterChanged = applyMidpoint(c, points, fixed, dragged) || iterChanged;
                     break;
@@ -854,6 +860,51 @@ function applyArcCenterCoincidentConstraints(constraints, points, lines, arcs, f
         changed = applyArcCenterCoincident(c, points, lines, arcs, fixed) || changed;
     }
     return changed;
+}
+
+function applyArcCenterOnLine(constraint, points, lines, arcs, fixed) {
+    const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
+    if (refs.length < 2) return false;
+    const arcId = refs.find(id => arcs.has(id)) || null;
+    const lineId = refs.find(id => lines.has(id)) || null;
+    if (!arcId || !lineId) return false;
+    const arc = arcs.get(arcId);
+    const line = lines.get(lineId);
+    if (!arc || !line) return false;
+    const [a, b] = getLineEndpoints(arc, points);
+    const [l1, l2] = getLineEndpoints(line, points);
+    if (!a || !b || !l1 || !l2) return false;
+    const center = getArcCenter(arc, a, b);
+    if (!center) return false;
+
+    const abx = (l2.x || 0) - (l1.x || 0);
+    const aby = (l2.y || 0) - (l1.y || 0);
+    const len2 = abx * abx + aby * aby;
+    if (len2 < EPS) return false;
+    const t = (((center.x || 0) - (l1.x || 0)) * abx + ((center.y || 0) - (l1.y || 0)) * aby) / len2;
+    const tx = (l1.x || 0) + abx * t;
+    const ty = (l1.y || 0) + aby * t;
+
+    const aId = getLineEndpointId(arc, 'a');
+    const bId = getLineEndpointId(arc, 'b');
+    const fa = !!(aId && fixed.has(aId));
+    const fb = !!(bId && fixed.has(bId));
+    return enforceArcFromCenter(arc, a, b, tx, ty, fa, fb);
+}
+
+function applyArcCenterFixedOrigin(constraint, points, lines, arcs, fixed) {
+    const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
+    const arcId = refs.find(id => arcs.has(id)) || null;
+    if (!arcId) return false;
+    const arc = arcs.get(arcId);
+    if (!arc) return false;
+    const [a, b] = getLineEndpoints(arc, points);
+    if (!a || !b) return false;
+    const aId = getLineEndpointId(arc, 'a');
+    const bId = getLineEndpointId(arc, 'b');
+    const fa = !!(aId && fixed.has(aId));
+    const fb = !!(bId && fixed.has(bId));
+    return enforceArcFromCenter(arc, a, b, 0, 0, fa, fb);
 }
 
 function applyTangent(constraint, points, lines, arcs, fixed, dragged = new Set(), draggedArcs = new Set(), tangentAggressive = false) {
