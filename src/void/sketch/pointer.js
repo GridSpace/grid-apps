@@ -702,6 +702,16 @@ function handleSketchDrag(delta, offset, isDone) {
                 draggedArcIds: Array.from(draggedArcIds || []),
                 tangentAggressive: true
             });
+            // Always finish drag with a clean global settle (no drag locks/ids),
+            // so over-constrained or locally-biased states resolve consistently.
+            enforceSketchConstraintsInPlace(feature, {
+                iterations: 96
+            });
+            enforceSketchConstraintsInPlace(feature, {
+                useFallback: true,
+                iterations: 96,
+                tangentAggressive: false
+            });
             api.features.commit(feature.id, {
                 opType: 'feature.update',
                 payload: {
