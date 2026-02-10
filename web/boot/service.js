@@ -43,7 +43,7 @@ self.addEventListener('message', e => {
 async function _install(e) {
     log('install');
     if (e.addRoutes) {
-        for (let pre of ["font","mesh","kiri","lib","wasm"]) {
+        for (let pre of ["font","mesh","kiri","void","lib","wasm"]) {
             e.addRoutes({
                 condition: { urlPattern: new URLPattern({ pathname: `/${pre}/.*` }) },
                 source: { cacheName: CACHE_VERSION }

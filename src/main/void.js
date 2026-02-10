@@ -92,6 +92,8 @@ async function init() {
     });
 
     space.view.setCtrl('void');
+    // Rebind overlay camera/control hooks after Orbit -> Trackball swap.
+    overlay.onProjectionChanged();
     space.view.setFitVisibleOnly(true);
     space.view.setHome(VOID_HOME_LEFT, VOID_HOME_UP);
 

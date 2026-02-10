@@ -8,7 +8,7 @@ import { TrackballControls } from '../ext/three.js';
 const { MOUSE, Vector3 } = THREE;
 const BUTTON = { LEFT: 0, MIDDLE: 1, RIGHT: 2 };
 const ACTION = { ROTATE: 0, DOLLY: 1, PAN: 2 };
-const VOID_ROTATE_SPEED = 48.0;
+const VOID_ROTATE_SPEED = 36.0;
 const VOID_PAN_SPEED_PERSPECTIVE = 1.0;
 const VOID_PAN_SPEED_ORTHO = 2.4;
 const VOID_ZOOM_SPEED_PERSPECTIVE_MULT = 1.35;
@@ -55,15 +55,15 @@ class Trackball {
 
         const mapButtons = () => {
             const actions = {
-                LEFT: ACTION.ROTATE,
-                MIDDLE: ACTION.DOLLY,
-                RIGHT: ACTION.PAN
+                LEFT: -1,
+                MIDDLE: -1,
+                RIGHT: -1
             };
             const bind = this.mouseButtons || this.mouseDefault;
-            const buttonToAction = {};
-            buttonToAction[bind.ORBIT] = ACTION.ROTATE;
+            const buttonToAction = Object.create(null);
+            if (bind.ORBIT !== undefined) buttonToAction[bind.ORBIT] = ACTION.ROTATE;
             if (bind.ZOOM !== undefined) buttonToAction[bind.ZOOM] = ACTION.DOLLY;
-            buttonToAction[bind.PAN] = ACTION.PAN;
+            if (bind.PAN !== undefined) buttonToAction[bind.PAN] = ACTION.PAN;
             actions.LEFT = buttonToAction[BUTTON.LEFT] ?? actions.LEFT;
             actions.MIDDLE = buttonToAction[BUTTON.MIDDLE] ?? actions.MIDDLE;
             actions.RIGHT = buttonToAction[BUTTON.RIGHT] ?? actions.RIGHT;
@@ -144,14 +144,14 @@ class Trackball {
         this.mouseButtons = bindings || this.mouseDefault;
         const bind = this.mouseButtons || this.mouseDefault;
         const actions = {
-            LEFT: ACTION.ROTATE,
-            MIDDLE: ACTION.DOLLY,
-            RIGHT: ACTION.PAN
+            LEFT: -1,
+            MIDDLE: -1,
+            RIGHT: -1
         };
-        const buttonToAction = {};
-        buttonToAction[bind.ORBIT] = ACTION.ROTATE;
+        const buttonToAction = Object.create(null);
+        if (bind.ORBIT !== undefined) buttonToAction[bind.ORBIT] = ACTION.ROTATE;
         if (bind.ZOOM !== undefined) buttonToAction[bind.ZOOM] = ACTION.DOLLY;
-        buttonToAction[bind.PAN] = ACTION.PAN;
+        if (bind.PAN !== undefined) buttonToAction[bind.PAN] = ACTION.PAN;
         actions.LEFT = buttonToAction[BUTTON.LEFT] ?? actions.LEFT;
         actions.MIDDLE = buttonToAction[BUTTON.MIDDLE] ?? actions.MIDDLE;
         actions.RIGHT = buttonToAction[BUTTON.RIGHT] ?? actions.RIGHT;
