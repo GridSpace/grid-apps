@@ -252,7 +252,11 @@ function applySketchConstraint(type) {
         if (points.length === 2) {
             const circleArc = this.findArcWithEndpoints(feature, points[0].id, points[1].id);
             if (circleArc) {
-                return this.convertArcToCircle(feature, circleArc.id, points[0].id, points[1].id);
+                const converted = this.convertArcToCircle(feature, circleArc.id, points[0].id, points[1].id);
+                if (converted) {
+                    this.clearSketchSelection?.();
+                }
+                return converted;
             }
             specs.push({ type, refs: [points[0].id, points[1].id] });
         } else if (points.length === 1 && lines.length === 1) {
@@ -328,6 +332,9 @@ function applySketchConstraint(type) {
         }
     });
 
+    if (changed) {
+        this.clearSketchSelection?.();
+    }
     return changed;
 }
 

@@ -152,60 +152,61 @@ function handleSketchKeyDown(event) {
         return hadLine || hadArc || hadRect || hadMarquee;
     }
 
-    if (event.code === 'KeyV') {
-        this.setSketchTool('select');
+    const toggleTool = tool => {
+        const curr = this.getSketchTool();
+        this.setSketchTool(curr === tool ? 'select' : tool);
         return true;
+    };
+
+    if (event.code === 'KeyL' && !event.shiftKey) {
+        return toggleTool('line');
     }
-    if (event.code === 'KeyL') {
-        this.setSketchTool('line');
-        return true;
+    if (event.code === 'KeyA' && !event.shiftKey) {
+        return toggleTool('arc-3pt');
     }
-    if (event.code === 'KeyA') {
-        this.setSketchTool('arc-3pt');
-        return true;
+    if (event.code === 'KeyC' && !event.shiftKey) {
+        return toggleTool('circle-center');
     }
-    if (event.code === 'KeyO') {
-        this.setSketchTool('circle-center');
-        return true;
+    if (event.code === 'KeyR' && !event.shiftKey) {
+        return toggleTool('rect-center');
     }
-    if (event.code === 'KeyR') {
-        this.setSketchTool(event.shiftKey ? 'rect-center' : 'rect');
-        return true;
+    if (event.code === 'KeyG' && !event.shiftKey) {
+        return toggleTool('rect');
     }
-    if (event.code === 'KeyQ') {
+    if (event.code === 'KeyS' && event.shiftKey) {
+        return toggleTool('point');
+    }
+    if (event.code === 'KeyQ' && !event.shiftKey) {
         return this.toggleSelectedConstruction();
     }
-    if (event.code === 'KeyU') {
-        if (event.shiftKey) {
-            return this.useHoveredDerivedPoint();
-        }
+    if (event.code === 'KeyU' && !event.shiftKey) {
         return this.useHoveredDerivedEdge();
     }
-    if (event.code === 'KeyH') {
+    if (event.code === 'KeyH' && !event.shiftKey) {
         return this.applySketchConstraint('horizontal');
     }
-    if (event.code === 'KeyI') {
+    if (event.code === 'KeyV' && !event.shiftKey) {
         return this.applySketchConstraint('vertical');
     }
-    if (event.code === 'KeyK') {
+    if (event.code === 'KeyL' && event.shiftKey) {
         return this.applySketchConstraint('perpendicular');
     }
-    if (event.code === 'KeyE') {
+    if (event.code === 'KeyE' && !event.shiftKey) {
         return this.applySketchConstraint('equal');
     }
-    if (event.code === 'KeyG') {
-        return this.applySketchConstraint('collinear');
-    }
-    if (event.code === 'KeyD') {
+    if (event.code === 'KeyD' && !event.shiftKey) {
         return this.applySketchConstraint('dimension');
     }
-    if (event.code === 'KeyT') {
+    if (event.code === 'KeyT' && !event.shiftKey) {
         return this.applySketchConstraint('tangent');
     }
-    if (event.code === 'KeyC') {
+    if (event.code === 'KeyI' && !event.shiftKey) {
         return this.applySketchConstraint('coincident');
     }
-    if (event.code === 'KeyF') {
+    if (event.code === 'KeyM' && event.shiftKey) {
+        return this.applySketchConstraint('midpoint');
+    }
+    if (event.code === 'KeyJ' && event.shiftKey) {
         return this.applySketchConstraint('fixed');
     }
     if (event.code === 'Delete' || event.code === 'Backspace') {
@@ -290,10 +291,7 @@ function useHoveredDerivedEdge() {
         faces: selectedFaces
     });
     if (!created) return false;
-    this.selectedDerivedSelections?.clear?.();
-    this.selectedSolidFaceKeys?.clear?.();
-    api.solids?.clearFaceSelection?.();
-    this.updateSketchInteractionVisuals();
+    this.clearSketchSelection?.();
     return true;
 }
 
@@ -310,7 +308,7 @@ function useHoveredDerivedPoint() {
         point_kind: candidate?.hoverPoint?.kind || 'mid'
     });
     if (!created) return false;
-    this.updateSketchInteractionVisuals();
+    this.clearSketchSelection?.();
     return true;
 }
 

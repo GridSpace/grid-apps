@@ -46,7 +46,8 @@ async function init() {
 
     // Setup 3D workspace
     space.setAntiAlias(true);
-    space.useDefaultKeys(true);
+    // Void owns its own keymap (Onshape-style); disable space.js defaults.
+    space.useDefaultKeys(false);
     space.init($('container'), delta => {}, false);
     api.sketchRuntime.init(space.world);
     api.solids.attach(space.world);

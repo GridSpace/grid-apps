@@ -564,7 +564,7 @@ html, body {
 }
 
 .hotkeys-dialog {
-    width: min(840px, calc(100vw - 40px));
+    width: min(630px, calc(100vw - 40px));
 }
 
 .hotkeys-row {
@@ -861,7 +861,7 @@ html, body {
 .props-panel {
     position: fixed;
     z-index: 10020;
-    width: 300px;
+    width: 255px;
     background: var(--bg-secondary);
     border: 1px solid var(--border);
     border-radius: 8px;

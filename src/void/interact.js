@@ -123,6 +123,11 @@ const interact = {
             if (space.isFocused()) {
                 return false;
             }
+            if (!event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey && event.code === 'KeyF') {
+                space.view.fit(null, { tween: true });
+                event.preventDefault();
+                return true;
+            }
             let handled = false;
             switch (event.code) {
                 case 'Space':

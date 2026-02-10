@@ -208,6 +208,7 @@ src/
   - timeline slider (`0..N`) controlling active rebuild prefix
   - all above are revisioned + undo/redoable
 - Sketch runtime currently renders from the active rebuild set (`features.listBuilt()`), not raw full feature list
+- Open TODO: stabilise dual-tangent sketch behavior (`line` tangent to two circles/arcs with endpoint-on-arc constraints)
 
 **Phase 2: Sketch System (Current Workstream)**
 - planegcs constraint solver integration is active

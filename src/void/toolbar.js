@@ -188,8 +188,11 @@ const toolbar = {
         this.addMenu(container, 'View', [
             { key: 'fit', label: 'Fit', onClick: () => space.view.fit(null, { tween: true }) },
             { key: 'top', label: 'Top', onClick: () => space.view.top() },
+            { key: 'bottom', label: 'Bottom', onClick: () => space.view.bottom() },
             { key: 'front', label: 'Front', onClick: () => space.view.front() },
-            { key: 'right', label: 'Right', onClick: () => space.view.right() }
+            { key: 'back', label: 'Back', onClick: () => space.view.back() },
+            { key: 'right', label: 'Right', onClick: () => space.view.right() },
+            { key: 'left', label: 'Left', onClick: () => space.view.left() }
         ]);
 
         container.appendChild(this.separator());
@@ -790,29 +793,22 @@ const toolbar = {
                     { key: 'Space', desc: 'Clear selection' },
                     { key: 'N', desc: 'View normal to hovered/selected face or plane' },
                     { key: 'P', desc: 'Toggle datum plane visibility' },
+                    { key: 'F', desc: 'Fit visible elements' },
                     { key: 'Ctrl/Cmd+Z', desc: 'Undo' },
                     { key: 'Ctrl/Cmd+Y', desc: 'Redo' },
                     { key: 'Shift+Ctrl/Cmd+Z', desc: 'Redo' }
                 ]
             },
             {
-                title: 'Viewport',
-                items: [
-                    { key: 'H', desc: 'Camera home' },
-                    { key: 'T', desc: 'Camera top' },
-                    { key: 'F', desc: 'Camera front' },
-                    { key: 'Shift+F', desc: 'Fit view' }
-                ]
-            },
-            {
                 title: 'Sketch Tools',
                 items: [
-                    { key: 'V', desc: 'Select tool' },
-                    { key: 'L', desc: 'Line tool' },
-                    { key: 'A', desc: '3 point arc tool' },
-                    { key: 'O', desc: 'Center point circle tool' },
-                    { key: 'R', desc: 'Corner rectangle tool' },
-                    { key: 'Shift+R', desc: 'Center rectangle tool' },
+                    { key: 'L', desc: 'Toggle line tool' },
+                    { key: 'A', desc: 'Toggle 3 point arc tool' },
+                    { key: 'C', desc: 'Toggle center point circle tool' },
+                    { key: 'G', desc: 'Toggle corner rectangle tool' },
+                    { key: 'R', desc: 'Toggle center rectangle tool' },
+                    { key: 'Shift+S', desc: 'Toggle point tool' },
+                    { key: 'U', desc: 'Use (project/convert) hovered/selected references' },
                     { key: 'Q', desc: 'Toggle construction on selected lines/arcs' },
                     { key: 'Esc', desc: 'Cancel line mode / close dialogs' }
                 ]
@@ -821,20 +817,36 @@ const toolbar = {
                 title: 'Sketch Constraints',
                 items: [
                     { key: 'H', desc: 'Horizontal constraint (selected line(s))' },
-                    { key: 'I', desc: 'Vertical constraint (selected line(s))' },
-                    { key: 'K', desc: 'Perpendicular (exactly 2 selected lines)' },
+                    { key: 'V', desc: 'Vertical constraint (selected line(s) or points)' },
+                    { key: 'Shift+L', desc: 'Perpendicular (exactly 2 selected lines)' },
                     { key: 'E', desc: 'Equal length (selected line pair/group)' },
-                    { key: 'G', desc: 'Collinear (exactly 2 selected lines)' },
                     { key: 'D', desc: 'Dimension (1 line or 2 points)' },
                     { key: 'T', desc: 'Tangent (line+arc/circle or arc/circle pair)' },
-                    { key: 'C', desc: 'Coincident (exactly 2 selected points)' },
-                    { key: 'F', desc: 'Fixed (selected point(s))' }
+                    { key: 'I', desc: 'Coincident (points, point-line, point-arc, center-point)' },
+                    { key: 'Shift+M', desc: 'Midpoint' },
+                    { key: 'Shift+J', desc: 'Fixed (selected point(s))' }
                 ]
             },
             {
                 title: 'Sketch Selection',
                 items: [
                     { key: 'Delete/Backspace', desc: 'Delete selected sketch entities/constraints' }
+                ]
+            },
+            {
+                title: 'Reserved (Not Yet Implemented)',
+                items: [
+                    { key: 'Shift+O', desc: 'Concentric' },
+                    { key: 'Shift+U', desc: 'Curvature' },
+                    { key: 'X', desc: 'Extend' },
+                    { key: 'Shift+A', desc: 'Line/arc create-mode toggle' },
+                    { key: 'Shift+K', desc: 'Normal constraint' },
+                    { key: 'O', desc: 'Offset' },
+                    { key: 'B', desc: 'Parallel' },
+                    { key: 'Shift+G', desc: 'Pierce' },
+                    { key: 'Shift+F', desc: 'Sketch fillet' },
+                    { key: 'Shift+Q', desc: 'Symmetric' },
+                    { key: 'M', desc: 'Trim' }
                 ]
             }
         ];
