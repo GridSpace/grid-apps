@@ -1,4 +1,4 @@
-const root = await navigator.storage.getDirectory();
+const root = await navigator.storage?.getDirectory();
 
 function resolvePath(path) {
     if (!path) {
