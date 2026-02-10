@@ -691,7 +691,23 @@ class Orbit extends EventDispatcher {
 
         this.onMouseUp = onMouseUp;
 
-        domEl.addEventListener('contextmenu', function (event) { event.preventDefault() }, false);
+        this.dispose = function() {
+            domEl.removeEventListener('contextmenu', onContextMenu, false);
+            domEl.removeEventListener('mousedown', onMouseDown, false);
+            domEl.removeEventListener('wheel', onMouseWheel, false);
+            domEl.removeEventListener('mousewheel', onMouseWheel, false);
+            domEl.removeEventListener('DOMMouseScroll', onMouseWheel, false);
+            domEl.removeEventListener('touchstart', touchstart, false);
+            domEl.removeEventListener('touchend', touchend, false);
+            domEl.removeEventListener('touchmove', touchmove, false);
+
+            document.removeEventListener('mousemove', onMouseMove, false);
+            document.removeEventListener('mouseup', onMouseUp, false);
+            window.removeEventListener('keydown', onKeyDown, false);
+        };
+
+        function onContextMenu(event) { event.preventDefault() }
+        domEl.addEventListener('contextmenu', onContextMenu, false);
         domEl.addEventListener('mousedown', onMouseDown, false);
         domEl.addEventListener('wheel', onMouseWheel, false); // Modern standard (Chrome, Safari, Firefox)
         domEl.addEventListener('mousewheel', onMouseWheel, false); // Legacy Chrome/Safari

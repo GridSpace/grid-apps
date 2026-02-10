@@ -2,6 +2,7 @@
 
 import { THREE } from '../ext/three.js';
 import { Orbit } from './orbit.js';
+import { Trackball } from './trackball.js';
 import { Text3D } from './text3d.js';
 import '../ext/tween.js';
 
@@ -140,7 +141,8 @@ let WIN = self.window || {},
     antiAlias = WIN.devicePixelRatio <= 1,
     lastAction = Date.now(),
     renderTime = 0,
-    fps = 0;
+    fps = 0,
+    controlMode = 'default';
 
 if (DOC) {
     if (typeof DOC.hidden !== "undefined") {
@@ -161,6 +163,27 @@ if (DOC) {
 
 function updateLastAction() {
     lastAction = Date.now();
+}
+
+function isTrackballMode() {
+    return controlMode === 'void';
+}
+
+function createViewControl(cam, dom, notify, slider) {
+    return isTrackballMode()
+        ? new Trackball(cam, dom, notify, slider)
+        : new Orbit(cam, dom, notify, slider);
+}
+
+function applyControlBindings() {
+    if (!viewControl?.setMouse) return;
+    if (controlMode === 'onshape') {
+        viewControl.setMouse(viewControl.mouseOnshape);
+    } else if (controlMode === 'void') {
+        viewControl.setMouse(viewControl.mouseVoid);
+    } else {
+        viewControl.setMouse(viewControl.mouseDefault);
+    }
 }
 
 function delayed(key, time, fn) {
@@ -196,7 +219,7 @@ function tweenit() {
 
 tweenit();
 
-function tweenCamPan(x,y,z,left,up,time) {
+function tweenCamPan(x,y,z,left,up,time,upVec) {
     updateLastAction();
     let pos = viewControl.getPosition();
     pos.panX = x;
@@ -205,14 +228,22 @@ function tweenCamPan(x,y,z,left,up,time) {
     if (left !== undefined) pos.left = left;
     if (up !== undefined) pos.up = up;
     if (time !== undefined) pos.time = time;
+    if (upVec) pos.upVec = upVec;
     tweenCam(pos);
 }
 
 function tweenCam(pos) {
     let hasScale = pos.scale !== undefined;
+    let hasUpVec = pos.upVec !== undefined;
     let prevScale = 1;
     let tweenDuration = pos.time ?? tweenTime;
     let tf = function () {
+        if (hasUpVec && camera) {
+            const upNow = new THREE.Vector3(this.upX, this.upY, this.upZ);
+            if (upNow.lengthSq() > 1e-12) {
+                camera.up.copy(upNow.normalize());
+            }
+        }
         const next = {
             left: this.left,
             up: this.up,
@@ -236,6 +267,14 @@ function tweenCam(pos) {
     if (hasScale) {
         from.scale = 1;
     }
+    if (hasUpVec && camera) {
+        from.upX = camera.up.x;
+        from.upY = camera.up.y;
+        from.upZ = camera.up.z;
+        to.upX = pos.upVec.x;
+        to.upY = pos.upVec.y;
+        to.upZ = pos.upVec.z;
+    }
     let dist = Math.abs(from.left - to.left);
     if (dist > Math.PI) {
         if (from.left < to.left) {
@@ -248,6 +287,12 @@ function tweenCam(pos) {
         to(to, tweenDuration).
         onUpdate(tf).
         onComplete(() => {
+            if (hasUpVec && camera) {
+                const upFinal = new THREE.Vector3(pos.upVec.x, pos.upVec.y, pos.upVec.z);
+                if (upFinal.lengthSq() > 1e-12) {
+                    camera.up.copy(upFinal.normalize());
+                }
+            }
             const finalPos = {
                 left: pos.left,
                 up: pos.up,
@@ -1182,6 +1227,40 @@ function updateFocus() {
     }
 }
 
+function onViewControlMove(position, moved) {
+    if (platform) {
+        platform.visible = hidePlatformBelow ?
+            initialized && position.y >= 0 && showPlatform : showPlatform;
+        volume.visible = volumeOn && platform.visible;
+    }
+    if (grid.view) {
+        grid.view.visible = hideGridBelow ? platform.visible : showGrid;
+    }
+    if (cameraLight) {
+        cameraLight.position.copy(camera.position);
+    }
+    if (moved && platformOnMove) {
+        clearTimeout(platformMoveTimer);
+        platformMoveTimer = setTimeout(platformOnMove, 500);
+        Space.scene.updateFog();
+    }
+    updateTrackingPlane();
+    updateLastAction();
+    updateFocus();
+}
+
+function onViewControlZoom(val) {
+    if (camera && grid?.origin?.scale) {
+        grid.origin.scale();
+    }
+    if (camera && viewControl) {
+        const dist = camera.position.distanceTo(viewControl.target);
+        raycaster.params.Line.threshold = Math.min(1, dist / 100);
+    }
+    updateLastAction();
+    if (sliderCallback) sliderCallback(val);
+}
+
 function setSky(opt = {}) {
     let { grid, color, gridColor } = opt;
     if (grid) Space.sky.showGrid(grid);
@@ -1393,7 +1472,7 @@ let Space = {
         reset:  ()     => { viewControl.reset(); requestRefresh() },
         load:   (cam)  => { viewControl.setPosition(cam); requestRefresh() },
         save:   ()     => { return viewControl.getPosition(true) },
-        panTo:  (x,y,z,l,u,t) => { tweenCamPan(x,y,z,l,u,t) },
+        panTo:  (x,y,z,l,u,t,upVec) => { tweenCamPan(x,y,z,l,u,t,upVec) },
         setZoom: (r,v) => { viewControl.setZoom(r,v) },
         fit:    (then, opts = {}) => {
             // Calculate bounding box of all objects in the workspace
@@ -1528,13 +1607,36 @@ let Space = {
             }
         },
         setCtrl: (name) => {
-            if (name === 'onshape') {
-                viewControl.setMouse(viewControl.mouseOnshape);
-            } else if (name === 'void') {
-                viewControl.setMouse(viewControl.mouseVoid);
-            } else {
-                viewControl.setMouse(viewControl.mouseDefault);
+            const nextMode = name || 'default';
+            const wantsTrackball = nextMode === 'void';
+            const hasTrackball = !!viewControl?.isTrackballAdapter;
+            controlMode = nextMode;
+
+            if (viewControl && wantsTrackball !== hasTrackball) {
+                const position = viewControl.getPosition(true);
+                const target = viewControl.getTarget().clone();
+                const minDistance = viewControl.minDistance;
+                const maxDistance = viewControl.maxDistance;
+                const noKeys = viewControl.noKeys;
+                const enabled = viewControl.enabled;
+                const reverseZoom = viewControl.reverseZoom;
+                const zoomSpeed = viewControl.zoomSpeed;
+
+                if (viewControl.dispose) {
+                    viewControl.dispose();
+                }
+
+                viewControl = createViewControl(camera, container, onViewControlMove, onViewControlZoom);
+                viewControl.noKeys = noKeys;
+                viewControl.minDistance = minDistance;
+                viewControl.maxDistance = maxDistance;
+                viewControl.enabled = enabled;
+                viewControl.reverseZoom = reverseZoom;
+                viewControl.zoomSpeed = zoomSpeed;
+                viewControl.setTarget(target);
+                viewControl.setPosition(position);
             }
+            applyControlBindings();
         },
         setFitVisibleOnly: (enabled) => {
             fitVisibleOnly = !!enabled;
@@ -1757,45 +1859,17 @@ let Space = {
         cameraType = type;
 
         // Recreate viewControl with new camera and proper callbacks
-        viewControl = new Orbit(camera, container, (position, moved) => {
-            if (platform) {
-                platform.visible = hidePlatformBelow ?
-                    initialized && position.y >= 0 && showPlatform : showPlatform;
-                volume.visible = volumeOn && platform.visible;
-            }
-            if (grid.view) {
-                grid.view.visible = hideGridBelow ? platform.visible : showGrid;
-            }
-            if (cameraLight) {
-                cameraLight.position.copy(camera.position);
-            }
-            if (moved && platformOnMove) {
-                clearTimeout(platformMoveTimer);
-                platformMoveTimer = setTimeout(platformOnMove, 500);
-                Space.scene.updateFog();
-            }
-            // Update tracking plane orientation
-            updateTrackingPlane();
-            updateLastAction();
-            updateFocus();
-        }, (val) => {
-            if (camera && grid?.origin?.scale) {
-                grid.origin.scale();
-            }
-            if (camera && viewControl) {
-                // increase intersect line precision on zoom
-                const dist = camera.position.distanceTo(viewControl.target);
-                raycaster.params.Line.threshold = Math.min(1, dist / 100);
-            }
-            updateLastAction();
-            if (sliderCallback) sliderCallback(val);
-        });
+        if (viewControl?.dispose) {
+            viewControl.dispose();
+        }
+        viewControl = createViewControl(camera, container, onViewControlMove, onViewControlZoom);
         viewControl.noKeys = noKeys;
         viewControl.minDistance = minDistance;
         viewControl.maxDistance = maxDistance;
         viewControl.enabled = enabled;
         viewControl.reverseZoom = reverseZoom;
         viewControl.zoomSpeed = zoomSpeed;
+        applyControlBindings();
         viewControl.setPosition(position);
 
         // Dispose old camera
@@ -1843,44 +1917,13 @@ let Space = {
 
         raycaster = new THREE.Raycaster();
 
-        viewControl = new Orbit(camera, domelement, (position, moved) => {
-            if (platform) {
-                platform.visible = hidePlatformBelow ?
-                    initialized && position.y >= 0 && showPlatform : showPlatform;
-                volume.visible = volumeOn && platform.visible;
-            }
-            if (grid.view) {
-                grid.view.visible = hideGridBelow ? platform.visible : showGrid;
-            }
-            if (cameraLight) {
-                cameraLight.position.copy(camera.position);
-            }
-            if (moved && platformOnMove) {
-                clearTimeout(platformMoveTimer);
-                platformMoveTimer = setTimeout(platformOnMove, 500);
-                Space.scene.updateFog();
-            }
-            // Update tracking plane orientation
-            updateTrackingPlane();
-            updateLastAction();
-            updateFocus();
-        }, (val) => {
-            if (camera && grid?.origin?.scale) {
-                grid.origin.scale();
-            }
-            if (camera && viewControl) {
-                // increase intersect line precision on zoom
-                const dist = camera.position.distanceTo(viewControl.target);
-                raycaster.params.Line.threshold = Math.min(1, dist / 100);
-            }
-            // broker.publish("space.view.zoom", camera);
-            updateLastAction();
-            if (slider) slider(val);
-        });
+        sliderCallback = slider;
+        viewControl = createViewControl(camera, domelement, onViewControlMove, onViewControlZoom);
 
         viewControl.noKeys = true;
         viewControl.minDistance = 1;
         viewControl.maxDistance = 1000;
+        applyControlBindings();
 
         SCENE.add(skyAmbient = new THREE.AmbientLight(0x707070));
 

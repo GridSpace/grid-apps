@@ -732,9 +732,45 @@ function viewNormalToHover() {
 
     const left = Math.atan2(offsetDir.x, offsetDir.z);
     const up = Math.acos(Math.max(-1, Math.min(1, offsetDir.y)));
-
-    space.view.panTo(point.x, point.y, point.z, left, up);
+    const snappedUp = getSnappedCameraUpForNormal(camera, offsetDir);
+    space.view.panTo(point.x, point.y, point.z, left, up, undefined, snappedUp || undefined);
     return true;
+}
+
+function getSnappedCameraUpForNormal(camera, viewDir) {
+    const dir = viewDir.clone().normalize();
+    const currentUpProjected = camera.up.clone().projectOnPlane(dir);
+    if (currentUpProjected.lengthSq() < 1e-8) {
+        currentUpProjected.set(0, 1, 0).projectOnPlane(dir);
+    }
+    if (currentUpProjected.lengthSq() < 1e-8) {
+        return null;
+    }
+    currentUpProjected.normalize();
+
+    const basis = [
+        new THREE.Vector3(1, 0, 0),
+        new THREE.Vector3(-1, 0, 0),
+        new THREE.Vector3(0, 1, 0),
+        new THREE.Vector3(0, -1, 0),
+        new THREE.Vector3(0, 0, 1),
+        new THREE.Vector3(0, 0, -1)
+    ];
+
+    let best = null;
+    let bestScore = -Infinity;
+    for (const axis of basis) {
+        const projected = axis.clone().projectOnPlane(dir);
+        const lenSq = projected.lengthSq();
+        if (lenSq < 1e-8) continue;
+        projected.normalize();
+        const score = projected.dot(currentUpProjected);
+        if (score > bestScore) {
+            bestScore = score;
+            best = projected;
+        }
+    }
+    return best;
 }
 
 function resolveTreeHoverNormalTarget() {
