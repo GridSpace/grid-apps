@@ -1091,7 +1091,8 @@ function deriveSelectionsAtomic(feature, selection = {}) {
                     y: rx * faceBasis.y.x + ry * faceBasis.y.y + rz * faceBasis.y.z
                 };
             };
-            for (const seg of segs) {
+            for (let segIndex = 0; segIndex < segs.length; segIndex++) {
+                const seg = segs[segIndex];
                 if (!seg?.a || !seg?.b) continue;
                 const aLocal = this.worldToSketchLocal(seg.a, basis);
                 const bLocal = this.worldToSketchLocal(seg.b, basis);
@@ -1104,7 +1105,7 @@ function deriveSelectionsAtomic(feature, selection = {}) {
                     face_frame: faceFrame || null,
                     local_a: worldToFaceLocal(seg.a) || null,
                     local_b: worldToFaceLocal(seg.b) || null,
-                    edge_index: null,
+                    edge_index: segIndex,
                     a: { x: seg.a.x, y: seg.a.y, z: seg.a.z },
                     b: { x: seg.b.x, y: seg.b.y, z: seg.b.z }
                 });

@@ -239,10 +239,7 @@ function resolveDerivedEdgeCandidate(event, intersections, feature) {
             line.closestPointToPoint(facePoint, true, near);
             const worldDist = near.distanceTo(facePoint);
             // Prefer segments actually near the hovered point on face.
-            // Use a scale-aware tolerance so large models still pick reliably.
-            const segLen = seg.a.distanceTo(seg.b);
-            const worldTol = Math.max(2.5, segLen * 0.35);
-            if (worldDist > worldTol) continue;
+            if (worldDist > 2.5) continue;
         }
         const mid = seg.mid || seg.a.clone().add(seg.b).multiplyScalar(0.5);
         const aLocal = this.worldToSketchLocal(seg.a, basis);
