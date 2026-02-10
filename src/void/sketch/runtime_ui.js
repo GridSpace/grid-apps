@@ -394,7 +394,8 @@ function applyEntityStyle(rec, mode, colors) {
             const parts = view.object.userData?._markerParts || {};
             const active = mode === 'edit' && (
                 hoveredId === id ||
-                selectedIds.has(id)
+                selectedIds.has(id) ||
+                constrained
             );
             view.object.visible = true;
             if (parts.core?.material?.color) {

@@ -104,7 +104,7 @@ function enforceWithFallback(sketch, opts = {}) {
         // subsequent line-length adjustments do not leave vertices drifting
         // off circles/arcs during drag.
         iterChanged = applyPointOnArcConstraints(constraints, points, arcs, fixed) || iterChanged;
-        iterChanged = applyEqualConstraintGroups(constraints, points, lines, fixed) || iterChanged;
+        iterChanged = applyEqualConstraintGroups(constraints, points, lines, arcs, fixed, draggedArcs) || iterChanged;
         changed = changed || iterChanged;
         if (!iterChanged) break;
     }
@@ -607,16 +607,23 @@ function getDrivingArcRadiusFromConstraints(constraints, arcId) {
     return NaN;
 }
 
-function applyEqualConstraintGroups(constraints, points, lines, fixed) {
-    const equalPairs = [];
+function applyEqualConstraintGroups(constraints, points, lines, arcs, fixed, draggedArcs = new Set()) {
+    const equalLinePairs = [];
+    const equalArcPairs = [];
     for (const c of constraints) {
         if (c?.type !== 'equal') continue;
         const refs = Array.isArray(c.refs) ? c.refs : [];
         if (refs.length < 2) continue;
-        if (!lines.has(refs[0]) || !lines.has(refs[1])) continue;
-        equalPairs.push([refs[0], refs[1]]);
+        if (lines.has(refs[0]) && lines.has(refs[1])) {
+            equalLinePairs.push([refs[0], refs[1]]);
+            continue;
+        }
+        if (arcs.has(refs[0]) && arcs.has(refs[1])) {
+            equalArcPairs.push([refs[0], refs[1]]);
+            continue;
+        }
     }
-    if (!equalPairs.length) return false;
+    if (!equalLinePairs.length && !equalArcPairs.length) return false;
 
     const parent = new Map();
     const find = id => {
@@ -636,20 +643,18 @@ function applyEqualConstraintGroups(constraints, points, lines, fixed) {
         const rb = find(b);
         if (ra !== rb) parent.set(rb, ra);
     };
-    for (const [a, b] of equalPairs) union(a, b);
-
-    const groups = new Map();
-    for (const [a, b] of equalPairs) {
+    let changed = false;
+    for (const [a, b] of equalLinePairs) union(a, b);
+    const lineGroups = new Map();
+    for (const [a, b] of equalLinePairs) {
         const ids = [a, b];
         for (const id of ids) {
             const r = find(id);
-            if (!groups.has(r)) groups.set(r, new Set());
-            groups.get(r).add(id);
+            if (!lineGroups.has(r)) lineGroups.set(r, new Set());
+            lineGroups.get(r).add(id);
         }
     }
-
-    let changed = false;
-    for (const ids of groups.values()) {
+    for (const ids of lineGroups.values()) {
         const linesInGroup = Array.from(ids).map(id => lines.get(id)).filter(Boolean);
         if (linesInGroup.length < 2) continue;
         let sum = 0;
@@ -693,6 +698,79 @@ function applyEqualConstraintGroups(constraints, points, lines, fixed) {
             }
         }
     }
+
+    const aparent = new Map();
+    const afind = id => {
+        if (!aparent.has(id)) aparent.set(id, id);
+        let p = aparent.get(id);
+        while (p !== aparent.get(p)) p = aparent.get(p);
+        let n = id;
+        while (aparent.get(n) !== p) {
+            const next = aparent.get(n);
+            aparent.set(n, p);
+            n = next;
+        }
+        return p;
+    };
+    const aunion = (a, b) => {
+        const ra = afind(a);
+        const rb = afind(b);
+        if (ra !== rb) aparent.set(rb, ra);
+    };
+    for (const [a, b] of equalArcPairs) aunion(a, b);
+    const arcGroups = new Map();
+    for (const [a, b] of equalArcPairs) {
+        const ids = [a, b];
+        for (const id of ids) {
+            const r = afind(id);
+            if (!arcGroups.has(r)) arcGroups.set(r, new Set());
+            arcGroups.get(r).add(id);
+        }
+    }
+    for (const ids of arcGroups.values()) {
+        const arcIds = Array.from(ids).filter(id => arcs.has(id));
+        if (arcIds.length < 2) continue;
+        let target = NaN;
+        for (const aid of arcIds) {
+            const dv = getDrivingArcRadiusFromConstraints(constraints, aid);
+            if (Number.isFinite(dv) && dv > EPS) {
+                target = dv;
+                break;
+            }
+        }
+        if (!Number.isFinite(target)) {
+            const dragged = arcIds.filter(id => draggedArcs?.has?.(id));
+            if (dragged.length) {
+                let sum = 0;
+                let count = 0;
+                for (const aid of dragged) {
+                    const c = getArcCircleData(arcs.get(aid), points);
+                    if (!c) continue;
+                    sum += c.radius;
+                    count++;
+                }
+                if (count) target = sum / count;
+            }
+        }
+        if (!Number.isFinite(target)) {
+            let sum = 0;
+            let count = 0;
+            for (const aid of arcIds) {
+                const c = getArcCircleData(arcs.get(aid), points);
+                if (!c) continue;
+                sum += c.radius;
+                count++;
+            }
+            if (!count) continue;
+            target = sum / count;
+        }
+        for (const aid of arcIds) {
+            const arc = arcs.get(aid);
+            if (!arc) continue;
+            changed = applyArcRadiusTarget(arc, points, target, fixed) || changed;
+        }
+    }
+
     return changed;
 }
 
