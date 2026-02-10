@@ -66,7 +66,14 @@ function createFeaturesApi(getApi) {
                 if (feature?.suppressed === undefined) {
                     feature.suppressed = false;
                 }
-                doc.features.push(feature);
+                doc.features = Array.isArray(doc.features) ? doc.features : [];
+                const rawTimeline = doc.timeline?.index;
+                const hasTimelineMarker = rawTimeline !== null && rawTimeline !== undefined && Number.isFinite(rawTimeline);
+                const timelineIndex = hasTimelineMarker
+                    ? Math.max(-1, Math.min(doc.features.length - 1, Math.floor(rawTimeline)))
+                    : (doc.features.length - 1);
+                const insertIndex = hasTimelineMarker ? (timelineIndex + 1) : doc.features.length;
+                doc.features.splice(insertIndex, 0, feature);
                 api.document.save({
                     kind: 'micro',
                     opType: 'feature.add',
@@ -75,8 +82,9 @@ function createFeaturesApi(getApi) {
                         id: feature?.id || null
                     }
                 });
-                if (doc.timeline?.index !== null && doc.timeline?.index !== undefined) {
-                    doc.timeline.index = doc.features.length - 1;
+                if (hasTimelineMarker) {
+                    // Keep marker at the newly inserted feature so downstream remains disabled.
+                    doc.timeline.index = insertIndex;
                 }
                 api.sketchRuntime?.sync();
                 api.solids?.scheduleRebuild?.('feature.add');
