@@ -364,6 +364,11 @@ function viewDirectionFromAngles(left, upAngle) {
 }
 
 function tweenPreset(left, upAngle, then) {
+    // Keep legacy behavior for orbit-based modes (kiri/mesh): do not tween camera.up.
+    if (controlMode !== 'void') {
+        tweenCam({ left, up: upAngle, panX, panY, panZ, then });
+        return;
+    }
     const upVec = camera
         ? snapUpForViewDirection(viewDirectionFromAngles(left, upAngle), camera.up)
         : null;
@@ -1958,7 +1963,11 @@ let Space = {
 
         // Copy camera position
         newCamera.position.copy(camera.position);
-        newCamera.up.copy(camera.up);
+        if (controlMode === 'void') {
+            newCamera.up.copy(camera.up);
+        } else {
+            newCamera.up.set(0, 1, 0);
+        }
         newCamera.lookAt(target);
 
         // Store old control properties
