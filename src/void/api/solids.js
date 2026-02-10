@@ -740,6 +740,19 @@ function createSolidsApi(getApi) {
             if (targetSolidId && Number.isFinite(sourceFaceId)) {
                 const faceKey = `${targetSolidId}:${sourceFaceId}`;
                 const segs = this.getFaceBoundarySegments(faceKey) || [];
+                const sourceEdgeIndex = Number(source?.edge_index);
+                if (Number.isFinite(sourceEdgeIndex) && sourceEdgeIndex >= 0 && sourceEdgeIndex < segs.length) {
+                    const seg = segs[sourceEdgeIndex];
+                    if (seg?.a && seg?.b) {
+                        return {
+                            solidId: targetSolidId,
+                            index: sourceEdgeIndex,
+                            aWorld: seg.a,
+                            bWorld: seg.b,
+                            midWorld: seg.a.clone().add(seg.b).multiplyScalar(0.5)
+                        };
+                    }
+                }
                 const face = this.getFaceByKey(faceKey);
                 const faceFrame = face?.meta ? this.frameFromFaceMeta(face.meta, source?.face_frame || null) : null;
                 const faceBasis = frameToBasis(faceFrame);
