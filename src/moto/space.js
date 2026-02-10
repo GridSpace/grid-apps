@@ -38,6 +38,8 @@ let WIN = self.window || {},
     selectRecurse = false,
     defaultKeys = true,
     fitVisibleOnly = false,
+    fitPaddingPerspective = 0.5,
+    fitPaddingOrthographic = 0.9,
     initialized = false,
     alignedTracking = false,
     trackingMode = 'platform',  // 'platform', 'camera-aligned', 'world-xy'
@@ -366,6 +368,22 @@ function tweenPreset(left, upAngle, then) {
         ? snapUpForViewDirection(viewDirectionFromAngles(left, upAngle), camera.up)
         : null;
     tweenCam({ left, up: upAngle, panX, panY, panZ, upVec: upVec || undefined, then });
+}
+
+function fitPreset(left, upAngle, then) {
+    const upVec = camera
+        ? snapUpForViewDirection(viewDirectionFromAngles(left, upAngle), camera.up)
+        : null;
+    Space.view.fit(then, { left, up: upAngle, upVec: upVec || undefined, tween: true });
+}
+
+function runPreset(left, upAngle, then) {
+    // Only void uses preset+fit behavior. Kiri/mesh keep legacy fixed-distance presets.
+    if (controlMode === 'void') {
+        fitPreset(left, upAngle, then);
+    } else {
+        tweenPreset(left, upAngle, then);
+    }
 }
 
 /** ******************************************************************
@@ -1513,13 +1531,13 @@ let Space = {
     },
 
     view: {
-        top:    (then) => { tweenPreset(0,     0,   then) },
-        bottom: (then) => { tweenPreset(home,  PI,  then) },
-        back:   (then) => { tweenPreset(PI,    PI2, then) },
-        home:   (then) => { tweenPreset(home,  up,  then) },
-        front:  (then) => { tweenPreset(0,     PI2, then) },
-        right:  (then) => { tweenPreset(PI2,   PI2, then) },
-        left:   (then) => { tweenPreset(-PI2,  PI2, then) },
+        top:    (then) => { runPreset(0,     0,   then) },
+        bottom: (then) => { runPreset(home,  PI,  then) },
+        back:   (then) => { runPreset(PI,    PI2, then) },
+        home:   (then) => { runPreset(home,  up,  then) },
+        front:  (then) => { runPreset(0,     PI2, then) },
+        right:  (then) => { runPreset(PI2,   PI2, then) },
+        left:   (then) => { runPreset(-PI2,  PI2, then) },
         reset:  ()     => { viewControl.reset(); requestRefresh() },
         load:   (cam)  => { viewControl.setPosition(cam); requestRefresh() },
         save:   ()     => { return viewControl.getPosition(true) },
@@ -1561,9 +1579,13 @@ let Space = {
 
             // Use the maximum dimension for distance calculation
             const maxDim = Math.max(size.x, size.y, size.z);
+            // Get target view angles (may be overridden by caller)
+            const pos = viewControl.getPosition();
+            const left = opts.left !== undefined ? opts.left : pos.left;
+            const upAngle = opts.up !== undefined ? opts.up : pos.up;
 
             // Calculate desired camera distance based on bounding box
-            const padding = opts.padding || 0.75;
+            const padding = opts.padding || (camera.isOrthographicCamera ? fitPaddingOrthographic : fitPaddingPerspective);
             let desiredDistance;
             let orthoScaleSaveTarget = null;
 
@@ -1575,8 +1597,6 @@ let Space = {
             } else {
                 // For orthographic, fit based on camera-plane extents (not perspective distance).
                 // This avoids chronic over-zoom-out in ortho mode.
-                camera.updateMatrixWorld(true);
-                const inv = camera.matrixWorldInverse;
                 const min = box.min;
                 const max = box.max;
                 const corners = [
@@ -1589,16 +1609,49 @@ let Space = {
                     new THREE.Vector3(max.x, max.y, min.z),
                     new THREE.Vector3(max.x, max.y, max.z)
                 ];
+
+                const requestedView = opts.left !== undefined || opts.up !== undefined || !!opts.upVec;
                 let camMinX = Infinity;
                 let camMaxX = -Infinity;
                 let camMinY = Infinity;
                 let camMaxY = -Infinity;
-                for (const corner of corners) {
-                    corner.applyMatrix4(inv);
-                    if (corner.x < camMinX) camMinX = corner.x;
-                    if (corner.x > camMaxX) camMaxX = corner.x;
-                    if (corner.y < camMinY) camMinY = corner.y;
-                    if (corner.y > camMaxY) camMaxY = corner.y;
+                if (requestedView) {
+                    const viewDir = viewDirectionFromAngles(left, upAngle);
+                    let upVec = null;
+                    if (opts.upVec) {
+                        upVec = new THREE.Vector3(opts.upVec.x || 0, opts.upVec.y || 0, opts.upVec.z || 0);
+                        if (upVec.lengthSq() > 1e-12) upVec.normalize();
+                    }
+                    if (!upVec) {
+                        upVec = snapUpForViewDirection(viewDir, camera.up) || camera.up.clone();
+                    }
+                    upVec = upVec.projectOnPlane(viewDir);
+                    if (upVec.lengthSq() < 1e-8) {
+                        upVec = new THREE.Vector3(0, 1, 0).projectOnPlane(viewDir);
+                    }
+                    if (upVec.lengthSq() < 1e-8) {
+                        upVec = new THREE.Vector3(1, 0, 0).projectOnPlane(viewDir);
+                    }
+                    upVec.normalize();
+                    const rightVec = upVec.clone().cross(viewDir).normalize();
+                    for (const corner of corners) {
+                        const x = corner.dot(rightVec);
+                        const y = corner.dot(upVec);
+                        if (x < camMinX) camMinX = x;
+                        if (x > camMaxX) camMaxX = x;
+                        if (y < camMinY) camMinY = y;
+                        if (y > camMaxY) camMaxY = y;
+                    }
+                } else {
+                    camera.updateMatrixWorld(true);
+                    const inv = camera.matrixWorldInverse;
+                    for (const corner of corners) {
+                        corner.applyMatrix4(inv);
+                        if (corner.x < camMinX) camMinX = corner.x;
+                        if (corner.x > camMaxX) camMaxX = corner.x;
+                        if (corner.y < camMinY) camMinY = corner.y;
+                        if (corner.y > camMaxY) camMaxY = corner.y;
+                    }
                 }
                 const spanX = Math.max(1e-6, camMaxX - camMinX);
                 const spanY = Math.max(1e-6, camMaxY - camMinY);
@@ -1609,11 +1662,6 @@ let Space = {
                 // Keep historical fit padding semantics: lower padding => more margin.
                 orthoScaleSaveTarget = Math.max(fitX, fitY) / Math.max(1e-6, padding);
             }
-
-            // Get current view angles or use defaults
-            const pos = viewControl.getPosition();
-            const left = opts.left !== undefined ? opts.left : pos.left;
-            const upAngle = opts.up !== undefined ? opts.up : pos.up;
 
             // Map scene coordinates to pan coordinates
             // The target position in orbit control is in scene space
@@ -1646,11 +1694,20 @@ let Space = {
             }
 
             if (opts.tween !== false) {
+                if (opts.upVec) {
+                    fitPos.upVec = opts.upVec;
+                }
                 fitPos.scale = fitScaleRatio;
                 fitPos.time = opts.time ?? 350;
                 fitPos.then = then;
                 tweenCam(fitPos);
             } else {
+                if (opts.upVec && camera) {
+                    const upNow = new THREE.Vector3(opts.upVec.x || 0, opts.upVec.y || 0, opts.upVec.z || 0);
+                    if (upNow.lengthSq() > 1e-12) {
+                        camera.up.copy(upNow.normalize());
+                    }
+                }
                 viewControl.setPosition(fitPos);
                 viewControl.setPosition({ scale: fitScaleRatio });
                 viewControl.update();
@@ -1691,6 +1748,14 @@ let Space = {
         },
         setFitVisibleOnly: (enabled) => {
             fitVisibleOnly = !!enabled;
+        },
+        setFitPadding: (next = {}) => {
+            if (Number.isFinite(next.perspective) && next.perspective > 0) {
+                fitPaddingPerspective = next.perspective;
+            }
+            if (Number.isFinite(next.orthographic) && next.orthographic > 0) {
+                fitPaddingOrthographic = next.orthographic;
+            }
         },
         getFPS () { return fps },
         getRMS() { return renderTime },

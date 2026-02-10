@@ -278,6 +278,8 @@ class ViewCube {
         renderer.setScissor(vpX, vpY, vpS, vpS);
         renderer.setScissorTest(true);
         renderer.autoClear = false;
+        // Ensure the cube is never occluded by main-scene depth.
+        renderer.clearDepth();
 
         // Render viewcube scene
         renderer.render(this.scene, this.camera);
