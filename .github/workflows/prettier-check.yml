@@ -1,4 +1,4 @@
-name: 'Docs Fomatting Check'
+name: 'Docs Formatting Check'
 on:
   push:
     paths:
@@ -12,12 +12,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          bun-version: latest
-      - name: Install dependencies
-        run: bun install
-      - name: check format for docs 
-        run:
-          bun docs-check
+          node-version: '20'
+      - name: Check docs formatting (retry once on transient network failure)
+        shell: bash
+        run: |
+          for attempt in 1 2; do
+            npx --yes prettier@3.5.3 --config ./conf/prettier.config.js ./docs --check && exit 0
+            if [ "$attempt" -lt 2 ]; then
+              echo "Prettier check failed (attempt $attempt). Retrying..."
+              sleep 5
+            fi
+          done
+          echo "Prettier check failed after retries."
+          exit 1
