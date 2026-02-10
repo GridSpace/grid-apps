@@ -209,6 +209,7 @@ src/
   - all above are revisioned + undo/redoable
 - Sketch runtime currently renders from the active rebuild set (`features.listBuilt()`), not raw full feature list
 - Open TODO: stabilise dual-tangent sketch behavior (`line` tangent to two circles/arcs with endpoint-on-arc constraints)
+- Open TODO: add min/max distance constraints for circle/arc vs target entity (Onshape-style behavior based on click side: near-side pick => min distance, far-side pick => max distance)
 
 **Phase 2: Sketch System (Current Workstream)**
 - planegcs constraint solver integration is active

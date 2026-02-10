@@ -50,6 +50,42 @@ function formatMeasuredValue(value) {
     return Number(value.toFixed(3)).toString();
 }
 
+function computeArcCenterForUi(arc, a, b) {
+    const cx = Number(arc?.cx);
+    const cy = Number(arc?.cy);
+    if (Number.isFinite(cx) && Number.isFinite(cy)) {
+        return { x: cx, y: cy };
+    }
+    const mx = Number(arc?.mx);
+    const my = Number(arc?.my);
+    if (!Number.isFinite(mx) || !Number.isFinite(my) || !a || !b) {
+        return null;
+    }
+    const x1 = a.x || 0;
+    const y1 = a.y || 0;
+    const x2 = b.x || 0;
+    const y2 = b.y || 0;
+    const x3 = mx;
+    const y3 = my;
+    const d = 2 * (x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2));
+    if (Math.abs(d) < 1e-8) return null;
+    const x1sq = x1 * x1 + y1 * y1;
+    const x2sq = x2 * x2 + y2 * y2;
+    const x3sq = x3 * x3 + y3 * y3;
+    const ccx = (x1sq * (y2 - y3) + x2sq * (y3 - y1) + x3sq * (y1 - y2)) / d;
+    const ccy = (x1sq * (x3 - x2) + x2sq * (x1 - x3) + x3sq * (x2 - x1)) / d;
+    if (!Number.isFinite(ccx) || !Number.isFinite(ccy)) return null;
+    return { x: ccx, y: ccy };
+}
+
+function isRadiusDimensionConstraint(feature, constraint) {
+    const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
+    if (refs.length !== 1) return false;
+    const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+    const byId = new Map(entities.map(e => [e?.id, e]));
+    return byId.get(refs[0])?.type === 'arc';
+}
+
 function projectLocalToScreen(rec, local, getApi) {
     if (!rec?.entitiesGroup || !local) return null;
     const world = new THREE.Vector3(local.x || 0, local.y || 0, 0);
@@ -64,14 +100,26 @@ function getDimensionEndpoints(feature, constraint) {
     const byId = new Map(entities.map(e => [e?.id, e]));
     const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
     if (refs.length === 1) {
-        const line = byId.get(refs[0]);
-        if (line?.type !== 'line') return null;
-        const aId = typeof line?.a === 'string' ? line.a : (typeof line?.p1_id === 'string' ? line.p1_id : null);
-        const bId = typeof line?.b === 'string' ? line.b : (typeof line?.p2_id === 'string' ? line.p2_id : null);
-        const a = byId.get(aId);
-        const b = byId.get(bId);
-        if (a?.type !== 'point' || b?.type !== 'point') return null;
-        return [a, b];
+        const ent = byId.get(refs[0]);
+        if (ent?.type === 'line') {
+            const aId = typeof ent?.a === 'string' ? ent.a : (typeof ent?.p1_id === 'string' ? ent.p1_id : null);
+            const bId = typeof ent?.b === 'string' ? ent.b : (typeof ent?.p2_id === 'string' ? ent.p2_id : null);
+            const a = byId.get(aId);
+            const b = byId.get(bId);
+            if (a?.type !== 'point' || b?.type !== 'point') return null;
+            return [a, b];
+        }
+        if (ent?.type === 'arc') {
+            const aId = typeof ent?.a === 'string' ? ent.a : (typeof ent?.p1_id === 'string' ? ent.p1_id : null);
+            const bId = typeof ent?.b === 'string' ? ent.b : (typeof ent?.p2_id === 'string' ? ent.p2_id : null);
+            const a = byId.get(aId);
+            const b = byId.get(bId);
+            if (a?.type !== 'point' || b?.type !== 'point') return null;
+            const center = computeArcCenterForUi(ent, a, b);
+            if (!center) return null;
+            return [{ x: center.x, y: center.y, type: 'point' }, { x: a.x || 0, y: a.y || 0, type: 'point' }];
+        }
+        return null;
     }
     if (refs.length >= 2) {
         const a = byId.get(refs[0]);
@@ -741,6 +789,24 @@ function getConstraintAnchorLocal(feature, constraint) {
     const lineTypes = new Set(['horizontal', 'vertical', 'horizontal_points', 'vertical_points', 'tangent', 'equal', 'collinear', 'dimension', 'arc_center_on_line']);
 
     if (lineTypes.has(constraint?.type)) {
+        if (constraint?.type === 'dimension') {
+            const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
+            if (refs.length === 1) {
+                const ent = byId.get(refs[0]);
+                if (ent?.type === 'arc') {
+                    const aId = typeof ent?.a === 'string' ? ent.a : (typeof ent?.p1_id === 'string' ? ent.p1_id : null);
+                    const bId = typeof ent?.b === 'string' ? ent.b : (typeof ent?.p2_id === 'string' ? ent.p2_id : null);
+                    const a = byId.get(aId);
+                    const b = byId.get(bId);
+                    if (a?.type === 'point' && b?.type === 'point') {
+                        const center = computeArcCenterForUi(ent, a, b);
+                        if (center) {
+                            return { x: (center.x + (a.x || 0)) * 0.5, y: (center.y + (a.y || 0)) * 0.5 };
+                        }
+                    }
+                }
+            }
+        }
         const line = refs.map(id => byId.get(id)).find(e => e?.type === 'line');
         if (line) {
             const [a, b] = this.getLineEndpoints(line, byId);
@@ -942,6 +1008,7 @@ function updateConstraintGlyphs(getApi, opts = {}) {
             glyph.className = 'sketch-constraint-glyph';
             const measured = isDimension ? computeDimensionMeasurement(rec.feature, c) : NaN;
             const mode = isDimension ? getDimensionMode(c) : 'driving';
+            const isRadiusDim = isDimension ? isRadiusDimensionConstraint(rec.feature, c) : false;
             glyph.textContent = isDimension
                 ? (mode === 'driven' ? formatMeasuredValue(measured) : formatDimensionLabel(c))
                 : this.constraintGlyphLabel(c.type);
@@ -951,7 +1018,8 @@ function updateConstraintGlyphs(getApi, opts = {}) {
                 glyph.classList.add('dimension');
                 glyph.classList.toggle('driven', mode === 'driven');
                 glyph.classList.toggle('driving', mode === 'driving');
-                glyph.dataset.mode = mode === 'driven' ? 'R' : 'D';
+                glyph.classList.toggle('radius', !!isRadiusDim);
+                glyph.dataset.mode = isRadiusDim ? '⊘' : (mode === 'driven' ? 'R' : 'D');
                 const ends = getDimensionEndpoints(rec.feature, c);
                 if (ends) {
                     const centerLocal = getDimensionCenterLocal.call(this, rec, rec.feature, c, this._glyphDrag);
@@ -968,7 +1036,7 @@ function updateConstraintGlyphs(getApi, opts = {}) {
                 glyph.classList.add('hover');
             }
             glyph.title = isDimension
-                ? `dimension (${mode}) - double-click edit, alt-click toggle driving/reference`
+                ? `${isRadiusDim ? 'radius ' : ''}dimension (${mode}) - double-click edit, alt-click toggle driving/reference`
                 : (c.type || 'constraint');
             glyph.ondblclick = event => {
                 if (!isDimension || mode !== 'driving') return;

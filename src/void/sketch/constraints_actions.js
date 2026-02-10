@@ -17,21 +17,79 @@ function getLineEndpointIds(line) {
     return [aId, bId];
 }
 
+function getArcEndpoints(arc) {
+    if (!arc) return [null, null];
+    const aId = typeof arc?.a === 'string' ? arc.a : (typeof arc?.p1_id === 'string' ? arc.p1_id : null);
+    const bId = typeof arc?.b === 'string' ? arc.b : (typeof arc?.p2_id === 'string' ? arc.p2_id : null);
+    return [aId, bId];
+}
+
+function resolvePointLike(byId, ref) {
+    if (!ref) return null;
+    if (ref === SKETCH_VIRTUAL_ORIGIN_ID) {
+        return { x: 0, y: 0 };
+    }
+    if (typeof ref === 'string' && ref.startsWith('arc-center:')) {
+        const arcId = ref.substring('arc-center:'.length);
+        const arc = byId.get(arcId);
+        if (arc?.type !== 'arc') return null;
+        const cx = Number(arc?.cx);
+        const cy = Number(arc?.cy);
+        if (Number.isFinite(cx) && Number.isFinite(cy)) {
+            return { x: cx, y: cy };
+        }
+        const [aId, bId] = getArcEndpoints(arc);
+        const a = byId.get(aId);
+        const b = byId.get(bId);
+        if (!a || !b) return null;
+        const mx = Number(arc?.mx);
+        const my = Number(arc?.my);
+        if (!Number.isFinite(mx) || !Number.isFinite(my)) return null;
+        const x1 = a.x || 0; const y1 = a.y || 0;
+        const x2 = b.x || 0; const y2 = b.y || 0;
+        const x3 = mx; const y3 = my;
+        const d = 2 * (x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2));
+        if (Math.abs(d) < 1e-8) return null;
+        const x1sq = x1 * x1 + y1 * y1;
+        const x2sq = x2 * x2 + y2 * y2;
+        const x3sq = x3 * x3 + y3 * y3;
+        const cx2 = (x1sq * (y2 - y3) + x2sq * (y3 - y1) + x3sq * (y1 - y2)) / d;
+        const cy2 = (x1sq * (x3 - x2) + x2sq * (x1 - x3) + x3sq * (x2 - x1)) / d;
+        if (!Number.isFinite(cx2) || !Number.isFinite(cy2)) return null;
+        return { x: cx2, y: cy2 };
+    }
+    const point = byId.get(ref);
+    if (point?.type === 'point') {
+        return { x: point.x || 0, y: point.y || 0 };
+    }
+    return null;
+}
+
 function measureDimensionValue(entities, refs = []) {
     const byId = new Map((entities || []).map(e => [e?.id, e]));
     if (refs.length === 1) {
-        const line = byId.get(refs[0]);
-        if (line?.type !== 'line') return NaN;
-        const [aId, bId] = getLineEndpointIds(line);
-        const a = byId.get(aId);
-        const b = byId.get(bId);
-        if (a?.type !== 'point' || b?.type !== 'point') return NaN;
-        return Math.hypot((b.x || 0) - (a.x || 0), (b.y || 0) - (a.y || 0));
+        const ent = byId.get(refs[0]);
+        if (ent?.type === 'line') {
+            const [aId, bId] = getLineEndpointIds(ent);
+            const a = byId.get(aId);
+            const b = byId.get(bId);
+            if (a?.type !== 'point' || b?.type !== 'point') return NaN;
+            return Math.hypot((b.x || 0) - (a.x || 0), (b.y || 0) - (a.y || 0));
+        }
+        if (ent?.type === 'arc') {
+            const center = resolvePointLike(byId, `arc-center:${ent.id}`);
+            if (!center) return NaN;
+            const [aId] = getArcEndpoints(ent);
+            const a = byId.get(aId);
+            if (a?.type !== 'point') return NaN;
+            return Math.hypot((a.x || 0) - center.x, (a.y || 0) - center.y);
+        }
+        return NaN;
     }
     if (refs.length >= 2) {
-        const a = byId.get(refs[0]);
-        const b = byId.get(refs[1]);
-        if (a?.type !== 'point' || b?.type !== 'point') return NaN;
+        const a = resolvePointLike(byId, refs[0]);
+        const b = resolvePointLike(byId, refs[1]);
+        if (!a || !b) return NaN;
         return Math.hypot((b.x || 0) - (a.x || 0), (b.y || 0) - (a.y || 0));
     }
     return NaN;
@@ -187,7 +245,8 @@ function applySketchConstraint(type) {
     const entities = Array.isArray(feature.entities) ? feature.entities : [];
     const selected = entities.filter(entity => this.selectedSketchEntities.has(entity.id));
     const hasOriginSelected = this.selectedSketchEntities.has(SKETCH_VIRTUAL_ORIGIN_ID);
-    if (!selected.length && !hasOriginSelected) {
+    const hasArcCenterSelected = (this.selectedSketchArcCenters?.size || 0) > 0;
+    if (!selected.length && !hasOriginSelected && !hasArcCenterSelected) {
         return false;
     }
 
@@ -198,6 +257,10 @@ function applySketchConstraint(type) {
     const arcCenters = Array.from(this.selectedSketchArcCenters || [])
         .map(id => entitiesById.get(id))
         .filter(entity => entity?.type === 'arc');
+    const pointLikeRefs = [];
+    for (const point of points) pointLikeRefs.push(point.id);
+    for (const arc of arcCenters) pointLikeRefs.push(`arc-center:${arc.id}`);
+    if (hasOriginSelected) pointLikeRefs.push(SKETCH_VIRTUAL_ORIGIN_ID);
     const specs = [];
 
     if (type === 'horizontal' || type === 'vertical') {
@@ -205,8 +268,8 @@ function applySketchConstraint(type) {
             for (const line of lines) {
                 specs.push({ type, refs: [line.id] });
             }
-        } else if (points.length === 2) {
-            specs.push({ type: `${type}_points`, refs: [points[0].id, points[1].id] });
+        } else if (pointLikeRefs.length === 2) {
+            specs.push({ type: `${type}_points`, refs: [pointLikeRefs[0], pointLikeRefs[1]] });
         } else {
             return false;
         }
@@ -216,12 +279,18 @@ function applySketchConstraint(type) {
         }
         specs.push({ type, refs: [lines[0].id, lines[1].id] });
     } else if (type === 'equal') {
-        if (lines.length < 2) {
+        if (lines.length >= 2) {
+            const base = lines[0];
+            for (let i = 1; i < lines.length; i++) {
+                specs.push({ type, refs: [base.id, lines[i].id] });
+            }
+        } else if (arcs.length >= 2) {
+            const base = arcs[0];
+            for (let i = 1; i < arcs.length; i++) {
+                specs.push({ type, refs: [base.id, arcs[i].id] });
+            }
+        } else {
             return false;
-        }
-        const base = lines[0];
-        for (let i = 1; i < lines.length; i++) {
-            specs.push({ type, refs: [base.id, lines[i].id] });
         }
     } else if (type === 'collinear') {
         if (lines.length !== 2) {
@@ -284,8 +353,10 @@ function applySketchConstraint(type) {
         let dimRefs = null;
         if (lines.length === 1 && points.length === 0 && arcs.length === 0) {
             dimRefs = [lines[0].id];
-        } else if (points.length === 2 && lines.length === 0 && arcs.length === 0) {
-            dimRefs = [points[0].id, points[1].id];
+        } else if (arcs.length === 1 && lines.length === 0 && points.length === 0 && arcCenters.length === 0 && !hasOriginSelected) {
+            dimRefs = [arcs[0].id];
+        } else if (pointLikeRefs.length === 2 && lines.length === 0 && arcs.length === 0) {
+            dimRefs = [pointLikeRefs[0], pointLikeRefs[1]];
         } else {
             return false;
         }
