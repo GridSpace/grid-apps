@@ -320,9 +320,7 @@ function applyEntityStyle(rec, mode, colors) {
             const parts = view.object.userData?._markerParts || {};
             const active = mode === 'edit' && (
                 hoveredId === id ||
-                selectedIds.has(id) ||
-                hoveredId === view.entity?.id ||
-                selectedIds.has(view.entity?.id)
+                selectedIds.has(id)
             );
             view.object.visible = true;
             if (parts.core?.material?.color) {
@@ -368,6 +366,15 @@ function getConstraintHoverHighlight(rec) {
     const c = constraints.find(cst => cst?.id === hoveredConstraintId);
     if (!c) return out;
     const refs = Array.isArray(c.refs) ? c.refs : [];
+    if (c?.type === 'arc_center_coincident' && refs.length >= 2) {
+        const arcId = refs[0];
+        const pointId = refs[1];
+        if (typeof arcId === 'string' && arcId) {
+            out.add(`arc-center:${arcId}`);
+        }
+        if (pointId) out.add(pointId);
+        return out;
+    }
     const pointRefs = [];
     for (const ref of refs) {
         if (!ref) continue;
@@ -825,8 +832,21 @@ function updateConstraintGlyphs(getApi, opts = {}) {
     const visible = [];
     for (const constraint of constraints) {
         const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
-        const byEntity = refs.some(ref => selectedEntityIds.has(ref));
-        const byHover = !!hoveredEntityId && refs.includes(hoveredEntityId);
+        let byEntity = refs.some(ref => selectedEntityIds.has(ref));
+        let byHover = !!hoveredEntityId && refs.includes(hoveredEntityId);
+        if (constraint?.type === 'arc_center_coincident' && refs.length >= 2) {
+            const arcId = refs[0];
+            const pointId = refs[1];
+            const arcCenterKey = typeof arcId === 'string' ? `arc-center:${arcId}` : null;
+            byEntity = !!(
+                (pointId && selectedEntityIds.has(pointId)) ||
+                (arcCenterKey && selectedEntityIds.has(arcCenterKey))
+            );
+            byHover = !!(
+                (pointId && hoveredEntityId === pointId) ||
+                (arcCenterKey && hoveredEntityId === arcCenterKey)
+            );
+        }
         const byDrag = draggingConstraintId === constraint?.id;
         const alwaysVisible = constraint?.type === 'dimension';
         if (alwaysVisible || byEntity || byHover || byDrag) {
@@ -863,7 +883,19 @@ function updateConstraintGlyphs(getApi, opts = {}) {
                 const centerScreen = centerLocal ? this.projectConstraintAnchor(rec, centerLocal, getApi) : null;
                 pos = centerScreen || this.applyConstraintOffset(c, screen, i, items.length, opts);
             } else {
-                pos = this.applyConstraintOffset(c, screen, i, items.length, opts);
+                if (this._glyphDrag && this._glyphDrag.constraintId === c?.id && !this._glyphDrag.isDimension) {
+                    const size = opts.glyphSizePx || 18;
+                    const gap = opts.glyphGapPx || 4;
+                    const rowWidth = items.length * size + Math.max(0, items.length - 1) * gap;
+                    const slotX = -rowWidth / 2 + (i + 0.5) * size + i * gap;
+                    const dragBase = this._glyphDrag.current || this._glyphDrag.base || { x: 0, y: -18 };
+                    pos = {
+                        x: screen.x + (dragBase.x || 0) + slotX,
+                        y: screen.y + (dragBase.y || 0)
+                    };
+                } else {
+                    pos = this.applyConstraintOffset(c, screen, i, items.length, opts);
+                }
             }
             const glyph = document.createElement('button');
             glyph.className = 'sketch-constraint-glyph';
