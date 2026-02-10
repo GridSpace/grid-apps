@@ -34,15 +34,6 @@ function createSolidsApi(getApi) {
         return { origin, normal, xAxis, yAxis };
     }
 
-    function worldToFrameLocal(world, basis) {
-        if (!world || !basis) return null;
-        const rel = world.clone().sub(basis.origin);
-        return {
-            x: rel.dot(basis.xAxis),
-            y: rel.dot(basis.yAxis)
-        };
-    }
-
     function frameLocalToWorld(local, basis) {
         if (!local || !basis) return null;
         return basis.origin.clone()
@@ -1161,7 +1152,7 @@ function createSolidsApi(getApi) {
             };
         },
 
-        refreshSketchFaceAttachments(debug = false) {
+        refreshSketchFaceAttachments() {
             const api = getApi();
             const features = api.features.list() || [];
             let changed = false;
@@ -1218,29 +1209,11 @@ function createSolidsApi(getApi) {
                         });
                     }
                 }
-                if (source?.type !== 'solid-face' && source?.type !== 'face') {
-                    if (debug && target?.kind === 'face') {
-                        console.log('void.rebind.skip_source', {
-                            sketchId: feature.id,
-                            targetId: target?.id || null,
-                            sourceType: source?.type || null
-                        });
-                    }
-                    continue;
-                }
+                if (source?.type !== 'solid-face' && source?.type !== 'face') continue;
                 if (!resolved) {
                     resolved = this.resolveSketchFrameForSource(source, feature.plane || null);
                 }
-                if (!resolved?.frame) {
-                    if (debug) {
-                        console.log('void.rebind.no_resolve', {
-                            sketchId: feature.id,
-                            targetId: target?.id || null,
-                            source: source || null
-                        });
-                    }
-                    continue;
-                }
+                if (!resolved?.frame) continue;
                 const frame = this.applyOffsetToFrame(resolved.frame, Number(feature?.target?.offset || 0));
                 const prev = feature.plane || {};
                 const nextSolidId = String(resolved.solidId || source?.solid_id || '');
@@ -1257,19 +1230,6 @@ function createSolidsApi(getApi) {
                     Number(source?.face_id) === Number(resolved.faceId) &&
                     String(source?.solid_id || '') === nextSolidId &&
                     source?.type === 'solid-face';
-                if (debug) {
-                    console.log('void.rebind.check', {
-                        sketchId: feature.id,
-                        same,
-                        targetId: target?.id || null,
-                        sourceSolid: String(source?.solid_id || ''),
-                        sourceFace: Number(source?.face_id),
-                        nextSolidId,
-                        nextFaceId: Number(resolved.faceId),
-                        prevOrigin: prev?.origin || null,
-                        nextOrigin: frame?.origin || null
-                    });
-                }
                 if (same) continue;
                 api.features.mutateTransient(feature.id, item => {
                     item.plane = frame;
@@ -1297,12 +1257,6 @@ function createSolidsApi(getApi) {
                     item.target.kind = 'face';
                     item.target.name = 'Face';
                 });
-                if (debug) {
-                    console.log('void.rebind.apply', {
-                        sketchId: feature.id,
-                        targetId: `${nextSolidId}:f${resolved.faceId}`
-                    });
-                }
                 changed = true;
             }
             return changed;
@@ -1385,8 +1339,7 @@ function createSolidsApi(getApi) {
                             derivedChanged = true;
                         }
                     }
-                    const debugRebind = String(passReason || '').startsWith('feature.edit.exit');
-                    const rebound = this.refreshSketchFaceAttachments(debugRebind);
+                    const rebound = this.refreshSketchFaceAttachments();
                     if (rebound || derivedChanged) {
                         if (persist) {
                             await api.document.save({
