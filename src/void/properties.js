@@ -360,11 +360,33 @@ const properties = {
                 const sourceType = item?.target?.source?.type || null;
                 if (sourceType === 'solid-face') {
                     const source = item.target.source;
-                    const resolved = api.solids?.resolveSketchFrameForSource?.(source, item.plane || null);
-                    if (resolved?.frame) {
-                        item.target.source.face_id = resolved.faceId;
-                        item.target.id = `${source.solid_id}:f${resolved.faceId}`;
-                        item.plane = api.solids?.applyOffsetToFrame?.(resolved.frame, value) || resolved.frame;
+                    const sourceSolidId = String(source?.solid_id || '');
+                    const sourceFaceId = Number(source?.face_id);
+                    let frame = null;
+                    let nextSolidId = sourceSolidId;
+                    let nextFaceId = sourceFaceId;
+
+                    // Offset edits should stay attached to the same face when possible.
+                    if (sourceSolidId && Number.isFinite(sourceFaceId)) {
+                        const direct = api.solids?.getSketchTargetForFaceKey?.(`${sourceSolidId}:${sourceFaceId}`) || null;
+                        if (direct?.frame) {
+                            frame = direct.frame;
+                        }
+                    }
+                    // Fallback only when the original face can no longer be resolved.
+                    if (!frame) {
+                        const resolved = api.solids?.resolveSketchFrameForSource?.(source, item.plane || null);
+                        if (resolved?.frame) {
+                            frame = resolved.frame;
+                            nextSolidId = String(resolved.solidId || sourceSolidId);
+                            nextFaceId = Number(resolved.faceId);
+                        }
+                    }
+                    if (frame) {
+                        item.target.source.solid_id = nextSolidId;
+                        item.target.source.face_id = nextFaceId;
+                        item.target.id = `${nextSolidId}:f${nextFaceId}`;
+                        item.plane = api.solids?.applyOffsetToFrame?.(frame, value) || frame;
                     }
                 } else if (sourceType === 'plane' && item.target?.source?.id) {
                     const option = DATUM_OPTIONS.find(o => o.id === item.target.source.id);
