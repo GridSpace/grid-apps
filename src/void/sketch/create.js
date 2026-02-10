@@ -146,6 +146,13 @@ function createSketchLine(feature, a, b, options = {}) {
         sketch.entities = Array.isArray(sketch.entities) ? sketch.entities : [];
         sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
 
+        const parseArcCenterRef = ref => {
+            if (typeof ref !== 'string') return null;
+            if (!ref.startsWith('arc-center:')) return null;
+            const arcId = ref.substring('arc-center:'.length);
+            return arcId || null;
+        };
+
         const pa = {
             id: this.newSketchEntityId('point'),
             type: 'point',
@@ -165,10 +172,28 @@ function createSketchLine(feature, a, b, options = {}) {
         sketch.entities.push(pa, pb);
 
         if (options.startRefId) {
-            addCoincidentConstraintIfMissing.call(this, sketch, pa.id, options.startRefId);
+            const arcId = parseArcCenterRef(options.startRefId);
+            if (arcId) {
+                sketch.constraints.push({
+                    id: this.newSketchEntityId('constraint'),
+                    type: 'arc_center_coincident',
+                    refs: [arcId, pa.id]
+                });
+            } else {
+                addCoincidentConstraintIfMissing.call(this, sketch, pa.id, options.startRefId);
+            }
         }
         if (options.endRefId) {
-            addCoincidentConstraintIfMissing.call(this, sketch, pb.id, options.endRefId);
+            const arcId = parseArcCenterRef(options.endRefId);
+            if (arcId) {
+                sketch.constraints.push({
+                    id: this.newSketchEntityId('constraint'),
+                    type: 'arc_center_coincident',
+                    refs: [arcId, pb.id]
+                });
+            } else {
+                addCoincidentConstraintIfMissing.call(this, sketch, pb.id, options.endRefId);
+            }
         }
 
         sketch.entities.push({

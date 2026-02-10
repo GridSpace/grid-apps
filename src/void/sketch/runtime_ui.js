@@ -318,7 +318,12 @@ function applyEntityStyle(rec, mode, colors) {
         }
         if (view.type === 'arc-center') {
             const parts = view.object.userData?._markerParts || {};
-            const active = mode === 'edit' && (hoveredId === view.entity?.id || selectedIds.has(view.entity?.id));
+            const active = mode === 'edit' && (
+                hoveredId === id ||
+                selectedIds.has(id) ||
+                hoveredId === view.entity?.id ||
+                selectedIds.has(view.entity?.id)
+            );
             view.object.visible = true;
             if (parts.core?.material?.color) {
                 parts.core.material.color.setHex(active ? colors.pointsHover : basePointColor);

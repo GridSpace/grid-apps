@@ -73,8 +73,14 @@ function hitTestSketchEntity(event, feature) {
                 const pc = api.overlay.project3Dto2D(wc);
                 if (pc?.visible) {
                     const cd = Math.hypot(screenPoint.x - pc.x, screenPoint.y - pc.y);
-                    if (cd <= SKETCH_HIT_POINT_PX && (!bestPoint || cd < bestPoint.dist)) {
-                        bestPoint = { id: entity.id, type: 'arc-center', dist: cd };
+                    const bestIsArcCenter = bestPoint?.type === 'arc-center';
+                    const sameDist = bestPoint ? Math.abs(cd - bestPoint.dist) <= 1e-6 : false;
+                    if (cd <= SKETCH_HIT_POINT_PX && (
+                        !bestPoint ||
+                        cd < bestPoint.dist - 1e-6 ||
+                        (!bestIsArcCenter && sameDist)
+                    )) {
+                        bestPoint = { id: `arc-center:${entity.id}`, type: 'arc-center', dist: cd };
                     }
                 }
             }
@@ -147,10 +153,15 @@ function getSketchEntityHitFromIntersections(intersections, feature) {
         if (!id) continue;
         if (allowed && !allowed.has(id)) continue;
         const type = hit.object.userData?.sketchEntityType || null;
-        const refId = hit.object.userData?.sketchEntityRefId || id;
+        if (type === 'profile') continue;
+        // Arc-center hits must keep their synthetic id (`arc-center:<arcId>`)
+        // so drag/snap code can resolve them unambiguously.
+        const refId = (type === 'arc-center') ? id : (hit.object.userData?.sketchEntityRefId || id);
         const cand = { id: refId, type, distance: hit.distance ?? Infinity };
-        if (type === 'point') {
-            if (!bestPoint || cand.distance < bestPoint.distance) {
+        if (type === 'point' || type === 'arc-center') {
+            const bestIsArcCenter = bestPoint?.type === 'arc-center';
+            const sameDist = bestPoint ? Math.abs((cand.distance ?? Infinity) - (bestPoint.distance ?? Infinity)) <= 1e-6 : false;
+            if (!bestPoint || cand.distance < bestPoint.distance - 1e-6 || (type === 'arc-center' && !bestIsArcCenter && sameDist)) {
                 bestPoint = cand;
             }
         } else if (!bestLine || cand.distance < bestLine.distance) {
@@ -166,7 +177,7 @@ function resolveSketchHit(event, intersections, feature) {
     if (screenHit?.type === 'point' || screenHit?.type === 'arc-center') {
         return screenHit;
     }
-    if (rayHit?.type === 'point') {
+    if (rayHit?.type === 'point' || rayHit?.type === 'arc-center') {
         return rayHit;
     }
     return rayHit || screenHit || null;
@@ -370,6 +381,19 @@ function isSketchEventInViewport(event) {
 function getSketchHitLocalPoint(feature, hit) {
     if (!hit?.id) {
         return null;
+    }
+    const isArcCenter = hit?.type === 'arc-center' || String(hit.id).startsWith('arc-center:');
+    if (isArcCenter) {
+        const arcId = String(hit.id).startsWith('arc-center:')
+            ? String(hit.id).substring('arc-center:'.length)
+            : String(hit.id);
+        const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+        const pointById = new Map(entities.filter(e => e?.type === 'point' && e?.id).map(e => [e.id, e]));
+        const arc = entities.find(entity => entity?.type === 'arc' && entity?.id === arcId) || null;
+        if (arc) {
+            const center = this.getArcCenterLocalFromEntity(arc, pointById);
+            if (center) return { x: center.x || 0, y: center.y || 0 };
+        }
     }
     if (hit.id === SKETCH_VIRTUAL_ORIGIN_ID) {
         return { x: 0, y: 0 };

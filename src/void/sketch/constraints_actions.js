@@ -192,7 +192,10 @@ function applySketchConstraint(type) {
     const lines = selected.filter(entity => entity.type === 'line');
     const arcs = selected.filter(entity => entity.type === 'arc');
     const points = selected.filter(entity => entity.type === 'point');
-    const arcCenters = selected.filter(entity => entity.type === 'arc' && this.selectedSketchArcCenters?.has?.(entity.id));
+    const entitiesById = new Map(entities.filter(entity => entity?.id).map(entity => [entity.id, entity]));
+    const arcCenters = Array.from(this.selectedSketchArcCenters || [])
+        .map(id => entitiesById.get(id))
+        .filter(entity => entity?.type === 'arc');
     const specs = [];
 
     if (type === 'horizontal' || type === 'vertical') {

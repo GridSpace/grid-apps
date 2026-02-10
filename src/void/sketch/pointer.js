@@ -10,6 +10,25 @@ import {
     SKETCH_VIRTUAL_ORIGIN_ID
 } from './constants.js';
 
+function normalizeArcCenterRefId(type, id) {
+    if (type !== 'arc-center' || typeof id !== 'string' || !id) return id || null;
+    return id.startsWith('arc-center:') ? id : `arc-center:${id}`;
+}
+
+function collectArcCenterCoincidentPointIds(feature, arcId) {
+    if (!feature || !arcId) return [];
+    const constraints = Array.isArray(feature.constraints) ? feature.constraints : [];
+    const out = [];
+    for (const c of constraints) {
+        if (c?.type !== 'arc_center_coincident') continue;
+        const refs = Array.isArray(c.refs) ? c.refs : [];
+        if (refs.length < 2) continue;
+        if (refs[0] !== arcId) continue;
+        if (typeof refs[1] === 'string' && refs[1]) out.push(refs[1]);
+    }
+    return out;
+}
+
 function handleSketchPointerDown(event, intersections) {
     const feature = this.getEditingSketchFeature();
     if (!feature) {
@@ -42,7 +61,9 @@ function handleSketchPointerDown(event, intersections) {
             return true;
         }
         this.sketchLineStart = start;
-        this.sketchLineStartRefId = (hit?.type === 'point' && hit?.id && hit.id !== SKETCH_VIRTUAL_ORIGIN_ID) ? hit.id : null;
+        this.sketchLineStartRefId = ((hit?.type === 'point' || hit?.type === 'arc-center') && hit?.id && hit.id !== SKETCH_VIRTUAL_ORIGIN_ID)
+            ? normalizeArcCenterRefId(hit.type, hit.id)
+            : null;
         this.sketchLineStartSeq = seq;
         this.sketchLinePreview = { a: start, b: start };
         this.updateSketchInteractionVisuals();
@@ -270,20 +291,25 @@ function handleSketchMouseUp(event, intersections) {
 
     if (tool === 'select') {
         const upHit = this.resolveSketchHit(event, intersections, feature);
-        const hit = upHit || (pointerDown?.hitId ? { id: pointerDown.hitId } : null) || (this.hoveredSketchEntityId ? { id: this.hoveredSketchEntityId } : null);
+        const hit = upHit
+            || (pointerDown?.hitId ? { id: pointerDown.hitId, type: pointerDown?.hitType || null } : null)
+            || (this.hoveredSketchEntityId ? { id: this.hoveredSketchEntityId } : null);
         if (hit?.id) {
             if (hit.id === SKETCH_VIRTUAL_ORIGIN_ID) {
                 this.updateSketchInteractionVisuals();
                 return true;
             }
             const isArcCenter = hit.type === 'arc-center';
-            if (this.selectedSketchEntities.has(hit.id)) {
-                this.selectedSketchEntities.delete(hit.id);
-                this.selectedSketchArcCenters?.delete?.(hit.id);
+            const arcCenterEntityId = isArcCenter
+                ? (String(hit.id).startsWith('arc-center:') ? String(hit.id).substring('arc-center:'.length) : String(hit.id))
+                : null;
+            const entitySelectId = isArcCenter ? hit.id : hit.id;
+            if (this.selectedSketchEntities.has(entitySelectId)) {
+                this.selectedSketchEntities.delete(entitySelectId);
+                if (arcCenterEntityId) this.selectedSketchArcCenters?.delete?.(arcCenterEntityId);
             } else {
-                this.selectedSketchEntities.add(hit.id);
-                if (isArcCenter) this.selectedSketchArcCenters?.add?.(hit.id);
-                else this.selectedSketchArcCenters?.delete?.(hit.id);
+                this.selectedSketchEntities.add(entitySelectId);
+                if (arcCenterEntityId) this.selectedSketchArcCenters?.add?.(arcCenterEntityId);
             }
         } else {
             const derived = this.hoveredDerivedCandidate || this.resolveDerivedEdgeCandidate(event, intersections, feature);
@@ -363,7 +389,9 @@ function handleSketchMouseUp(event, intersections) {
         const fallbackHovered = this.hoveredSketchEntityId && this.hoveredSketchEntityId !== SKETCH_VIRTUAL_ORIGIN_ID ? { id: this.hoveredSketchEntityId, type: 'point' } : null;
         const resolved = upHit || fallbackHovered;
         const local = this.getSketchHitLocalPoint(feature, resolved) || this.projectEventToSketchLocal(event, feature);
-        const endRefId = (resolved?.type === 'point' && resolved?.id && resolved.id !== SKETCH_VIRTUAL_ORIGIN_ID) ? resolved.id : null;
+        const endRefId = ((resolved?.type === 'point' || resolved?.type === 'arc-center') && resolved?.id && resolved.id !== SKETCH_VIRTUAL_ORIGIN_ID)
+            ? normalizeArcCenterRefId(resolved.type, resolved.id)
+            : null;
         if (!local || !this.sketchLineStart) return true;
         if (this.sketchLineStartSeq === pointerDown?.seq) {
             if (dist > SKETCH_DRAG_START_PX) {
@@ -701,6 +729,11 @@ function handleSketchDrag(delta, offset, isDone) {
         if (Math.hypot(offset?.x || 0, offset?.y || 0) < SKETCH_DRAG_START_PX) return false;
         const downId = this.sketchPointerDown.hitId || this.hoveredSketchEntityId || null;
         const downType = this.sketchPointerDown.hitType || null;
+        const downArcId = downType === 'arc-center'
+            ? (typeof downId === 'string'
+                ? (downId.startsWith('arc-center:') ? downId.substring('arc-center:'.length) : downId)
+                : null)
+            : null;
         const entities = Array.isArray(feature?.entities) ? feature.entities : [];
         const entityById = new Map(entities.filter(e => e?.id).map(e => [e.id, e]));
         const pointById = new Map(entities.filter(e => e?.type === 'point' && e.id).map(e => [e.id, e]));
@@ -714,7 +747,13 @@ function handleSketchDrag(delta, offset, isDone) {
         const downEntity = entityById.get(downId) || null;
         const circleCurveDown = downType === 'arc' && isDragResizableCircleArc(downEntity, pointById);
         const dragSelectedLines = this.selectedSketchEntities.has(downId) || this.isPointOnSelectedSketchLine(feature, downId);
-        const activeIds = centerDrag ? new Set([downId]) : circleCurveDown ? new Set([downId]) : dragSelectedLines ? new Set(this.selectedSketchEntities) : new Set([downId]);
+        const activeIds = centerDrag
+            ? new Set(downArcId ? [downArcId] : [])
+            : circleCurveDown
+                ? new Set([downId])
+                : dragSelectedLines
+                    ? new Set(this.selectedSketchEntities)
+                    : new Set([downId]);
         const circleCurveDragIds = new Set();
         if (!centerDrag) {
             for (const id of activeIds) {
@@ -725,11 +764,19 @@ function handleSketchDrag(delta, offset, isDone) {
             if (downType === 'arc' && isDragResizableCircleArc(downEnt, pointById)) circleCurveDragIds.add(downId);
         }
         const refs = this.collectCoordinateRefsFromIds(feature, activeIds);
+        if (centerDrag && downArcId) {
+            const entitiesById = new Map((Array.isArray(feature?.entities) ? feature.entities : [])
+                .filter(e => e?.type === 'point' && e?.id)
+                .map(e => [e.id, e]));
+            const extraPointIds = collectArcCenterCoincidentPointIds(feature, downArcId);
+            for (const pid of extraPointIds) {
+                const p = entitiesById.get(pid);
+                if (p) refs.push(p);
+            }
+        }
         if (!this.sketchPointerDown.local) return false;
         const baseline = new Map();
-        if (!centerDrag) {
-            for (const ref of refs) baseline.set(ref, { x: ref.x || 0, y: ref.y || 0 });
-        }
+        for (const ref of refs) baseline.set(ref, { x: ref.x || 0, y: ref.y || 0 });
         const arcControlBaseline = [];
         for (const entity of entities) {
             if (entity?.type !== 'arc' || !entity.id) continue;
@@ -754,7 +801,7 @@ function handleSketchDrag(delta, offset, isDone) {
             arcControlBaseline,
             activeIds,
             circleCurveDragIds,
-            movedPointIds: new Set((centerDrag ? [] : refs).map(ref => ref?.id).filter(Boolean)),
+            movedPointIds: new Set(refs.map(ref => ref?.id).filter(Boolean)),
             draggedArcIds: new Set(Array.from(activeIds).filter(id => entityById.get(id)?.type === 'arc')),
             centerLocks: (!centerDrag && !circleCurveDown)
                 ? this.collectDragLockedArcCenters(feature, activeIds, refs, { includePointOnArc: true })
@@ -944,7 +991,7 @@ function collectDragLockedArcCenters(feature, activeIds, refs = [], options = {}
     for (const ref of refs || []) {
         if (ref?.id) selected.add(ref.id);
     }
-    const lockTypes = new Set(['tangent', 'arc_center_coincident']);
+    const lockTypes = new Set(['tangent']);
     if (options?.includePointOnArc) lockTypes.add('point_on_arc');
     const out = new Map();
     for (const c of constraints) {

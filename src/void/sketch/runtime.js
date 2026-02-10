@@ -461,6 +461,12 @@ function createSketchRuntimeApi(getApi) {
                         centerMarker.userData.sketchEntityId = centerKey;
                         centerMarker.userData.sketchEntityType = 'arc-center';
                         centerMarker.userData.sketchEntityRefId = entity.id;
+                        centerMarker.traverse(obj => {
+                            obj.userData = obj.userData || {};
+                            obj.userData.sketchEntityId = centerKey;
+                            obj.userData.sketchEntityType = 'arc-center';
+                            obj.userData.sketchEntityRefId = entity.id;
+                        });
                         rec.entitiesGroup.add(centerMarker);
                         rec.entityViews.set(centerKey, { entity, object: centerMarker, type: 'arc-center' });
                     }
