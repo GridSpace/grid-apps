@@ -72,7 +72,7 @@ function enforceWithFallback(sketch, opts = {}) {
                     iterChanged = applyPerpendicular(c, points, lines, fixed) || iterChanged;
                     break;
                 case 'equal':
-                    iterChanged = applyEqual(c, points, lines, arcs, fixed) || iterChanged;
+                    iterChanged = applyEqual(c, points, lines, arcs, fixed, constraints) || iterChanged;
                     break;
                 case 'collinear':
                     iterChanged = applyCollinear(c, points, lines, fixed) || iterChanged;
@@ -508,7 +508,7 @@ function applyPerpendicular(constraint, points, lines, fixed) {
     return cc || cd;
 }
 
-function applyEqual(constraint, points, lines, arcs, fixed) {
+function applyEqual(constraint, points, lines, arcs, fixed, constraints = []) {
     const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
     if (refs.length < 2) return false;
     const l1 = lines.get(refs[0]);
@@ -519,6 +519,18 @@ function applyEqual(constraint, points, lines, arcs, fixed) {
         const c1 = getArcCircleData(a1, points);
         const c2 = getArcCircleData(a2, points);
         if (!c1 || !c2) return false;
+        const r1Driving = getDrivingArcRadiusFromConstraints(constraints, refs[0]);
+        const r2Driving = getDrivingArcRadiusFromConstraints(constraints, refs[1]);
+        if (Number.isFinite(r1Driving) && Number.isFinite(r2Driving)) {
+            if (Math.abs(r1Driving - r2Driving) <= EPS) return false;
+            return false;
+        }
+        if (Number.isFinite(r1Driving) && !Number.isFinite(r2Driving)) {
+            return applyArcRadiusTarget(a2, points, r1Driving, fixed);
+        }
+        if (Number.isFinite(r2Driving) && !Number.isFinite(r1Driving)) {
+            return applyArcRadiusTarget(a1, points, r2Driving, fixed);
+        }
         const target = (c1.radius + c2.radius) * 0.5;
         const p2a = getLineEndpointId(a2, 'a');
         const p2b = getLineEndpointId(a2, 'b');
@@ -580,6 +592,19 @@ function applyEqual(constraint, points, lines, arcs, fixed) {
     changed = setPoint(c, mx - hx, my - hy) || changed;
     changed = setPoint(d, mx + hx, my + hy) || changed;
     return changed;
+}
+
+function getDrivingArcRadiusFromConstraints(constraints, arcId) {
+    if (!arcId) return NaN;
+    for (const c of constraints || []) {
+        if (c?.type !== 'dimension') continue;
+        if (c?.data?.mode === 'driven') continue;
+        const refs = Array.isArray(c?.refs) ? c.refs : [];
+        if (refs.length !== 1 || refs[0] !== arcId) continue;
+        const v = Number(c?.data?.value);
+        if (Number.isFinite(v) && v > EPS) return v;
+    }
+    return NaN;
 }
 
 function applyEqualConstraintGroups(constraints, points, lines, fixed) {
