@@ -26,6 +26,7 @@ function createSketchRuntimeApi(getApi) {
         hoveredId: null,
         editingId: null,
         selectedIds: new Set(),
+        forcedVisibleIds: new Set(),
         mutatingIds: new Set(),
         hoveredProfileKey: null,
         selectedProfileKeys: new Set(),
@@ -638,6 +639,11 @@ function createSketchRuntimeApi(getApi) {
 
         setSelected(featureIds) {
             this.selectedIds = new Set(featureIds || []);
+            this.refreshStates();
+        },
+
+        setForcedVisible(featureIds) {
+            this.forcedVisibleIds = new Set(featureIds || []);
             this.refreshStates();
         },
 

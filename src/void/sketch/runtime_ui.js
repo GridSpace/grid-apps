@@ -338,12 +338,13 @@ function addDimensionDecoration3D(rec, c, a, b, opts = {}) {
 function applySketchState(rec, getApi, colors) {
     const feature = rec.feature || {};
     const visible = feature.visible !== false;
+    const forcedVisible = this.forcedVisibleIds?.has?.(feature.id) || false;
     const hovered = this.hoveredId === feature.id;
     const editing = this.editingId === feature.id;
     const selected = this.selectedIds.has(feature.id);
 
     const showPlane = editing || hovered || selected;
-    const showEntities = visible || hovered || editing || selected;
+    const showEntities = visible || forcedVisible || hovered || editing || selected;
 
     rec.plane.setVisible(showPlane);
     rec.entitiesGroup.visible = showEntities;

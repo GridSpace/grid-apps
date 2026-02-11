@@ -735,14 +735,17 @@ const properties = {
             api.interact.hoveredSketchProfileKey = null;
             api.sketchRuntime?.setSelectedProfiles?.([]);
             api.sketchRuntime?.setHoveredProfile?.(null);
+            api.sketchRuntime?.setForcedVisible?.([]);
             return;
         }
         const profiles = Array.isArray(feature?.input?.profiles) ? feature.input.profiles : [];
         const keys = profiles
             .map(p => (p?.sketchId && p?.profileId) ? `${p.sketchId}:${p.profileId}` : null)
             .filter(Boolean);
+        const sketchIds = Array.from(new Set(profiles.map(p => p?.sketchId).filter(Boolean)));
         api.interact.selectedSketchProfiles = new Set(keys);
         api.sketchRuntime?.setSelectedProfiles?.(keys);
+        api.sketchRuntime?.setForcedVisible?.(sketchIds);
     },
 
     setExtrudeProfileHover(profile) {
