@@ -14,6 +14,23 @@ const devel = process.argv.slice(2).map(v => v.replaceAll('-', '')).indexOf('dev
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = true;
 
+// Enable GPU/graphics acceleration for Linux (addresses WebGL issues)
+// Equivalent to Chrome flags that fixed the rendering in Chrome browser
+if (process.platform === 'linux') {
+    // CRITICAL: Override GPU blocklist - allows hardware acceleration on blocked GPUs
+    app.commandLine.appendSwitch('ignore-gpu-blocklist');
+
+    // Enable WebGL draft extensions (improves WebGL compatibility)
+    app.commandLine.appendSwitch('enable-webgl-draft-extensions');
+
+    // Force GPU acceleration for 2D/3D rendering
+    app.commandLine.appendSwitch('enable-gpu-rasterization');
+
+    // Optional: Try Vulkan if available (Chromium auto-falls back to OpenGL if not)
+    // Uncomment if you need Vulkan specifically, but most systems work without it:
+    app.commandLine.appendSwitch('enable-features', 'Vulkan');
+}
+
 server({
     port: 5309,
     apps: basDir,
