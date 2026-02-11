@@ -290,6 +290,8 @@ function handleSketchMouseUp(event, intersections) {
     if (wasDrag) return true;
 
     if (tool === 'select') {
+        const mirrorMode = !!this.sketchMirrorMode;
+        const mirrorAxisId = this.sketchMirrorAxisId || null;
         const upHit = this.resolveSketchHit(event, intersections, feature);
         const hit = upHit
             || (pointerDown?.hitId ? { id: pointerDown.hitId, type: pointerDown?.hitType || null } : null)
@@ -306,6 +308,24 @@ function handleSketchMouseUp(event, intersections) {
             } else {
                 this.selectedSketchEntities.add(entitySelectId);
                 if (arcCenterEntityId) this.selectedSketchArcCenters?.add?.(arcCenterEntityId);
+            }
+            if (mirrorMode && mirrorAxisId) {
+                const sourceId = (typeof entitySelectId === 'string' && entitySelectId.startsWith('arc-center:'))
+                    ? entitySelectId.substring('arc-center:'.length)
+                    : entitySelectId;
+                if (sourceId === mirrorAxisId) {
+                    this.selectedSketchEntities.add(mirrorAxisId);
+                } else if (typeof sourceId === 'string' && sourceId && this.selectedSketchEntities.has(entitySelectId)) {
+                    const mirrored = this.mirrorSelectedSketchGeometry?.({
+                        axisId: mirrorAxisId,
+                        sourceIds: [sourceId],
+                        keepResultSelected: false
+                    });
+                    if (mirrored) {
+                        this.selectedSketchEntities.delete(entitySelectId);
+                        this.selectedSketchArcCenters?.delete?.(sourceId);
+                    }
+                }
             }
         } else {
             const derived = this.hoveredDerivedCandidate || this.resolveDerivedEdgeCandidate(event, intersections, feature);

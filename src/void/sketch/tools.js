@@ -41,6 +41,9 @@ function setSketchTool(tool = 'select') {
         return;
     }
     this.sketchTool = next;
+    if (next !== 'select') {
+        this.stopSketchMirrorMode?.();
+    }
     if (next !== 'line') {
         this.cancelSketchLine();
     }
@@ -114,6 +117,33 @@ function clearSketchSelection() {
     this.updateSketchInteractionVisuals();
 }
 
+function getSelectedSketchMirrorAxis(feature) {
+    const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+    const selected = this.selectedSketchEntities instanceof Set ? this.selectedSketchEntities : new Set();
+    const lines = entities.filter(entity => entity?.type === 'line' && selected.has(entity.id));
+    return lines.length === 1 ? lines[0] : null;
+}
+
+function startSketchMirrorMode() {
+    const feature = this.getEditingSketchFeature();
+    if (!feature) return false;
+    const axis = this.getSelectedSketchMirrorAxis(feature);
+    if (!axis?.id) return false;
+    this.sketchMirrorMode = true;
+    this.sketchMirrorAxisId = axis.id;
+    this.setSketchTool('select');
+    this.updateSketchInteractionVisuals();
+    return true;
+}
+
+function stopSketchMirrorMode() {
+    if (!this.sketchMirrorMode && !this.sketchMirrorAxisId) return false;
+    this.sketchMirrorMode = false;
+    this.sketchMirrorAxisId = null;
+    this.updateSketchInteractionVisuals();
+    return true;
+}
+
 function handleSketchKeyDown(event) {
     if (!this.isSketchEditing()) {
         return false;
@@ -147,6 +177,9 @@ function handleSketchKeyDown(event) {
         }
         if (this.getSketchTool() !== 'select') {
             this.setSketchTool('select');
+            return true;
+        }
+        if (this.stopSketchMirrorMode?.()) {
             return true;
         }
         return hadLine || hadArc || hadRect || hadMarquee;
@@ -208,6 +241,12 @@ function handleSketchKeyDown(event) {
     }
     if (event.code === 'KeyJ' && event.shiftKey) {
         return this.applySketchConstraint('fixed');
+    }
+    if (event.code === 'KeyM' && !event.shiftKey) {
+        if (this.sketchMirrorMode) {
+            return this.stopSketchMirrorMode?.();
+        }
+        return this.startSketchMirrorMode?.();
     }
     if (event.code === 'Delete' || event.code === 'Backspace') {
         if (this.selectedSketchConstraints?.size) {
@@ -322,6 +361,9 @@ export {
     cancelSketchCircle,
     cancelSketchRect,
     clearSketchSelection,
+    getSelectedSketchMirrorAxis,
+    startSketchMirrorMode,
+    stopSketchMirrorMode,
     handleSketchKeyDown,
     selectSketchConstraint,
     setHoveredSketchConstraint,

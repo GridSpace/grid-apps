@@ -11,6 +11,7 @@ const VOID_PALETTE = {
         linesSelected: 0x9ec7ff,
         linesProjectedFace: 0x5a9fd4,
         linesDerivedActual: 0xff9933,
+        linesMirrorAxis: 0xb07cff,
         pointsGray: 0x8f8f8f,
         pointsHover: 0xff9933,
         pointsEdit: 0xffffff,

@@ -216,6 +216,11 @@ src/
 **Phase 2: Sketch System (Current Workstream)**
 - planegcs constraint solver integration is active
 - sketch runtime supports point/line/arc/circle/rectangle workflows
+- sketch mirror mode is now Onshape-style:
+  - select exactly one line as mirror axis, then press `M` (or use Constraints -> Mirror)
+  - mirror axis is highlighted purple while mode is active
+  - each subsequently selected sketch entity is mirrored immediately across that axis
+  - `Esc` or `Space` exits mirror mode
 - constraints currently wired: coincident, point-on-line, fixed, horizontal, vertical, perpendicular, equal, collinear, tangent, arc-center coincident, midpoint
 - horizontal/vertical can target line entities or a selected point pair
 - rectangle tools are implemented as constrained line sets:

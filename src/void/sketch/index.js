@@ -17,6 +17,9 @@ import {
     cancelSketchCircle,
     cancelSketchRect,
     clearSketchSelection,
+    getSelectedSketchMirrorAxis,
+    startSketchMirrorMode,
+    stopSketchMirrorMode,
     handleSketchKeyDown,
     selectSketchConstraint,
     setHoveredSketchConstraint,
@@ -120,6 +123,10 @@ function createSketchPolygonFromSelectedCircle(mode = 'inscribed') {
     return sketchCreate.createSketchPolygonFromSelectedCircle.call(this, mode);
 }
 
+function mirrorSelectedSketchGeometry(options = {}) {
+    return sketchCreate.mirrorSelectedSketchGeometry.call(this, options);
+}
+
 function getSelectedSketchCircle(feature) {
     return sketchCreate.getSelectedSketchCircle.call(this, feature);
 }
@@ -178,6 +185,8 @@ function updateSketchInteractionVisuals() {
     api.sketchRuntime?.setEntityInteraction(feature.id, {
         hoveredId: this.sketchDrag ? dragHoverId : this.hoveredSketchEntityId,
         selectedIds: Array.from(this.selectedSketchEntities),
+        mirrorMode: !!this.sketchMirrorMode,
+        mirrorAxisId: this.sketchMirrorAxisId || null,
         hoveredConstraintId: this.hoveredSketchConstraintId || null,
         selectedConstraintIds: Array.from(this.selectedSketchConstraints || []),
         previewLine: this.sketchLinePreview || externalLine,
@@ -317,6 +326,9 @@ export {
     cancelSketchCircle,
     cancelSketchRect,
     clearSketchSelection,
+    getSelectedSketchMirrorAxis,
+    startSketchMirrorMode,
+    stopSketchMirrorMode,
     selectSketchConstraint,
     setHoveredSketchConstraint,
     useHoveredDerivedEdge,
@@ -395,6 +407,7 @@ export {
     deriveSelectionsAtomic,
     refreshDerivedSketchGeometry,
     createSketchPolygonFromSelectedCircle,
+    mirrorSelectedSketchGeometry,
     deleteSelectedSketchEntities,
     deleteSelectedSketchConstraints,
     findPointByCoord,

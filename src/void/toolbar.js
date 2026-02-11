@@ -171,7 +171,8 @@ const toolbar = {
             { key: 'tangent', label: 'Tangent', onClick: () => api.interact.applySketchConstraint?.('tangent') },
             { key: 'midpoint', label: 'Midpoint', onClick: () => api.interact.applySketchConstraint?.('midpoint') },
             { key: 'coincident', label: 'Coincident', onClick: () => api.interact.applySketchConstraint?.('coincident') },
-            { key: 'fixed', label: 'Fixed', onClick: () => api.interact.applySketchConstraint?.('fixed') }
+            { key: 'fixed', label: 'Fixed', onClick: () => api.interact.applySketchConstraint?.('fixed') },
+            { key: 'mirror', label: 'Mirror', onClick: () => api.interact.startSketchMirrorMode?.() }
         ]);
         this.sketchConstraintButtons = this.sketchConstraintMenu.items;
 
@@ -824,7 +825,8 @@ const toolbar = {
                     { key: 'T', desc: 'Tangent (line+arc/circle or arc/circle pair)' },
                     { key: 'I', desc: 'Coincident (points, point-line, point-arc, center-point)' },
                     { key: 'Shift+M', desc: 'Midpoint' },
-                    { key: 'Shift+J', desc: 'Fixed (selected point(s))' }
+                    { key: 'Shift+J', desc: 'Fixed (selected point(s))' },
+                    { key: 'M', desc: 'Toggle mirror mode (requires one selected line axis)' }
                 ]
             },
             {
@@ -845,8 +847,8 @@ const toolbar = {
                     { key: 'B', desc: 'Parallel' },
                     { key: 'Shift+G', desc: 'Pierce' },
                     { key: 'Shift+F', desc: 'Sketch fillet' },
-                    { key: 'Shift+Q', desc: 'Symmetric' },
-                    { key: 'M', desc: 'Trim' }
+                    { key: '(TBD)', desc: 'Symmetric' },
+                    { key: '(TBD)', desc: 'Trim' }
                 ]
             }
         ];

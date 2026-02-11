@@ -67,6 +67,8 @@ const interact = {
     sketchRectStartSeq: null,
     sketchRectPreview: null,
     sketchRectCenterMode: false,
+    sketchMirrorMode: false,
+    sketchMirrorAxisId: null,
     sketchPointerSeq: 0,
     sketchMarquee: null,
     sketchMarqueeEl: null,

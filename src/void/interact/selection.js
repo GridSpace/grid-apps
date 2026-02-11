@@ -97,6 +97,7 @@ function deselectAll() {
     api.sketchRuntime?.setHoveredProfile?.(null);
     this.clearSketchSelection?.();
     this.cancelSketchLine?.();
+    this.stopSketchMirrorMode?.();
     this.setSketchTool?.('select');
     this.updateHandleScreenScales();
     window.dispatchEvent(new CustomEvent('void-clear-selection'));

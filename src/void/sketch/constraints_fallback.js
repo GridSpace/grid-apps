@@ -98,6 +98,12 @@ function enforceWithFallback(sketch, opts = {}) {
                 case 'midpoint':
                     iterChanged = applyMidpoint(c, points, fixed, dragged) || iterChanged;
                     break;
+                case 'mirror_point':
+                    iterChanged = applyMirrorPoint(c, points, lines, fixed, dragged) || iterChanged;
+                    break;
+                case 'mirror_arc':
+                    iterChanged = applyMirrorArc(c, points, lines, arcs, fixed, dragged, draggedArcs) || iterChanged;
+                    break;
                 default:
                     break;
             }
@@ -1375,6 +1381,160 @@ function setArcCenterAndMeta(arc, cx, cy, radius, startAngle, endAngle, ccw) {
     return changed;
 }
 
+function mirrorPointAcrossAxisLocal(point, axisA, axisB) {
+    const ax = axisA?.x || 0;
+    const ay = axisA?.y || 0;
+    const bx = axisB?.x || 0;
+    const by = axisB?.y || 0;
+    const px = point?.x || 0;
+    const py = point?.y || 0;
+    const dx = bx - ax;
+    const dy = by - ay;
+    const den = dx * dx + dy * dy;
+    if (!Number.isFinite(den) || den < EPS) {
+        return { x: px, y: py };
+    }
+    const t = ((px - ax) * dx + (py - ay) * dy) / den;
+    const qx = ax + t * dx;
+    const qy = ay + t * dy;
+    return { x: qx * 2 - px, y: qy * 2 - py };
+}
+
+function resolveMirrorAxis(constraint, lines, points) {
+    const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
+    if (refs.length < 1) return null;
+    const axisLine = lines.get(refs[0]);
+    if (!axisLine) return null;
+    const [a, b] = getLineEndpoints(axisLine, points);
+    if (!a || !b) return null;
+    const len = Math.hypot((b.x || 0) - (a.x || 0), (b.y || 0) - (a.y || 0));
+    if (!Number.isFinite(len) || len < EPS) return null;
+    return { a, b };
+}
+
+function applyMirrorPoint(constraint, points, lines, fixed, dragged = new Set()) {
+    const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
+    if (refs.length < 3) return false;
+    const axis = resolveMirrorAxis(constraint, lines, points);
+    if (!axis) return false;
+    const srcId = refs[1];
+    const dstId = refs[2];
+    const src = points.get(srcId);
+    const dst = points.get(dstId);
+    if (!src || !dst) return false;
+    const srcDragged = !!dragged?.has?.(srcId);
+    const dstDragged = !!dragged?.has?.(dstId);
+    const srcFixed = isFixed(srcId, fixed);
+    const dstFixed = isFixed(dstId, fixed);
+    let primary = src;
+    let primaryId = srcId;
+    let secondary = dst;
+    let secondaryId = dstId;
+    if (dstDragged && !srcDragged) {
+        primary = dst;
+        primaryId = dstId;
+        secondary = src;
+        secondaryId = srcId;
+    } else if (srcFixed && !dstFixed) {
+        primary = src;
+        primaryId = srcId;
+        secondary = dst;
+        secondaryId = dstId;
+    } else if (dstFixed && !srcFixed) {
+        primary = dst;
+        primaryId = dstId;
+        secondary = src;
+        secondaryId = srcId;
+    }
+    if (isFixed(secondaryId, fixed) && !isFixed(primaryId, fixed)) {
+        return false;
+    }
+    const mirrored = mirrorPointAcrossAxisLocal(primary, axis.a, axis.b);
+    return setPoint(secondary, mirrored.x, mirrored.y);
+}
+
+function applyMirrorArc(constraint, points, lines, arcs, fixed, draggedPoints = new Set(), draggedArcs = new Set()) {
+    const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
+    if (refs.length < 3) return false;
+    const axis = resolveMirrorAxis(constraint, lines, points);
+    if (!axis) return false;
+    const srcArcId = refs[1];
+    const dstArcId = refs[2];
+    const srcArc = arcs.get(srcArcId);
+    const dstArc = arcs.get(dstArcId);
+    if (!srcArc || !dstArc) return false;
+    const srcEndpoints = [getLineEndpointId(srcArc, 'a'), getLineEndpointId(srcArc, 'b')];
+    const dstEndpoints = [getLineEndpointId(dstArc, 'a'), getLineEndpointId(dstArc, 'b')];
+    const srcDragged = draggedArcs?.has?.(srcArcId) || srcEndpoints.some(id => draggedPoints?.has?.(id));
+    const dstDragged = draggedArcs?.has?.(dstArcId) || dstEndpoints.some(id => draggedPoints?.has?.(id));
+    let primaryArc = srcArc;
+    let primaryId = srcArcId;
+    let secondaryArc = dstArc;
+    let secondaryId = dstArcId;
+    if (dstDragged && !srcDragged) {
+        primaryArc = dstArc;
+        primaryId = dstArcId;
+        secondaryArc = srcArc;
+        secondaryId = srcArcId;
+    }
+    const pAId = getLineEndpointId(primaryArc, 'a');
+    const pBId = getLineEndpointId(primaryArc, 'b');
+    const sAId = getLineEndpointId(secondaryArc, 'a');
+    const sBId = getLineEndpointId(secondaryArc, 'b');
+    const pA = points.get(pAId);
+    const pB = points.get(pBId);
+    const sA = points.get(sAId);
+    const sB = points.get(sBId);
+    if (!pA || !pB || !sA || !sB) return false;
+
+    let changed = false;
+    const mA = mirrorPointAcrossAxisLocal(pA, axis.a, axis.b);
+    const mB = mirrorPointAcrossAxisLocal(pB, axis.a, axis.b);
+    if (!isFixed(sAId, fixed)) changed = setPoint(sA, mA.x, mA.y) || changed;
+    if (!isFixed(sBId, fixed)) changed = setPoint(sB, mB.x, mB.y) || changed;
+
+    const center = getArcCenter(primaryArc, pA, pB)
+        || (Number.isFinite(primaryArc?.cx) && Number.isFinite(primaryArc?.cy) ? { x: primaryArc.cx, y: primaryArc.cy } : null);
+    if (!center) return changed;
+    const mCenter = mirrorPointAcrossAxisLocal(center, axis.a, axis.b);
+    const mControl = Number.isFinite(primaryArc?.mx) && Number.isFinite(primaryArc?.my)
+        ? mirrorPointAcrossAxisLocal({ x: primaryArc.mx, y: primaryArc.my }, axis.a, axis.b)
+        : null;
+
+    if (isCircleCurve(primaryArc)) {
+        const radius = Number(primaryArc?.radius) || Math.hypot((pA.x || 0) - center.x, (pA.y || 0) - center.y);
+        changed = setArcCenterAndMeta(secondaryArc, mCenter.x, mCenter.y, radius, 0, Math.PI * 2, true) || changed;
+        if (mControl) {
+            changed = setArcControl(secondaryArc, mControl.x, mControl.y) || changed;
+        } else {
+            changed = setArcControl(secondaryArc, mCenter.x, mCenter.y + radius) || changed;
+        }
+        return changed;
+    }
+
+    const sa = Math.atan2((sA.y || 0) - mCenter.y, (sA.x || 0) - mCenter.x);
+    const ea = Math.atan2((sB.y || 0) - mCenter.y, (sB.x || 0) - mCenter.x);
+    const radius = Math.hypot((sA.x || 0) - mCenter.x, (sA.y || 0) - mCenter.y);
+    const ccw = !(primaryArc?.ccw === false);
+    changed = setArcCenterAndMeta(secondaryArc, mCenter.x, mCenter.y, radius, sa, ea, ccw) || changed;
+    if (mControl) {
+        changed = setArcControl(secondaryArc, mControl.x, mControl.y) || changed;
+    }
+    return changed;
+}
+
+function applyMirrorConstraints(constraints, points, lines, arcs, fixed, draggedPoints = new Set(), draggedArcs = new Set()) {
+    let changed = false;
+    for (const c of constraints || []) {
+        if (c?.type === 'mirror_point') {
+            changed = applyMirrorPoint(c, points, lines, fixed, draggedPoints) || changed;
+        } else if (c?.type === 'mirror_arc') {
+            changed = applyMirrorArc(c, points, lines, arcs, fixed, draggedPoints, draggedArcs) || changed;
+        }
+    }
+    return changed;
+}
+
 function normalizeAngle(a) {
     let out = a % (Math.PI * 2);
     if (out < 0) out += Math.PI * 2;
@@ -1540,5 +1700,6 @@ export {
     applyPointOnArcConstraints,
     applyArcCenterCoincidentConstraints,
     applyMidpointConstraints,
-    applyTangentConstraints
+    applyTangentConstraints,
+    applyMirrorConstraints
 };

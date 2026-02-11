@@ -10,7 +10,8 @@ import {
     applyPointOnArcConstraints,
     applyArcCenterCoincidentConstraints,
     applyMidpointConstraints,
-    applyTangentConstraints
+    applyTangentConstraints,
+    applyMirrorConstraints
 } from './constraints_fallback.js';
 
 const EPS = 1e-9;
@@ -180,6 +181,7 @@ function enforceWithPlanegcs(sketch, opts = {}) {
         if (!tChanged) break;
         changed = true;
     }
+    changed = applyMirrorConstraints(constraints, pointEntityById, lineById, arcById, fixed, dragged, new Set(Array.isArray(opts?.draggedArcIds) ? opts.draggedArcIds : [])) || changed;
 
     // Final polish: reconcile constraints that are handled outside planegcs
     // (for example point_on_arc groups used by inscribed/circumscribed polygons)

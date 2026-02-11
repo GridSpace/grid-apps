@@ -649,6 +649,289 @@ function createSketchPolygonFromSelectedCircle(mode = 'inscribed') {
     return true;
 }
 
+function mirrorLocalPointAcrossLine(local, axisA, axisB) {
+    const ax = axisA?.x || 0;
+    const ay = axisA?.y || 0;
+    const bx = axisB?.x || 0;
+    const by = axisB?.y || 0;
+    const px = local?.x || 0;
+    const py = local?.y || 0;
+    const dx = bx - ax;
+    const dy = by - ay;
+    const den = dx * dx + dy * dy;
+    if (!Number.isFinite(den) || den < 1e-12) {
+        return { x: px, y: py };
+    }
+    const t = ((px - ax) * dx + (py - ay) * dy) / den;
+    const qx = ax + t * dx;
+    const qy = ay + t * dy;
+    return {
+        x: qx * 2 - px,
+        y: qy * 2 - py
+    };
+}
+
+function pointDistanceToLine(local, axisA, axisB) {
+    const ax = axisA?.x || 0;
+    const ay = axisA?.y || 0;
+    const bx = axisB?.x || 0;
+    const by = axisB?.y || 0;
+    const px = local?.x || 0;
+    const py = local?.y || 0;
+    const dx = bx - ax;
+    const dy = by - ay;
+    const den = dx * dx + dy * dy;
+    if (!Number.isFinite(den) || den < 1e-12) return Infinity;
+    const t = ((px - ax) * dx + (py - ay) * dy) / den;
+    const qx = ax + t * dx;
+    const qy = ay + t * dy;
+    return Math.hypot(px - qx, py - qy);
+}
+
+function mirrorSelectedSketchGeometry(options = {}) {
+    const feature = this.getEditingSketchFeature();
+    if (!feature) return false;
+    const entities = Array.isArray(feature.entities) ? feature.entities : [];
+    const byId = new Map(entities.filter(e => e?.id).map(e => [e.id, e]));
+    const selectedIds = new Set(this.selectedSketchEntities || []);
+    const sourceIdsOpt = Array.isArray(options?.sourceIds) ? options.sourceIds.filter(id => typeof id === 'string' && id) : null;
+    const keepResultSelected = options?.keepResultSelected !== false;
+    let axis = null;
+    if (typeof options?.axisId === 'string' && options.axisId) {
+        const axisEntity = byId.get(options.axisId);
+        if (axisEntity?.type === 'line') {
+            axis = axisEntity;
+        }
+    }
+    if (!axis) {
+        const selectedLines = entities.filter(e => e?.type === 'line' && selectedIds.has(e.id));
+        if (selectedLines.length !== 1) {
+            return false;
+        }
+        axis = selectedLines[0];
+    }
+    const axisAId = typeof axis?.a === 'string' ? axis.a : (typeof axis?.p1_id === 'string' ? axis.p1_id : null);
+    const axisBId = typeof axis?.b === 'string' ? axis.b : (typeof axis?.p2_id === 'string' ? axis.p2_id : null);
+    const axisA = byId.get(axisAId);
+    const axisB = byId.get(axisBId);
+    if (!axisA || !axisB) return false;
+    if (Math.hypot((axisB.x || 0) - (axisA.x || 0), (axisB.y || 0) - (axisA.y || 0)) < SKETCH_MIN_LINE_LENGTH) {
+        return false;
+    }
+
+    const selectedPoints = [];
+    const selectedCurveIds = [];
+    const sourceIds = sourceIdsOpt ? new Set(sourceIdsOpt) : selectedIds;
+    for (const ent of entities) {
+        if (!sourceIds.has(ent.id)) continue;
+        if (ent.id === axis.id) continue;
+        if (ent.type === 'point') selectedPoints.push(ent.id);
+        if (ent.type === 'line' || ent.type === 'arc') selectedCurveIds.push(ent.id);
+    }
+    if (!selectedPoints.length && !selectedCurveIds.length) {
+        return false;
+    }
+
+    const pointIdsToMirror = new Set(selectedPoints);
+    for (const cid of selectedCurveIds) {
+        const ent = byId.get(cid);
+        if (!ent) continue;
+        const aId = typeof ent?.a === 'string' ? ent.a : (typeof ent?.p1_id === 'string' ? ent.p1_id : null);
+        const bId = typeof ent?.b === 'string' ? ent.b : (typeof ent?.p2_id === 'string' ? ent.p2_id : null);
+        if (aId) pointIdsToMirror.add(aId);
+        if (bId) pointIdsToMirror.add(bId);
+        if (ent.type === 'arc') {
+            const tps = Array.isArray(ent?.data?.threePointIds) ? ent.data.threePointIds : [];
+            for (const pid of tps) {
+                if (typeof pid === 'string') pointIdsToMirror.add(pid);
+            }
+        }
+    }
+
+    const axisIds = new Set([axisAId, axisBId]);
+    const pointMap = new Map();
+    const createdPointIds = [];
+    const createdCurveIds = [];
+    const mirrorPointPairs = [];
+    const mirrorLinePairs = [];
+    const mirrorArcPairs = [];
+
+    api.features.update(feature.id, sketch => {
+        sketch.entities = Array.isArray(sketch.entities) ? sketch.entities : [];
+        sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
+        const mapById = new Map(sketch.entities.filter(e => e?.id).map(e => [e.id, e]));
+        const hasMirrorConstraint = (type, refs) => sketch.constraints.some(c => {
+            if (c?.type !== type) return false;
+            const crefs = Array.isArray(c?.refs) ? c.refs : [];
+            return crefs.length === refs.length && refs.every((ref, i) => String(crefs[i] || '') === String(ref || ''));
+        });
+        const addMirrorConstraint = (type, refs) => {
+            if (!refs.every(ref => typeof ref === 'string' && ref)) return;
+            if (hasMirrorConstraint(type, refs)) return;
+            sketch.constraints.push({
+                id: this.newSketchEntityId('cst'),
+                type,
+                refs: [...refs],
+                data: {},
+                created_at: Date.now()
+            });
+        };
+        const axisLine = mapById.get(axis.id);
+        if (!axisLine || axisLine.type !== 'line') return;
+        const aAxisId = typeof axisLine?.a === 'string' ? axisLine.a : (typeof axisLine?.p1_id === 'string' ? axisLine.p1_id : null);
+        const bAxisId = typeof axisLine?.b === 'string' ? axisLine.b : (typeof axisLine?.p2_id === 'string' ? axisLine.p2_id : null);
+        const pAxisA = mapById.get(aAxisId);
+        const pAxisB = mapById.get(bAxisId);
+        if (!pAxisA || !pAxisB) return;
+        const axisALocal = { x: pAxisA.x || 0, y: pAxisA.y || 0 };
+        const axisBLocal = { x: pAxisB.x || 0, y: pAxisB.y || 0 };
+
+        for (const pid of pointIdsToMirror) {
+            const p = mapById.get(pid);
+            if (!p || p.type !== 'point') continue;
+            if (axisIds.has(pid)) {
+                pointMap.set(pid, pid);
+                continue;
+            }
+            const d = pointDistanceToLine(p, axisALocal, axisBLocal);
+            if (Number.isFinite(d) && d <= SKETCH_POINT_MERGE_EPS) {
+                pointMap.set(pid, pid);
+                continue;
+            }
+            const mp = mirrorLocalPointAcrossLine(p, axisALocal, axisBLocal);
+            const nid = this.newSketchEntityId('point');
+            const fixed = p.fixed === true;
+            sketch.entities.push({
+                id: nid,
+                type: 'point',
+                x: mp.x,
+                y: mp.y,
+                fixed
+            });
+            mapById.set(nid, sketch.entities[sketch.entities.length - 1]);
+            pointMap.set(pid, nid);
+            createdPointIds.push(nid);
+            mirrorPointPairs.push([pid, nid]);
+        }
+
+        for (const cid of selectedCurveIds) {
+            const src = mapById.get(cid);
+            if (!src || (src.type !== 'line' && src.type !== 'arc')) continue;
+            const aId = typeof src?.a === 'string' ? src.a : (typeof src?.p1_id === 'string' ? src.p1_id : null);
+            const bId = typeof src?.b === 'string' ? src.b : (typeof src?.p2_id === 'string' ? src.p2_id : null);
+            const na = pointMap.get(aId) || aId;
+            const nb = pointMap.get(bId) || bId;
+            if (!na || !nb) continue;
+
+            if (src.type === 'line') {
+                const lid = this.newSketchEntityId('line');
+                sketch.entities.push({
+                    id: lid,
+                    type: 'line',
+                    construction: src.construction === true,
+                    a: na,
+                    b: nb
+                });
+                mapById.set(lid, sketch.entities[sketch.entities.length - 1]);
+                createdCurveIds.push(lid);
+                mirrorLinePairs.push([src.id, lid]);
+                continue;
+            }
+
+            const aid = this.newSketchEntityId('arc');
+            const arc = {
+                id: aid,
+                type: 'arc',
+                construction: src.construction === true,
+                a: na,
+                b: nb,
+                ccw: src.ccw === undefined ? true : src.ccw
+            };
+            if (Number.isFinite(src.cx) && Number.isFinite(src.cy)) {
+                const mc = mirrorLocalPointAcrossLine({ x: src.cx, y: src.cy }, axisALocal, axisBLocal);
+                arc.cx = mc.x;
+                arc.cy = mc.y;
+            }
+            if (Number.isFinite(src.mx) && Number.isFinite(src.my)) {
+                const mm = mirrorLocalPointAcrossLine({ x: src.mx, y: src.my }, axisALocal, axisBLocal);
+                arc.mx = mm.x;
+                arc.my = mm.y;
+            }
+            if (src.data && typeof src.data === 'object') {
+                const data = JSON.parse(JSON.stringify(src.data));
+                if (Array.isArray(data.threePointIds)) {
+                    data.threePointIds = data.threePointIds.map(pid => pointMap.get(pid) || pid);
+                }
+                arc.data = data;
+            }
+            if (src.startAngle !== undefined) arc.startAngle = src.startAngle;
+            if (src.endAngle !== undefined) arc.endAngle = src.endAngle;
+            if (Number.isFinite(src.radius)) arc.radius = src.radius;
+            if (isCircleCurve(src)) {
+                // Keep circle orientation canonical; circle is orientation-invariant.
+                arc.ccw = true;
+                if (Number.isFinite(arc.cx) && Number.isFinite(arc.cy)) {
+                    const p1 = mapById.get(na);
+                    if (p1) {
+                        const r = Math.hypot((p1.x || 0) - arc.cx, (p1.y || 0) - arc.cy);
+                        if (Number.isFinite(r) && r > SKETCH_MIN_LINE_LENGTH) {
+                            arc.radius = r;
+                        }
+                    }
+                }
+            } else {
+                // Reflection flips winding.
+                arc.ccw = !(src.ccw === false);
+                if (Number.isFinite(arc.cx) && Number.isFinite(arc.cy)) {
+                    const pa = mapById.get(na);
+                    const pb = mapById.get(nb);
+                    if (pa && pb) {
+                        arc.startAngle = Math.atan2((pa.y || 0) - arc.cy, (pa.x || 0) - arc.cx);
+                        arc.endAngle = Math.atan2((pb.y || 0) - arc.cy, (pb.x || 0) - arc.cx);
+                        arc.radius = Math.hypot((pa.x || 0) - arc.cx, (pa.y || 0) - arc.cy);
+                    }
+                }
+            }
+            sketch.entities.push(arc);
+            mapById.set(aid, arc);
+            createdCurveIds.push(aid);
+            mirrorArcPairs.push([src.id, aid]);
+        }
+
+        for (const [srcPointId, dstPointId] of mirrorPointPairs) {
+            addMirrorConstraint('mirror_point', [axis.id, srcPointId, dstPointId]);
+        }
+        for (const [srcLineId, dstLineId] of mirrorLinePairs) {
+            addMirrorConstraint('mirror_line', [axis.id, srcLineId, dstLineId]);
+        }
+        for (const [srcArcId, dstArcId] of mirrorArcPairs) {
+            addMirrorConstraint('mirror_arc', [axis.id, srcArcId, dstArcId]);
+        }
+
+        enforceSketchConstraintsInPlace(sketch);
+    }, {
+        opType: 'feature.update',
+        payload: {
+            field: 'entities.add',
+            entity: 'mirror',
+            axis: axis.id
+        }
+    });
+
+    if (!createdCurveIds.length && !createdPointIds.length) {
+        return false;
+    }
+    if (keepResultSelected) {
+        this.selectedSketchEntities.clear();
+        this.selectedSketchArcCenters?.clear?.();
+        for (const id of createdCurveIds) this.selectedSketchEntities.add(id);
+        for (const id of createdPointIds) this.selectedSketchEntities.add(id);
+        this.hoveredSketchEntityId = null;
+    }
+    this.updateSketchInteractionVisuals();
+    return true;
+}
+
 function getSelectedSketchCircle(feature) {
     const entities = Array.isArray(feature?.entities) ? feature.entities : [];
     const selected = entities.filter(entity => this.selectedSketchEntities.has(entity.id));
@@ -1188,6 +1471,7 @@ export {
     getRectangleCorners,
     createSketchRectangle,
     createSketchPolygonFromSelectedCircle,
+    mirrorSelectedSketchGeometry,
     getSelectedSketchCircle,
     getCircleData,
     computeArcGeometry,

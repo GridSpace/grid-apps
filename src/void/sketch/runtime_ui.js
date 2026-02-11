@@ -23,7 +23,10 @@ function constraintGlyphLabel(type) {
         equal: '=',
         midpoint: 'M',
         dimension: 'D',
-        polygon_pattern: 'PG'
+        polygon_pattern: 'PG',
+        mirror_point: 'MR',
+        mirror_line: 'MR',
+        mirror_arc: 'MR'
     };
     return labels[type] || '?';
 }
@@ -383,6 +386,8 @@ function applyEntityStyle(rec, mode, colors) {
 
     const hoveredId = rec.interaction?.hoveredId || null;
     const selectedIds = rec.interaction?.selectedIds || new Set();
+    const mirrorMode = !!rec.interaction?.mirrorMode;
+    const mirrorAxisId = rec.interaction?.mirrorAxisId || null;
     const hoveredProfileId = rec.interaction?.hoveredProfileId || null;
     const selectedProfileIds = rec.interaction?.selectedProfileIds || new Set();
     const constraintHighlight = this.getConstraintHoverHighlight(rec);
@@ -393,18 +398,23 @@ function applyEntityStyle(rec, mode, colors) {
         const hovered = mode === 'edit' && (hoveredId === id || constrained) && !selected;
 
         if (view.type === 'line' || view.type === 'arc') {
-            const color = selected
-                ? colors.linesHover
-                : hovered
+            const isMirrorAxis = mirrorMode && view.type === 'line' && id === mirrorAxisId;
+            const color = isMirrorAxis
+                ? (colors.linesMirrorAxis || 0xb07cff)
+                : selected
                     ? colors.linesHover
-                    : baseLineColor;
+                    : hovered
+                        ? colors.linesHover
+                        : baseLineColor;
             view.object.material.color.setHex(color);
             if (view.object.material?.isLineMaterial) {
-                const width = selected
+                const width = isMirrorAxis
                     ? (colors.lineWidths?.selected || 3.4)
-                    : hovered
-                        ? (colors.lineWidths?.hover || 3.0)
-                        : (colors.lineWidths?.default || 1.2);
+                    : selected
+                        ? (colors.lineWidths?.selected || 3.4)
+                        : hovered
+                            ? (colors.lineWidths?.hover || 3.0)
+                            : (colors.lineWidths?.default || 1.2);
                 view.object.material.linewidth = width;
                 const { renderer } = space.internals();
                 const w = renderer?.domElement?.clientWidth || renderer?.domElement?.width || 1;
@@ -945,7 +955,7 @@ function getConstraintAnchorLocal(feature, constraint) {
     const entities = Array.isArray(feature?.entities) ? feature.entities : [];
     const byId = new Map(entities.map(e => [e?.id, e]));
     const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
-    const lineTypes = new Set(['horizontal', 'vertical', 'horizontal_points', 'vertical_points', 'tangent', 'equal', 'collinear', 'dimension', 'arc_center_on_line', 'arc_center_on_arc']);
+    const lineTypes = new Set(['horizontal', 'vertical', 'horizontal_points', 'vertical_points', 'tangent', 'equal', 'collinear', 'dimension', 'arc_center_on_line', 'arc_center_on_arc', 'mirror_line']);
     const pointLike = ref => {
         if (!ref) return null;
         if (ref === '__sketch-origin__') return { x: 0, y: 0 };
@@ -964,6 +974,22 @@ function getConstraintAnchorLocal(feature, constraint) {
         if (p?.type === 'point') return { x: p.x || 0, y: p.y || 0 };
         return null;
     };
+
+    if (constraint?.type === 'mirror_line') {
+        const src = byId.get(refs[1]);
+        const dst = byId.get(refs[2]);
+        const lineMid = line => {
+            if (line?.type !== 'line') return null;
+            const [a, b] = this.getLineEndpoints(line, byId);
+            if (!a || !b) return null;
+            return { x: ((a.x || 0) + (b.x || 0)) * 0.5, y: ((a.y || 0) + (b.y || 0)) * 0.5 };
+        };
+        const a = lineMid(src);
+        const b = lineMid(dst);
+        if (a && b) return { x: (a.x + b.x) * 0.5, y: (a.y + b.y) * 0.5 };
+        if (a) return a;
+        if (b) return b;
+    }
 
     if (lineTypes.has(constraint?.type)) {
         if (constraint?.type === 'dimension') {
@@ -1019,6 +1045,20 @@ function getConstraintAnchorLocal(feature, constraint) {
                 }
                 if (sc) return sc;
                 if (dc) return dc;
+            }
+        }
+    }
+
+    if (constraint?.type === 'mirror_arc') {
+        const arc = refs.map(id => byId.get(id)).find(e => e?.type === 'arc');
+        if (arc) {
+            const aId = typeof arc?.a === 'string' ? arc.a : (typeof arc?.p1_id === 'string' ? arc.p1_id : null);
+            const bId = typeof arc?.b === 'string' ? arc.b : (typeof arc?.p2_id === 'string' ? arc.p2_id : null);
+            const a = byId.get(aId);
+            const b = byId.get(bId);
+            if (a?.type === 'point' && b?.type === 'point') {
+                const center = computeArcCenterForUi(arc, a, b);
+                if (center) return center;
             }
         }
     }
