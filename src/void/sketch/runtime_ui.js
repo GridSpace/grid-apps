@@ -79,7 +79,7 @@ function computeArcCenterForUi(arc, a, b) {
     return { x: ccx, y: ccy };
 }
 
-function isRadiusDimensionConstraint(feature, constraint) {
+function isArcDimensionConstraint(feature, constraint) {
     const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
     if (refs.length !== 1) return false;
     const entities = Array.isArray(feature?.entities) ? feature.entities : [];
@@ -135,7 +135,8 @@ function computeDimensionMeasurement(feature, constraint) {
     const pts = getDimensionEndpoints(feature, constraint);
     if (!pts) return NaN;
     const [a, b] = pts;
-    return Math.hypot((b.x || 0) - (a.x || 0), (b.y || 0) - (a.y || 0));
+    const base = Math.hypot((b.x || 0) - (a.x || 0), (b.y || 0) - (a.y || 0));
+    return isArcDimensionConstraint(feature, constraint) ? base * 2 : base;
 }
 
 function clearDimensionDecorations3D(rec) {
@@ -262,10 +263,24 @@ function addDimensionDecoration3D(rec, c, a, b, opts = {}) {
         rec.dimensionGroup.add(line);
     };
 
-    // Radius dimensions: if glyph center is outside the circle, draw a leader
-    // from the glyph to the circle instead of full extension/baseline/caps.
-    const isRadiusDim = Array.isArray(c?.refs) && c.refs.length === 1;
-    if (isRadiusDim) {
+    const drawArrowHead = (tip, dir, size = capLen * 0.9) => {
+        const dlen = Math.hypot(dir.x || 0, dir.y || 0);
+        if (!Number.isFinite(dlen) || dlen < 1e-8) return;
+        const ux = (dir.x || 0) / dlen;
+        const uy = (dir.y || 0) / dlen;
+        const px = -uy;
+        const py = ux;
+        const backX = (tip.x || 0) - ux * size;
+        const backY = (tip.y || 0) - uy * size;
+        const wing = size * 0.55;
+        makeLine(tip, { x: backX + px * wing, y: backY + py * wing });
+        makeLine(tip, { x: backX - px * wing, y: backY - py * wing });
+    };
+
+    // Diameter dimensions: inside the circle draw full diameter with end arrows.
+    // Outside the circle draw a leader with a single arrow touching the circle.
+    const isArcDim = isArcDimensionConstraint(rec?.feature, c);
+    if (isArcDim) {
         const centerPt = a;
         const edgePt = b;
         const rdx = (edgePt.x || 0) - (centerPt.x || 0);
@@ -282,8 +297,23 @@ function addDimensionDecoration3D(rec, c, a, b, opts = {}) {
                 y: (centerPt.y || 0) + uy2 * radius
             };
             makeLine(center, touch);
+            drawArrowHead(touch, { x: touch.x - (center.x || 0), y: touch.y - (center.y || 0) });
             return;
         }
+        const ux2 = Number.isFinite(off) && off > 1e-6 ? odx / off : 1;
+        const uy2 = Number.isFinite(off) && off > 1e-6 ? ody / off : 0;
+        const d0 = {
+            x: (centerPt.x || 0) - ux2 * radius,
+            y: (centerPt.y || 0) - uy2 * radius
+        };
+        const d1 = {
+            x: (centerPt.x || 0) + ux2 * radius,
+            y: (centerPt.y || 0) + uy2 * radius
+        };
+        makeLine(d0, d1);
+        drawArrowHead(d0, { x: d0.x - d1.x, y: d0.y - d1.y });
+        drawArrowHead(d1, { x: d1.x - d0.x, y: d1.y - d0.y });
+        return;
     }
 
     // extension lines
@@ -1194,7 +1224,7 @@ function updateConstraintGlyphs(getApi, opts = {}) {
             glyph.className = 'sketch-constraint-glyph';
             const measured = isDimension ? computeDimensionMeasurement(rec.feature, c) : NaN;
             const mode = isDimension ? getDimensionMode(c) : 'driving';
-            const isRadiusDim = isDimension ? isRadiusDimensionConstraint(rec.feature, c) : false;
+            const isArcDim = isDimension ? isArcDimensionConstraint(rec.feature, c) : false;
             glyph.textContent = isDimension
                 ? (mode === 'driven' ? formatMeasuredValue(measured) : formatDimensionLabel(c))
                 : this.constraintGlyphLabel(c.type);
@@ -1204,7 +1234,7 @@ function updateConstraintGlyphs(getApi, opts = {}) {
                 glyph.classList.add('dimension');
                 glyph.classList.toggle('driven', mode === 'driven');
                 glyph.classList.toggle('driving', mode === 'driving');
-                glyph.classList.toggle('radius', !!isRadiusDim);
+                glyph.classList.toggle('radius', !!isArcDim);
                 glyph.dataset.mode = mode === 'driven' ? 'R' : 'D';
                 const ends = getDimensionEndpoints(rec.feature, c);
                 if (ends) {
@@ -1223,7 +1253,7 @@ function updateConstraintGlyphs(getApi, opts = {}) {
                 glyph.classList.add('hover');
             }
             glyph.title = isDimension
-                ? `${isRadiusDim ? 'radius ' : ''}dimension (${mode}) - double-click edit, alt-click toggle driving/reference`
+                ? `${isArcDim ? 'diameter ' : ''}dimension (${mode}) - double-click edit, alt-click toggle driving/reference`
                 : (c.type || 'constraint');
             glyph.ondblclick = event => {
                 if (!isDimension || mode !== 'driving') return;

@@ -82,7 +82,7 @@ function measureDimensionValue(entities, refs = []) {
             const [aId] = getArcEndpoints(ent);
             const a = byId.get(aId);
             if (a?.type !== 'point') return NaN;
-            return Math.hypot((a.x || 0) - center.x, (a.y || 0) - center.y);
+            return Math.hypot((a.x || 0) - center.x, (a.y || 0) - center.y) * 2;
         }
         return NaN;
     }

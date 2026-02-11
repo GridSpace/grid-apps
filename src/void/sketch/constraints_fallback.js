@@ -605,7 +605,7 @@ function getDrivingArcRadiusFromConstraints(constraints, arcId) {
         const refs = Array.isArray(c?.refs) ? c.refs : [];
         if (refs.length !== 1 || refs[0] !== arcId) continue;
         const v = Number(c?.data?.value);
-        if (Number.isFinite(v) && v > EPS) return v;
+        if (Number.isFinite(v) && v > EPS) return v * 0.5;
     }
     return NaN;
 }
@@ -802,7 +802,7 @@ function applyDimension(constraint, points, lines, arcs, fixed) {
         p2Id = getLineEndpointId(line, 'b');
     } else if (refs.length === 1 && arcs.has(refs[0])) {
         const arc = arcs.get(refs[0]);
-        return applyArcRadiusTarget(arc, points, target, fixed);
+        return applyArcRadiusTarget(arc, points, target * 0.5, fixed);
     } else if (refs.length >= 2 && points.has(refs[0]) && points.has(refs[1])) {
         p1Id = refs[0];
         p2Id = refs[1];
@@ -831,7 +831,10 @@ function applyDimension(constraint, points, lines, arcs, fixed) {
         const my = ((aRef.y || 0) + (bRef.y || 0)) * 0.5;
         const hx = ux * target * 0.5;
         const hy = uy * target * 0.5;
-        return setPointLikeRef(aRef, mx - hx, my - hy, points, fixed) || setPointLikeRef(bRef, mx + hx, my + hy, points, fixed);
+        let changed = false;
+        changed = setPointLikeRef(aRef, mx - hx, my - hy, points, fixed) || changed;
+        changed = setPointLikeRef(bRef, mx + hx, my + hy, points, fixed) || changed;
+        return changed;
     }
     if (!p1Id || !p2Id) return false;
     const a = points.get(p1Id);
@@ -861,7 +864,10 @@ function applyDimension(constraint, points, lines, arcs, fixed) {
     const my = ((a.y || 0) + (b.y || 0)) * 0.5;
     const hx = ux * target * 0.5;
     const hy = uy * target * 0.5;
-    return setPoint(a, mx - hx, my - hy) || setPoint(b, mx + hx, my + hy);
+    let changed = false;
+    changed = setPoint(a, mx - hx, my - hy) || changed;
+    changed = setPoint(b, mx + hx, my + hy) || changed;
+    return changed;
 }
 
 function applyArcRadiusTarget(arc, points, target, fixed) {

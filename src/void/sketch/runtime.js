@@ -32,6 +32,7 @@ function createSketchRuntimeApi(getApi) {
         _glyphLayer: null,
         _glyphDrag: null,
         _glyphClick: null,
+        _cameraSyncBound: false,
 
         init(world) {
             if (this.root) return;
@@ -46,6 +47,36 @@ function createSketchRuntimeApi(getApi) {
                     this.updatePointScreenScales();
                     this.updateConstraintGlyphs();
                 });
+            }
+            if (!this._cameraSyncBound) {
+                this._cameraSyncBound = true;
+                const refreshGlyphs = () => {
+                    if (!this.sketches?.size) return;
+                    this.updatePointScreenScales();
+                    this.updateConstraintGlyphs();
+                };
+                // Keep glyph/overlay projection in lockstep with camera while orbiting/panning/zooming.
+                space.afterRender(() => {
+                    refreshGlyphs();
+                });
+                const { renderer } = space.internals();
+                const dom = renderer?.domElement || null;
+                if (dom?.addEventListener) {
+                    dom.addEventListener('wheel', () => {
+                        if (!this.sketches?.size) return;
+                        // Force a refresh tick during dolly so glyph overlays keep pace.
+                        space.refresh();
+                        refreshGlyphs();
+                    }, { passive: true });
+                    dom.addEventListener('mousemove', event => {
+                        if (!this.sketches?.size) return;
+                        // Middle-button drag pan can otherwise lag glyph projection.
+                        if ((event?.buttons || 0) & 4) {
+                            space.refresh();
+                            refreshGlyphs();
+                        }
+                    }, { passive: true });
+                }
             }
             window.addEventListener('resize', () => {
                 this.updatePointScreenScales();
