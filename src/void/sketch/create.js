@@ -4,6 +4,7 @@ import { api } from '../api.js';
 import { enforceSketchConstraintsInPlace } from './constraints.js';
 import {
     isCircleCurve,
+    isThreePointCircle,
     markArcThreePoint,
     markArcCenterPoint,
     markArcTangent,
@@ -688,6 +689,41 @@ function pointDistanceToLine(local, axisA, axisB) {
     return Math.hypot(px - qx, py - qy);
 }
 
+function isLikelyCircleArcEntity(entity, byId) {
+    if (!entity || entity.type !== 'arc') return false;
+    if (isCircleCurve(entity)) return true;
+    const cx = Number(entity?.cx);
+    const cy = Number(entity?.cy);
+    const radius = Number(entity?.radius);
+    if (!Number.isFinite(cx) || !Number.isFinite(cy) || !Number.isFinite(radius) || radius <= SKETCH_MIN_LINE_LENGTH) {
+        return false;
+    }
+    const aId = typeof entity?.a === 'string' ? entity.a : (typeof entity?.p1_id === 'string' ? entity.p1_id : null);
+    const bId = typeof entity?.b === 'string' ? entity.b : (typeof entity?.p2_id === 'string' ? entity.p2_id : null);
+    const a = byId?.get?.(aId);
+    const b = byId?.get?.(bId);
+    if (!a || !b) {
+        return true;
+    }
+    const da = Math.hypot((a.x || 0) - cx, (a.y || 0) - cy);
+    const db = Math.hypot((b.x || 0) - cx, (b.y || 0) - cy);
+    const ab = Math.hypot((a.x || 0) - (b.x || 0), (a.y || 0) - (b.y || 0));
+    const tol = Math.max(1e-5, radius * 1e-4);
+    if (ab <= tol) return true;
+    if (Math.abs(da - radius) <= tol && Math.abs(db - radius) <= tol && Math.abs(da - db) <= tol) {
+        const sa = Number(entity?.startAngle);
+        const ea = Number(entity?.endAngle);
+        if (Number.isFinite(sa) && Number.isFinite(ea)) {
+            const span = Math.abs(ea - sa);
+            const tau = Math.PI * 2;
+            if (Math.abs(span - tau) <= 1e-3 || Math.abs((span % tau) - tau) <= 1e-3) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 function mirrorSelectedSketchGeometry(options = {}) {
     const feature = this.getEditingSketchFeature();
     if (!feature) return false;
@@ -867,7 +903,8 @@ function mirrorSelectedSketchGeometry(options = {}) {
             if (src.startAngle !== undefined) arc.startAngle = src.startAngle;
             if (src.endAngle !== undefined) arc.endAngle = src.endAngle;
             if (Number.isFinite(src.radius)) arc.radius = src.radius;
-            if (isCircleCurve(src)) {
+            const srcLooksCircle = isLikelyCircleArcEntity(src, mapById);
+            if (srcLooksCircle) {
                 // Keep circle orientation canonical; circle is orientation-invariant.
                 arc.ccw = true;
                 if (Number.isFinite(arc.cx) && Number.isFinite(arc.cy)) {
@@ -878,6 +915,11 @@ function mirrorSelectedSketchGeometry(options = {}) {
                             arc.radius = r;
                         }
                     }
+                }
+                if (isThreePointCircle(src)) {
+                    markCircleThreePoint(arc);
+                } else {
+                    markCircleCenterPoint(arc);
                 }
             } else {
                 // Reflection flips winding.
@@ -894,6 +936,15 @@ function mirrorSelectedSketchGeometry(options = {}) {
             }
             sketch.entities.push(arc);
             mapById.set(aid, arc);
+            if (srcLooksCircle) {
+                const pna = mapById.get(na);
+                const pnb = mapById.get(nb);
+                if (pna && pnb) {
+                    pnb.x = pna.x || 0;
+                    pnb.y = pna.y || 0;
+                }
+                addCoincidentConstraintIfMissing.call(this, sketch, na, nb);
+            }
             createdCurveIds.push(aid);
             mirrorArcPairs.push([src.id, aid]);
         }
