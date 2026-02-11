@@ -504,7 +504,12 @@ function applyPreviewLine(rec, mode, editing, colors) {
     rec.previewLine.geometry.dispose();
     rec.previewLine.geometry = new THREE.BufferGeometry().setFromPoints([a, b]);
     const useHover = !!preview.forceHover;
-    rec.previewLine.material.color.setHex(useHover ? colors.linesHover : (mode === 'edit' ? colors.linesEdit : colors.linesHover));
+    const projected = !!preview.projected;
+    rec.previewLine.material.color.setHex(
+        projected
+            ? (colors.linesProjectedFace || 0x5a9fd4)
+            : (useHover ? colors.linesHover : (mode === 'edit' ? colors.linesEdit : colors.linesHover))
+    );
     rec.previewLine.material.depthTest = false;
     rec.previewLine.visible = true;
     rec.previewLine.renderOrder = 60;
@@ -524,6 +529,11 @@ function applyPreviewExternalWorld(rec, mode, editing, colors) {
     if (line && srcLine?.a && srcLine?.b) {
         const a = new THREE.Vector3(srcLine.a.x || 0, srcLine.a.y || 0, srcLine.a.z || 0);
         const b = new THREE.Vector3(srcLine.b.x || 0, srcLine.b.y || 0, srcLine.b.z || 0);
+        // srcLine points are scene/world-space; convert into this line's parent-local space.
+        if (line.parent?.worldToLocal) {
+            line.parent.worldToLocal(a);
+            line.parent.worldToLocal(b);
+        }
         line.geometry.dispose();
         line.geometry = new THREE.BufferGeometry().setFromPoints([a, b]);
         line.material.color.setHex(colors.linesDerivedActual || 0x39d7ff);
@@ -534,10 +544,19 @@ function applyPreviewExternalWorld(rec, mode, editing, colors) {
         line.visible = false;
     }
     if (point && srcPoint) {
-        point.position.set(srcPoint.x || 0, srcPoint.y || 0, srcPoint.z || 0);
+        const p = new THREE.Vector3(srcPoint.x || 0, srcPoint.y || 0, srcPoint.z || 0);
+        // srcPoint is scene/world-space; convert into marker parent-local space.
+        if (point.parent?.worldToLocal) {
+            point.parent.worldToLocal(p);
+        }
+        point.position.copy(p);
         const parts = point.userData?._markerParts || {};
         if (parts.core?.material?.color) parts.core.material.color.setHex(colors.pointsDerivedActual || 0x39d7ff);
+        if (parts.core?.material) parts.core.material.depthTest = false;
         if (parts.ringWhite?.material?.color) parts.ringWhite.material.color.setHex(0xffffff);
+        if (parts.ringWhite?.material) parts.ringWhite.material.depthTest = false;
+        if (parts.ringOuter?.material) parts.ringOuter.material.depthTest = false;
+        if (parts.ringInner?.material) parts.ringInner.material.depthTest = false;
         if (parts.ringHighlight) parts.ringHighlight.visible = false;
         point.visible = true;
         point.renderOrder = 60;
@@ -583,6 +602,7 @@ function applyPreviewStart(rec, mode, editing, colors) {
         return;
     }
     rec.previewStart.position.set(start.x || 0, start.y || 0, 0);
+    const projected = !!start?.projected;
     const parts = rec.previewStart.userData?._markerParts || {};
     if (parts.core?.material?.color) {
         parts.core.material.color.setHex(colors.pointsGray);
@@ -591,7 +611,7 @@ function applyPreviewStart(rec, mode, editing, colors) {
     if (parts.ringHighlight) {
         parts.ringHighlight.visible = true;
         if (parts.ringHighlight.material?.color) {
-            parts.ringHighlight.material.color.setHex(colors.pointsHover);
+            parts.ringHighlight.material.color.setHex(projected ? (colors.linesProjectedFace || 0x5a9fd4) : colors.pointsHover);
         }
         if (parts.ringHighlight.material) {
             parts.ringHighlight.material.depthTest = false;

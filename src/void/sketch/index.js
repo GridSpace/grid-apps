@@ -163,10 +163,15 @@ function updateSketchInteractionVisuals() {
     const externalPointLocal = canShowExternalPreview ? (external?.hoverPoint?.local || null) : null;
     const showExternalPoint = !!externalPointLocal;
     const showExternalLine = canShowExternalPreview && !!external?.aLocal && !!external?.bLocal && !showExternalPoint;
-    const externalLine = showExternalLine ? { a: external.aLocal, b: external.bLocal, forceHover: true } : null;
-    const externalStart = showExternalPoint ? externalPointLocal : null;
+    const externalLine = showExternalLine
+        ? { a: external.aLocal, b: external.bLocal, forceHover: true, projected: true }
+        : null;
+    const externalStart = showExternalPoint
+        ? { ...externalPointLocal, projected: true }
+        : null;
     const externalEnd = null;
     const externalMid = null;
+    const externalPointWorld = showExternalPoint ? (external?.hoverPoint?.world || null) : null;
     const projectedFaceSegments = !showExternalPoint && !showExternalLine && this.hoveredSolidFaceKey
         ? this.projectFaceBoundaryToSketch(feature, this.hoveredSolidFaceKey)
         : null;
@@ -176,8 +181,21 @@ function updateSketchInteractionVisuals() {
         hoveredConstraintId: this.hoveredSketchConstraintId || null,
         selectedConstraintIds: Array.from(this.selectedSketchConstraints || []),
         previewLine: this.sketchLinePreview || externalLine,
-        previewExternalWorldLine: null,
-        previewExternalWorldPoint: null,
+        previewExternalWorldLine: showExternalLine
+            ? {
+                a: external?.aWorld || null,
+                b: external?.bWorld || null,
+                forceHover: true
+            }
+            : null,
+        previewExternalWorldPoint: showExternalPoint
+            ? {
+                x: externalPointWorld?.x || 0,
+                y: externalPointWorld?.y || 0,
+                z: externalPointWorld?.z || 0,
+                forceHover: true
+            }
+            : null,
         previewFaceSegments: projectedFaceSegments || null,
         previewStart: this.sketchLineStart || this.sketchArcStart || this.sketchCircleCenter || this.sketchRectStart || externalStart,
         previewEnd: this.sketchArcEnd || this.sketchCircleSecond || externalEnd || null,
