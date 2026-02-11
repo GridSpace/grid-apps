@@ -63,10 +63,12 @@ function createShaderPointSymbol(opts = {}) {
             uniform float uRingHighlightR;
             uniform float uThickness;
             uniform float uHighlight;
+            uniform float uSize;
 
             float band(float r, float c, float w) {
                 float d = abs(r - c);
-                return 1.0 - smoothstep(w, w + 0.01, d);
+                float aa = max(fwidth(r) * 1.5, 1.0 / max(8.0, uSize));
+                return 1.0 - smoothstep(w, w + aa, d);
             }
 
             void main() {
@@ -77,7 +79,8 @@ function createShaderPointSymbol(opts = {}) {
                 vec3 col = uCoreColor;
                 float a = 0.0;
 
-                float core = 1.0 - smoothstep(uCoreR, uCoreR + 0.01, r);
+                float aa = max(fwidth(r) * 1.5, 1.0 / max(8.0, uSize));
+                float core = 1.0 - smoothstep(uCoreR, uCoreR + aa, r);
                 if (core > 0.001) {
                     col = uCoreColor;
                     a = max(a, core);
@@ -191,62 +194,7 @@ function createSketchPointMarker(x = 0, y = 0, opts = {}, colors = {}) {
 }
 
 function createArcCenterMarker(x = 0, y = 0, colors = {}) {
-    const marker = new THREE.Group();
-    marker.position.set(x, y, 0);
-    marker.renderOrder = 8;
-    marker.userData._shaderPoint = true;
-
-    const pickCore = new THREE.Mesh(
-        new THREE.CircleGeometry(0.58, 12),
-        new THREE.MeshBasicMaterial({
-            color: 0xffffff,
-            transparent: true,
-            opacity: 0,
-            depthWrite: false
-        })
-    );
-    pickCore.material.colorWrite = false;
-    marker.add(pickCore);
-
-    const sym = createShaderPointSymbol({
-        sizePx: 12,
-        coreColor: 0x8f8f8f,
-        ringBlackColor: 0x8f8f8f,
-        ringWhiteColor: 0xffffff,
-        highlightColor: colors.pointsHover || 0xff9933,
-        coreR: 0.16,
-        ringBlackR: 0.0,
-        ringWhiteR: 0.28,
-        ringHighlightR: 0.36,
-        thickness: 0.028
-    });
-    marker.add(sym.points);
-    const ringHighlight = {
-        material: sym.material,
-        get visible() {
-            return !!(sym.uniforms.uHighlight.value > 0.5);
-        },
-        set visible(v) {
-            sym.uniforms.uHighlight.value = v ? 1 : 0;
-        }
-    };
-    const ring = { material: sym.material };
-    ring.material.color = {
-        setHex(hex) {
-            if (sym.uniforms.uRingWhiteColor.value?.setHex) sym.uniforms.uRingWhiteColor.value.setHex(hex);
-        },
-        getHex() {
-            return sym.uniforms.uRingWhiteColor.value?.getHex?.() || 0xffffff;
-        }
-    };
-
-    marker.userData._markerParts = {
-        core: sym.points,
-        ringWhite: ring,
-        ringHighlight,
-        ringOuter: { material: sym.material },
-        ringInner: { material: sym.material }
-    };
+    const marker = createSketchPointMarker(x, y, {}, colors);
     marker.userData._isArcCenter = true;
     return marker;
 }

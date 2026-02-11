@@ -459,6 +459,15 @@ function applyEntityStyle(rec, mode, colors) {
             }
             if (parts.ringHighlight) {
                 parts.ringHighlight.visible = !!active;
+                if (parts.ringHighlight.material?.color) {
+                    parts.ringHighlight.material.color.setHex(colors.pointsHover);
+                }
+            }
+            if (parts.ringWhite?.material?.color) {
+                parts.ringWhite.material.color.setHex(0xffffff);
+            }
+            if (parts.ringBlack?.material?.color) {
+                parts.ringBlack.material.color.setHex(0x101010);
             }
             continue;
         }
