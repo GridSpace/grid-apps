@@ -148,7 +148,7 @@ function createSketchPointMarker(x = 0, y = 0, opts = {}, colors = {}) {
         coreColor: 0x8f8f8f,
         ringBlackColor: 0x101010,
         ringWhiteColor: 0xffffff,
-        highlightColor: colors.pointsHover || 0xff9933,
+        highlightColor: colors.linesHover || colors.pointsHover || 0xff9933,
         coreR: 0.17,
         ringBlackR: 0.23,
         ringWhiteR: 0.29,
@@ -158,6 +158,14 @@ function createSketchPointMarker(x = 0, y = 0, opts = {}, colors = {}) {
     marker.add(sym.points);
     const ringHighlight = {
         material: sym.material,
+        color: {
+            setHex(hex) {
+                if (sym.uniforms.uHighlightColor.value?.setHex) sym.uniforms.uHighlightColor.value.setHex(hex);
+            },
+            getHex() {
+                return sym.uniforms.uHighlightColor.value?.getHex?.() || 0xff9933;
+            }
+        },
         get visible() {
             return !!(sym.uniforms.uHighlight.value > 0.5);
         },

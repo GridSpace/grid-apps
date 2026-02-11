@@ -33,6 +33,7 @@ function hitTestSketchEntity(event, feature) {
     let bestPoint = null;
     let bestLine = null;
     const pointById = new Map();
+    const pointHitPx = SKETCH_HIT_POINT_PX;
     for (const entity of entities) {
         if (entity?.type === 'point' && entity.id) {
             pointById.set(entity.id, entity);
@@ -47,7 +48,7 @@ function hitTestSketchEntity(event, feature) {
             const proj = api.overlay.project3Dto2D(world);
             if (!proj?.visible) continue;
             const dist = Math.hypot(screenPoint.x - proj.x, screenPoint.y - proj.y);
-            if (dist <= SKETCH_HIT_POINT_PX && (!bestPoint || dist < bestPoint.dist)) {
+            if (dist <= pointHitPx && (!bestPoint || dist < bestPoint.dist)) {
                 bestPoint = { id: entity.id, type: 'point', dist };
             }
             continue;
@@ -75,10 +76,10 @@ function hitTestSketchEntity(event, feature) {
                     const cd = Math.hypot(screenPoint.x - pc.x, screenPoint.y - pc.y);
                     const bestIsArcCenter = bestPoint?.type === 'arc-center';
                     const sameDist = bestPoint ? Math.abs(cd - bestPoint.dist) <= 1e-6 : false;
-                    if (cd <= SKETCH_HIT_POINT_PX && (
+                    if (cd <= pointHitPx && (
                         !bestPoint ||
                         cd < bestPoint.dist - 1e-6 ||
-                        (!bestIsArcCenter && sameDist)
+                        (bestIsArcCenter && sameDist)
                     )) {
                         bestPoint = { id: `arc-center:${entity.id}`, type: 'arc-center', dist: cd };
                     }
@@ -106,7 +107,7 @@ function hitTestSketchEntity(event, feature) {
     const originProj = api.overlay.project3Dto2D(basis.origin);
     if (originProj?.visible) {
         const originDist = Math.hypot(screenPoint.x - originProj.x, screenPoint.y - originProj.y);
-        if (originDist <= SKETCH_HIT_POINT_PX && (!bestPoint || originDist < bestPoint.dist)) {
+        if (originDist <= pointHitPx && (!bestPoint || originDist < bestPoint.dist)) {
             bestPoint = { id: SKETCH_VIRTUAL_ORIGIN_ID, type: 'point', dist: originDist };
         }
     }
@@ -161,7 +162,7 @@ function getSketchEntityHitFromIntersections(intersections, feature) {
         if (type === 'point' || type === 'arc-center') {
             const bestIsArcCenter = bestPoint?.type === 'arc-center';
             const sameDist = bestPoint ? Math.abs((cand.distance ?? Infinity) - (bestPoint.distance ?? Infinity)) <= 1e-6 : false;
-            if (!bestPoint || cand.distance < bestPoint.distance - 1e-6 || (type === 'arc-center' && !bestIsArcCenter && sameDist)) {
+            if (!bestPoint || cand.distance < bestPoint.distance - 1e-6 || (type === 'point' && bestIsArcCenter && sameDist)) {
                 bestPoint = cand;
             }
         } else if (!bestLine || cand.distance < bestLine.distance) {

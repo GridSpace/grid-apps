@@ -245,7 +245,7 @@ function handleSketchHover(event, intersections) {
         || (prevDerived?.solidId !== derived?.solidId)
         || (prevDerived?.index !== derived?.index)
         || (prevDerived?.hoverPoint?.kind !== derived?.hoverPoint?.kind);
-    const hoveredId = hit && !this.selectedSketchEntities.has(hit.id) ? hit.id : null;
+    const hoveredId = hit ? hit.id : null;
     if (this.hoveredSketchEntityId !== hoveredId || previewChanged || derivedChanged) {
         this.hoveredSketchEntityId = hoveredId;
         this.updateSketchInteractionVisuals();

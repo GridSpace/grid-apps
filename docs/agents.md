@@ -222,6 +222,7 @@ src/
   - each subsequently selected sketch entity is mirrored immediately across that axis
   - `Esc` or `Space` exits mirror mode
 - constraints currently wired: coincident, point-on-line, fixed, horizontal, vertical, perpendicular, equal, collinear, tangent, arc-center coincident, midpoint
+- deferred: Onshape-like under/fully constrained coloring for sketch entities needs a custom per-entity DoF analysis layer on top of planegcs (not directly exposed as per-entity status by solver)
 - horizontal/vertical can target line entities or a selected point pair
 - rectangle tools are implemented as constrained line sets:
   - corner rectangle

@@ -406,12 +406,6 @@ function applyEntityStyle(rec, mode, colors) {
             pointAttachments.get(bId).push(entity.id);
         }
     }
-    const curveColor = curveId => {
-        const selectedCurve = mode === 'edit' && selectedIds.has(curveId);
-        const constrainedCurve = mode === 'edit' && constraintHighlight.has(curveId) && !selectedCurve;
-        const hoveredCurve = mode === 'edit' && (hoveredId === curveId || constrainedCurve) && !selectedCurve;
-        return (selectedCurve || hoveredCurve) ? colors.linesHover : baseLineColor;
-    };
     const sketchHovered = mode === 'hover';
 
     for (const [id, view] of rec.entityViews.entries()) {
@@ -475,17 +469,24 @@ function applyEntityStyle(rec, mode, colors) {
                 selectedIds.has(id) ||
                 constrained
             ));
-            const arcId = typeof id === 'string' && id.startsWith('arc-center:') ? id.substring('arc-center:'.length) : null;
-            const coreColor = arcId ? curveColor(arcId) : basePointColor;
+            const coreColor = active
+                ? (colors.linesHover || colors.pointsHover)
+                : baseLineColor;
             view.object.visible = true;
             if (parts.core?.material?.color) {
                 parts.core.material.color.setHex(coreColor);
             }
-            if (parts.ringBase) parts.ringBase.visible = !!active;
+            if (parts.core?.material?.uniforms?.uCoreColor?.value?.setHex) {
+                parts.core.material.uniforms.uCoreColor.value.setHex(coreColor);
+            }
+            if (parts.ringBase) parts.ringBase.visible = false;
+            if (parts.core?.material?.uniforms?.uShowBaseRings) {
+                parts.core.material.uniforms.uShowBaseRings.value = 0;
+            }
             if (parts.ringHighlight) {
-                parts.ringHighlight.visible = !!active;
-                if (parts.ringHighlight.material?.color) {
-                    parts.ringHighlight.material.color.setHex(colors.linesHover || colors.pointsHover);
+                parts.ringHighlight.visible = false;
+                if (parts.ringHighlight.color) {
+                    parts.ringHighlight.color.setHex(colors.linesHover || colors.pointsHover);
                 }
             }
             if (parts.ringWhite?.material?.color) {
@@ -499,17 +500,26 @@ function applyEntityStyle(rec, mode, colors) {
 
         if (view.type === 'point') {
             const parts = view.object.userData?._markerParts || {};
-            const attached = (pointAttachments.get(id)?.length || 0) > 0;
-            const attachedColor = attached ? curveColor(pointAttachments.get(id)[0]) : basePointColor;
-            const active = sketchHovered || selected || hovered;
+            const attachments = pointAttachments.get(id) || [];
+            const attached = attachments.length > 0;
+            const active = sketchHovered || selected || hovered || constrained;
+            const pointColor = active
+                ? (colors.linesHover || colors.pointsHover)
+                : (attached ? baseLineColor : basePointColor);
             if (parts.core?.material?.color) {
-                parts.core.material.color.setHex(attachedColor);
+                parts.core.material.color.setHex(pointColor);
             }
-            if (parts.ringBase) parts.ringBase.visible = !attached || !!active;
+            if (parts.core?.material?.uniforms?.uCoreColor?.value?.setHex) {
+                parts.core.material.uniforms.uCoreColor.value.setHex(pointColor);
+            }
+            if (parts.ringBase) parts.ringBase.visible = !attached;
+            if (parts.core?.material?.uniforms?.uShowBaseRings) {
+                parts.core.material.uniforms.uShowBaseRings.value = attached ? 0 : 1;
+            }
             if (parts.ringHighlight) {
-                parts.ringHighlight.visible = !!active;
-                if (parts.ringHighlight.material?.color) {
-                    parts.ringHighlight.material.color.setHex(colors.linesHover || colors.pointsHover);
+                parts.ringHighlight.visible = !!active && !attached;
+                if (parts.ringHighlight.color) {
+                    parts.ringHighlight.color.setHex(colors.linesHover || colors.pointsHover);
                 }
             }
             if (parts.ringWhite?.material?.color) {
@@ -745,8 +755,8 @@ function applyPreviewStart(rec, mode, editing, colors) {
     }
     if (parts.ringHighlight) {
         parts.ringHighlight.visible = true;
-        if (parts.ringHighlight.material?.color) {
-            parts.ringHighlight.material.color.setHex(projected ? (colors.linesProjectedFace || 0x5a9fd4) : colors.pointsHover);
+        if (parts.ringHighlight.color) {
+            parts.ringHighlight.color.setHex(projected ? (colors.linesProjectedFace || 0x5a9fd4) : (colors.linesHover || colors.pointsHover));
         }
         if (parts.ringHighlight.material) {
             parts.ringHighlight.material.depthTest = false;
@@ -778,8 +788,8 @@ function applyPreviewEnd(rec, mode, editing, colors) {
     }
     if (parts.ringHighlight) {
         parts.ringHighlight.visible = true;
-        if (parts.ringHighlight.material?.color) {
-            parts.ringHighlight.material.color.setHex(colors.pointsHover);
+        if (parts.ringHighlight.color) {
+            parts.ringHighlight.color.setHex(colors.linesHover || colors.pointsHover);
         }
         if (parts.ringHighlight.material) {
             parts.ringHighlight.material.depthTest = false;

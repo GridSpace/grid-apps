@@ -177,7 +177,24 @@ function updateSketchInteractionVisuals() {
         ? { ...externalPointLocal, projected: true }
         : null;
     const externalEnd = null;
-    const externalMid = null;
+    let externalMid = null;
+    if (!showExternalPoint && !showExternalLine && !this.sketchLineStart && !this.sketchArcStart && !this.sketchCircleCenter && !this.sketchRectStart) {
+        const hoveredId = this.sketchDrag ? dragHoverId : this.hoveredSketchEntityId;
+        if (hoveredId && !String(hoveredId).startsWith('arc-center:')) {
+            const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+            const byId = new Map(entities.filter(e => e?.id).map(e => [e.id, e]));
+            const ent = byId.get(hoveredId);
+            if (ent?.type === 'line') {
+                const [a, b] = this.getLineEndpoints(ent, byId);
+                if (a && b) {
+                    externalMid = {
+                        x: ((a.x || 0) + (b.x || 0)) * 0.5,
+                        y: ((a.y || 0) + (b.y || 0)) * 0.5
+                    };
+                }
+            }
+        }
+    }
     const externalPointWorld = showExternalPoint ? (external?.hoverPoint?.world || null) : null;
     const projectedFaceSegments = !showExternalPoint && !showExternalLine && this.hoveredSolidFaceKey
         ? this.projectFaceBoundaryToSketch(feature, this.hoveredSolidFaceKey)
