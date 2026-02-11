@@ -54,6 +54,7 @@ function createShaderPointSymbol(opts = {}) {
             }
         `,
         fragmentShader: `
+            #include <common>
             uniform vec3 uCoreColor;
             uniform vec3 uRingBlackColor;
             uniform vec3 uRingWhiteColor;
@@ -112,6 +113,8 @@ function createShaderPointSymbol(opts = {}) {
 
                 if (a < 0.01) discard;
                 gl_FragColor = vec4(col, a);
+                #include <tonemapping_fragment>
+                #include <colorspace_fragment>
             }
         `
     });
