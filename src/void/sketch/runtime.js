@@ -32,7 +32,9 @@ function createSketchRuntimeApi(getApi) {
         _glyphLayer: null,
         _glyphDrag: null,
         _glyphClick: null,
-        _cameraSyncBound: false,
+        _cameraSyncQueued: false,
+        _viewCtrlBound: null,
+        _viewCtrlChangeHandler: null,
 
         init(world) {
             if (this.root) return;
@@ -41,43 +43,18 @@ function createSketchRuntimeApi(getApi) {
             world.add(this.root);
             this._tmpPointWorld = new THREE.Vector3();
             this.ensureConstraintGlyphLayer();
-            const viewCtrl = space.view?.ctrl;
-            if (viewCtrl && viewCtrl.addEventListener) {
-                viewCtrl.addEventListener('change', () => {
-                    this.updatePointScreenScales();
-                    this.updateConstraintGlyphs();
-                });
-            }
-            if (!this._cameraSyncBound) {
-                this._cameraSyncBound = true;
-                const refreshGlyphs = () => {
+            const queueGlyphSync = () => {
+                if (this._cameraSyncQueued) return;
+                this._cameraSyncQueued = true;
+                self.requestAnimationFrame(() => {
+                    this._cameraSyncQueued = false;
                     if (!this.sketches?.size) return;
                     this.updatePointScreenScales();
                     this.updateConstraintGlyphs();
-                };
-                // Keep glyph/overlay projection in lockstep with camera while orbiting/panning/zooming.
-                space.afterRender(() => {
-                    refreshGlyphs();
                 });
-                const { renderer } = space.internals();
-                const dom = renderer?.domElement || null;
-                if (dom?.addEventListener) {
-                    dom.addEventListener('wheel', () => {
-                        if (!this.sketches?.size) return;
-                        // Force a refresh tick during dolly so glyph overlays keep pace.
-                        space.refresh();
-                        refreshGlyphs();
-                    }, { passive: true });
-                    dom.addEventListener('mousemove', event => {
-                        if (!this.sketches?.size) return;
-                        // Middle-button drag pan can otherwise lag glyph projection.
-                        if ((event?.buttons || 0) & 4) {
-                            space.refresh();
-                            refreshGlyphs();
-                        }
-                    }, { passive: true });
-                }
-            }
+            };
+            this._viewCtrlChangeHandler = queueGlyphSync;
+            this.bindViewControl();
             window.addEventListener('resize', () => {
                 this.updatePointScreenScales();
                 this.updateConstraintGlyphs();
@@ -95,6 +72,7 @@ function createSketchRuntimeApi(getApi) {
         },
 
         sync() {
+            this.bindViewControl();
             const api = getApi();
             const features = api.features.listBuilt().filter(f => f?.type === 'sketch');
             const present = new Set(features.map(f => f.id));
@@ -121,6 +99,20 @@ function createSketchRuntimeApi(getApi) {
             }
             this.updatePointScreenScales();
             this.updateConstraintGlyphs();
+        },
+
+        bindViewControl() {
+            const next = space.view?.ctrl || null;
+            if (next === this._viewCtrlBound) {
+                return;
+            }
+            if (this._viewCtrlBound?.removeEventListener && this._viewCtrlChangeHandler) {
+                this._viewCtrlBound.removeEventListener('change', this._viewCtrlChangeHandler);
+            }
+            this._viewCtrlBound = next;
+            if (this._viewCtrlBound?.addEventListener && this._viewCtrlChangeHandler) {
+                this._viewCtrlBound.addEventListener('change', this._viewCtrlChangeHandler);
+            }
         },
 
         getRecord(featureId) {

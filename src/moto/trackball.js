@@ -8,6 +8,7 @@ import { TrackballControls } from '../ext/three.js';
 const { MOUSE, Vector3 } = THREE;
 const BUTTON = { LEFT: 0, MIDDLE: 1, RIGHT: 2 };
 const ACTION = { ROTATE: 0, DOLLY: 1, PAN: 2 };
+const EPS = 1e-6;
 const VOID_ROTATE_SPEED = 36.0;
 const VOID_PAN_SPEED_PERSPECTIVE = 1.0;
 const VOID_PAN_SPEED_ORTHO = 2.4;
@@ -75,8 +76,33 @@ class Trackball {
         const emitNotify = (moved) => {
             if (notify) notify(this.object.position, moved);
         };
+        this._emitNotify = emitNotify;
+        this._lastPosition = this.object.position.clone();
+        this._lastQuaternion = this.object.quaternion.clone();
+        this._lastZoom = this.object.zoom !== undefined ? this.object.zoom : 1;
 
-        this.control.addEventListener('change', () => emitNotify(true));
+        // Keep Space idle-halo semantics identical to Orbit: any control change
+        // is treated as active camera motion.
+        this.control.addEventListener('change', () => {
+            this._emitNotify?.(true);
+        });
+
+        // Mirror Orbit semantics: always signal notify from update(), with moved=true/false.
+        // Patch underlying control.update() so internal handlers also flow through this path.
+        const rawUpdate = this.control.update.bind(this.control);
+        this.control.update = (...args) => {
+            rawUpdate(...args);
+            const moved =
+                this._lastPosition.distanceToSquared(this.object.position) > EPS
+                || 8 * (1 - this._lastQuaternion.dot(this.object.quaternion)) > EPS
+                || Math.abs((this.object.zoom || 1) - this._lastZoom) > EPS;
+            this._emitNotify?.(moved);
+            if (moved) {
+                this._lastPosition.copy(this.object.position);
+                this._lastQuaternion.copy(this.object.quaternion);
+                this._lastZoom = this.object.zoom !== undefined ? this.object.zoom : 1;
+            }
+        };
 
         this._animating = false;
         this._raf = null;
