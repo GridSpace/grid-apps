@@ -722,14 +722,18 @@ function handleSketchDrag(delta, offset, isDone) {
                 draggedArcIds: Array.from(draggedArcIds || []),
                 tangentAggressive: true
             });
-            // Always finish drag with a clean global settle (no drag locks/ids),
-            // so over-constrained or locally-biased states resolve consistently.
+            // Always finish drag with a clean global settle while preserving
+            // drag context so directional constraints (like mirror) do not snap back.
             enforceSketchConstraintsInPlace(feature, {
-                iterations: 96
+                iterations: 96,
+                draggedPointIds: Array.from(movedPointIds || []),
+                draggedArcIds: Array.from(draggedArcIds || [])
             });
             enforceSketchConstraintsInPlace(feature, {
                 useFallback: true,
                 iterations: 96,
+                draggedPointIds: Array.from(movedPointIds || []),
+                draggedArcIds: Array.from(draggedArcIds || []),
                 tangentAggressive: false
             });
             api.features.commit(feature.id, {

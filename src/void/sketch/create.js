@@ -790,7 +790,7 @@ function mirrorSelectedSketchGeometry(options = {}) {
     const createdCurveIds = [];
     const mirrorPointPairs = [];
     const mirrorLinePairs = [];
-    const mirrorArcPairs = [];
+    const skipMirrorPointPairKeys = new Set();
 
     api.features.update(feature.id, sketch => {
         sketch.entities = Array.isArray(sketch.entities) ? sketch.entities : [];
@@ -811,6 +811,35 @@ function mirrorSelectedSketchGeometry(options = {}) {
                 data: {},
                 created_at: Date.now()
             });
+        };
+        const ensureArcCenterPoint = arcId => {
+            if (!arcId) return null;
+            for (const c of sketch.constraints) {
+                if (c?.type !== 'arc_center_coincident') continue;
+                const refs = Array.isArray(c?.refs) ? c.refs : [];
+                if (refs[0] !== arcId) continue;
+                const pid = refs[1];
+                if (typeof pid === 'string' && mapById.get(pid)?.type === 'point') {
+                    return pid;
+                }
+            }
+            const arc = mapById.get(arcId);
+            if (!arc || arc.type !== 'arc') return null;
+            const cx = Number(arc.cx);
+            const cy = Number(arc.cy);
+            if (!Number.isFinite(cx) || !Number.isFinite(cy)) return null;
+            const pid = this.newSketchEntityId('point');
+            const p = { id: pid, type: 'point', x: cx, y: cy, fixed: false };
+            sketch.entities.push(p);
+            mapById.set(pid, p);
+            sketch.constraints.push({
+                id: this.newSketchEntityId('cst'),
+                type: 'arc_center_coincident',
+                refs: [arcId, pid],
+                data: {},
+                created_at: Date.now()
+            });
+            return pid;
         };
         const axisLine = mapById.get(axis.id);
         if (!axisLine || axisLine.type !== 'line') return;
@@ -944,21 +973,29 @@ function mirrorSelectedSketchGeometry(options = {}) {
                     pnb.y = pna.y || 0;
                 }
                 addCoincidentConstraintIfMissing.call(this, sketch, na, nb);
+                const srcAId = typeof src?.a === 'string' ? src.a : (typeof src?.p1_id === 'string' ? src.p1_id : null);
+                const srcBId = typeof src?.b === 'string' ? src.b : (typeof src?.p2_id === 'string' ? src.p2_id : null);
+                if (srcAId && na) skipMirrorPointPairKeys.add(`${srcAId}|${na}`);
+                if (srcBId && nb) skipMirrorPointPairKeys.add(`${srcBId}|${nb}`);
+                const srcCenterPointId = ensureArcCenterPoint(src.id);
+                const dstCenterPointId = ensureArcCenterPoint(aid);
+                if (srcCenterPointId && dstCenterPointId) {
+                    mirrorPointPairs.push([srcCenterPointId, dstCenterPointId]);
+                }
+                addMirrorConstraint('equal', [src.id, aid]);
             }
             createdCurveIds.push(aid);
-            mirrorArcPairs.push([src.id, aid]);
         }
 
         for (const [srcPointId, dstPointId] of mirrorPointPairs) {
+            if (skipMirrorPointPairKeys.has(`${srcPointId}|${dstPointId}`)) {
+                continue;
+            }
             addMirrorConstraint('mirror_point', [axis.id, srcPointId, dstPointId]);
         }
         for (const [srcLineId, dstLineId] of mirrorLinePairs) {
             addMirrorConstraint('mirror_line', [axis.id, srcLineId, dstLineId]);
         }
-        for (const [srcArcId, dstArcId] of mirrorArcPairs) {
-            addMirrorConstraint('mirror_arc', [axis.id, srcArcId, dstArcId]);
-        }
-
         enforceSketchConstraintsInPlace(sketch);
     }, {
         opType: 'feature.update',

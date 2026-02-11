@@ -47,6 +47,12 @@ function enforceWithFallback(sketch, opts = {}) {
                 case 'coincident':
                     iterChanged = applyCoincident(c, points, fixed) || iterChanged;
                     break;
+                case 'mirror_point':
+                    iterChanged = applyMirrorPoint(c, points, lines, fixed, dragged) || iterChanged;
+                    break;
+                case 'mirror_arc':
+                    iterChanged = applyMirrorArc(c, points, lines, arcs, fixed, dragged, draggedArcs) || iterChanged;
+                    break;
                 case 'point_on_line':
                     iterChanged = applyPointOnLine(c, points, lines, fixed) || iterChanged;
                     break;
@@ -97,12 +103,6 @@ function enforceWithFallback(sketch, opts = {}) {
                     break;
                 case 'midpoint':
                     iterChanged = applyMidpoint(c, points, fixed, dragged) || iterChanged;
-                    break;
-                case 'mirror_point':
-                    iterChanged = applyMirrorPoint(c, points, lines, fixed, dragged) || iterChanged;
-                    break;
-                case 'mirror_arc':
-                    iterChanged = applyMirrorArc(c, points, lines, arcs, fixed, dragged, draggedArcs) || iterChanged;
                     break;
                 default:
                     break;
@@ -1426,6 +1426,16 @@ function applyMirrorPoint(constraint, points, lines, fixed, dragged = new Set())
     const dstDragged = !!dragged?.has?.(dstId);
     const srcFixed = isFixed(srcId, fixed);
     const dstFixed = isFixed(dstId, fixed);
+    if (!srcDragged && !dstDragged && !srcFixed && !dstFixed) {
+        const reflectedDst = mirrorPointAcrossAxisLocal(dst, axis.a, axis.b);
+        const sx = ((src.x || 0) + (reflectedDst.x || 0)) * 0.5;
+        const sy = ((src.y || 0) + (reflectedDst.y || 0)) * 0.5;
+        const mirrored = mirrorPointAcrossAxisLocal({ x: sx, y: sy }, axis.a, axis.b);
+        let changed = false;
+        changed = setPoint(src, sx, sy) || changed;
+        changed = setPoint(dst, mirrored.x, mirrored.y) || changed;
+        return changed;
+    }
     let primary = src;
     let primaryId = srcId;
     let secondary = dst;
@@ -1454,73 +1464,10 @@ function applyMirrorPoint(constraint, points, lines, fixed, dragged = new Set())
 }
 
 function applyMirrorArc(constraint, points, lines, arcs, fixed, draggedPoints = new Set(), draggedArcs = new Set()) {
-    const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
-    if (refs.length < 3) return false;
-    const axis = resolveMirrorAxis(constraint, lines, points);
-    if (!axis) return false;
-    const srcArcId = refs[1];
-    const dstArcId = refs[2];
-    const srcArc = arcs.get(srcArcId);
-    const dstArc = arcs.get(dstArcId);
-    if (!srcArc || !dstArc) return false;
-    const srcEndpoints = [getLineEndpointId(srcArc, 'a'), getLineEndpointId(srcArc, 'b')];
-    const dstEndpoints = [getLineEndpointId(dstArc, 'a'), getLineEndpointId(dstArc, 'b')];
-    const srcDragged = draggedArcs?.has?.(srcArcId) || srcEndpoints.some(id => draggedPoints?.has?.(id));
-    const dstDragged = draggedArcs?.has?.(dstArcId) || dstEndpoints.some(id => draggedPoints?.has?.(id));
-    let primaryArc = srcArc;
-    let primaryId = srcArcId;
-    let secondaryArc = dstArc;
-    let secondaryId = dstArcId;
-    if (dstDragged && !srcDragged) {
-        primaryArc = dstArc;
-        primaryId = dstArcId;
-        secondaryArc = srcArc;
-        secondaryId = srcArcId;
-    }
-    const pAId = getLineEndpointId(primaryArc, 'a');
-    const pBId = getLineEndpointId(primaryArc, 'b');
-    const sAId = getLineEndpointId(secondaryArc, 'a');
-    const sBId = getLineEndpointId(secondaryArc, 'b');
-    const pA = points.get(pAId);
-    const pB = points.get(pBId);
-    const sA = points.get(sAId);
-    const sB = points.get(sBId);
-    if (!pA || !pB || !sA || !sB) return false;
-
-    let changed = false;
-    const mA = mirrorPointAcrossAxisLocal(pA, axis.a, axis.b);
-    const mB = mirrorPointAcrossAxisLocal(pB, axis.a, axis.b);
-    if (!isFixed(sAId, fixed)) changed = setPoint(sA, mA.x, mA.y) || changed;
-    if (!isFixed(sBId, fixed)) changed = setPoint(sB, mB.x, mB.y) || changed;
-
-    const center = getArcCenter(primaryArc, pA, pB)
-        || (Number.isFinite(primaryArc?.cx) && Number.isFinite(primaryArc?.cy) ? { x: primaryArc.cx, y: primaryArc.cy } : null);
-    if (!center) return changed;
-    const mCenter = mirrorPointAcrossAxisLocal(center, axis.a, axis.b);
-    const mControl = Number.isFinite(primaryArc?.mx) && Number.isFinite(primaryArc?.my)
-        ? mirrorPointAcrossAxisLocal({ x: primaryArc.mx, y: primaryArc.my }, axis.a, axis.b)
-        : null;
-
-    if (isCircleCurve(primaryArc)) {
-        const radius = Number(primaryArc?.radius) || Math.hypot((pA.x || 0) - center.x, (pA.y || 0) - center.y);
-        changed = setArcCenterAndMeta(secondaryArc, mCenter.x, mCenter.y, radius, 0, Math.PI * 2, true) || changed;
-        if (mControl) {
-            changed = setArcControl(secondaryArc, mControl.x, mControl.y) || changed;
-        } else {
-            changed = setArcControl(secondaryArc, mCenter.x, mCenter.y + radius) || changed;
-        }
-        return changed;
-    }
-
-    const sa = Math.atan2((sA.y || 0) - mCenter.y, (sA.x || 0) - mCenter.x);
-    const ea = Math.atan2((sB.y || 0) - mCenter.y, (sB.x || 0) - mCenter.x);
-    const radius = Math.hypot((sA.x || 0) - mCenter.x, (sA.y || 0) - mCenter.y);
-    const ccw = !(primaryArc?.ccw === false);
-    changed = setArcCenterAndMeta(secondaryArc, mCenter.x, mCenter.y, radius, sa, ea, ccw) || changed;
-    if (mControl) {
-        changed = setArcControl(secondaryArc, mControl.x, mControl.y) || changed;
-    }
-    return changed;
+    // Disabled by design: mirrored arc/circle behavior is driven by mirrored
+    // point pairs. Keeping this path inactive avoids unstable center-drag
+    // interactions until we add a dedicated robust arc mirror relation.
+    return false;
 }
 
 function applyMirrorConstraints(constraints, points, lines, arcs, fixed, draggedPoints = new Set(), draggedArcs = new Set()) {
