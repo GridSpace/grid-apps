@@ -391,6 +391,28 @@ function applyEntityStyle(rec, mode, colors) {
     const hoveredProfileId = rec.interaction?.hoveredProfileId || null;
     const selectedProfileIds = rec.interaction?.selectedProfileIds || new Set();
     const constraintHighlight = this.getConstraintHoverHighlight(rec);
+    const entities = Array.isArray(rec?.feature?.entities) ? rec.feature.entities : [];
+    const pointAttachments = new Map();
+    for (const entity of entities) {
+        if ((entity?.type !== 'line' && entity?.type !== 'arc') || !entity?.id) continue;
+        const aId = typeof entity?.a === 'string' ? entity.a : (typeof entity?.p1_id === 'string' ? entity.p1_id : null);
+        const bId = typeof entity?.b === 'string' ? entity.b : (typeof entity?.p2_id === 'string' ? entity.p2_id : null);
+        if (aId) {
+            if (!pointAttachments.has(aId)) pointAttachments.set(aId, []);
+            pointAttachments.get(aId).push(entity.id);
+        }
+        if (bId) {
+            if (!pointAttachments.has(bId)) pointAttachments.set(bId, []);
+            pointAttachments.get(bId).push(entity.id);
+        }
+    }
+    const curveColor = curveId => {
+        const selectedCurve = mode === 'edit' && selectedIds.has(curveId);
+        const constrainedCurve = mode === 'edit' && constraintHighlight.has(curveId) && !selectedCurve;
+        const hoveredCurve = mode === 'edit' && (hoveredId === curveId || constrainedCurve) && !selectedCurve;
+        return (selectedCurve || hoveredCurve) ? colors.linesHover : baseLineColor;
+    };
+    const sketchHovered = mode === 'hover';
 
     for (const [id, view] of rec.entityViews.entries()) {
         const selected = mode === 'edit' && selectedIds.has(id);
@@ -448,19 +470,22 @@ function applyEntityStyle(rec, mode, colors) {
         }
         if (view.type === 'arc-center') {
             const parts = view.object.userData?._markerParts || {};
-            const active = mode === 'edit' && (
+            const active = sketchHovered || (mode === 'edit' && (
                 hoveredId === id ||
                 selectedIds.has(id) ||
                 constrained
-            );
+            ));
+            const arcId = typeof id === 'string' && id.startsWith('arc-center:') ? id.substring('arc-center:'.length) : null;
+            const coreColor = arcId ? curveColor(arcId) : basePointColor;
             view.object.visible = true;
             if (parts.core?.material?.color) {
-                parts.core.material.color.setHex(active ? colors.pointsHover : basePointColor);
+                parts.core.material.color.setHex(coreColor);
             }
+            if (parts.ringBase) parts.ringBase.visible = !!active;
             if (parts.ringHighlight) {
                 parts.ringHighlight.visible = !!active;
                 if (parts.ringHighlight.material?.color) {
-                    parts.ringHighlight.material.color.setHex(colors.pointsHover);
+                    parts.ringHighlight.material.color.setHex(colors.linesHover || colors.pointsHover);
                 }
             }
             if (parts.ringWhite?.material?.color) {
@@ -474,14 +499,17 @@ function applyEntityStyle(rec, mode, colors) {
 
         if (view.type === 'point') {
             const parts = view.object.userData?._markerParts || {};
-            const active = selected || hovered;
+            const attached = (pointAttachments.get(id)?.length || 0) > 0;
+            const attachedColor = attached ? curveColor(pointAttachments.get(id)[0]) : basePointColor;
+            const active = sketchHovered || selected || hovered;
             if (parts.core?.material?.color) {
-                parts.core.material.color.setHex(active ? colors.pointsHover : basePointColor);
+                parts.core.material.color.setHex(attachedColor);
             }
+            if (parts.ringBase) parts.ringBase.visible = !attached || !!active;
             if (parts.ringHighlight) {
                 parts.ringHighlight.visible = !!active;
                 if (parts.ringHighlight.material?.color) {
-                    parts.ringHighlight.material.color.setHex(colors.pointsHover);
+                    parts.ringHighlight.material.color.setHex(colors.linesHover || colors.pointsHover);
                 }
             }
             if (parts.ringWhite?.material?.color) {

@@ -32,6 +32,7 @@ function createShaderPointSymbol(opts = {}) {
         uRingBlackColor: { value: new THREE.Color(opts.ringBlackColor || 0x101010) },
         uRingWhiteColor: { value: new THREE.Color(opts.ringWhiteColor || 0xffffff) },
         uHighlightColor: { value: new THREE.Color(opts.highlightColor || 0xff9933) },
+        uShowBaseRings: { value: Number(opts.showBaseRings === false ? 0 : 1) },
         uCoreR: { value: coreR },
         uRingBlackR: { value: ringBlackR },
         uRingWhiteR: { value: ringWhiteR },
@@ -57,6 +58,7 @@ function createShaderPointSymbol(opts = {}) {
             uniform vec3 uRingBlackColor;
             uniform vec3 uRingWhiteColor;
             uniform vec3 uHighlightColor;
+            uniform float uShowBaseRings;
             uniform float uCoreR;
             uniform float uRingBlackR;
             uniform float uRingWhiteR;
@@ -86,16 +88,18 @@ function createShaderPointSymbol(opts = {}) {
                     a = max(a, core);
                 }
 
-                float blk = band(r, uRingBlackR, uThickness);
-                if (blk > 0.001) {
-                    col = mix(col, uRingBlackColor, blk);
-                    a = max(a, blk);
-                }
+                if (uShowBaseRings > 0.5) {
+                    float blk = band(r, uRingBlackR, uThickness);
+                    if (blk > 0.001) {
+                        col = mix(col, uRingBlackColor, blk);
+                        a = max(a, blk);
+                    }
 
-                float wht = band(r, uRingWhiteR, uThickness);
-                if (wht > 0.001) {
-                    col = mix(col, uRingWhiteColor, wht);
-                    a = max(a, wht);
+                    float wht = band(r, uRingWhiteR, uThickness);
+                    if (wht > 0.001) {
+                        col = mix(col, uRingWhiteColor, wht);
+                        a = max(a, wht);
+                    }
                 }
 
                 if (uHighlight > 0.5) {
@@ -184,6 +188,15 @@ function createSketchPointMarker(x = 0, y = 0, opts = {}, colors = {}) {
         core: sym.points,
         ringBlack,
         ringWhite,
+        ringBase: {
+            material: sym.material,
+            get visible() {
+                return !!(sym.uniforms.uShowBaseRings.value > 0.5);
+            },
+            set visible(v) {
+                sym.uniforms.uShowBaseRings.value = v ? 1 : 0;
+            }
+        },
         ringHighlight,
         ringOuter: { material: sym.material },
         ringInner: { material: sym.material }
