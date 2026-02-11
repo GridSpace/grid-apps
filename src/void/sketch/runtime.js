@@ -1,6 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { THREE, Line2, LineGeometry, LineMaterial } from '../../ext/three.js';
+import { THREE, Line2, LineGeometry, LineMaterial, LineSegments2, LineSegmentsGeometry } from '../../ext/three.js';
 import { space } from '../../moto/space.js';
 import { Plane } from '../plane.js';
 import { VOID_PALETTE } from '../palette.js';
@@ -120,33 +120,17 @@ function createSketchRuntimeApi(getApi) {
             entitiesGroup.name = `sketch-entities-${feature.id}`;
             const dimensionGroup = new THREE.Group();
             dimensionGroup.name = `sketch-dimensions-${feature.id}`;
-            const previewLine = new THREE.Line(
-                new THREE.BufferGeometry().setFromPoints([
-                    new THREE.Vector3(0, 0, 0),
-                    new THREE.Vector3(0, 0, 0)
-                ]),
-                new THREE.LineBasicMaterial({
-                    color: SKETCH_COLORS.linesHover,
-                    transparent: true,
-                    opacity: 0.9,
-                    depthWrite: false
-                })
-            );
+            const previewLine = this.createFatLine([
+                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(0, 0, 0)
+            ], SKETCH_COLORS.linesHover, SKETCH_COLORS.lineWidths.hover);
             previewLine.visible = false;
             previewLine.renderOrder = 9;
             entitiesGroup.add(previewLine);
-            const previewArc = new THREE.Line(
-                new THREE.BufferGeometry().setFromPoints([
-                    new THREE.Vector3(0, 0, 0),
-                    new THREE.Vector3(0, 0, 0)
-                ]),
-                new THREE.LineBasicMaterial({
-                    color: SKETCH_COLORS.linesHover,
-                    transparent: true,
-                    opacity: 0.9,
-                    depthWrite: false
-                })
-            );
+            const previewArc = this.createFatLine([
+                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(0, 0, 0)
+            ], SKETCH_COLORS.linesHover, SKETCH_COLORS.lineWidths.hover);
             previewArc.visible = false;
             previewArc.renderOrder = 9;
             entitiesGroup.add(previewArc);
@@ -162,48 +146,24 @@ function createSketchRuntimeApi(getApi) {
             previewArcCenter.visible = false;
             previewArcCenter.renderOrder = 11;
             entitiesGroup.add(previewArcCenter);
-            const previewRect = new THREE.Line(
-                new THREE.BufferGeometry().setFromPoints([
-                    new THREE.Vector3(0, 0, 0),
-                    new THREE.Vector3(0, 0, 0),
-                    new THREE.Vector3(0, 0, 0),
-                    new THREE.Vector3(0, 0, 0),
-                    new THREE.Vector3(0, 0, 0)
-                ]),
-                new THREE.LineBasicMaterial({
-                    color: SKETCH_COLORS.linesHover,
-                    transparent: true,
-                    opacity: 0.9,
-                    depthWrite: false
-                })
-            );
+            const previewRect = this.createFatLine([
+                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(0, 0, 0)
+            ], SKETCH_COLORS.linesHover, SKETCH_COLORS.lineWidths.hover);
             previewRect.visible = false;
             previewRect.renderOrder = 9;
             entitiesGroup.add(previewRect);
-            const previewFaceSegments = new THREE.LineSegments(
-                new THREE.BufferGeometry(),
-                new THREE.LineBasicMaterial({
-                    color: SKETCH_COLORS.linesHover,
-                    transparent: true,
-                    opacity: 0.85,
-                    depthWrite: false
-                })
-            );
+            const previewFaceSegments = this.createFatSegments([], SKETCH_COLORS.linesProjectedFace, SKETCH_COLORS.lineWidths.hover);
             previewFaceSegments.visible = false;
             previewFaceSegments.renderOrder = 55;
             entitiesGroup.add(previewFaceSegments);
-            const previewExternalWorldLine = new THREE.Line(
-                new THREE.BufferGeometry().setFromPoints([
-                    new THREE.Vector3(0, 0, 0),
-                    new THREE.Vector3(0, 0, 0)
-                ]),
-                new THREE.LineBasicMaterial({
-                    color: SKETCH_COLORS.linesDerivedActual,
-                    transparent: true,
-                    opacity: 0.95,
-                    depthWrite: false
-                })
-            );
+            const previewExternalWorldLine = this.createFatLine([
+                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(0, 0, 0)
+            ], SKETCH_COLORS.linesDerivedActual, SKETCH_COLORS.lineWidths.hover);
             previewExternalWorldLine.visible = false;
             previewExternalWorldLine.renderOrder = 60;
             group.add(previewExternalWorldLine);
@@ -273,6 +233,28 @@ function createSketchRuntimeApi(getApi) {
             const h = renderer?.domElement?.clientHeight || renderer?.domElement?.height || 1;
             mat.resolution.set(w, h);
             const line = new Line2(geo, mat);
+            line.computeLineDistances?.();
+            line.userData = line.userData || {};
+            line.userData.isFatLine = true;
+            return line;
+        },
+
+        createFatSegments(positions = [], color = SKETCH_COLORS.linesGray, width = SKETCH_COLORS.lineWidths.default) {
+            const geo = new LineSegmentsGeometry();
+            geo.setPositions(positions);
+            const mat = new LineMaterial({
+                color,
+                linewidth: width,
+                transparent: true,
+                opacity: 1,
+                depthWrite: false,
+                alphaToCoverage: false
+            });
+            const { renderer } = space.internals();
+            const w = renderer?.domElement?.clientWidth || renderer?.domElement?.width || 1;
+            const h = renderer?.domElement?.clientHeight || renderer?.domElement?.height || 1;
+            mat.resolution.set(w, h);
+            const line = new LineSegments2(geo, mat);
             line.computeLineDistances?.();
             line.userData = line.userData || {};
             line.userData.isFatLine = true;

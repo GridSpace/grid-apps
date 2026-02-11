@@ -506,6 +506,42 @@ function getConstraintHoverHighlight(rec) {
     return out;
 }
 
+function setLineObjectPoints(lineObject, points = []) {
+    if (!lineObject || !Array.isArray(points) || points.length < 2) {
+        return;
+    }
+    if (lineObject.material?.isLineMaterial && lineObject.geometry?.setPositions) {
+        const flat = [];
+        for (const p of points) {
+            flat.push(p.x || 0, p.y || 0, p.z || 0);
+        }
+        lineObject.geometry.setPositions(flat);
+        lineObject.computeLineDistances?.();
+        lineObject.geometry.computeBoundingSphere?.();
+        return;
+    }
+    const verts = points.map(p => new THREE.Vector3(p.x || 0, p.y || 0, p.z || 0));
+    lineObject.geometry?.dispose?.();
+    lineObject.geometry = new THREE.BufferGeometry().setFromPoints(verts);
+}
+
+function setLineObjectStyle(lineObject, color, width, depthTest = false) {
+    if (!lineObject?.material) return;
+    if (lineObject.material.color) {
+        lineObject.material.color.setHex(color);
+    }
+    lineObject.material.depthTest = depthTest;
+    if (lineObject.material.isLineMaterial) {
+        if (Number.isFinite(width)) {
+            lineObject.material.linewidth = width;
+        }
+        const { renderer } = space.internals();
+        const w = renderer?.domElement?.clientWidth || renderer?.domElement?.width || 1;
+        const h = renderer?.domElement?.clientHeight || renderer?.domElement?.height || 1;
+        lineObject.material.resolution?.set?.(w, h);
+    }
+}
+
 function applyPreviewLine(rec, mode, editing, colors) {
     if (!rec.previewLine) return;
     const preview = rec.interaction?.previewLine;
@@ -514,18 +550,15 @@ function applyPreviewLine(rec, mode, editing, colors) {
         rec.previewLine.visible = false;
         return;
     }
-    const a = new THREE.Vector3(preview.a.x || 0, preview.a.y || 0, 0);
-    const b = new THREE.Vector3(preview.b.x || 0, preview.b.y || 0, 0);
-    rec.previewLine.geometry.dispose();
-    rec.previewLine.geometry = new THREE.BufferGeometry().setFromPoints([a, b]);
+    const a = { x: preview.a.x || 0, y: preview.a.y || 0, z: 0 };
+    const b = { x: preview.b.x || 0, y: preview.b.y || 0, z: 0 };
+    setLineObjectPoints(rec.previewLine, [a, b]);
     const useHover = !!preview.forceHover;
     const projected = !!preview.projected;
-    rec.previewLine.material.color.setHex(
-        projected
-            ? (colors.linesProjectedFace || 0x5a9fd4)
-            : (useHover ? colors.linesHover : (mode === 'edit' ? colors.linesEdit : colors.linesHover))
-    );
-    rec.previewLine.material.depthTest = false;
+    const lineColor = projected
+        ? (colors.linesProjectedFace || 0x5a9fd4)
+        : (useHover ? colors.linesHover : (mode === 'edit' ? colors.linesEdit : colors.linesHover));
+    setLineObjectStyle(rec.previewLine, lineColor, colors.lineWidths?.hover || 3.0, false);
     rec.previewLine.visible = true;
     rec.previewLine.renderOrder = 60;
 }
@@ -550,10 +583,8 @@ function applyPreviewExternalWorld(rec, mode, editing, colors) {
             line.parent.worldToLocal(a);
             line.parent.worldToLocal(b);
         }
-        line.geometry.dispose();
-        line.geometry = new THREE.BufferGeometry().setFromPoints([a, b]);
-        line.material.color.setHex(colors.linesDerivedActual || 0x39d7ff);
-        line.material.depthTest = false;
+        setLineObjectPoints(line, [a, b]);
+        setLineObjectStyle(line, colors.linesDerivedActual || 0x39d7ff, colors.lineWidths?.hover || 3.0, false);
         line.visible = true;
         line.renderOrder = 60;
     } else if (line) {
@@ -601,11 +632,21 @@ function applyPreviewFaceSegments(rec, mode, editing, colors) {
         rec.previewFaceSegments.visible = false;
         return;
     }
-    rec.previewFaceSegments.geometry.dispose();
-    rec.previewFaceSegments.geometry = new THREE.BufferGeometry();
-    rec.previewFaceSegments.geometry.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
-    rec.previewFaceSegments.material.color.setHex(colors.linesProjectedFace || 0x5a9fd4);
-    rec.previewFaceSegments.material.depthTest = false;
+    if (rec.previewFaceSegments.material?.isLineMaterial && rec.previewFaceSegments.geometry?.setPositions) {
+        rec.previewFaceSegments.geometry.setPositions(verts);
+        rec.previewFaceSegments.computeLineDistances?.();
+        rec.previewFaceSegments.geometry.computeBoundingSphere?.();
+    } else {
+        rec.previewFaceSegments.geometry?.dispose?.();
+        rec.previewFaceSegments.geometry = new THREE.BufferGeometry();
+        rec.previewFaceSegments.geometry.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+    }
+    setLineObjectStyle(
+        rec.previewFaceSegments,
+        colors.linesProjectedFace || 0x5a9fd4,
+        colors.lineWidths?.hover || 3.0,
+        false
+    );
     rec.previewFaceSegments.renderOrder = 55;
     rec.previewFaceSegments.visible = true;
 }
@@ -709,11 +750,10 @@ function applyPreviewArc(rec, mode, editing, colors) {
         return;
     }
     if (preview.mode === 'chord' && preview.a && preview.b) {
-        const a = new THREE.Vector3(preview.a.x || 0, preview.a.y || 0, 0);
-        const b = new THREE.Vector3(preview.b.x || 0, preview.b.y || 0, 0);
-        rec.previewArc.geometry.dispose();
-        rec.previewArc.geometry = new THREE.BufferGeometry().setFromPoints([a, b]);
-        rec.previewArc.material.color.setHex(mode === 'edit' ? colors.linesEdit : colors.linesHover);
+        const a = { x: preview.a.x || 0, y: preview.a.y || 0, z: 0 };
+        const b = { x: preview.b.x || 0, y: preview.b.y || 0, z: 0 };
+        setLineObjectPoints(rec.previewArc, [a, b]);
+        setLineObjectStyle(rec.previewArc, mode === 'edit' ? colors.linesEdit : colors.linesHover, colors.lineWidths?.hover || 3.0, false);
         rec.previewArc.visible = true;
         if (rec.previewArcCenter) {
             rec.previewArcCenter.visible = false;
@@ -723,10 +763,8 @@ function applyPreviewArc(rec, mode, editing, colors) {
     if ((preview.mode === 'arc' || preview.mode === 'circle') && Number.isFinite(preview.cx) && Number.isFinite(preview.cy)) {
         const pts = this.getArcRenderPoints(preview, preview.a, preview.b, 48);
         if (pts.length >= 2) {
-            rec.previewArc.geometry.dispose();
-            rec.previewArc.geometry = new THREE.BufferGeometry().setFromPoints(pts.map(p => new THREE.Vector3(p.x, p.y, 0)));
-            rec.previewArc.material.color.setHex(mode === 'edit' ? colors.linesEdit : colors.linesHover);
-            rec.previewArc.material.depthTest = false;
+            setLineObjectPoints(rec.previewArc, pts.map(p => ({ x: p.x || 0, y: p.y || 0, z: 0 })));
+            setLineObjectStyle(rec.previewArc, mode === 'edit' ? colors.linesEdit : colors.linesHover, colors.lineWidths?.hover || 3.0, false);
             rec.previewArc.visible = true;
             rec.previewArc.renderOrder = 60;
             if (rec.previewArcCenter) {
@@ -762,15 +800,14 @@ function applyPreviewRect(rec, mode, editing, colors) {
         return;
     }
     const pts = [
-        new THREE.Vector3(corners[0].x || 0, corners[0].y || 0, 0),
-        new THREE.Vector3(corners[1].x || 0, corners[1].y || 0, 0),
-        new THREE.Vector3(corners[2].x || 0, corners[2].y || 0, 0),
-        new THREE.Vector3(corners[3].x || 0, corners[3].y || 0, 0),
-        new THREE.Vector3(corners[0].x || 0, corners[0].y || 0, 0)
+        { x: corners[0].x || 0, y: corners[0].y || 0, z: 0 },
+        { x: corners[1].x || 0, y: corners[1].y || 0, z: 0 },
+        { x: corners[2].x || 0, y: corners[2].y || 0, z: 0 },
+        { x: corners[3].x || 0, y: corners[3].y || 0, z: 0 },
+        { x: corners[0].x || 0, y: corners[0].y || 0, z: 0 }
     ];
-    rec.previewRect.geometry.dispose();
-    rec.previewRect.geometry = new THREE.BufferGeometry().setFromPoints(pts);
-    rec.previewRect.material.color.setHex(mode === 'edit' ? colors.linesEdit : colors.linesHover);
+    setLineObjectPoints(rec.previewRect, pts);
+    setLineObjectStyle(rec.previewRect, mode === 'edit' ? colors.linesEdit : colors.linesHover, colors.lineWidths?.hover || 3.0, false);
     rec.previewRect.visible = true;
 }
 
@@ -845,6 +882,13 @@ function updatePointScreenScales(opts) {
     };
 
     for (const rec of this.sketches.values()) {
+        const syncLineRes = line => {
+            if (!line?.material?.isLineMaterial) return;
+            const { renderer: r } = space.internals();
+            const w = r?.domElement?.clientWidth || r?.domElement?.width || 1;
+            const h = r?.domElement?.clientHeight || r?.domElement?.height || 1;
+            line.material.resolution?.set?.(w, h);
+        };
         for (const view of rec.entityViews.values()) {
             if ((view.type === 'line' || view.type === 'arc') && view.object?.material?.isLineMaterial) {
                 const { renderer: r } = space.internals();
@@ -855,6 +899,11 @@ function updatePointScreenScales(opts) {
             if ((view.type !== 'point' && view.type !== 'arc-center') || !view.object) continue;
             updateScale(view.object);
         }
+        syncLineRes(rec.previewLine);
+        syncLineRes(rec.previewArc);
+        syncLineRes(rec.previewRect);
+        syncLineRes(rec.previewFaceSegments);
+        syncLineRes(rec.previewExternalWorldLine);
         if (rec.previewStart) updateScale(rec.previewStart);
         if (rec.previewEnd) updateScale(rec.previewEnd);
         if (rec.previewArcCenter) updateScale(rec.previewArcCenter);
