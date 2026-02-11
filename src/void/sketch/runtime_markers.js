@@ -117,25 +117,6 @@ function createShaderPointSymbol(opts = {}) {
     return { points: pts, material: mat, uniforms };
 }
 
-function makePointRing(radius, color, opacity = 1) {
-    const seg = 24;
-    const verts = [];
-    for (let i = 0; i <= seg; i++) {
-        const t = (i / seg) * Math.PI * 2;
-        verts.push(Math.cos(t) * radius, Math.sin(t) * radius, 0.01);
-    }
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
-    const mat = new THREE.LineBasicMaterial({
-        color,
-        transparent: opacity < 1,
-        opacity,
-        depthWrite: false
-    });
-    const ring = new THREE.Line(geo, mat);
-    return ring;
-}
-
 function createSketchPointMarker(x = 0, y = 0, opts = {}, colors = {}) {
     const marker = new THREE.Group();
     marker.position.set(x, y, 0);
@@ -271,7 +252,6 @@ function createArcCenterMarker(x = 0, y = 0, colors = {}) {
 }
 
 export {
-    makePointRing,
     createSketchPointMarker,
     createArcCenterMarker
 };

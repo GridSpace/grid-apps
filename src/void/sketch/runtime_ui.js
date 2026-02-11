@@ -238,7 +238,10 @@ function addDimensionDecoration3D(rec, c, a, b, opts = {}) {
     const nx = -uy;
     const ny = ux;
     const mode = getDimensionMode(c);
-    let color = mode === 'driven' ? 0x8e8e8e : 0xc6c6c6;
+    const palette = opts?.colors || {};
+    let color = mode === 'driven'
+        ? (palette.constraintGlyphDriven || 0x8e8e8e)
+        : (palette.constraintGlyphDerived || 0xc6c6c6);
     if (opts?.hovered) color = 0xff9933;
     if (opts?.selected) color = 0x5a9fd4;
 
@@ -366,6 +369,18 @@ function applyEntityStyle(rec, mode, colors) {
                     ? colors.linesHover
                     : baseLineColor;
             view.object.material.color.setHex(color);
+            if (view.object.material?.isLineMaterial) {
+                const width = selected
+                    ? (colors.lineWidths?.selected || 3.4)
+                    : hovered
+                        ? (colors.lineWidths?.hover || 3.0)
+                        : (colors.lineWidths?.default || 1.2);
+                view.object.material.linewidth = width;
+                const { renderer } = space.internals();
+                const w = renderer?.domElement?.clientWidth || renderer?.domElement?.width || 1;
+                const h = renderer?.domElement?.clientHeight || renderer?.domElement?.height || 1;
+                view.object.material.resolution?.set?.(w, h);
+            }
             continue;
         }
         if (view.type === 'profile') {
@@ -374,14 +389,14 @@ function applyEntityStyle(rec, mode, colors) {
             const fill = view.object;
             if (fill?.material?.color) {
                 if (activeHovered) {
-                    fill.material.color.setHex(0xff9933);
-                    fill.material.opacity = 0.24;
+                    fill.material.color.setHex(colors.profileFillHover || 0xff9933);
+                    fill.material.opacity = colors.profileOpacityHover ?? 0.24;
                 } else if (activeSelected) {
-                    fill.material.color.setHex(0x5a9fd4);
-                    fill.material.opacity = 0.28;
+                    fill.material.color.setHex(colors.profileFillSelected || 0x5a9fd4);
+                    fill.material.opacity = colors.profileOpacitySelected ?? 0.28;
                 } else {
-                    fill.material.color.setHex(0x8f8f8f);
-                    fill.material.opacity = 0.18;
+                    fill.material.color.setHex(colors.profileFillDefault || 0x8f8f8f);
+                    fill.material.opacity = colors.profileOpacityDefault ?? 0.18;
                 }
                 // Active sketch profile picks must draw above coplanar solid faces.
                 const overlay = activeSelected || activeHovered;
@@ -831,6 +846,12 @@ function updatePointScreenScales(opts) {
 
     for (const rec of this.sketches.values()) {
         for (const view of rec.entityViews.values()) {
+            if ((view.type === 'line' || view.type === 'arc') && view.object?.material?.isLineMaterial) {
+                const { renderer: r } = space.internals();
+                const w = r?.domElement?.clientWidth || r?.domElement?.width || 1;
+                const h = r?.domElement?.clientHeight || r?.domElement?.height || 1;
+                view.object.material.resolution?.set?.(w, h);
+            }
             if ((view.type !== 'point' && view.type !== 'arc-center') || !view.object) continue;
             updateScale(view.object);
         }
@@ -1142,7 +1163,8 @@ function updateConstraintGlyphs(getApi, opts = {}) {
                     addDimensionDecoration3D(rec, c, ends[0], ends[1], {
                         selected: selectedConstraintIds.has(c.id),
                         hovered: hoveredConstraintId === c.id,
-                        centerLocal
+                        centerLocal,
+                        colors: opts?.colors || null
                     });
                 }
             }

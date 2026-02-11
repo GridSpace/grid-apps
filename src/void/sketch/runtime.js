@@ -1,33 +1,16 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { THREE } from '../../ext/three.js';
+import { THREE, Line2, LineGeometry, LineMaterial } from '../../ext/three.js';
 import { space } from '../../moto/space.js';
 import { Plane } from '../plane.js';
+import { VOID_PALETTE } from '../palette.js';
 import * as markerOps from './runtime_markers.js';
 import * as profileOps from './runtime_profiles.js';
 import * as arcOps from './runtime_arc.js';
 import * as uiOps from './runtime_ui.js';
 import { isCircleCurve, isThreePointCircle } from './curve.js';
 
-const SKETCH_COLORS = {
-    planeDefault: { fill: 0x5a9fd4, fillOpacity: 0.1, outline: 0x5a9fd4, outlineOpacity: 0.65 },
-    planeHover: { fill: 0xff9933, fillOpacity: 0.14, outline: 0xff9933, outlineOpacity: 0.95 },
-    planeEdit: { fill: 0x9ec7ff, fillOpacity: 0.08, outline: 0x5a9fd4, outlineOpacity: 0.9 },
-    linesGray: 0x8f8f8f,
-    linesHover: 0xff9933,
-    linesEdit: 0xffffff,
-    linesSelected: 0x9ec7ff,
-    linesProjectedFace: 0x5a9fd4,
-    linesDerivedActual: 0xff9933,
-    pointsGray: 0x8f8f8f,
-    pointsHover: 0xff9933,
-    pointsEdit: 0xffffff,
-    pointsSelected: 0x9ec7ff,
-    pointsDerivedActual: 0xff9933,
-    labelDefault: '#8f8f8f',
-    labelHover: '#ff9933',
-    labelEdit: '#a7cbff'
-};
+const SKETCH_COLORS = VOID_PALETTE.sketch;
 const SKETCH_PLANE_SCALE = 0.86;
 const SKETCH_PLANE_MIN_SIZE = 24;
 const SKETCH_POINT_SCREEN_RADIUS_PX = 6;
@@ -270,6 +253,32 @@ function createSketchRuntimeApi(getApi) {
             };
         },
 
+        createFatLine(points = [], color = SKETCH_COLORS.linesGray, width = SKETCH_COLORS.lineWidths.default) {
+            const geo = new LineGeometry();
+            const pos = [];
+            for (const p of points) {
+                pos.push(p.x || 0, p.y || 0, p.z || 0);
+            }
+            geo.setPositions(pos);
+            const mat = new LineMaterial({
+                color,
+                linewidth: width,
+                transparent: true,
+                opacity: 1,
+                depthWrite: false,
+                alphaToCoverage: false
+            });
+            const { renderer } = space.internals();
+            const w = renderer?.domElement?.clientWidth || renderer?.domElement?.width || 1;
+            const h = renderer?.domElement?.clientHeight || renderer?.domElement?.height || 1;
+            mat.resolution.set(w, h);
+            const line = new Line2(geo, mat);
+            line.computeLineDistances?.();
+            line.userData = line.userData || {};
+            line.userData.isFatLine = true;
+            return line;
+        },
+
         updateSketchRecord(rec) {
             const feature = rec.feature;
             if (feature?.plane) {
@@ -323,10 +332,6 @@ function createSketchRuntimeApi(getApi) {
 
         constraintGlyphLabel(type) {
             return uiOps.constraintGlyphLabel(type);
-        },
-
-        makePointRing(radius, color, opacity = 1) {
-            return markerOps.makePointRing(radius, color, opacity);
         },
 
         createSketchPointMarker(x = 0, y = 0, opts = {}) {
@@ -393,10 +398,6 @@ function createSketchRuntimeApi(getApi) {
                 if (entity.type === 'line' && entity.a && entity.b) {
                     const [a, b] = this.getLineEndpoints(entity, pointById);
                     if (!a || !b) continue;
-                    const geometry = new THREE.BufferGeometry().setFromPoints([
-                        new THREE.Vector3(a.x || 0, a.y || 0, 0),
-                        new THREE.Vector3(b.x || 0, b.y || 0, 0)
-                    ]);
                     const material = entity.construction
                         ? new THREE.LineDashedMaterial({
                             color: SKETCH_COLORS.linesGray,
@@ -412,8 +413,19 @@ function createSketchRuntimeApi(getApi) {
                             opacity: 1,
                             depthWrite: false
                         });
-                    const line = new THREE.Line(geometry, material);
-                    if (line.computeLineDistances && entity.construction) {
+                    const line = entity.construction
+                        ? new THREE.Line(
+                            new THREE.BufferGeometry().setFromPoints([
+                                new THREE.Vector3(a.x || 0, a.y || 0, 0),
+                                new THREE.Vector3(b.x || 0, b.y || 0, 0)
+                            ]),
+                            material
+                        )
+                        : this.createFatLine([
+                            new THREE.Vector3(a.x || 0, a.y || 0, 0),
+                            new THREE.Vector3(b.x || 0, b.y || 0, 0)
+                        ], SKETCH_COLORS.linesGray, SKETCH_COLORS.lineWidths.default);
+                    if (entity.construction && line.computeLineDistances) {
                         line.computeLineDistances();
                     }
                     line.renderOrder = 7;
@@ -428,7 +440,6 @@ function createSketchRuntimeApi(getApi) {
                     if (!a || !b) continue;
                     const points = this.getArcRenderPoints(entity, a, b, 48);
                     if (points.length < 2) continue;
-                    const geometry = new THREE.BufferGeometry().setFromPoints(points.map(p => new THREE.Vector3(p.x, p.y, 0)));
                     const material = entity.construction
                         ? new THREE.LineDashedMaterial({
                             color: SKETCH_COLORS.linesGray,
@@ -444,8 +455,11 @@ function createSketchRuntimeApi(getApi) {
                             opacity: 1,
                             depthWrite: false
                         });
-                    const arc = new THREE.Line(geometry, material);
-                    if (arc.computeLineDistances && entity.construction) {
+                    const arcPoints = points.map(p => new THREE.Vector3(p.x, p.y, 0));
+                    const arc = entity.construction
+                        ? new THREE.Line(new THREE.BufferGeometry().setFromPoints(arcPoints), material)
+                        : this.createFatLine(arcPoints, SKETCH_COLORS.linesGray, SKETCH_COLORS.lineWidths.default);
+                    if (entity.construction && arc.computeLineDistances) {
                         arc.computeLineDistances();
                     }
                     arc.renderOrder = 7;
@@ -727,7 +741,8 @@ function createSketchRuntimeApi(getApi) {
         updateConstraintGlyphs() {
             return uiOps.updateConstraintGlyphs.call(this, getApi, {
                 glyphSizePx: CONSTRAINT_GLYPH_SIZE_PX,
-                glyphGapPx: CONSTRAINT_GLYPH_GAP_PX
+                glyphGapPx: CONSTRAINT_GLYPH_GAP_PX,
+                colors: SKETCH_COLORS
             });
         },
 

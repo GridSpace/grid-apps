@@ -2,6 +2,7 @@
 
 import { THREE } from '../ext/three.js';
 import { space } from '../moto/space.js';
+import { VOID_PALETTE } from './palette.js';
 
 const {
     Group, BoxGeometry, MeshBasicMaterial, Mesh,
@@ -34,17 +35,10 @@ class ViewCube {
         this.enabled = true;
 
         // Face colors
-        this.faceColors = {
-            front:  0x4a9eff,  // Blue
-            back:   0x4a9eff,
-            right:  0xff4a4a,  // Red
-            left:   0xff4a4a,
-            top:    0x4aff4a,  // Green
-            bottom: 0x4aff4a
-        };
+        this.faceColors = { ...VOID_PALETTE.viewcube.faces };
 
-        this.hoverColor = 0xffaa33;  // Orange highlight
-        this.edgeColor = 0x000000;   // Black edges
+        this.hoverColor = VOID_PALETTE.viewcube.hover;
+        this.edgeColor = VOID_PALETTE.viewcube.edge;
 
         // Build the cube
         this.build();

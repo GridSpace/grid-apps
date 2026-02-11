@@ -292,6 +292,8 @@ src/
   - camera-facing, circular, pixel-sized (zoom invariant)
   - avoids DOM overlay jitter at high entity counts
 - Legacy `_markerParts` compatibility shims are retained so existing hover/select styling code paths continue to work.
+- Centralized JS color tuning now starts in `src/void/palette.js` (current coverage: sketch + viewcube, expanding incrementally).
+- Sketch non-construction lines/arcs now use `Line2/LineMaterial` for visible hover/select thickness control (`lineWidths` in palette).
 
 ### Routes
 - `/void/` - Primary URL
