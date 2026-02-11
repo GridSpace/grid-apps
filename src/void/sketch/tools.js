@@ -310,7 +310,7 @@ function useHoveredDerivedEdge() {
                 selectedPoints.push({
                     type: 'point',
                     local: hovered.hoverPoint.local,
-                    source: { ...(hovered.source || {}), point_kind: hovered.hoverPoint.kind || 'mid' }
+                    source: { ...(hovered.source || {}), local_point: null, point_kind: hovered.hoverPoint.kind || 'mid' }
                 });
             } else {
                 selectedEdges.push({
@@ -344,6 +344,7 @@ function useHoveredDerivedPoint() {
     if (!local) return false;
     const created = this.createDerivedSketchPoint(feature, local, {
         ...(candidate.source || {}),
+        local_point: null,
         point_kind: candidate?.hoverPoint?.kind || 'mid'
     });
     if (!created) return false;

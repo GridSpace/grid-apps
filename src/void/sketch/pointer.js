@@ -347,6 +347,7 @@ function handleSketchMouseUp(event, intersections) {
                             local: derived.hoverPoint.local,
                             source: {
                                 ...(derived.source || {}),
+                                local_point: null,
                                 point_kind: pointKind || 'mid'
                             }
                         });

@@ -808,31 +808,11 @@ function applyPreviewEnd(rec, mode, editing, colors) {
 function applyPreviewArc(rec, mode, editing, colors) {
     if (!rec.previewArc) return;
     const preview = rec.interaction?.previewArc;
-    const previewMid = rec.interaction?.previewMid;
     const forceHover = !!rec.interaction?.previewLine?.forceHover;
     if (!(editing || forceHover) || !preview) {
         rec.previewArc.visible = false;
         if (rec.previewArcCenter) {
-            if ((editing || forceHover) && previewMid) {
-                rec.previewArcCenter.position.set(previewMid.x || 0, previewMid.y || 0, 0);
-                const parts = rec.previewArcCenter.userData?._markerParts || {};
-                if (parts.core?.material?.color) {
-                    parts.core.material.color.setHex(colors.pointsHover);
-                    parts.core.material.depthTest = false;
-                }
-                if (parts.ringHighlight) {
-                    parts.ringHighlight.visible = true;
-                    if (parts.ringHighlight.material) {
-                        parts.ringHighlight.material.depthTest = false;
-                    }
-                }
-                if (parts.ringOuter?.material) parts.ringOuter.material.depthTest = false;
-                if (parts.ringInner?.material) parts.ringInner.material.depthTest = false;
-                rec.previewArcCenter.renderOrder = 60;
-                rec.previewArcCenter.visible = true;
-            } else {
-                rec.previewArcCenter.visible = false;
-            }
+            rec.previewArcCenter.visible = false;
         }
         return;
     }
