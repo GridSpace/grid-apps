@@ -207,9 +207,11 @@ src/
   - feature reorder (up/down)
   - timeline slider (`0..N`) controlling active rebuild prefix
   - all above are revisioned + undo/redoable
+  - feature creation now inserts at the active timeline marker (`index + 1`) instead of always appending to the end
 - Sketch runtime currently renders from the active rebuild set (`features.listBuilt()`), not raw full feature list
 - Open TODO: stabilise dual-tangent sketch behavior (`line` tangent to two circles/arcs with endpoint-on-arc constraints)
 - Open TODO: add min/max distance constraints for circle/arc vs target entity (Onshape-style behavior based on click side: near-side pick => min distance, far-side pick => max distance)
+- Known regression history: commit `5093eec4` introduced an overly permissive derived-edge proximity gate (`segLen * 0.35`) in `resolveDerivedEdgeCandidate`; this causes incorrect face/edge picks in sketch derive hover. Keep tight gate (`2.5`) unless replaced with a screen-space metric.
 
 **Phase 2: Sketch System (Current Workstream)**
 - planegcs constraint solver integration is active
@@ -260,6 +262,7 @@ src/
   - Store sketch geometry in sketch-local 2D coordinates
   - Plane/frame transform maps sketch-local geometry into 3D scene
   - This is required for future derived geometry from non-datum faces/parts
+  - When rendering world-space derived previews inside sketch runtime, convert world coords to parent-local before drawing (avoid double-transform rotation/offset artifacts)
 - Constraint rollout (checkpoint):
   - Solver-backed enforcement is active (planegcs + fallback)
   - Implemented:
@@ -283,6 +286,12 @@ src/
 - Undo/redo granularity:
   - One undo unit per mutation (entity create/complete move/change, dimension change)
   - Not per low-level pointer gesture frame
+
+**Sketch Point Rendering (current)**
+- Sketch point and arc-center markers are now shader-based (`THREE.Points` + fragment rings) in WebGL:
+  - camera-facing, circular, pixel-sized (zoom invariant)
+  - avoids DOM overlay jitter at high entity counts
+- Legacy `_markerParts` compatibility shims are retained so existing hover/select styling code paths continue to work.
 
 ### Routes
 - `/void/` - Primary URL

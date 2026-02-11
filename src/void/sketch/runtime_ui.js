@@ -531,6 +531,7 @@ function applyPreviewExternalWorld(rec, mode, editing, colors) {
         const b = new THREE.Vector3(srcLine.b.x || 0, srcLine.b.y || 0, srcLine.b.z || 0);
         // srcLine points are scene/world-space; convert into this line's parent-local space.
         if (line.parent?.worldToLocal) {
+            line.parent.updateMatrixWorld?.(true);
             line.parent.worldToLocal(a);
             line.parent.worldToLocal(b);
         }
@@ -547,6 +548,7 @@ function applyPreviewExternalWorld(rec, mode, editing, colors) {
         const p = new THREE.Vector3(srcPoint.x || 0, srcPoint.y || 0, srcPoint.z || 0);
         // srcPoint is scene/world-space; convert into marker parent-local space.
         if (point.parent?.worldToLocal) {
+            point.parent.updateMatrixWorld?.(true);
             point.parent.worldToLocal(p);
         }
         point.position.copy(p);
@@ -808,6 +810,9 @@ function updatePointScreenScales(opts) {
     const tmp = this._tmpPointWorld || new THREE.Vector3();
 
     const updateScale = object => {
+        if (object?.userData?._shaderPoint) {
+            return;
+        }
         object.getWorldPosition(tmp);
         let worldPerPixel;
         if (camera.isPerspectiveCamera) {
