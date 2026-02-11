@@ -148,7 +148,7 @@ function createSketchPointMarker(x = 0, y = 0, opts = {}, colors = {}) {
         coreColor: 0x8f8f8f,
         ringBlackColor: 0x101010,
         ringWhiteColor: 0xffffff,
-        highlightColor: colors.linesHover || colors.pointsHover || 0xff9933,
+        highlightColor: colors.linesHover || 0xff9933,
         coreR: 0.17,
         ringBlackR: 0.23,
         ringWhiteR: 0.29,
