@@ -749,6 +749,41 @@ const properties = {
         const key = (profile?.sketchId && profile?.profileId)
             ? `${profile.sketchId}:${profile.profileId}`
             : null;
+        const currentFeature = this.currentFeatureId ? api.features.findById(this.currentFeatureId) : null;
+        const currentFeatureId = currentFeature?.type === 'extrude' ? currentFeature.id : null;
+        const hoveredSolidIds = [];
+        if (profile?.sketchId && profile?.profileId) {
+            const sketchId = String(profile.sketchId);
+            const profileId = String(profile.profileId);
+            const profileKey = `${sketchId}:${profileId}`;
+            const solids = api.solids?.list?.() || [];
+            const scoped = currentFeatureId
+                ? solids.filter(solid => String(solid?.source?.feature_id || '') === String(currentFeatureId))
+                : solids;
+            const hasProfileKeyMap = scoped.some(solid => Array.isArray(solid?.source?.profile_keys) && solid.source.profile_keys.length);
+            for (const solid of solids) {
+                if (currentFeatureId && String(solid?.source?.feature_id || '') !== String(currentFeatureId)) {
+                    continue;
+                }
+                const srcProfile = solid?.source?.profile || null;
+                const srcProfileKeys = Array.isArray(solid?.source?.profile_keys) ? solid.source.profile_keys : [];
+                const provProfile = solid?.provenance?.source?.profile || null;
+                const provFaces = Array.isArray(solid?.provenance?.faces) ? solid.provenance.faces : [];
+                const matchProfile = p => (
+                    String(p?.sketchId || '') === sketchId &&
+                    String(p?.profileId || '') === profileId
+                );
+                const matchFace = provFaces.some(face => matchProfile(face?.source || null));
+                const matchKeys = srcProfileKeys.some(k => String(k || '') === profileKey);
+                const match = hasProfileKeyMap
+                    ? matchKeys
+                    : (matchKeys || matchProfile(srcProfile) || matchProfile(provProfile) || matchFace);
+                if (match) {
+                    if (solid?.id) hoveredSolidIds.push(solid.id);
+                }
+            }
+        }
+        api.solids?.setHovered?.(hoveredSolidIds);
         api.interact.hoveredSketchProfileKey = key;
         api.sketchRuntime?.setHoveredProfile?.(key);
         window.dispatchEvent(new CustomEvent('void-state-change'));

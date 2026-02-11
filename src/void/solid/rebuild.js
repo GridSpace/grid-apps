@@ -202,6 +202,46 @@ function unionSelectedRegions(profileLoopsList) {
     return out;
 }
 
+function pointInLoop(point, loop) {
+    if (!point || !Array.isArray(loop) || loop.length < 3) return false;
+    let inside = false;
+    for (let i = 0, j = loop.length - 1; i < loop.length; j = i++) {
+        const xi = Number(loop[i]?.x || 0);
+        const yi = Number(loop[i]?.y || 0);
+        const xj = Number(loop[j]?.x || 0);
+        const yj = Number(loop[j]?.y || 0);
+        const intersects = ((yi > point.y) !== (yj > point.y))
+            && (point.x < ((xj - xi) * (point.y - yi)) / ((yj - yi) || 1e-12) + xi);
+        if (intersects) inside = !inside;
+    }
+    return inside;
+}
+
+function pointInRegion(point, region) {
+    if (!point || !region?.outer) return false;
+    if (!pointInLoop(point, region.outer)) return false;
+    const holes = Array.isArray(region.holes) ? region.holes : [];
+    for (const hole of holes) {
+        if (pointInLoop(point, hole)) return false;
+    }
+    return true;
+}
+
+function loopCentroid(loop) {
+    if (!Array.isArray(loop) || loop.length < 3) return null;
+    let sx = 0;
+    let sy = 0;
+    let n = 0;
+    for (const p of loop) {
+        if (!p) continue;
+        sx += Number(p.x || 0);
+        sy += Number(p.y || 0);
+        n++;
+    }
+    if (!n) return null;
+    return { x: sx / n, y: sy / n };
+}
+
 async function rebuildGeneratedSolidsFromSnapshot(snapshot, options = {}) {
     const builtFeatures = Array.isArray(snapshot?.builtFeatures) ? snapshot.builtFeatures : [];
     const sketchPlanes = snapshot?.sketchPlanes || {};
@@ -246,7 +286,33 @@ async function rebuildGeneratedSolidsFromSnapshot(snapshot, options = {}) {
                     if (!polygons.length) continue;
                     const bodyIndex = bodySeq++;
                     const id = makeBodyId(feature.id, bodyIndex);
-                    const primaryTarget = sketchPack.entries[0]?.profileTarget || null;
+                    let primaryTarget = null;
+                    const contributingProfileKeys = [];
+                    for (const entry of sketchPack.entries) {
+                        const sketchId = entry?.profileTarget?.sketchId || null;
+                        const profileId = entry?.profileTarget?.profileId || null;
+                        if (!sketchId || !profileId) continue;
+                        const key = `${sketchId}:${profileId}`;
+                        let contributes = false;
+                        const loops = Array.isArray(entry?.profileLoops) ? entry.profileLoops : [];
+                        for (const loop of loops) {
+                            const sample = loopCentroid(loop);
+                            if (sample && pointInRegion(sample, region)) {
+                                contributes = true;
+                                break;
+                            }
+                        }
+                        if (contributes) {
+                            contributingProfileKeys.push(key);
+                            if (!primaryTarget) primaryTarget = entry.profileTarget || null;
+                        }
+                    }
+                    if (!primaryTarget) {
+                        primaryTarget = sketchPack.entries[0]?.profileTarget || null;
+                    }
+                    if (!contributingProfileKeys.length && primaryTarget?.sketchId && primaryTarget?.profileId) {
+                        contributingProfileKeys.push(`${primaryTarget.sketchId}:${primaryTarget.profileId}`);
+                    }
                     const body = {
                         id,
                         name: `${feature.name || 'Extrude'}-${bodyIndex + 1}`,
@@ -254,7 +320,8 @@ async function rebuildGeneratedSolidsFromSnapshot(snapshot, options = {}) {
                         source: {
                             feature_id: feature.id,
                             feature_type: feature.type,
-                            profile: primaryTarget
+                            profile: primaryTarget,
+                            profile_keys: contributingProfileKeys
                         },
                         provenance: buildSeedProvenance(feature, primaryTarget, bodyIndex),
                         mesh: null,
