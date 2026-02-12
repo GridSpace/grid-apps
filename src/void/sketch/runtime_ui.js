@@ -563,6 +563,14 @@ function getConstraintHoverHighlight(rec) {
     const constraints = Array.isArray(rec?.feature?.constraints) ? rec.feature.constraints : [];
     const entities = Array.isArray(rec?.feature?.entities) ? rec.feature.entities : [];
     const byId = new Map(entities.map(e => [e?.id, e]));
+    const addEntityRef = ref => {
+        if (!ref) return;
+        out.add(ref);
+        const ent = byId.get(ref);
+        if (ent?.type === 'arc') {
+            out.add(`arc-center:${ref}`);
+        }
+    };
     const c = constraints.find(cst => cst?.id === hoveredConstraintId);
     if (!c) return out;
     const refs = Array.isArray(c.refs) ? c.refs : [];
@@ -582,7 +590,23 @@ function getConstraintHoverHighlight(rec) {
         if (c?.data?.uLineId) out.add(c.data.uLineId);
         if (c?.data?.vLineId) out.add(c.data.vLineId);
         const sourceIds = Array.isArray(c?.data?.sourceIds) ? c.data.sourceIds : visRefs.slice(1);
-        for (const id of sourceIds) out.add(id);
+        for (const id of sourceIds) addEntityRef(id);
+        for (const rec of (Array.isArray(c?.data?.copies) ? c.data.copies : [])) {
+            const ids = Array.isArray(rec)
+                ? rec
+                : (Array.isArray(rec?.ids) ? rec.ids : []);
+            for (const id of ids) addEntityRef(id);
+        }
+        for (const rec of (Array.isArray(c?.data?.pointMaps) ? c.data.pointMaps : [])) {
+            const pairs = Array.isArray(rec)
+                ? rec
+                : (Array.isArray(rec?.pairs) ? rec.pairs : []);
+            for (const pair of pairs) {
+                if (!Array.isArray(pair) || pair.length < 2) continue;
+                addEntityRef(pair[0]);
+                addEntityRef(pair[1]);
+            }
+        }
         return out;
     }
     if (c?.type === 'arc_center_coincident' && visRefs.length >= 2) {
