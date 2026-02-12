@@ -22,6 +22,98 @@ const dbindex = ["admin", "documents", "versions"];
 const VOID_HOME_LEFT = Math.PI / 4;
 // Match view direction along the test line vector (1,1,1) toward origin.
 const VOID_HOME_UP = Math.acos(1 / Math.sqrt(3));
+const LEFT_PANEL_WIDTH_KEY = 'left_panel_width';
+const LEFT_PANEL_MIN_PX = 190;
+const VIEWPORT_MIN_PX = 320;
+
+function setupLeftPanelResize(db) {
+    const content = $('content');
+    const left = $('left-panel');
+    const container = $('container');
+    if (!content || !left || !container) return;
+
+    let handle = $('left-panel-resizer');
+    if (!handle) {
+        handle = document.createElement('div');
+        handle.id = 'left-panel-resizer';
+        handle.title = 'Resize tree panel';
+        content.insertBefore(handle, container);
+    }
+
+    const clampWidth = width => {
+        const maxByLayout = Math.max(LEFT_PANEL_MIN_PX, (content.clientWidth || 1200) - VIEWPORT_MIN_PX);
+        const max = Math.min(640, maxByLayout);
+        return Math.max(LEFT_PANEL_MIN_PX, Math.min(max, Number(width) || LEFT_PANEL_MIN_PX));
+    };
+
+    const applyWidth = width => {
+        const w = clampWidth(width);
+        left.style.flex = `0 0 ${w}px`;
+        left.style.width = `${w}px`;
+        return w;
+    };
+
+    const persistWidth = width => {
+        const w = applyWidth(width);
+        try { localStorage.setItem(LEFT_PANEL_WIDTH_KEY, String(w)); } catch {}
+        db?.admin?.put?.(LEFT_PANEL_WIDTH_KEY, w);
+    };
+
+    const restoreLocal = () => {
+        try {
+            const raw = localStorage.getItem(LEFT_PANEL_WIDTH_KEY);
+            if (raw !== null) {
+                const parsed = Number(raw);
+                if (Number.isFinite(parsed)) applyWidth(parsed);
+            }
+        } catch {}
+    };
+
+    restoreLocal();
+    db?.admin?.get?.(LEFT_PANEL_WIDTH_KEY).then(width => {
+        if (Number.isFinite(width)) applyWidth(width);
+    });
+
+    let dragging = false;
+    let startX = 0;
+    let startW = 0;
+
+    const onMove = event => {
+        if (!dragging) return;
+        const dx = (event?.clientX || 0) - startX;
+        const w = applyWidth(startW + dx);
+        space.update();
+        try { localStorage.setItem(LEFT_PANEL_WIDTH_KEY, String(w)); } catch {}
+    };
+
+    const onUp = event => {
+        if (!dragging) return;
+        dragging = false;
+        document.body.classList.remove('left-panel-resizing');
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+        const dx = (event?.clientX || 0) - startX;
+        persistWidth(startW + dx);
+        space.update();
+    };
+
+    handle.onmousedown = event => {
+        if (event.button !== 0) return;
+        dragging = true;
+        startX = event.clientX || 0;
+        startW = left.getBoundingClientRect().width;
+        document.body.classList.add('left-panel-resizing');
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onUp);
+        event.preventDefault();
+        event.stopPropagation();
+    };
+
+    window.addEventListener('resize', () => {
+        const curr = left.getBoundingClientRect().width;
+        applyWidth(curr);
+    });
+}
 
 // Main initialization function
 async function init() {
@@ -143,6 +235,7 @@ async function init() {
     toolbar.updateProjectionLabel();
     properties.init();
     tree.build();
+    setupLeftPanelResize(db);
 
     // Document history hotkeys: Cmd/Ctrl+Z, Cmd/Ctrl+Shift+Z, Cmd/Ctrl+Y
     window.addEventListener('keydown', async event => {
