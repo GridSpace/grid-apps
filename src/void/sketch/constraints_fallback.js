@@ -1192,10 +1192,12 @@ function applyDistanceToConstraint(constraint, constraints, points, lines, arcs,
     let lineDir = null;
     let otherCenter = null;
     const pointLike = getPointLikeRef(targetRef, points, arcs);
+    const isArcTarget = arcs.has(targetRef);
+    const isLineTarget = lines.has(targetRef);
     if (pointLike) {
         targetPoint = { x: pointLike.x || 0, y: pointLike.y || 0 };
         centerDistance = Math.hypot((pointLike.x || 0) - circle.cx, (pointLike.y || 0) - circle.cy);
-    } else if (lines.has(targetRef)) {
+    } else if (isLineTarget) {
         const line = lines.get(targetRef);
         const [a, b] = getLineEndpoints(line, points);
         if (!a || !b) return false;
@@ -1203,7 +1205,7 @@ function applyDistanceToConstraint(constraint, constraints, points, lines, arcs,
         lineAnchor = { x: nearest.x, y: nearest.y };
         lineDir = { x: (b.x || 0) - (a.x || 0), y: (b.y || 0) - (a.y || 0) };
         centerDistance = Math.hypot((nearest.x || 0) - circle.cx, (nearest.y || 0) - circle.cy);
-    } else if (arcs.has(targetRef)) {
+    } else if (isArcTarget) {
         const other = arcs.get(targetRef);
         const otherCircle = getArcCircleData(other, points);
         if (!otherCircle) return false;
@@ -1239,10 +1241,14 @@ function applyDistanceToConstraint(constraint, constraints, points, lines, arcs,
     } else if (mode === 'min') {
         const ext = currentRadius + r2 + target;
         if (Number.isFinite(ext) && ext > EPS) centerTargets.push(ext);
-        const containsOther = currentRadius - r2 - target;
-        if (Number.isFinite(containsOther) && containsOther > EPS) centerTargets.push(containsOther);
-        const insideOther = r2 - currentRadius - target;
-        if (Number.isFinite(insideOther) && insideOther > EPS) centerTargets.push(insideOther);
+        // For point/line targets, using only external branch avoids drag-time
+        // branch flipping and keeps resizing smooth against fixed references.
+        if (isArcTarget) {
+            const containsOther = currentRadius - r2 - target;
+            if (Number.isFinite(containsOther) && containsOther > EPS) centerTargets.push(containsOther);
+            const insideOther = r2 - currentRadius - target;
+            if (Number.isFinite(insideOther) && insideOther > EPS) centerTargets.push(insideOther);
+        }
     } else {
         return false;
     }
@@ -1267,24 +1273,22 @@ function applyDistanceToConstraint(constraint, constraints, points, lines, arcs,
             const ny = vy / vl;
             moved = enforceArcFromCenter(arc, pa, pb, targetPoint.x + nx * dTarget, targetPoint.y + ny * dTarget, fa, fb);
         } else if (lineAnchor && lineDir) {
-            let vx = circle.cx - lineAnchor.x;
-            let vy = circle.cy - lineAnchor.y;
-            let vl = Math.hypot(vx, vy);
-            if (vl < EPS) {
-                const lx = lineDir.x || 0;
-                const ly = lineDir.y || 0;
-                const ll = Math.hypot(lx, ly);
-                if (ll < EPS) {
-                    vx = 1; vy = 0; vl = 1;
-                } else {
-                    vx = -ly / ll;
-                    vy = lx / ll;
-                    vl = 1;
-                }
+            const lx = lineDir.x || 0;
+            const ly = lineDir.y || 0;
+            const ll = Math.hypot(lx, ly);
+            if (ll < EPS) return false;
+            const nx = -ly / ll;
+            const ny = lx / ll;
+            const sx = circle.cx - lineAnchor.x;
+            const sy = circle.cy - lineAnchor.y;
+            const signed = sx * nx + sy * ny;
+            constraint.data = constraint.data || {};
+            let side = Number(constraint.data.line_side_sign);
+            if (!(side === 1 || side === -1)) {
+                side = signed < 0 ? -1 : 1;
+                constraint.data.line_side_sign = side;
             }
-            const nx = vx / vl;
-            const ny = vy / vl;
-            moved = enforceArcFromCenter(arc, pa, pb, lineAnchor.x + nx * dTarget, lineAnchor.y + ny * dTarget, fa, fb);
+            moved = enforceArcFromCenter(arc, pa, pb, lineAnchor.x + nx * side * dTarget, lineAnchor.y + ny * side * dTarget, fa, fb);
         } else if (otherCenter) {
             let vx = circle.cx - otherCenter.x;
             let vy = circle.cy - otherCenter.y;
@@ -1303,10 +1307,12 @@ function applyDistanceToConstraint(constraint, constraints, points, lines, arcs,
     } else if (mode === 'min') {
         const external = centerDistance - r2 - target;
         if (Number.isFinite(external) && external > EPS && centerDistance >= external + r2 - EPS) candidates.push(external);
-        const containsOther = target + centerDistance + r2;
-        if (Number.isFinite(containsOther) && containsOther > EPS && containsOther >= centerDistance + r2 - EPS) candidates.push(containsOther);
-        const insideOther = r2 - centerDistance - target;
-        if (Number.isFinite(insideOther) && insideOther > EPS && r2 >= centerDistance + insideOther - EPS) candidates.push(insideOther);
+        if (isArcTarget) {
+            const containsOther = target + centerDistance + r2;
+            if (Number.isFinite(containsOther) && containsOther > EPS && containsOther >= centerDistance + r2 - EPS) candidates.push(containsOther);
+            const insideOther = r2 - centerDistance - target;
+            if (Number.isFinite(insideOther) && insideOther > EPS && r2 >= centerDistance + insideOther - EPS) candidates.push(insideOther);
+        }
     }
     if (!candidates.length) return false;
 
