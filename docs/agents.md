@@ -210,7 +210,9 @@ src/
   - feature creation now inserts at the active timeline marker (`index + 1`) instead of always appending to the end
 - Sketch runtime currently renders from the active rebuild set (`features.listBuilt()`), not raw full feature list
 - Open TODO: stabilise dual-tangent sketch behavior (`line` tangent to two circles/arcs with endpoint-on-arc constraints)
-- Open TODO: add min/max distance constraints for circle/arc vs target entity (Onshape-style behavior based on click side: near-side pick => min distance, far-side pick => max distance)
+- Min/max distance constraints are now wired (`circle/arc` vs `point/line/circle-arc`) but still need stability tuning under drag:
+  - current known issue: circle-in-box (`min` to two orthogonal lines) can feel jerky while drag-resizing radius
+  - current implementation favors deterministic branching for line targets; revisit with solver-side branch lock per drag gesture if needed
 - Known regression history: commit `5093eec4` introduced an overly permissive derived-edge proximity gate (`segLen * 0.35`) in `resolveDerivedEdgeCandidate`; this causes incorrect face/edge picks in sketch derive hover. Keep tight gate (`2.5`) unless replaced with a screen-space metric.
 
 **Phase 2: Sketch System (Current Workstream)**
@@ -239,7 +241,7 @@ src/
   - mirror axis is highlighted purple while mode is active
   - each subsequently selected sketch entity is mirrored immediately across that axis
   - `Esc` or `Space` exits mirror mode
-- constraints currently wired: coincident, point-on-line, fixed, horizontal, vertical, perpendicular, equal, collinear, tangent, arc-center coincident, midpoint
+- constraints currently wired: coincident, point-on-line, fixed, horizontal, vertical, perpendicular, equal, collinear, tangent, arc-center coincident, midpoint, min-distance, max-distance
 - deferred: Onshape-like under/fully constrained coloring for sketch entities needs a custom per-entity DoF analysis layer on top of planegcs (not directly exposed as per-entity status by solver)
 - horizontal/vertical can target line entities or a selected point pair
 - rectangle tools are implemented as constrained line sets:
@@ -250,6 +252,10 @@ src/
 - `extrude` can now be created as a history feature from a selected sketch (tree + document/history plumbing)
 - 3D solid generation/rebuild is active via Manifold replay (extrude + boolean paths)
 - timeline/reorder/suppress semantics are active at the feature-history layer before full BREP ops
+- chamfer scaffolding (phase-1 UI only) is active:
+  - solid-mode edge hover/select now parallels face hover/select
+  - `Chamfer` feature can be created from selected edges (toolbar button + properties dialog with edge list)
+  - geometry mutation/rebuild for chamfer edges is not yet applied (selection/dialog/history plumbing only)
 
 **Solid Pipeline (new scaffold)**
 - `void` now has a dedicated solid path (separate from `kiri/mesh` CSG wrappers):

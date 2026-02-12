@@ -147,6 +147,17 @@ function createSolidsApi(getApi) {
         return a < b ? `${a}:${b}` : `${b}:${a}`;
     }
 
+    function distancePointToSegmentSquared(p, a, b) {
+        const ab = new THREE.Vector3().subVectors(b, a);
+        const ap = new THREE.Vector3().subVectors(p, a);
+        const abLenSq = ab.lengthSq();
+        if (abLenSq <= 1e-18) return p.distanceToSquared(a);
+        let t = ap.dot(ab) / abLenSq;
+        t = Math.max(0, Math.min(1, t));
+        const proj = a.clone().addScaledVector(ab, t);
+        return p.distanceToSquared(proj);
+    }
+
     function buildSurfaceRegionData(geometry) {
         const posAttr = geometry?.getAttribute?.('position');
         const idxAttr = geometry?.getIndex?.();
@@ -387,6 +398,8 @@ function createSolidsApi(getApi) {
         _edgeMaterial: null,
         _selectedFaceKeys: new Set(),
         _hoveredFaceKey: null,
+        _selectedEdgeKeys: new Set(),
+        _hoveredEdgeKey: null,
         _faceMats: null,
         _worker: null,
         _workerReady: false,
@@ -551,6 +564,12 @@ function createSolidsApi(getApi) {
                 for (const overlay of view.faceOverlays?.values?.() || []) {
                     overlay.geometry?.dispose?.();
                 }
+                while (view.edgeOverlays?.children?.length) {
+                    const child = view.edgeOverlays.children[0];
+                    child.geometry?.dispose?.();
+                    child.material?.dispose?.();
+                    view.edgeOverlays.remove(child);
+                }
                 this._meshViews.delete(id);
             }
 
@@ -590,13 +609,16 @@ function createSolidsApi(getApi) {
                     };
                     const overlays = new THREE.Group();
                     overlays.name = `solid-${id}-face-overlays`;
+                    const edgeOverlays = new THREE.Group();
+                    edgeOverlays.name = `solid-${id}-edge-overlays`;
                     const group = new THREE.Group();
                     group.name = `solid-${id}`;
                     group.add(mesh);
                     group.add(edges);
                     group.add(overlays);
+                    group.add(edgeOverlays);
                     this._root.add(group);
-                    view = { group, mesh, edges, overlays, faceOverlays: new Map(), faceTriToGroup: new Int32Array(0), faceGroups: new Map(), indexedGeometry: built.indexed };
+                    view = { group, mesh, edges, overlays, edgeOverlays, faceOverlays: new Map(), faceTriToGroup: new Int32Array(0), faceGroups: new Map(), indexedGeometry: built.indexed };
                     this._meshViews.set(id, view);
                 } else {
                     // Always replace geometry on rebuild. Topology counts can stay
@@ -610,6 +632,12 @@ function createSolidsApi(getApi) {
                     view.faceOverlays?.clear?.();
                     while (view.overlays?.children?.length) {
                         view.overlays.remove(view.overlays.children[0]);
+                    }
+                    while (view.edgeOverlays?.children?.length) {
+                        const child = view.edgeOverlays.children[0];
+                        child.geometry?.dispose?.();
+                        child.material?.dispose?.();
+                        view.edgeOverlays.remove(child);
                     }
                     const built = buildSolidGeometry(meshData);
                     view.mesh.geometry = built.render;
@@ -641,7 +669,12 @@ function createSolidsApi(getApi) {
             if (this._hoveredFaceKey && !this.getFaceByKey(this._hoveredFaceKey)) {
                 this._hoveredFaceKey = null;
             }
+            this._selectedEdgeKeys = new Set(Array.from(this._selectedEdgeKeys).filter(key => this.getEdgeByKey(key)));
+            if (this._hoveredEdgeKey && !this.getEdgeByKey(this._hoveredEdgeKey)) {
+                this._hoveredEdgeKey = null;
+            }
             this.syncFaceOverlays();
+            this.syncEdgeOverlays();
         },
 
         getPickMeshes() {
@@ -704,9 +737,36 @@ function createSolidsApi(getApi) {
                 if (!object || !isObjectEffectivelyVisible(object)) continue;
                 if (object?.userData?.solidEdge !== true) continue;
                 const solidId = String(object?.userData?.solidId || '');
-                const segIndex = Number(hit?.index);
-                if (!solidId || !Number.isFinite(segIndex)) continue;
-                const seg = this.getEdgeSegmentWorld(object, segIndex);
+                if (!solidId) continue;
+
+                let segIndex = Number(hit?.index);
+                let seg = Number.isFinite(segIndex) ? this.getEdgeSegmentWorld(object, segIndex) : null;
+
+                // Some line raycast paths do not provide a stable segment index.
+                // Resolve by nearest world-space segment to the reported hit point.
+                if (!seg && hit?.point) {
+                    const pos = object.geometry?.getAttribute?.('position');
+                    const idx = object.geometry?.getIndex?.();
+                    const segCount = idx?.array?.length
+                        ? Math.floor(idx.array.length / 2)
+                        : Math.floor((pos?.count || 0) / 2);
+                    let bestI = -1;
+                    let bestD2 = Infinity;
+                    for (let i = 0; i < segCount; i++) {
+                        const cand = this.getEdgeSegmentWorld(object, i);
+                        if (!cand) continue;
+                        const d2 = distancePointToSegmentSquared(hit.point, cand.a, cand.b);
+                        if (d2 < bestD2) {
+                            bestD2 = d2;
+                            bestI = i;
+                            seg = cand;
+                        }
+                    }
+                    if (bestI >= 0) {
+                        segIndex = bestI;
+                    }
+                }
+
                 if (!seg) continue;
                 const mid = seg.a.clone().add(seg.b).multiplyScalar(0.5);
                 return {
@@ -719,6 +779,80 @@ function createSolidsApi(getApi) {
                 };
             }
             return null;
+        },
+
+        getEdgeByKey(key) {
+            const raw = String(key || '');
+            if (raw.startsWith('faceedge:')) {
+                const parts = raw.split(':');
+                if (parts.length < 4) return null;
+                const segIndex = Number(parts[parts.length - 1]);
+                const faceId = Number(parts[parts.length - 2]);
+                const solidId = parts.slice(1, -2).join(':');
+                if (!solidId || !Number.isFinite(faceId) || !Number.isFinite(segIndex)) return null;
+                const segs = this.getFaceBoundarySegments(`${solidId}:${faceId}`) || [];
+                const seg = segs[segIndex];
+                if (!seg?.a || !seg?.b) return null;
+                return {
+                    key: raw,
+                    solidId,
+                    index: segIndex,
+                    faceId,
+                    aWorld: seg.a,
+                    bWorld: seg.b,
+                    midWorld: seg.mid || seg.a.clone().add(seg.b).multiplyScalar(0.5)
+                };
+            }
+            const splitAt = raw.lastIndexOf(':');
+            if (splitAt <= 0 || splitAt >= raw.length - 1) return null;
+            const solidId = raw.substring(0, splitAt);
+            const edgeIndex = Number(raw.substring(splitAt + 1));
+            if (!solidId || !Number.isFinite(edgeIndex)) return null;
+            const edgeObj = this.getPickEdgeForSolid(solidId);
+            if (!edgeObj) return null;
+            const seg = this.getEdgeSegmentWorld(edgeObj, edgeIndex);
+            if (!seg) return null;
+            return {
+                key: `${solidId}:${edgeIndex}`,
+                solidId,
+                index: edgeIndex,
+                aWorld: seg.a,
+                bWorld: seg.b,
+                midWorld: seg.a.clone().add(seg.b).multiplyScalar(0.5)
+            };
+        },
+
+        getFaceEdgeHit(faceKey, worldPoint, maxWorldDist = 2.5) {
+            if (!faceKey || !worldPoint) return null;
+            const splitAt = String(faceKey).lastIndexOf(':');
+            if (splitAt <= 0) return null;
+            const solidId = String(faceKey).substring(0, splitAt);
+            const faceId = Number(String(faceKey).substring(splitAt + 1));
+            if (!solidId || !Number.isFinite(faceId)) return null;
+            const segs = this.getFaceBoundarySegments(faceKey) || [];
+            if (!segs.length) return null;
+            let bestIndex = -1;
+            let bestD2 = Infinity;
+            for (let i = 0; i < segs.length; i++) {
+                const seg = segs[i];
+                if (!seg?.a || !seg?.b) continue;
+                const d2 = distancePointToSegmentSquared(worldPoint, seg.a, seg.b);
+                if (d2 < bestD2) {
+                    bestD2 = d2;
+                    bestIndex = i;
+                }
+            }
+            if (bestIndex < 0 || bestD2 > maxWorldDist * maxWorldDist) return null;
+            const seg = segs[bestIndex];
+            return {
+                key: `faceedge:${solidId}:${faceId}:${bestIndex}`,
+                solidId,
+                faceId,
+                index: bestIndex,
+                aWorld: seg.a,
+                bWorld: seg.b,
+                midWorld: seg.mid || seg.a.clone().add(seg.b).multiplyScalar(0.5)
+            };
         },
 
         resolveEdgeFromSource(source = {}) {
@@ -940,6 +1074,37 @@ function createSolidsApi(getApi) {
 
         getSelectedFaceKeys() {
             return Array.from(this._selectedFaceKeys);
+        },
+
+        setHoveredEdge(key = null) {
+            const next = key && this.getEdgeByKey(key) ? key : null;
+            if (next === this._hoveredEdgeKey) return;
+            this._hoveredEdgeKey = next;
+            this.syncEdgeOverlays();
+        },
+
+        setSelectedEdges(keys = []) {
+            this._selectedEdgeKeys = new Set((keys || []).filter(key => this.getEdgeByKey(key)));
+            this.syncEdgeOverlays();
+        },
+
+        toggleSelectedEdge(key, multi = false) {
+            if (!this.getEdgeByKey(key)) return Array.from(this._selectedEdgeKeys);
+            if (!multi) this._selectedEdgeKeys.clear();
+            if (this._selectedEdgeKeys.has(key)) this._selectedEdgeKeys.delete(key);
+            else this._selectedEdgeKeys.add(key);
+            this.syncEdgeOverlays();
+            return Array.from(this._selectedEdgeKeys);
+        },
+
+        clearEdgeSelection() {
+            this._selectedEdgeKeys.clear();
+            this._hoveredEdgeKey = null;
+            this.syncEdgeOverlays();
+        },
+
+        getSelectedEdgeKeys() {
+            return Array.from(this._selectedEdgeKeys);
         },
 
         getSketchTargetForFaceKey(key) {
@@ -1283,6 +1448,48 @@ function createSolidsApi(getApi) {
                     const hovered = this._hoveredFaceKey === key;
                     overlay.visible = selected || hovered;
                     overlay.material = selected ? this._faceMats.selected : this._faceMats.hover;
+                }
+            }
+        },
+
+        syncEdgeOverlays() {
+            for (const [solidId, view] of this._meshViews.entries()) {
+                if (!view?.edgeOverlays) continue;
+                while (view.edgeOverlays.children.length) {
+                    const child = view.edgeOverlays.children[0];
+                    child.geometry?.dispose?.();
+                    child.material?.dispose?.();
+                    view.edgeOverlays.remove(child);
+                }
+                const wanted = [];
+                for (const key of this._selectedEdgeKeys) {
+                    const edge = this.getEdgeByKey(key);
+                    if (edge?.solidId === solidId) {
+                        wanted.push({ key, selected: true });
+                    }
+                }
+                if (this._hoveredEdgeKey && !this._selectedEdgeKeys.has(this._hoveredEdgeKey)) {
+                    const edge = this.getEdgeByKey(this._hoveredEdgeKey);
+                    if (edge?.solidId === solidId) {
+                        wanted.push({ key: this._hoveredEdgeKey, selected: false });
+                    }
+                }
+                for (const item of wanted) {
+                    const edge = this.getEdgeByKey(item.key);
+                    if (!edge?.aWorld || !edge?.bWorld) continue;
+                    const aLocal = view.group.worldToLocal(edge.aWorld.clone());
+                    const bLocal = view.group.worldToLocal(edge.bWorld.clone());
+                    const geo = new THREE.BufferGeometry().setFromPoints([aLocal, bLocal]);
+                    const mat = new THREE.LineBasicMaterial({
+                        color: item.selected ? 0xff9933 : 0xffb366,
+                        transparent: true,
+                        opacity: item.selected ? 0.95 : 0.85,
+                        depthTest: false,
+                        depthWrite: false
+                    });
+                    const line = new THREE.Line(geo, mat);
+                    line.renderOrder = 80;
+                    view.edgeOverlays.add(line);
                 }
             }
         },

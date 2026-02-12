@@ -106,6 +106,14 @@ function getHoverContext() {
             hoveredSolidIds.add(raw.substring(0, split));
         }
     }
+    const hoveredEdgeKey = api.interact?.hoveredSolidEdgeKey || null;
+    if (hoveredEdgeKey) {
+        const raw = String(hoveredEdgeKey);
+        const split = raw.lastIndexOf(':');
+        if (split > 0) {
+            hoveredSolidIds.add(raw.substring(0, split));
+        }
+    }
     if (hoveredSolidIds.size) {
         const solids = api.solids?.list?.() || [];
         for (const solidId of hoveredSolidIds) {
@@ -123,9 +131,10 @@ function getHoverContext() {
 
 function getFaceSelectionContext() {
     const faceKeys = api.solids?.getSelectedFaceKeys?.() || [];
+    const edgeKeys = api.solids?.getSelectedEdgeKeys?.() || [];
     const selectedSolidIds = new Set();
     const selectedFeatureIds = new Set();
-    for (const key of faceKeys) {
+    for (const key of [...faceKeys, ...edgeKeys]) {
         const raw = String(key || '');
         const split = raw.lastIndexOf(':');
         if (split <= 0) continue;
@@ -449,6 +458,7 @@ function renderFeaturesSection() {
             const label = feature?.name || feature?.type || 'Feature';
             const isSketch = feature?.type === 'sketch';
             const isExtrude = feature?.type === 'extrude';
+            const isChamfer = feature?.type === 'chamfer';
             const isBoolean = feature?.type === 'boolean';
             const visible = feature?.visible !== false;
             const suppressed = feature?.suppressed === true;
@@ -499,11 +509,11 @@ function renderFeaturesSection() {
                 onEdit: f => this.onFeatureEdit(f),
                 onHoverEnter: f => {
                     if (isSketch) api.sketchRuntime?.setHovered(f.id);
-                    if (isExtrude || isBoolean) api.solids?.setHovered?.(getSolidIdsForFeature(f?.id));
+                    if (isExtrude || isChamfer || isBoolean) api.solids?.setHovered?.(getSolidIdsForFeature(f?.id));
                 },
                 onHoverLeave: () => {
                     if (isSketch) api.sketchRuntime?.setHovered(null);
-                    if (isExtrude || isBoolean) api.solids?.setHovered?.([]);
+                    if (isExtrude || isChamfer || isBoolean) api.solids?.setHovered?.([]);
                 }
             }));
         }
@@ -557,6 +567,7 @@ function renderFeaturesSection() {
             const label = feature?.name || feature?.type || 'Feature';
             const isSketch = feature?.type === 'sketch';
             const isExtrude = feature?.type === 'extrude';
+            const isChamfer = feature?.type === 'chamfer';
             const isBoolean = feature?.type === 'boolean';
             const visible = feature?.visible !== false;
                 const suppressed = feature?.suppressed === true;
@@ -607,11 +618,11 @@ function renderFeaturesSection() {
                 onEdit: f => this.onFeatureEdit(f),
                 onHoverEnter: f => {
                     if (isSketch) api.sketchRuntime?.setHovered(f.id);
-                    if (isExtrude || isBoolean) api.solids?.setHovered?.(getSolidIdsForFeature(f?.id));
+                    if (isExtrude || isChamfer || isBoolean) api.solids?.setHovered?.(getSolidIdsForFeature(f?.id));
                 },
                 onHoverLeave: () => {
                     if (isSketch) api.sketchRuntime?.setHovered(null);
-                    if (isExtrude || isBoolean) api.solids?.setHovered?.([]);
+                    if (isExtrude || isChamfer || isBoolean) api.solids?.setHovered?.([]);
                 }
             }));
         }

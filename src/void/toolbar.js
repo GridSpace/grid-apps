@@ -16,6 +16,7 @@ const toolbar = {
     cameraToggleBtn: null,
     sketchBtn: null,
     extrudeBtn: null,
+    chamferBtn: null,
     booleanBtn: null,
     sketchToolButtons: null,
     sketchToolMenus: null,
@@ -199,6 +200,9 @@ const toolbar = {
         this.extrudeBtn = this.addButton(solidOpsGroup, 'Extrude', () => {
             this.onExtrudeButton();
         }, { id: 'btn-extrude', disabled: true });
+        this.chamferBtn = this.addButton(solidOpsGroup, 'Chamfer', () => {
+            this.onChamferButton();
+        }, { id: 'btn-chamfer', disabled: true });
         this.booleanBtn = this.addButton(solidOpsGroup, 'Boolean', () => {
             this.onBooleanButton();
         }, { id: 'btn-boolean', disabled: true });
@@ -281,6 +285,7 @@ const toolbar = {
         const editing = !!api.sketchRuntime?.editingId;
         const canCreate = !editing && !!api.interact.resolveSketchTargetFromSelection();
         const canExtrude = (this.getSelectedExtrudeTargets().length > 0) || (!editing && !!this.getSelectedSolidSourceExtrudeFeature());
+        const canChamfer = !editing && (this.getSelectedChamferEdges().length > 0 || !!this.getSelectedSolidSourceChamferFeature());
         const canBoolean = !editing && (this.getSelectedBooleanTargets().length >= 2 || !!this.getSelectedSolidSourceBooleanFeature());
 
         if (this.sketchBtn) {
@@ -295,6 +300,9 @@ const toolbar = {
         }
         if (this.extrudeBtn) {
             this.extrudeBtn.disabled = !canExtrude;
+        }
+        if (this.chamferBtn) {
+            this.chamferBtn.disabled = !canChamfer;
         }
         if (this.booleanBtn) {
             this.booleanBtn.disabled = !canBoolean;
@@ -430,6 +438,67 @@ const toolbar = {
         return solidIds.filter(id => solids.some(solid => solid?.id === id));
     },
 
+    getSelectedChamferEdges() {
+        const keys = api.solids?.getSelectedEdgeKeys?.() || [];
+        return keys.map(key => {
+            const edge = api.solids?.getEdgeByKey?.(key);
+            if (!edge) return null;
+            return {
+                key,
+                solidId: edge.solidId,
+                edgeIndex: edge.index
+            };
+        }).filter(Boolean);
+    },
+
+    createChamferFeatureFromSelection() {
+        const edges = this.getSelectedChamferEdges();
+        if (!edges.length) return null;
+        const doc = api.document.current;
+        if (!doc) return null;
+        const chamferCount = (doc.features || []).filter(f => f?.type === 'chamfer').length;
+        const id = (typeof crypto !== 'undefined' && crypto.randomUUID)
+            ? crypto.randomUUID().replace(/-/g, '').slice(0, 12)
+            : `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+        const feature = {
+            id,
+            type: 'chamfer',
+            name: `Chamfer ${chamferCount + 1}`,
+            created_at: Date.now(),
+            suppressed: false,
+            visible: true,
+            input: {
+                edges
+            },
+            params: {
+                distance: 1
+            },
+            result: null
+        };
+        api.features.add(feature);
+        tree.selectedFeatureId = feature.id;
+        tree.selectedFeatureIds = new Set([feature.id]);
+        tree.selectedSolidIds = new Set();
+        properties.showFeature(feature, {
+            onChange: () => tree.render()
+        });
+        tree.render();
+        window.dispatchEvent(new CustomEvent('void-state-change'));
+        return feature;
+    },
+
+    getSelectedSolidSourceChamferFeature() {
+        const solidIds = Array.from(tree.selectedSolidIds || []);
+        if (solidIds.length !== 1) return null;
+        const solidId = solidIds[0];
+        const solid = (api.solids?.list?.() || []).find(item => item?.id === solidId);
+        const sourceFeatureId = solid?.source?.feature_id || null;
+        if (!sourceFeatureId) return null;
+        const feature = api.features.findById(sourceFeatureId);
+        if (!feature || feature.type !== 'chamfer') return null;
+        return feature;
+    },
+
     createBooleanFeatureFromSelection() {
         const targets = this.getSelectedBooleanTargets();
         if (targets.length < 2) return null;
@@ -528,6 +597,22 @@ const toolbar = {
             return;
         }
         this.createBooleanFeatureFromSelection();
+    },
+
+    onChamferButton() {
+        const existing = this.getSelectedSolidSourceChamferFeature();
+        if (existing) {
+            tree.selectedSolidIds = new Set();
+            tree.selectedFeatureIds = new Set([existing.id]);
+            tree.selectedFeatureId = existing.id;
+            properties.showFeature(existing, {
+                onChange: () => tree.render()
+            });
+            tree.render();
+            window.dispatchEvent(new CustomEvent('void-state-change'));
+            return;
+        }
+        this.createChamferFeatureFromSelection();
     },
 
     getProjectionLabel() {

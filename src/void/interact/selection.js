@@ -33,8 +33,11 @@ function selectPlane(plane, event) {
         this.clearSelectedPoints();
         this.selectedSketchProfiles?.clear?.();
         this.selectedSolidFaceKeys?.clear?.();
+        this.selectedSolidEdgeKeys?.clear?.();
         this.hoveredSolidFaceKey = null;
+        this.hoveredSolidEdgeKey = null;
         api.solids?.clearFaceSelection?.();
+        api.solids?.clearEdgeSelection?.();
         api.sketchRuntime?.setSelectedProfiles?.([]);
         api.sketchRuntime?.setHoveredProfile?.(null);
 
@@ -91,8 +94,11 @@ function deselectAll() {
     this.selectedSketchProfiles?.clear?.();
     this.hoveredSketchProfileKey = null;
     this.selectedSolidFaceKeys?.clear?.();
+    this.selectedSolidEdgeKeys?.clear?.();
     this.hoveredSolidFaceKey = null;
+    this.hoveredSolidEdgeKey = null;
     api.solids?.clearFaceSelection?.();
+    api.solids?.clearEdgeSelection?.();
     api.sketchRuntime?.setSelectedProfiles?.([]);
     api.sketchRuntime?.setHoveredProfile?.(null);
     this.clearSketchSelection?.();

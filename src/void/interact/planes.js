@@ -35,10 +35,15 @@ function getInteractiveObjects() {
         objects.push(mesh);
     }
 
-    if (this.isSketchEditing && this.isSketchEditing() && !(this.isSketchRetargetMode && this.isSketchRetargetMode())) {
+    const sketchEditingActive = this.isSketchEditing && this.isSketchEditing();
+    const sketchRetarget = this.isSketchRetargetMode && this.isSketchRetargetMode();
+    const includeSolidEdges = !sketchEditingActive || (sketchEditingActive && !sketchRetarget);
+    if (includeSolidEdges) {
         for (const edgeObj of api.solids?.getPickEdges?.() || []) {
             objects.push(edgeObj);
         }
+    }
+    if (sketchEditingActive && !sketchRetarget) {
         const sketch = this.getEditingSketchFeature && this.getEditingSketchFeature();
         const rec = sketch?.id ? api.sketchRuntime?.getRecord?.(sketch.id) : null;
         if (rec?.entityViews) {
@@ -157,10 +162,31 @@ function handleHover(intersection, event, allIntersections) {
             this.hoveredSketchProfileKey = null;
             api.sketchRuntime?.setHoveredProfile(null);
         }
+        if (primaryHit?.type === 'solid-edge') {
+            const solidEdgeHit = primaryHit.hit;
+            this.hoveredSolidEdgeKey = solidEdgeHit.key;
+            api.solids?.setHoveredEdge?.(solidEdgeHit.key);
+            if (this.hoveredSolidFaceKey) {
+                this.hoveredSolidFaceKey = null;
+                api.solids?.setHoveredFace?.(null);
+            }
+            this.hoverIntersection = solidEdgeHit.intersection || intersection || null;
+            this.setHoveredPoint(null);
+            if (this.hoveredPlane && !this.hoveredPlane.isSelected()) {
+                this.hoveredPlane.setHovered(false);
+                this.hoveredPlane = null;
+            }
+            window.dispatchEvent(new CustomEvent('void-state-change'));
+            return;
+        }
         if (primaryHit?.type === 'solid-face') {
             const solidFaceHit = primaryHit.hit;
             this.hoveredSolidFaceKey = solidFaceHit.key;
             api.solids?.setHoveredFace?.(solidFaceHit.key);
+            if (this.hoveredSolidEdgeKey) {
+                this.hoveredSolidEdgeKey = null;
+                api.solids?.setHoveredEdge?.(null);
+            }
             this.hoverIntersection = solidFaceHit.intersection || intersection || null;
             this.setHoveredPoint(null);
             if (this.hoveredPlane && !this.hoveredPlane.isSelected()) {
@@ -173,6 +199,11 @@ function handleHover(intersection, event, allIntersections) {
         if (this.hoveredSolidFaceKey) {
             this.hoveredSolidFaceKey = null;
             api.solids?.setHoveredFace?.(null);
+            window.dispatchEvent(new CustomEvent('void-state-change'));
+        }
+        if (this.hoveredSolidEdgeKey) {
+            this.hoveredSolidEdgeKey = null;
+            api.solids?.setHoveredEdge?.(null);
             window.dispatchEvent(new CustomEvent('void-state-change'));
         }
     } else if (primaryHit?.type === 'solid-face') {
@@ -298,6 +329,10 @@ function handleMouseUp(intersection, event, allIntersections) {
             this.selectSketchProfile(primaryHit.hit, event);
             return;
         }
+        if (primaryHit?.type === 'solid-edge') {
+            this.selectSolidEdge(primaryHit.hit, event);
+            return;
+        }
         if (primaryHit?.type === 'solid-face') {
             this.selectSolidFace(primaryHit.hit, event);
             return;
@@ -371,15 +406,64 @@ function getPrimarySurfaceHitFromIntersections(intersections) {
                 };
             }
         }
-        if (nearestProfile && nearestSolidFace) {
-            const delta = nearestProfile.distance - nearestSolidFace.distance;
-            if (delta <= SKETCH_FACE_EPSILON) {
-                return nearestProfile;
-            }
-            return nearestSolidFace;
+    }
+    let nearestSolidEdge = null;
+    if (nearestSolidFace?.hit?.key && nearestSolidFace?.hit?.intersection?.point) {
+        const edge = api.solids?.getFaceEdgeHit?.(nearestSolidFace.hit.key, nearestSolidFace.hit.intersection.point, 2.5);
+        if (edge) {
+            nearestSolidEdge = {
+                type: 'solid-edge',
+                // Slightly prefer edge over owning face when near boundary.
+                distance: Math.max(0, (nearestSolidFace.distance || 0) - 1e-4),
+                hit: {
+                    ...edge,
+                    intersection: nearestSolidFace.hit.intersection
+                }
+            };
         }
     }
+    if (!nearestSolidEdge) {
+        const fallback = api.solids?.getEdgeHitFromIntersections?.(intersections);
+        if (fallback) {
+            nearestSolidEdge = {
+                type: 'solid-edge',
+                distance: Number(fallback?.intersection?.distance) || 0,
+                hit: {
+                    key: `${fallback.solidId}:${fallback.index}`,
+                    solidId: fallback.solidId,
+                    index: fallback.index,
+                    aWorld: fallback.aWorld,
+                    bWorld: fallback.bWorld,
+                    midWorld: fallback.midWorld,
+                    intersection: fallback.intersection
+                }
+            };
+        }
+    }
+    if (nearestProfile && nearestSolidEdge && nearestSolidFace) {
+        const nearest = [nearestProfile, nearestSolidEdge, nearestSolidFace]
+            .sort((a, b) => a.distance - b.distance)[0];
+        return nearest;
+    }
+    if (nearestProfile && nearestSolidEdge) {
+        const delta = nearestProfile.distance - nearestSolidEdge.distance;
+        if (delta <= SKETCH_FACE_EPSILON) return nearestProfile;
+        return nearestSolidEdge;
+    }
+    if (nearestProfile && nearestSolidFace) {
+        const delta = nearestProfile.distance - nearestSolidFace.distance;
+        if (delta <= SKETCH_FACE_EPSILON) {
+            return nearestProfile;
+        }
+        return nearestSolidFace;
+    }
+    if (nearestSolidEdge && nearestSolidFace) {
+        return nearestSolidEdge.distance <= nearestSolidFace.distance + SKETCH_FACE_EPSILON
+            ? nearestSolidEdge
+            : nearestSolidFace;
+    }
     if (nearestProfile) return nearestProfile;
+    if (nearestSolidEdge) return nearestSolidEdge;
     if (nearestSolidFace) return nearestSolidFace;
     return null;
 }
@@ -422,8 +506,11 @@ function selectSketchProfile(hit, event) {
     const multi = !!(event?.ctrlKey || event?.metaKey);
     if (!multi) {
         this.selectedSolidFaceKeys?.clear?.();
+        this.selectedSolidEdgeKeys?.clear?.();
         this.hoveredSolidFaceKey = null;
+        this.hoveredSolidEdgeKey = null;
         api.solids?.clearFaceSelection?.();
+        api.solids?.clearEdgeSelection?.();
         this.selectedSketchProfiles.clear();
     }
     if (this.selectedSketchProfiles.has(key)) {
@@ -455,6 +542,9 @@ function selectSolidFace(hit, event) {
         this.selectedPlanes?.clear?.();
         this.selectedSketchProfiles?.clear?.();
         this.clearSelectedPoints?.();
+        this.selectedSolidEdgeKeys?.clear?.();
+        this.hoveredSolidEdgeKey = null;
+        api.solids?.clearEdgeSelection?.();
         api.sketchRuntime?.setSelectedProfiles?.([]);
         api.sketchRuntime?.setHoveredProfile?.(null);
     }
@@ -581,6 +671,52 @@ function selectSolidFace(hit, event) {
             api.solids?.setSelected?.(selectedIds);
             properties.onChanged?.();
         }
+    }
+    window.dispatchEvent(new CustomEvent('void-state-change'));
+}
+
+function selectSolidEdge(hit, event) {
+    const key = hit?.key || null;
+    if (!key) return;
+    const currentFeatureId = properties.currentFeatureId || null;
+    const currentFeature = currentFeatureId ? api.features.findById(currentFeatureId) : null;
+    const editingChamfer = currentFeature?.type === 'chamfer' && currentFeature?.id === currentFeatureId;
+    const multi = editingChamfer || !!(event?.ctrlKey || event?.metaKey);
+    if (!multi) {
+        for (const selectedPlane of this.selectedPlanes || []) {
+            selectedPlane.setSelected(false);
+        }
+        this.selectedPlanes?.clear?.();
+        this.selectedSketchProfiles?.clear?.();
+        this.clearSelectedPoints?.();
+        this.selectedSolidFaceKeys?.clear?.();
+        this.hoveredSolidFaceKey = null;
+        api.solids?.clearFaceSelection?.();
+    }
+    const selected = api.solids?.toggleSelectedEdge?.(key, multi) || [];
+    this.selectedSolidEdgeKeys = new Set(selected);
+    this.hoveredSolidEdgeKey = key;
+    api.solids?.setHoveredEdge?.(key);
+    if (editingChamfer) {
+        const edgeRefs = selected
+            .map(edgeKey => {
+                const edge = api.solids?.getEdgeByKey?.(edgeKey);
+                if (!edge) return null;
+                return {
+                    key: edgeKey,
+                    solidId: edge.solidId,
+                    edgeIndex: edge.index
+                };
+            })
+            .filter(Boolean);
+        api.features.update(currentFeature.id, feature => {
+            feature.input = feature.input || {};
+            feature.input.edges = edgeRefs;
+        }, {
+            opType: 'feature.update',
+            payload: { field: 'edges.set', edges: edgeRefs }
+        });
+        properties.onChanged?.();
     }
     window.dispatchEvent(new CustomEvent('void-state-change'));
 }
@@ -927,6 +1063,7 @@ export {
     getSketchProfileHitFromIntersections,
     getPrimarySurfaceHitFromIntersections,
     selectSketchProfile,
+    selectSolidEdge,
     selectSolidFace,
     startHandleDrag,
     getOppositeCorner,

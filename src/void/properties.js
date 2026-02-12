@@ -273,6 +273,7 @@ const properties = {
         this.syncExtrudeProfileSelection(null);
         this.syncExtrudeTargetSelection(null);
         this.syncBooleanSolidSelection(null);
+        this.syncChamferEdgeSelection(null);
         this.currentFeatureId = null;
         this._sessionFeatureId = null;
         this._sessionFeatureType = null;
@@ -304,12 +305,15 @@ const properties = {
             this.renderSketchFields(feature);
         } else if (feature.type === 'extrude') {
             this.renderExtrudeFields(feature);
+        } else if (feature.type === 'chamfer') {
+            this.renderChamferFields(feature);
         } else if (feature.type === 'boolean') {
             this.renderBooleanFields(feature);
         }
         this.syncExtrudeProfileSelection(feature);
         this.syncExtrudeTargetSelection(feature);
         this.syncBooleanSolidSelection(feature);
+        this.syncChamferEdgeSelection(feature);
     },
 
     renderSketchFields(feature) {
@@ -695,6 +699,61 @@ const properties = {
         }
     },
 
+    renderChamferFields(feature) {
+        const params = feature?.params || {};
+        const distance = Math.max(0.0001, Math.abs(Number(params.distance ?? 1)));
+        this.body.appendChild(this.createNumberField('Distance', distance, value => {
+            const next = Math.max(0.0001, Math.abs(Number(value) || 0));
+            const updated = api.features.update(feature.id, item => {
+                item.params = item.params || {};
+                item.params.distance = next;
+            }, {
+                opType: 'feature.update',
+                payload: { field: 'distance', value: next }
+            });
+            if (updated) this.onChanged();
+        }));
+
+        const edges = Array.isArray(feature?.input?.edges) ? feature.input.edges : [];
+        const edgeArea = this.createSolidPickerArea({
+            title: 'Edges',
+            active: true,
+            emptyText: 'No edges selected'
+        });
+        if (edges.length) {
+            for (const edge of edges) {
+                const row = document.createElement('div');
+                row.className = 'props-extrude-profile-row';
+                const text = document.createElement('div');
+                text.className = 'props-extrude-profile-text';
+                const solidName = this.getSolidDisplayName(edge?.solidId || '');
+                const edgeIndex = Number(edge?.edgeIndex);
+                text.textContent = `${solidName} / Edge ${Number.isFinite(edgeIndex) ? edgeIndex + 1 : '?'}`;
+                const remove = document.createElement('button');
+                remove.className = 'props-extrude-profile-remove';
+                remove.textContent = '×';
+                remove.title = 'Remove edge';
+                remove.onclick = () => {
+                    const updated = api.features.update(feature.id, item => {
+                        item.input = item.input || {};
+                        const current = Array.isArray(item.input.edges) ? item.input.edges : [];
+                        item.input.edges = current.filter(e => String(e?.key || '') !== String(edge?.key || ''));
+                    }, {
+                        opType: 'feature.update',
+                        payload: { field: 'edges.remove', key: edge?.key || null }
+                    });
+                    if (updated) this.onChanged();
+                };
+                row.appendChild(text);
+                row.appendChild(remove);
+                edgeArea.list.appendChild(row);
+            }
+        } else {
+            edgeArea.showEmpty();
+        }
+        this.body.appendChild(edgeArea.wrap);
+    },
+
     createSolidPickerArea({ title, active = false, onActivate = null, emptyText = 'Nothing selected' }) {
         const wrap = document.createElement('div');
         wrap.className = `props-field props-picker-area${active ? ' active' : ''}`;
@@ -817,6 +876,22 @@ const properties = {
         const tools = Array.isArray(input.tools) ? input.tools.filter(Boolean) : [];
         const selected = mode === 'subtract' ? Array.from(new Set([...targets, ...tools])) : targets;
         api.solids?.setSelected?.(selected);
+    },
+
+    syncChamferEdgeSelection(feature) {
+        const isChamfer = feature?.type === 'chamfer' && this.currentFeatureId === feature?.id;
+        if (!isChamfer) {
+            api.interact.selectedSolidEdgeKeys?.clear?.();
+            api.interact.hoveredSolidEdgeKey = null;
+            api.solids?.setSelectedEdges?.([]);
+            api.solids?.setHoveredEdge?.(null);
+            return;
+        }
+        const keys = (Array.isArray(feature?.input?.edges) ? feature.input.edges : [])
+            .map(edge => String(edge?.key || ''))
+            .filter(Boolean);
+        api.interact.selectedSolidEdgeKeys = new Set(keys);
+        api.solids?.setSelectedEdges?.(keys);
     },
 
     getBooleanInput(feature) {

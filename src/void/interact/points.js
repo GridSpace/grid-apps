@@ -77,13 +77,16 @@ function selectPoint(id, event) {
         }
         this.selectedPlanes.clear();
         this.selectedSolidFaceKeys?.clear?.();
+        this.selectedSolidEdgeKeys?.clear?.();
         this.hoveredSolidFaceKey = null;
+        this.hoveredSolidEdgeKey = null;
         this.selectedSketchProfiles?.clear?.();
         this.hoveredSketchProfileKey = null;
         this.clearSketchSelection?.();
         this.cancelSketchLine?.();
         this.setSketchTool?.('select');
         api.solids?.clearFaceSelection?.();
+        api.solids?.clearEdgeSelection?.();
         this.clearSelectedPoints();
         this.selectedPoints.add(id);
     } else {
