@@ -538,6 +538,38 @@ function applySketchConstraint(type) {
             displayRefs: displayRefsFor(normalized),
             data: { value, mode: getConstraintMode(current) }
         });
+    } else if (type === 'min_distance' || type === 'max_distance') {
+        let refs = null;
+        if (arcs.length === 1 && pointLikeRefs.length === 1 && lines.length === 0) {
+            refs = [arcs[0].id, pointLikeRefs[0]];
+        } else if (arcs.length === 1 && lines.length === 1 && pointLikeRefs.length === 0) {
+            refs = [arcs[0].id, lines[0].id];
+        } else if (arcs.length === 2 && lines.length === 0 && pointLikeRefs.length === 0) {
+            refs = [arcs[0].id, arcs[1].id];
+        } else {
+            return false;
+        }
+        const normalized = this.normalizeConstraintRefs(type, refs);
+        const current = this.findSketchConstraintInList?.(feature, type, normalized);
+        const currentValue = Number(current?.data?.value);
+        const seed = Number.isFinite(currentValue) && currentValue > 0 ? currentValue : 1;
+        clearSketchTransientInputState(this);
+        const promptLabel = type === 'min_distance' ? 'Min distance value' : 'Max distance value';
+        const input = window.prompt(promptLabel, String(Number(seed.toFixed(4))));
+        clearSketchTransientInputState(this);
+        if (input === null) {
+            return false;
+        }
+        const value = Number(input);
+        if (!Number.isFinite(value) || value <= 0) {
+            return false;
+        }
+        specs.push({
+            type,
+            refs: normalized,
+            displayRefs: displayRefsFor(normalized),
+            data: { value }
+        });
     } else if (type === 'fixed') {
         for (const point of points) {
             const refs = [point.id];
@@ -702,6 +734,20 @@ function toggleSketchConstraintInList(sketch, list, type, refs, dataIn = null, d
                 applyConstraintDisplayRefs(existing, displayRefsIn);
                 return true;
             }
+            if (type === 'min_distance' || type === 'max_distance') {
+                existing.data = existing.data || {};
+                const prev = Number(existing.data.value);
+                const next = Number(dataIn?.value);
+                if (!Number.isFinite(next) || next <= 0) {
+                    return false;
+                }
+                if (Math.abs(prev - next) < 1e-9) {
+                    return false;
+                }
+                existing.data.value = next;
+                applyConstraintDisplayRefs(existing, displayRefsIn);
+                return true;
+            }
             if (type === 'fixed' && dataIn?.anchors && typeof dataIn.anchors === 'object') {
                 existing.data = existing.data || {};
                 existing.data.anchors = existing.data.anchors || {};
@@ -767,6 +813,13 @@ function toggleSketchConstraintInList(sketch, list, type, refs, dataIn = null, d
         }
         rec.data = { ...rec.data, value };
     }
+    if (type === 'min_distance' || type === 'max_distance') {
+        const value = Number(dataIn?.value);
+        if (!Number.isFinite(value) || value <= 0) {
+            return false;
+        }
+        rec.data = { ...rec.data, value };
+    }
     list.push(rec);
     return true;
 }
@@ -780,6 +833,9 @@ function normalizeConstraintRefs(type, refs) {
         return out.slice(0, 2).sort();
     }
     if (type === 'point_on_line' || type === 'point_on_arc') {
+        return out.slice(0, 2).sort();
+    }
+    if (type === 'min_distance' || type === 'max_distance') {
         return out.slice(0, 2).sort();
     }
     if (type === 'arc_center_on_line') {

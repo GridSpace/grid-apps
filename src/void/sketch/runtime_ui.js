@@ -23,6 +23,8 @@ function constraintGlyphLabel(type) {
         equal: '=',
         midpoint: 'M',
         dimension: 'D',
+        min_distance: 'd<',
+        max_distance: 'd>',
         polygon_pattern: 'PG',
         circular_pattern: 'CP',
         grid_pattern: 'GP',
@@ -1049,7 +1051,7 @@ function getConstraintAnchorLocal(feature, constraint) {
     const rawRefs = Array.isArray(constraint?.refs) ? constraint.refs : [];
     const displayRefs = Array.isArray(constraint?.ui?.display_refs) ? constraint.ui.display_refs : [];
     const refs = displayRefs.length ? displayRefs : rawRefs;
-    const lineTypes = new Set(['horizontal', 'vertical', 'horizontal_points', 'vertical_points', 'tangent', 'equal', 'collinear', 'dimension', 'arc_center_on_line', 'arc_center_on_arc', 'mirror_line']);
+    const lineTypes = new Set(['horizontal', 'vertical', 'horizontal_points', 'vertical_points', 'tangent', 'equal', 'collinear', 'dimension', 'min_distance', 'max_distance', 'arc_center_on_line', 'arc_center_on_arc', 'mirror_line']);
     const pointLike = ref => {
         if (!ref) return null;
         if (ref === '__sketch-origin__') return { x: 0, y: 0 };

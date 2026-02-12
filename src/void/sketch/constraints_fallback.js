@@ -92,6 +92,12 @@ function enforceWithFallback(sketch, opts = {}) {
                 case 'dimension':
                     iterChanged = applyDimension(c, points, lines, arcs, fixed) || iterChanged;
                     break;
+                case 'min_distance':
+                    iterChanged = applyDistanceToConstraint(c, constraints, points, lines, arcs, fixed, 'min') || iterChanged;
+                    break;
+                case 'max_distance':
+                    iterChanged = applyDistanceToConstraint(c, constraints, points, lines, arcs, fixed, 'max') || iterChanged;
+                    break;
                 case 'tangent':
                     iterChanged = applyTangent(c, points, lines, arcs, fixed, dragged, draggedArcs, tangentAggressive) || iterChanged;
                     break;
@@ -1163,6 +1169,161 @@ function applyDimension(constraint, points, lines, arcs, fixed) {
     return changed;
 }
 
+function applyDistanceToConstraint(constraint, constraints, points, lines, arcs, fixed, mode = 'min') {
+    const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
+    const target = Number(constraint?.data?.value);
+    if (refs.length < 2 || !Number.isFinite(target) || target <= EPS) return false;
+    const arcId = refs.find(ref => arcs.has(ref)) || null;
+    if (!arcId) return false;
+    const arc = arcs.get(arcId);
+    if (!arc) return false;
+    const circle = getArcCircleData(arc, points);
+    if (!circle) return false;
+    const currentRadius = Number(circle.radius);
+    if (!Number.isFinite(currentRadius) || currentRadius <= EPS) return false;
+
+    const targetRef = refs.find(ref => ref !== arcId) || null;
+    if (!targetRef) return false;
+
+    let centerDistance = null;
+    let targetRadius = null;
+    let targetPoint = null;
+    let lineAnchor = null;
+    let lineDir = null;
+    let otherCenter = null;
+    const pointLike = getPointLikeRef(targetRef, points, arcs);
+    if (pointLike) {
+        targetPoint = { x: pointLike.x || 0, y: pointLike.y || 0 };
+        centerDistance = Math.hypot((pointLike.x || 0) - circle.cx, (pointLike.y || 0) - circle.cy);
+    } else if (lines.has(targetRef)) {
+        const line = lines.get(targetRef);
+        const [a, b] = getLineEndpoints(line, points);
+        if (!a || !b) return false;
+        const nearest = nearestPointOnInfiniteLine(circle.cx, circle.cy, a.x || 0, a.y || 0, b.x || 0, b.y || 0);
+        lineAnchor = { x: nearest.x, y: nearest.y };
+        lineDir = { x: (b.x || 0) - (a.x || 0), y: (b.y || 0) - (a.y || 0) };
+        centerDistance = Math.hypot((nearest.x || 0) - circle.cx, (nearest.y || 0) - circle.cy);
+    } else if (arcs.has(targetRef)) {
+        const other = arcs.get(targetRef);
+        const otherCircle = getArcCircleData(other, points);
+        if (!otherCircle) return false;
+        otherCenter = { x: otherCircle.cx || 0, y: otherCircle.cy || 0 };
+        centerDistance = Math.hypot((otherCircle.cx || 0) - circle.cx, (otherCircle.cy || 0) - circle.cy);
+        targetRadius = Number(otherCircle.radius);
+        if (!Number.isFinite(targetRadius) || targetRadius <= EPS) return false;
+    } else {
+        return false;
+    }
+    if (!Number.isFinite(centerDistance)) return false;
+    const r2 = Number.isFinite(targetRadius) ? targetRadius : 0;
+    const [pa, pb] = getLineEndpoints(arc, points);
+    if (!pa || !pb) return false;
+    const aId = getLineEndpointId(arc, 'a');
+    const bId = getLineEndpointId(arc, 'b');
+    const fa = isFixed(aId, fixed);
+    const fb = isFixed(bId, fixed);
+    const radiusDriven = Number.isFinite(getDrivingArcRadiusFromConstraints(constraints, arcId));
+
+    // min distance = nearest boundary distance
+    // max distance = farthest boundary distance
+    const currentMin = Math.max(0, Math.max(centerDistance - (currentRadius + r2), Math.abs(currentRadius - r2) - centerDistance));
+    const currentMax = centerDistance + currentRadius + r2;
+    if (mode === 'min' && Math.abs(currentMin - target) <= 1e-6) return false;
+    if (mode === 'max' && Math.abs(currentMax - target) <= 1e-6) return false;
+
+    const candidates = [];
+    const centerTargets = [];
+    if (mode === 'max') {
+        const d = target - currentRadius - r2;
+        if (Number.isFinite(d) && d > EPS) centerTargets.push(d);
+    } else if (mode === 'min') {
+        const ext = currentRadius + r2 + target;
+        if (Number.isFinite(ext) && ext > EPS) centerTargets.push(ext);
+        const containsOther = currentRadius - r2 - target;
+        if (Number.isFinite(containsOther) && containsOther > EPS) centerTargets.push(containsOther);
+        const insideOther = r2 - currentRadius - target;
+        if (Number.isFinite(insideOther) && insideOther > EPS) centerTargets.push(insideOther);
+    } else {
+        return false;
+    }
+    if (centerTargets.length && !(fa && fb)) {
+        let dTarget = centerTargets[0];
+        let dDelta = Math.abs(dTarget - centerDistance);
+        for (let i = 1; i < centerTargets.length; i++) {
+            const d = centerTargets[i];
+            const delta = Math.abs(d - centerDistance);
+            if (delta < dDelta) {
+                dTarget = d;
+                dDelta = delta;
+            }
+        }
+        let moved = false;
+        if (targetPoint) {
+            let vx = circle.cx - targetPoint.x;
+            let vy = circle.cy - targetPoint.y;
+            let vl = Math.hypot(vx, vy);
+            if (vl < EPS) { vx = 1; vy = 0; vl = 1; }
+            const nx = vx / vl;
+            const ny = vy / vl;
+            moved = enforceArcFromCenter(arc, pa, pb, targetPoint.x + nx * dTarget, targetPoint.y + ny * dTarget, fa, fb);
+        } else if (lineAnchor && lineDir) {
+            let vx = circle.cx - lineAnchor.x;
+            let vy = circle.cy - lineAnchor.y;
+            let vl = Math.hypot(vx, vy);
+            if (vl < EPS) {
+                const lx = lineDir.x || 0;
+                const ly = lineDir.y || 0;
+                const ll = Math.hypot(lx, ly);
+                if (ll < EPS) {
+                    vx = 1; vy = 0; vl = 1;
+                } else {
+                    vx = -ly / ll;
+                    vy = lx / ll;
+                    vl = 1;
+                }
+            }
+            const nx = vx / vl;
+            const ny = vy / vl;
+            moved = enforceArcFromCenter(arc, pa, pb, lineAnchor.x + nx * dTarget, lineAnchor.y + ny * dTarget, fa, fb);
+        } else if (otherCenter) {
+            let vx = circle.cx - otherCenter.x;
+            let vy = circle.cy - otherCenter.y;
+            let vl = Math.hypot(vx, vy);
+            if (vl < EPS) { vx = 1; vy = 0; vl = 1; }
+            const nx = vx / vl;
+            const ny = vy / vl;
+            moved = enforceArcFromCenter(arc, pa, pb, otherCenter.x + nx * dTarget, otherCenter.y + ny * dTarget, fa, fb);
+        }
+        if (moved) return true;
+    }
+
+    if (mode === 'max') {
+        const radius = target - centerDistance - r2;
+        if (Number.isFinite(radius) && radius > EPS) candidates.push(radius);
+    } else if (mode === 'min') {
+        const external = centerDistance - r2 - target;
+        if (Number.isFinite(external) && external > EPS && centerDistance >= external + r2 - EPS) candidates.push(external);
+        const containsOther = target + centerDistance + r2;
+        if (Number.isFinite(containsOther) && containsOther > EPS && containsOther >= centerDistance + r2 - EPS) candidates.push(containsOther);
+        const insideOther = r2 - centerDistance - target;
+        if (Number.isFinite(insideOther) && insideOther > EPS && r2 >= centerDistance + insideOther - EPS) candidates.push(insideOther);
+    }
+    if (!candidates.length) return false;
+
+    let best = candidates[0];
+    let bestDelta = Math.abs(best - currentRadius);
+    for (let i = 1; i < candidates.length; i++) {
+        const c = candidates[i];
+        const d = Math.abs(c - currentRadius);
+        if (d < bestDelta) {
+            best = c;
+            bestDelta = d;
+        }
+    }
+    if (radiusDriven) return false;
+    return applyArcRadiusTarget(arc, points, best, fixed);
+}
+
 function applyArcRadiusTarget(arc, points, target, fixed) {
     if (!arc || !Number.isFinite(target) || target <= EPS) return false;
     const [a, b] = getLineEndpoints(arc, points);
@@ -1325,6 +1486,23 @@ function nearestPointOnSegment(px, py, ax, ay, bx, by) {
     const apx = px - ax;
     const apy = py - ay;
     const t = Math.max(0, Math.min(1, (apx * abx + apy * aby) / abLenSq));
+    const x = ax + abx * t;
+    const y = ay + aby * t;
+    const dx = px - x;
+    const dy = py - y;
+    return { x, y, d2: dx * dx + dy * dy };
+}
+
+function nearestPointOnInfiniteLine(px, py, ax, ay, bx, by) {
+    const abx = bx - ax;
+    const aby = by - ay;
+    const abLenSq = abx * abx + aby * aby;
+    if (abLenSq < EPS) {
+        return { x: ax, y: ay, d2: (px - ax) * (px - ax) + (py - ay) * (py - ay) };
+    }
+    const apx = px - ax;
+    const apy = py - ay;
+    const t = (apx * abx + apy * aby) / abLenSq;
     const x = ax + abx * t;
     const y = ay + aby * t;
     const dx = px - x;
