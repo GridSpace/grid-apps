@@ -236,6 +236,52 @@ function applyCircularPattern(constraint, points, lines, arcs, fixed, dragged = 
     if (!center) return false;
 
     let changed = false;
+    // Back-propagate drag from copies -> source so dragging any copy behaves
+    // like dragging the source, then forward-propagate source -> all copies.
+    for (let step = 1; step < count; step++) {
+        const angle = (Math.PI * 2 * step) / count;
+        const pointPairs = Array.isArray(pointMaps[step - 1]) ? pointMaps[step - 1] : [];
+        for (const pair of pointPairs) {
+            if (!Array.isArray(pair) || pair.length < 2) continue;
+            const srcId = pair[0];
+            const dstId = pair[1];
+            if (!dragged?.has?.(dstId) || dragged?.has?.(srcId) || isFixed(srcId, fixed)) continue;
+            const dst = points.get(dstId);
+            const src = points.get(srcId);
+            if (!src || !dst) continue;
+            const inv = rotatePatternPointAround(dst, center, -angle);
+            changed = setPoint(src, inv.x, inv.y) || changed;
+        }
+        const stepCopies = Array.isArray(copies[step - 1]) ? copies[step - 1] : [];
+        for (let i = 0; i < sourceIds.length; i++) {
+            const sourceId = sourceIds[i];
+            const copyId = stepCopies[i];
+            if (!sourceId || !copyId) continue;
+            if (!draggedArcs?.has?.(copyId) || draggedArcs?.has?.(sourceId)) continue;
+            const srcArc = arcs.get(sourceId);
+            const dstArc = arcs.get(copyId);
+            if (!srcArc || !dstArc) continue;
+            if (Number.isFinite(dstArc.cx) && Number.isFinite(dstArc.cy)) {
+                const invC = rotatePatternPointAround({ x: dstArc.cx, y: dstArc.cy }, center, -angle);
+                const sa = Number(dstArc.startAngle);
+                const ea = Number(dstArc.endAngle);
+                changed = setArcCenterAndMeta(
+                    srcArc,
+                    invC.x,
+                    invC.y,
+                    Number.isFinite(dstArc.radius) ? dstArc.radius : Number(srcArc.radius || 0),
+                    Number.isFinite(sa) ? sa - angle : Number(srcArc.startAngle || 0),
+                    Number.isFinite(ea) ? ea - angle : Number(srcArc.endAngle || 0),
+                    dstArc.ccw === undefined ? true : dstArc.ccw
+                ) || changed;
+            }
+            if (Number.isFinite(dstArc.mx) && Number.isFinite(dstArc.my)) {
+                const invM = rotatePatternPointAround({ x: dstArc.mx, y: dstArc.my }, center, -angle);
+                changed = setArcControl(srcArc, invM.x, invM.y) || changed;
+            }
+        }
+    }
+
     for (let step = 1; step < count; step++) {
         const angle = (Math.PI * 2 * step) / count;
         const pointPairs = Array.isArray(pointMaps[step - 1]) ? pointMaps[step - 1] : [];

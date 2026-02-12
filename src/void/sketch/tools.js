@@ -195,7 +195,7 @@ function editSketchCircularPatternConstraint(constraintId) {
     const constraints = Array.isArray(feature.constraints) ? feature.constraints : [];
     const found = constraints.find(c => c?.id === constraintId && c?.type === 'circular_pattern');
     if (!found) return false;
-    const current = Math.max(2, Number(found?.data?.count || 0) || 6);
+    const current = Math.max(2, Number(found?.data?.count || 0) || 3);
     const input = window.prompt('Pattern copies', String(current));
     if (input === null) return false;
     const value = Math.floor(Number(input));

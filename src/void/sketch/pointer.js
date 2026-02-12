@@ -904,6 +904,8 @@ function handleSketchDrag(delta, offset, isDone) {
     this.sketchDrag.snapMovedPointId = snapMovedPointId;
     this.hoveredSketchEntityId = snap?.hoveredId || snapId;
 
+    const hasCircularPattern = Array.isArray(feature?.constraints)
+        && feature.constraints.some(c => c?.type === 'circular_pattern');
     if (activeCircleDrag && !this.sketchDrag.centerDrag) {
         this.projectPointOnArcConstraintsForArcs(feature, this.sketchDrag.circleCurveDragIds);
         const tangentDriven = dragTouchesTangentConstraint(
@@ -914,7 +916,7 @@ function handleSketchDrag(delta, offset, isDone) {
         this.applyDragLockedArcCenters(feature, this.sketchDrag.centerLocks);
         enforceSketchConstraintsInPlace(feature, {
             useFallback: tangentDriven || !this.sketchDrag.pointDrag,
-            iterations: 24,
+            iterations: hasCircularPattern ? 14 : 24,
             draggedPointIds: Array.from(this.sketchDrag.movedPointIds || []),
             draggedArcIds: Array.from(this.sketchDrag.draggedArcIds || []),
             tangentAggressive: false
@@ -929,7 +931,7 @@ function handleSketchDrag(delta, offset, isDone) {
         this.applyDragLockedArcCenters(feature, this.sketchDrag.centerLocks);
         enforceSketchConstraintsInPlace(feature, {
             useFallback: tangentDriven || !this.sketchDrag.pointDrag,
-            iterations: 48,
+            iterations: hasCircularPattern ? 18 : 48,
             draggedPointIds: Array.from(this.sketchDrag.movedPointIds || []),
             draggedArcIds: Array.from(this.sketchDrag.draggedArcIds || []),
             tangentAggressive: false

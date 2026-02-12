@@ -1220,7 +1220,7 @@ function circularPatternSelectedSketchGeometry(options = {}) {
     const byId = new Map(entities.filter(e => e?.id).map(e => [e.id, e]));
     const selectedIds = new Set(this.selectedSketchEntities || []);
     const centerRef = typeof options?.centerRef === 'string' ? options.centerRef : null;
-    const count = Math.max(2, Math.min(256, Number(options?.count) || 6));
+    const count = Math.max(2, Math.min(256, Number(options?.count) || 3));
     const keepResultSelected = options?.keepResultSelected !== false;
     if (!centerRef || !resolvePatternCenterLocalFromRef.call(this, centerRef, byId)) {
         return false;

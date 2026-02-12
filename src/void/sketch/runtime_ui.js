@@ -1321,7 +1321,7 @@ function updateConstraintGlyphs(getApi, opts = {}) {
             const mode = isDimension ? getDimensionMode(c) : 'driving';
             const isArcDim = isDimension ? isArcDimensionConstraint(rec.feature, c) : false;
             glyph.textContent = c?.type === 'circular_pattern'
-                ? String(Math.max(2, Number(c?.data?.count || 0) || 6))
+                ? String(Math.max(2, Number(c?.data?.count || 0) || 3))
                 : (isDimension
                 ? (mode === 'driven' ? formatMeasuredValue(measured) : formatDimensionLabel(c))
                 : this.constraintGlyphLabel(c.type));
@@ -1333,10 +1333,11 @@ function updateConstraintGlyphs(getApi, opts = {}) {
                 const dx = (pos.x || 0) - (screen.x || 0);
                 const dy = (pos.y || 0) - (screen.y || 0);
                 const len = Math.hypot(dx, dy);
-                if (len > 1) {
+                const trim = 10;
+                if (len > trim + 1) {
                     leader.style.left = `${Math.round(screen.x)}px`;
                     leader.style.top = `${Math.round(screen.y)}px`;
-                    leader.style.width = `${Math.round(len)}px`;
+                    leader.style.width = `${Math.round(Math.max(0, len - trim))}px`;
                     leader.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`;
                     layer.appendChild(leader);
                 }
@@ -1398,6 +1399,16 @@ function updateConstraintGlyphs(getApi, opts = {}) {
                     api.interact?.toggleSketchDimensionMode?.(c.id);
                     return;
                 }
+                if (c?.type === 'circular_pattern') {
+                    const now = performance.now();
+                    const prev = this._glyphClick;
+                    if (prev && prev.id === c.id && (now - prev.time) < 360) {
+                        this._glyphClick = null;
+                        api.interact?.editSketchCircularPatternConstraint?.(c.id);
+                        return;
+                    }
+                    this._glyphClick = { id: c.id, time: now };
+                }
                 if (isDimension) {
                     const now = performance.now();
                     const prev = this._glyphClick;
@@ -1407,7 +1418,7 @@ function updateConstraintGlyphs(getApi, opts = {}) {
                         return;
                     }
                     this._glyphClick = { id: c.id, time: now };
-                } else {
+                } else if (c?.type !== 'circular_pattern') {
                     this._glyphClick = null;
                 }
                 api.interact?.selectSketchConstraint?.(c.id, event);
