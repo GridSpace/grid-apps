@@ -1048,12 +1048,23 @@ const toolbar = {
             item.onclick = () => {
                 if (item.disabled) return;
                 entry.onClick?.();
+                // Prevent :focus-within from pinning the hover menu open after click.
+                item.blur();
+                trigger.blur();
             };
             panel.appendChild(item);
             if (entry.key) {
                 items[entry.key] = item;
             }
         }
+
+        menu.addEventListener('mouseleave', () => {
+            // Ensure hover menus dismiss when pointer exits after click selection.
+            trigger.blur();
+            if (document.activeElement && panel.contains(document.activeElement)) {
+                document.activeElement.blur();
+            }
+        });
 
         pop.appendChild(panel);
         menu.appendChild(trigger);
