@@ -331,31 +331,40 @@ function handleSketchKeyDown(event) {
         return this.useHoveredDerivedEdge();
     }
     if (event.code === 'KeyH' && !event.shiftKey) {
-        return this.applySketchConstraint('horizontal');
+        this.applySketchConstraint('horizontal');
+        return true;
     }
     if (event.code === 'KeyV' && !event.shiftKey) {
-        return this.applySketchConstraint('vertical');
+        this.applySketchConstraint('vertical');
+        return true;
     }
     if (event.code === 'KeyL' && event.shiftKey) {
-        return this.applySketchConstraint('perpendicular');
+        this.applySketchConstraint('perpendicular');
+        return true;
     }
     if (event.code === 'KeyE' && !event.shiftKey) {
-        return this.applySketchConstraint('equal');
+        this.applySketchConstraint('equal');
+        return true;
     }
     if (event.code === 'KeyD' && !event.shiftKey) {
-        return this.applySketchConstraint('dimension');
+        this.applySketchConstraint('dimension');
+        return true;
     }
     if (event.code === 'KeyT' && !event.shiftKey) {
-        return this.applySketchConstraint('tangent');
+        this.applySketchConstraint('tangent');
+        return true;
     }
     if (event.code === 'KeyI' && !event.shiftKey) {
-        return this.applySketchConstraint('coincident');
+        this.applySketchConstraint('coincident');
+        return true;
     }
     if (event.code === 'KeyM' && event.shiftKey) {
-        return this.applySketchConstraint('midpoint');
+        this.applySketchConstraint('midpoint');
+        return true;
     }
     if (event.code === 'KeyJ' && event.shiftKey) {
-        return this.applySketchConstraint('fixed');
+        this.applySketchConstraint('fixed');
+        return true;
     }
     if (event.code === 'KeyM' && !event.shiftKey) {
         if (this.sketchMirrorMode) {

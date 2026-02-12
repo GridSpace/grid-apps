@@ -10,6 +10,55 @@ function getConstraintMode(constraint) {
     return mode === 'driven' ? 'driven' : 'driving';
 }
 
+function buildPatternCloneToSourceMap(feature) {
+    const map = new Map();
+    const constraints = Array.isArray(feature?.constraints) ? feature.constraints : [];
+    for (const c of constraints) {
+        if (c?.type !== 'circular_pattern' && c?.type !== 'grid_pattern') continue;
+        const data = c?.data || {};
+        const sourceIds = Array.isArray(data?.sourceIds) ? data.sourceIds.filter(id => typeof id === 'string' && id) : [];
+        const copies = Array.isArray(data?.copies) ? data.copies : [];
+        const pointMaps = Array.isArray(data?.pointMaps) ? data.pointMaps : [];
+        for (const copyRec of copies) {
+            const ids = Array.isArray(copyRec)
+                ? copyRec
+                : (Array.isArray(copyRec?.ids) ? copyRec.ids : []);
+            for (let i = 0; i < sourceIds.length; i++) {
+                const srcId = sourceIds[i];
+                const dstId = ids[i];
+                if (typeof srcId === 'string' && srcId && typeof dstId === 'string' && dstId) {
+                    map.set(dstId, srcId);
+                }
+            }
+        }
+        for (const pointRec of pointMaps) {
+            const pairs = Array.isArray(pointRec)
+                ? pointRec
+                : (Array.isArray(pointRec?.pairs) ? pointRec.pairs : []);
+            for (const pair of pairs) {
+                if (!Array.isArray(pair) || pair.length < 2) continue;
+                const srcId = pair[0];
+                const dstId = pair[1];
+                if (typeof srcId === 'string' && srcId && typeof dstId === 'string' && dstId) {
+                    map.set(dstId, srcId);
+                }
+            }
+        }
+    }
+    return map;
+}
+
+function mapPatternRefToSource(ref, cloneToSource) {
+    if (ref === SKETCH_VIRTUAL_ORIGIN_ID) return ref;
+    if (typeof ref !== 'string' || !ref) return ref;
+    if (ref.startsWith('arc-center:')) {
+        const arcId = ref.substring('arc-center:'.length);
+        const srcArcId = cloneToSource.get(arcId) || arcId;
+        return `arc-center:${srcArcId}`;
+    }
+    return cloneToSource.get(ref) || ref;
+}
+
 function getLineEndpointIds(line) {
     if (!line) return [null, null];
     const aId = typeof line?.a === 'string' ? line.a : (typeof line?.p1_id === 'string' ? line.p1_id : null);
@@ -259,9 +308,21 @@ function applySketchConstraint(type) {
         return false;
     }
     const entities = Array.isArray(feature.entities) ? feature.entities : [];
-    const selected = entities.filter(entity => this.selectedSketchEntities.has(entity.id));
-    const hasOriginSelected = this.selectedSketchEntities.has(SKETCH_VIRTUAL_ORIGIN_ID);
-    const hasArcCenterSelected = (this.selectedSketchArcCenters?.size || 0) > 0;
+    const cloneToSource = buildPatternCloneToSourceMap(feature);
+    const selectedEntityIds = new Set(
+        Array.from(this.selectedSketchEntities || [])
+            .map(id => mapPatternRefToSource(id, cloneToSource))
+            .filter(Boolean)
+    );
+    const selectedArcCenterIds = new Set(
+        Array.from(this.selectedSketchArcCenters || [])
+            .map(id => mapPatternRefToSource(id, cloneToSource))
+            .map(ref => typeof ref === 'string' && ref.startsWith('arc-center:') ? ref.substring('arc-center:'.length) : ref)
+            .filter(id => typeof id === 'string' && id)
+    );
+    const selected = entities.filter(entity => selectedEntityIds.has(entity.id));
+    const hasOriginSelected = selectedEntityIds.has(SKETCH_VIRTUAL_ORIGIN_ID);
+    const hasArcCenterSelected = selectedArcCenterIds.size > 0;
     if (!selected.length && !hasOriginSelected && !hasArcCenterSelected) {
         return false;
     }
@@ -270,7 +331,7 @@ function applySketchConstraint(type) {
     const arcs = selected.filter(entity => entity.type === 'arc');
     const points = selected.filter(entity => entity.type === 'point');
     const entitiesById = new Map(entities.filter(entity => entity?.id).map(entity => [entity.id, entity]));
-    const arcCenters = Array.from(this.selectedSketchArcCenters || [])
+    const arcCenters = Array.from(selectedArcCenterIds || [])
         .map(id => entitiesById.get(id))
         .filter(entity => entity?.type === 'arc');
     const pointLikeRefs = [];
