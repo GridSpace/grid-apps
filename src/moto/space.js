@@ -1221,6 +1221,8 @@ function onMouseUp(event) {
 
 function onMouseMove(event) {
     if (isVoidUiEventTarget(event?.target)) {
+        updateLastAction();
+        requestRefresh();
         return;
     }
     updateLastAction();

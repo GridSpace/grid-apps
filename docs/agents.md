@@ -233,6 +233,9 @@ src/
   - creates two construction guide lines (U/V) from anchor with default `horizontal`/`vertical` constraints
   - renders two always-visible count glyphs (`Hn`, `Vn`) near guide endpoints (double-click to edit counts)
   - copies are regenerated from source using guide-line vectors (guide constraints can be removed for skewed grids)
+  - known issues (open):
+    - dragging the grid anchor can invert U/V construction line direction unexpectedly
+    - patterned circle dimension behavior is inconsistent between source and clone circles (dimension propagation/ownership)
   - mirror axis is highlighted purple while mode is active
   - each subsequently selected sketch entity is mirrored immediately across that axis
   - `Esc` or `Space` exits mirror mode
@@ -318,6 +321,8 @@ src/
 - Arc/circle sketch dimensions now use **diameter semantics** (stored/edited/measured as diameter; solver applies radius = diameter / 2). Dimension decoration renders:
   - inside circle/arc: full diameter line with arrow end caps
   - outside circle/arc: leader line with arrow pointing to the circle
+- Known runtime refresh issue (open, under validation):
+  - if pointer remains over tree/panels long enough, viewport updates can appear stalled (sketch hover/render). Keep `space` activity/refresh alive for UI-target mousemove paths.
 
 ### Routes
 - `/void/` - Primary URL
