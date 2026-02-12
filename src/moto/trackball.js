@@ -232,6 +232,26 @@ class Trackball {
         if (set.panY !== undefined) t.y = set.panY;
         if (set.panZ !== undefined) t.z = set.panZ;
 
+        const hasCamPos = Number.isFinite(set?.camX) && Number.isFinite(set?.camY) && Number.isFinite(set?.camZ);
+        if (hasCamPos) {
+            this.object.position.set(set.camX, set.camY, set.camZ);
+            if (Number.isFinite(set?.upX) && Number.isFinite(set?.upY) && Number.isFinite(set?.upZ)) {
+                const up = new Vector3(set.upX, set.upY, set.upZ);
+                if (up.lengthSq() > 1e-12) this.object.up.copy(up.normalize());
+            }
+            this.object.lookAt(t);
+            if (set.scale !== undefined && isFinite(set.scale) && set.scale > 0) {
+                if (this.object.isPerspectiveCamera) {
+                    const eye = this.object.position.clone().sub(t).multiplyScalar(set.scale);
+                    this.object.position.copy(t).add(eye);
+                } else if (this.object.isOrthographicCamera) {
+                    this.object.zoom = this.object.zoom / set.scale;
+                    this.object.updateProjectionMatrix();
+                }
+            }
+            return;
+        }
+
         let off = this.object.position.clone().sub(t);
         let radius = off.length();
         if (!isFinite(radius) || radius <= 0) radius = 1;
@@ -244,6 +264,20 @@ class Trackball {
             radius * Math.cos(up),
             radius * Math.sin(up) * Math.cos(left)
         );
+
+        // Avoid singular lookAt matrices at poles by ensuring camera.up is not parallel to view direction.
+        const viewDir = off.clone().normalize();
+        let upVec = null;
+        if (Number.isFinite(set?.upX) && Number.isFinite(set?.upY) && Number.isFinite(set?.upZ)) {
+            upVec = new Vector3(set.upX, set.upY, set.upZ);
+        } else {
+            upVec = this.object.up.clone();
+        }
+        if (upVec.lengthSq() < 1e-12) upVec.set(0, 1, 0);
+        upVec.projectOnPlane(viewDir);
+        if (upVec.lengthSq() < 1e-8) upVec = new Vector3(0, 0, 1).projectOnPlane(viewDir);
+        if (upVec.lengthSq() < 1e-8) upVec = new Vector3(1, 0, 0).projectOnPlane(viewDir);
+        if (upVec.lengthSq() > 1e-12) this.object.up.copy(upVec.normalize());
 
         this.object.position.copy(t).add(off);
         this.object.lookAt(t);
@@ -270,6 +304,12 @@ class Trackball {
             panX: t.x,
             panY: t.y,
             panZ: t.z,
+            camX: this.object.position.x,
+            camY: this.object.position.y,
+            camZ: this.object.position.z,
+            upX: this.object.up.x,
+            upY: this.object.up.y,
+            upZ: this.object.up.z,
             scale: scaled ? (this.object.isOrthographicCamera ? 1 / this.object.zoom : 1) : 1
         };
     }

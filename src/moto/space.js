@@ -327,7 +327,13 @@ function snapUpForViewDirection(dir, currentUp) {
         projectedUp = new THREE.Vector3(0, 1, 0).projectOnPlane(viewDir);
     }
     if (projectedUp.lengthSq() < 1e-8) {
-        return null;
+        projectedUp = new THREE.Vector3(0, 0, 1).projectOnPlane(viewDir);
+    }
+    if (projectedUp.lengthSq() < 1e-8) {
+        projectedUp = new THREE.Vector3(1, 0, 0).projectOnPlane(viewDir);
+    }
+    if (projectedUp.lengthSq() < 1e-8) {
+        return new THREE.Vector3(0, 1, 0);
     }
     projectedUp.normalize();
 
@@ -1548,7 +1554,7 @@ let Space = {
 
     view: {
         top:    (then) => { runPreset(0,     0,   then) },
-        bottom: (then) => { runPreset(home,  PI,  then) },
+        bottom: (then) => { runPreset(0,     PI,  then) },
         back:   (then) => { runPreset(PI,    PI2, then) },
         home:   (then) => { runPreset(home,  up,  then) },
         front:  (then) => { runPreset(0,     PI2, then) },
