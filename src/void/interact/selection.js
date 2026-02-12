@@ -101,6 +101,11 @@ function deselectAll() {
     this.stopSketchCircularPatternMode?.();
     this.stopSketchGridPatternMode?.();
     this.setSketchTool?.('select');
+    this.sketchPointerDown = null;
+    this.sketchDrag = null;
+    if (api?.sketchRuntime) {
+        api.sketchRuntime._glyphDrag = null;
+    }
     this.updateHandleScreenScales();
     window.dispatchEvent(new CustomEvent('void-clear-selection'));
     window.dispatchEvent(new CustomEvent('void-state-change'));

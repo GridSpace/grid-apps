@@ -268,6 +268,11 @@ function handleSketchKeyDown(event) {
     }
 
     if (event.code === 'Escape') {
+        this.sketchPointerDown = null;
+        this.sketchDrag = null;
+        if (api?.sketchRuntime) {
+            api.sketchRuntime._glyphDrag = null;
+        }
         const hadMarquee = !!this.sketchMarquee;
         if (hadMarquee) {
             this.clearSketchMarquee();

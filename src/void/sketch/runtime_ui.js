@@ -104,7 +104,9 @@ function projectLocalToScreen(rec, local, getApi) {
 function getDimensionEndpoints(feature, constraint) {
     const entities = Array.isArray(feature?.entities) ? feature.entities : [];
     const byId = new Map(entities.map(e => [e?.id, e]));
-    const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
+    const refs = Array.isArray(constraint?.ui?.display_refs) && constraint.ui.display_refs.length
+        ? constraint.ui.display_refs
+        : (Array.isArray(constraint?.refs) ? constraint.refs : []);
     if (refs.length === 1) {
         const ent = byId.get(refs[0]);
         if (ent?.type === 'line') {
@@ -564,53 +566,56 @@ function getConstraintHoverHighlight(rec) {
     const c = constraints.find(cst => cst?.id === hoveredConstraintId);
     if (!c) return out;
     const refs = Array.isArray(c.refs) ? c.refs : [];
+    const visRefs = Array.isArray(c?.ui?.display_refs) && c.ui.display_refs.length
+        ? c.ui.display_refs
+        : refs;
     if (c?.type === 'circular_pattern') {
-        const centerRef = typeof c?.data?.centerRef === 'string' ? c.data.centerRef : refs[0];
+        const centerRef = typeof c?.data?.centerRef === 'string' ? c.data.centerRef : visRefs[0];
         if (centerRef) out.add(centerRef);
-        const sourceIds = Array.isArray(c?.data?.sourceIds) ? c.data.sourceIds : refs.slice(1);
+        const sourceIds = Array.isArray(c?.data?.sourceIds) ? c.data.sourceIds : visRefs.slice(1);
         for (const id of sourceIds) out.add(id);
         return out;
     }
     if (c?.type === 'grid_pattern') {
-        const centerRef = typeof c?.data?.centerPointId === 'string' ? c.data.centerPointId : refs[0];
+        const centerRef = typeof c?.data?.centerPointId === 'string' ? c.data.centerPointId : visRefs[0];
         if (centerRef) out.add(centerRef);
         if (c?.data?.uLineId) out.add(c.data.uLineId);
         if (c?.data?.vLineId) out.add(c.data.vLineId);
-        const sourceIds = Array.isArray(c?.data?.sourceIds) ? c.data.sourceIds : refs.slice(1);
+        const sourceIds = Array.isArray(c?.data?.sourceIds) ? c.data.sourceIds : visRefs.slice(1);
         for (const id of sourceIds) out.add(id);
         return out;
     }
-    if (c?.type === 'arc_center_coincident' && refs.length >= 2) {
-        const arcId = refs[0];
-        const pointId = refs[1];
+    if (c?.type === 'arc_center_coincident' && visRefs.length >= 2) {
+        const arcId = visRefs[0];
+        const pointId = visRefs[1];
         if (typeof arcId === 'string' && arcId) {
             out.add(`arc-center:${arcId}`);
         }
         if (pointId) out.add(pointId);
         return out;
     }
-    if (c?.type === 'arc_center_on_line' && refs.length >= 2) {
-        const arcId = refs.find(ref => byId.get(ref)?.type === 'arc') || refs[0];
-        const lineId = refs.find(ref => byId.get(ref)?.type === 'line') || refs[1];
+    if (c?.type === 'arc_center_on_line' && visRefs.length >= 2) {
+        const arcId = visRefs.find(ref => byId.get(ref)?.type === 'arc') || visRefs[0];
+        const lineId = visRefs.find(ref => byId.get(ref)?.type === 'line') || visRefs[1];
         if (typeof arcId === 'string' && arcId) out.add(`arc-center:${arcId}`);
         if (lineId) out.add(lineId);
         return out;
     }
-    if (c?.type === 'arc_center_on_arc' && refs.length >= 2) {
-        const arcs = refs.filter(ref => byId.get(ref)?.type === 'arc');
+    if (c?.type === 'arc_center_on_arc' && visRefs.length >= 2) {
+        const arcs = visRefs.filter(ref => byId.get(ref)?.type === 'arc');
         if (arcs.length >= 2) {
             out.add(`arc-center:${arcs[0]}`);
             out.add(arcs[1]);
             return out;
         }
     }
-    if (c?.type === 'arc_center_fixed_origin' && refs.length >= 1) {
-        const arcId = refs[0];
+    if (c?.type === 'arc_center_fixed_origin' && visRefs.length >= 1) {
+        const arcId = visRefs[0];
         if (typeof arcId === 'string' && arcId) out.add(`arc-center:${arcId}`);
         return out;
     }
     const pointRefs = [];
-    for (const ref of refs) {
+    for (const ref of visRefs) {
         if (!ref) continue;
         out.add(ref);
         const ent = byId.get(ref);

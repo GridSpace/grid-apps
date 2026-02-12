@@ -50,7 +50,7 @@ class Trackball {
         this.continuousRotate = true;
         this.reverseZoom = false;
         this.zoomSpeed = 1.0;
-        this.noKeys = false;
+        this._keysDisabled = false;
 
         this.isTrackballAdapter = true;
 
@@ -155,6 +155,23 @@ class Trackball {
         Object.defineProperty(this, 'enabled', {
             get: () => this.control.enabled,
             set: (v) => { this.control.enabled = !!v; }
+        });
+        Object.defineProperty(this, 'noKeys', {
+            get: () => !!this._keysDisabled,
+            set: (v) => {
+                const next = !!v;
+                if (next === this._keysDisabled) return;
+                this._keysDisabled = next;
+                if (typeof window !== 'undefined') {
+                    if (next) {
+                        window.removeEventListener('keydown', this.control._onKeyDown);
+                        window.removeEventListener('keyup', this.control._onKeyUp);
+                    } else {
+                        window.addEventListener('keydown', this.control._onKeyDown);
+                        window.addEventListener('keyup', this.control._onKeyUp);
+                    }
+                }
+            }
         });
         Object.defineProperty(this, 'minDistance', {
             get: () => this.control.minDistance,
@@ -286,6 +303,21 @@ class Trackball {
 
     onMouseUp() {
         // TrackballControls manages pointer lifecycle internally.
+    }
+
+    resetInputState() {
+        // Clear any latched key/mouse state (e.g. if native prompt swallowed keyup/mouseup)
+        // and ensure key listeners are restored according to noKeys policy.
+        this.control.state = -1;
+        this.control.keyState = -1;
+        if (typeof window !== 'undefined') {
+            window.removeEventListener('keydown', this.control._onKeyDown);
+            window.removeEventListener('keyup', this.control._onKeyUp);
+            if (!this._keysDisabled) {
+                window.addEventListener('keydown', this.control._onKeyDown);
+                window.addEventListener('keyup', this.control._onKeyUp);
+            }
+        }
     }
 
     dispose() {

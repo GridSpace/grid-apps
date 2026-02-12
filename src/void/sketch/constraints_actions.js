@@ -1,6 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { api } from '../api.js';
+import { space } from '../../moto/space.js';
 import { enforceSketchConstraintsInPlace } from './constraints.js';
 import * as sketchCreate from './create.js';
 import { SKETCH_VIRTUAL_ORIGIN_ID } from './constants.js';
@@ -65,6 +66,31 @@ function applyConstraintDisplayRefs(constraint, displayRefs = null) {
     if (!refs.length) return;
     constraint.ui = constraint.ui || {};
     constraint.ui.display_refs = refs;
+}
+
+function clearSketchTransientInputState(ctx) {
+    if (!ctx) return;
+    ctx.sketchPointerDown = null;
+    ctx.sketchDrag = null;
+    if (api?.sketchRuntime) {
+        api.sketchRuntime._glyphDrag = null;
+    }
+    // Native prompt can swallow pointer-up events; flush camera/input controls
+    // so trackball/orbit state cannot remain latched into drag mode.
+    try {
+        const ctrl = space?.view?.ctrl;
+        ctrl?.onMouseUp?.({ button: 0 });
+        ctrl?.resetInputState?.();
+        const doc = self.document;
+        const evtInit = { bubbles: true, cancelable: true, button: 0, buttons: 0, clientX: 0, clientY: 0 };
+        doc?.dispatchEvent?.(new MouseEvent('mouseup', evtInit));
+        if (typeof PointerEvent !== 'undefined') {
+            doc?.dispatchEvent?.(new PointerEvent('pointerup', evtInit));
+        }
+    } catch (e) {
+        // no-op
+    }
+    space?.update?.();
 }
 
 function getLineEndpointIds(line) {
@@ -496,7 +522,9 @@ function applySketchConstraint(type) {
         const seed = Number.isFinite(currentValue) && currentValue > 0
             ? currentValue
             : (Number.isFinite(measured) && measured > 0 ? measured : 10);
+        clearSketchTransientInputState(this);
         const input = window.prompt('Dimension value', String(Number(seed.toFixed(4))));
+        clearSketchTransientInputState(this);
         if (input === null) {
             return false;
         }
@@ -559,8 +587,7 @@ function applySketchConstraint(type) {
 function editSketchDimensionConstraint(constraintId) {
     const feature = this.getEditingSketchFeature();
     if (!feature || !constraintId) return false;
-    this.sketchPointerDown = null;
-    this.sketchDrag = null;
+    clearSketchTransientInputState(this);
     const constraints = Array.isArray(feature.constraints) ? feature.constraints : [];
     const found = constraints.find(c => c?.id === constraintId && c?.type === 'dimension');
     if (!found) return false;
@@ -571,6 +598,7 @@ function editSketchDimensionConstraint(constraintId) {
         ? current
         : (Number.isFinite(measured) && measured > 0 ? measured : 10);
     const input = window.prompt('Dimension value', String(Number(seed.toFixed(4))));
+    clearSketchTransientInputState(this);
     if (input === null) return false;
     const value = Number(input);
     if (!Number.isFinite(value) || value <= 0) return false;
