@@ -17,12 +17,25 @@ function pointerDistance(event, pointerDown) {
     return Math.hypot((event.clientX || 0) - pointerDown.clientX, (event.clientY || 0) - pointerDown.clientY);
 }
 
+function collectInternalCircleEndpointIds(entities = []) {
+    const hidden = new Set();
+    for (const entity of entities) {
+        if (entity?.type !== 'arc' || !isCircleCurve(entity) || isThreePointCircle(entity)) continue;
+        const aId = typeof entity?.a === 'string' ? entity.a : (typeof entity?.p1_id === 'string' ? entity.p1_id : null);
+        const bId = typeof entity?.b === 'string' ? entity.b : (typeof entity?.p2_id === 'string' ? entity.p2_id : null);
+        if (aId) hidden.add(aId);
+        if (bId) hidden.add(bId);
+    }
+    return hidden;
+}
+
 function hitTestSketchEntity(event, feature) {
     if (!event || !feature) {
         return null;
     }
 
     const entities = Array.isArray(feature.entities) ? feature.entities : [];
+    const internalCircleEndpointIds = collectInternalCircleEndpointIds(entities);
 
     const basis = this.getSketchBasis(feature);
     const screenPoint = this.getEventViewportXY(event);
@@ -44,6 +57,7 @@ function hitTestSketchEntity(event, feature) {
         if (!entity?.id) continue;
 
         if (entity.type === 'point') {
+            if (internalCircleEndpointIds.has(entity.id)) continue;
             const world = this.sketchLocalToWorld(entity, basis);
             const proj = api.overlay.project3Dto2D(world);
             if (!proj?.visible) continue;
@@ -147,6 +161,8 @@ function getSketchEntityHitFromIntersections(intersections, feature) {
     }
     const rec = api.sketchRuntime?.getRecord?.(feature?.id);
     const allowed = rec?.entityViews ? new Set(Array.from(rec.entityViews.keys())) : null;
+    const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+    const internalCircleEndpointIds = collectInternalCircleEndpointIds(entities);
     let bestPoint = null;
     let bestLine = null;
     for (const hit of intersections) {
@@ -158,6 +174,7 @@ function getSketchEntityHitFromIntersections(intersections, feature) {
         // Arc-center hits must keep their synthetic id (`arc-center:<arcId>`)
         // so drag/snap code can resolve them unambiguously.
         const refId = (type === 'arc-center') ? id : (hit.object.userData?.sketchEntityRefId || id);
+        if (type === 'point' && internalCircleEndpointIds.has(refId)) continue;
         const cand = { id: refId, type, distance: hit.distance ?? Infinity };
         if (type === 'point' || type === 'arc-center') {
             const bestIsArcCenter = bestPoint?.type === 'arc-center';
@@ -418,13 +435,14 @@ function getSketchHitLocalPoint(feature, hit) {
 
 function getSketchDragSnapTarget(event, feature, movedPointIds) {
     const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+    const internalCircleEndpointIds = collectInternalCircleEndpointIds(entities);
     const basis = this.getSketchBasis(feature);
     const vp = this.getEventViewportXY(event);
     if (!basis || !vp) {
         return null;
     }
 
-    const points = entities.filter(e => e?.type === 'point' && e.id);
+    const points = entities.filter(e => e?.type === 'point' && e.id && !internalCircleEndpointIds.has(e.id));
     const moved = points.filter(p => movedPointIds?.has(p.id));
     const others = points.filter(p => !movedPointIds?.has(p.id) && p.id !== SKETCH_VIRTUAL_ORIGIN_ID);
     if (!moved.length) {

@@ -224,6 +224,10 @@ src/
   - while active, clicking sketch entities creates linked circular copies around that center
   - pattern constraint glyph stays visible, supports drag offset, and double-click edits copy count
   - deleting the pattern glyph removes the driving pattern constraint and leaves copied geometry unbound
+  - known regression (open): after certain circular-pattern drag operations, some entities become effectively locked/non-movable
+    - observed after moving patterned elements with additional constraints in sketch
+    - likely in drag ownership propagation / fallback solver interaction for `circular_pattern`
+    - status: unresolved, needs focused repro + solver trace
   - mirror axis is highlighted purple while mode is active
   - each subsequently selected sketch entity is mirrored immediately across that axis
   - `Esc` or `Space` exits mirror mode
