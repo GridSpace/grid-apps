@@ -7,6 +7,43 @@ function createHeader(text) {
     return el;
 }
 
+function createSearchHeader({ value = '', onInput, onClear, onFocus, onBlur } = {}) {
+    const wrap = document.createElement('div');
+    wrap.className = 'tree-search';
+
+    const icon = document.createElement('span');
+    icon.className = 'tree-search-icon';
+    icon.textContent = '🔍';
+    wrap.appendChild(icon);
+
+    const input = document.createElement('input');
+    input.className = 'tree-search-input';
+    input.type = 'text';
+    input.placeholder = 'Search';
+    input.value = value || '';
+    input.autocomplete = 'off';
+    input.spellcheck = false;
+    input.oninput = event => onInput?.(event);
+    input.onfocus = event => onFocus?.(event);
+    input.onblur = event => onBlur?.(event);
+    wrap.appendChild(input);
+
+    const clear = document.createElement('button');
+    clear.className = 'tree-search-clear';
+    clear.textContent = '×';
+    clear.title = 'Clear search';
+    clear.style.visibility = (value && String(value).length) ? 'visible' : 'hidden';
+    clear.onclick = event => {
+        event.stopPropagation();
+        input.value = '';
+        onClear?.();
+        input.focus();
+    };
+    wrap.appendChild(clear);
+
+    return wrap;
+}
+
 function createDivider() {
     const el = document.createElement('div');
     el.className = 'tree-divider';
@@ -275,6 +312,7 @@ function getIcon(type) {
 
 export {
     createHeader,
+    createSearchHeader,
     createDivider,
     createRow,
     createTimelineMarkerRow,

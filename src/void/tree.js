@@ -14,6 +14,9 @@ const tree = {
     selectedFeatureId: null,
     selectedFeatureIds: new Set(),
     selectedSolidIds: new Set(),
+    searchQuery: '',
+    _searchCaret: 0,
+    _searchRestorePending: false,
     _boundRuntimeChanges: false,
 
     build() {

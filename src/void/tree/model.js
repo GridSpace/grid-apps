@@ -147,13 +147,38 @@ function getFaceSelectionContext() {
 function render() {
     if (!this.container) return;
     this.container.innerHTML = '';
-
-    this.container.appendChild(this.createHeader('Model'));
+    this.container.appendChild(this.createSearchHeader({
+        value: this.searchQuery || '',
+        onInput: event => {
+            const value = event?.target?.value || '';
+            this.searchQuery = String(value);
+            this._searchRestorePending = true;
+            this._searchCaret = Number.isFinite(event?.target?.selectionStart) ? event.target.selectionStart : this.searchQuery.length;
+            this.render();
+        },
+        onClear: () => {
+            this.searchQuery = '';
+            this._searchRestorePending = true;
+            this._searchCaret = 0;
+            this.render();
+        },
+        onFocus: () => {}
+    }));
+    this.container.appendChild(this.createDivider());
     this.renderDefaultGeometrySection();
     this.container.appendChild(this.createDivider());
     this.renderFeaturesSection();
     this.container.appendChild(this.createDivider());
     this.renderSolidsSection();
+    if (this._searchRestorePending) {
+        const input = this.container.querySelector('.tree-search-input');
+        if (input) {
+            input.focus();
+            const caret = Number.isFinite(this._searchCaret) ? this._searchCaret : String(input.value || '').length;
+            input.setSelectionRange(caret, caret);
+        }
+        this._searchRestorePending = false;
+    }
 }
 
 function onFeatureSelected(feature) {
@@ -322,8 +347,13 @@ function renderFeaturesSection() {
 
     const doc = api.document.current;
     const folders = this.getFolders(doc);
-    const features = api.features.list();
-    const featureIds = new Set(features.map(f => f?.id).filter(Boolean));
+    const allFeatures = api.features.list();
+    const needle = String(this.searchQuery || '').trim().toLowerCase();
+    const filtering = needle.length > 0;
+    const features = filtering
+        ? allFeatures.filter(feature => String(feature?.name || feature?.type || 'feature').toLowerCase().includes(needle))
+        : allFeatures;
+    const featureIds = new Set(allFeatures.map(f => f?.id).filter(Boolean));
     for (const id of Array.from(this.selectedFeatureIds || [])) {
         if (!featureIds.has(id)) {
             this.selectedFeatureIds.delete(id);
@@ -403,12 +433,13 @@ function renderFeaturesSection() {
 
     if (hasOnlyDefaultFolder) {
         if (!features.length) {
-            this.container.appendChild(this.createEmptyRow('No features yet', 1));
+            this.container.appendChild(this.createEmptyRow(filtering ? 'No matching features' : 'No features yet', 1));
             return;
         }
-        for (let index = 0; index < features.length; index++) {
-            const feature = features[index];
-            if (markerCount === index) {
+        for (let displayIndex = 0; displayIndex < features.length; displayIndex++) {
+            const feature = features[displayIndex];
+            const index = allFeatures.indexOf(feature);
+            if (!filtering && markerCount === index) {
                 this.container.appendChild(this.createTimelineMarkerRow({
                     active: true,
                     onSelect: () => setTimeline(index),
@@ -476,10 +507,10 @@ function renderFeaturesSection() {
                 }
             }));
         }
-        if (markerCount === features.length) {
+        if (!filtering && markerCount === allFeatures.length) {
             this.container.appendChild(this.createTimelineMarkerRow({
                 active: true,
-                onSelect: () => setTimeline(features.length),
+                onSelect: () => setTimeline(allFeatures.length),
                 onPointerStart: beginTimelinePointerDrag
             }));
         }
@@ -510,13 +541,13 @@ function renderFeaturesSection() {
 
         const items = i === 0 ? features : [];
         if (!items.length && i === 0) {
-            this.container.appendChild(this.createEmptyRow('No features yet', 2));
+            this.container.appendChild(this.createEmptyRow(filtering ? 'No matching features' : 'No features yet', 2));
         }
 
         for (let localIndex = 0; localIndex < items.length; localIndex++) {
             const feature = items[localIndex];
-            const index = features.indexOf(feature);
-            if (i === 0 && markerCount === index) {
+            const index = allFeatures.indexOf(feature);
+            if (!filtering && i === 0 && markerCount === index) {
                 this.container.appendChild(this.createTimelineMarkerRow({
                     active: true,
                     onSelect: () => setTimeline(index),
@@ -584,10 +615,10 @@ function renderFeaturesSection() {
                 }
             }));
         }
-        if (i === 0 && items.length && markerCount === features.length) {
+        if (!filtering && i === 0 && items.length && markerCount === allFeatures.length) {
             this.container.appendChild(this.createTimelineMarkerRow({
                 active: true,
-                onSelect: () => setTimeline(features.length),
+                onSelect: () => setTimeline(allFeatures.length),
                 onPointerStart: beginTimelinePointerDrag
             }));
         }
@@ -612,11 +643,16 @@ function renderSolidsSection() {
         return;
     }
 
-    const solids = api.solids?.list?.() || [];
+    const needle = String(this.searchQuery || '').trim().toLowerCase();
+    const filtering = needle.length > 0;
+    const solidsAll = api.solids?.list?.() || [];
+    const solids = filtering
+        ? solidsAll.filter(solid => String(solid?.name || 'solid').toLowerCase().includes(needle))
+        : solidsAll;
     const activeEditIndex = getActiveEditIndex();
 
     if (!solids.length) {
-        this.container.appendChild(this.createEmptyRow('No solids yet', 1));
+        this.container.appendChild(this.createEmptyRow(filtering ? 'No matching solids' : 'No solids yet', 1));
         return;
     }
 
