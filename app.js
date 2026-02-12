@@ -334,8 +334,10 @@ function initModule(mod, file, dir) {
             const path = mod.dir + '/' + dir + '/' + file;
             try {
                 const body = fs.readFileSync(path);
-                if (debug && !single) logger.log({ inject: code, file, opt });
-                if (opt.first) {
+                if (debug && !single) {
+                    logger.log({ inject: code, file, opt });
+                }
+                if (opt.first && append[code]) {
                     append[code] = body.toString() + '\n' + append[code];
                 } else {
                     append[code] += body.toString() + '\n';
