@@ -22,6 +22,8 @@ const toolbar = {
     sketchToolMenuItems: null,
     sketchConstraintButtons: null,
     sketchConstraintMenu: null,
+    sketchEditGroupEl: null,
+    solidOpsGroupEl: null,
     docNameEl: null,
     openDialogEl: null,
     openDialogListEl: null,
@@ -103,17 +105,22 @@ const toolbar = {
             tree.render();
             window.dispatchEvent(new CustomEvent('void-state-change'));
         }, { id: 'btn-sketch' });
+        const sketchEditGroup = document.createElement('div');
+        sketchEditGroup.className = 'toolbar-mode-group toolbar-mode-group-sketch';
+        this.sketchEditGroupEl = sketchEditGroup;
+        container.appendChild(sketchEditGroup);
+
         this.sketchToolButtons = {
-            point: this.addButton(container, 'Point', () => {
+            point: this.addButton(sketchEditGroup, 'Point', () => {
                 const current = api.interact.getSketchTool?.() || 'select';
                 api.interact.setSketchTool(current === 'point' ? 'select' : 'point');
             }),
-            line: this.addButton(container, 'Line', () => {
+            line: this.addButton(sketchEditGroup, 'Line', () => {
                 const current = api.interact.getSketchTool?.() || 'select';
                 api.interact.setSketchTool(current === 'line' ? 'select' : 'line');
             })
         };
-        const arcMenu = this.addMenu(container, 'Arc', [
+        const arcMenu = this.addMenu(sketchEditGroup, 'Arc', [
             { key: 'arc-3pt', label: '3 Point Arc', onClick: () => {
                 api.interact.setSketchTool('arc-3pt');
             } },
@@ -124,7 +131,7 @@ const toolbar = {
                 api.interact.setSketchTool('arc-tangent');
             } }
         ]);
-        const circleMenu = this.addMenu(container, 'Circle', [
+        const circleMenu = this.addMenu(sketchEditGroup, 'Circle', [
             { key: 'circle-center', label: 'Center Point Circle', onClick: () => {
                 api.interact.setSketchTool('circle-center');
             } },
@@ -132,7 +139,7 @@ const toolbar = {
                 api.interact.setSketchTool('circle-3pt');
             } }
         ]);
-        const rectMenu = this.addMenu(container, 'Rect', [
+        const rectMenu = this.addMenu(sketchEditGroup, 'Rect', [
             { key: 'rect', label: 'Corner Rect', onClick: () => {
                 api.interact.setSketchTool('rect');
             } },
@@ -140,7 +147,7 @@ const toolbar = {
                 api.interact.setSketchTool('rect-center');
             } }
         ]);
-        const polyMenu = this.addMenu(container, 'Polygon', [
+        const polyMenu = this.addMenu(sketchEditGroup, 'Polygon', [
             { key: 'inscribed', label: 'Inscribed', onClick: () => {
                 api.interact.createSketchPolygonFromSelectedCircle?.('inscribed');
             } },
@@ -148,7 +155,7 @@ const toolbar = {
                 api.interact.createSketchPolygonFromSelectedCircle?.('circumscribed');
             } }
         ]);
-        const patternMenu = this.addMenu(container, 'Pattern', [
+        const patternMenu = this.addMenu(sketchEditGroup, 'Pattern', [
             { key: 'mirror', label: 'Mirror', onClick: () => api.interact.startSketchMirrorMode?.() },
             { key: 'circular', label: 'Circular', onClick: () => api.interact.startSketchCircularPatternMode?.() },
             { key: 'grid', label: 'Grid', onClick: () => api.interact.startSketchGridPatternMode?.() }
@@ -167,8 +174,7 @@ const toolbar = {
             ...polyMenu.items,
             ...patternMenu.items
         };
-        container.appendChild(this.separator());
-        this.sketchConstraintMenu = this.addMenu(container, 'Constraints', [
+        this.sketchConstraintMenu = this.addMenu(sketchEditGroup, 'Constraints', [
             { key: 'horizontal', label: 'Horizontal', onClick: () => api.interact.applySketchConstraint?.('horizontal') },
             { key: 'vertical', label: 'Vertical', onClick: () => api.interact.applySketchConstraint?.('vertical') },
             { key: 'perpendicular', label: 'Perpendicular', onClick: () => api.interact.applySketchConstraint?.('perpendicular') },
@@ -181,15 +187,20 @@ const toolbar = {
             { key: 'fixed', label: 'Fixed', onClick: () => api.interact.applySketchConstraint?.('fixed') }
         ]);
         this.sketchConstraintButtons = this.sketchConstraintMenu.items;
+        sketchEditGroup.appendChild(this.separator());
 
-        this.extrudeBtn = this.addButton(container, 'Extrude', () => {
+        const solidOpsGroup = document.createElement('div');
+        solidOpsGroup.className = 'toolbar-mode-group toolbar-mode-group-solid';
+        this.solidOpsGroupEl = solidOpsGroup;
+        container.appendChild(solidOpsGroup);
+
+        this.extrudeBtn = this.addButton(solidOpsGroup, 'Extrude', () => {
             this.onExtrudeButton();
         }, { id: 'btn-extrude', disabled: true });
-        this.booleanBtn = this.addButton(container, 'Boolean', () => {
+        this.booleanBtn = this.addButton(solidOpsGroup, 'Boolean', () => {
             this.onBooleanButton();
         }, { id: 'btn-boolean', disabled: true });
-
-        container.appendChild(this.separator());
+        solidOpsGroup.appendChild(this.separator());
 
         // View tools
         this.addMenu(container, 'View', [
@@ -273,6 +284,12 @@ const toolbar = {
         if (this.sketchBtn) {
             this.sketchBtn.disabled = !canCreate;
             this.sketchBtn.classList.toggle('active', canCreate && !editing);
+        }
+        if (this.sketchEditGroupEl) {
+            this.sketchEditGroupEl.classList.toggle('hidden', !editing);
+        }
+        if (this.solidOpsGroupEl) {
+            this.solidOpsGroupEl.classList.toggle('hidden', editing);
         }
         if (this.extrudeBtn) {
             this.extrudeBtn.disabled = !canExtrude;

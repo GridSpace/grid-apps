@@ -453,6 +453,14 @@ body.left-panel-resizing * {
     position: relative;
 }
 
+.toolbar-mode-group {
+    display: contents;
+}
+
+.toolbar-mode-group.hidden {
+    display: none;
+}
+
 .toolbar-menu-trigger::after {
     content: "▾";
     font-size: 10px;
