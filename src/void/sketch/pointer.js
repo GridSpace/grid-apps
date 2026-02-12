@@ -294,6 +294,8 @@ function handleSketchMouseUp(event, intersections) {
         const mirrorAxisId = this.sketchMirrorAxisId || null;
         const circularMode = !!this.sketchCircularPatternMode;
         const circularCenterRef = this.sketchCircularPatternCenterRef || null;
+        const gridMode = !!this.sketchGridPatternMode;
+        const gridCenterRef = this.sketchGridPatternCenterRef || null;
         const upHit = this.resolveSketchHit(event, intersections, feature);
         const hit = upHit
             || (pointerDown?.hitId ? { id: pointerDown.hitId, type: pointerDown?.hitType || null } : null)
@@ -341,6 +343,22 @@ function handleSketchMouseUp(event, intersections) {
                 if (!centerMatch && typeof sourceId === 'string' && sourceId && this.selectedSketchEntities.has(entitySelectId)) {
                     const patterned = this.circularPatternSelectedSketchGeometry?.({
                         centerRef: circularCenterRef,
+                        sourceIds: [sourceId],
+                        keepResultSelected: false
+                    });
+                    if (patterned) {
+                        this.selectedSketchEntities.delete(entitySelectId);
+                        this.selectedSketchArcCenters?.delete?.(sourceId);
+                    }
+                }
+            } else if (gridMode && gridCenterRef) {
+                const centerMatch = sourceRefId === gridCenterRef;
+                const sourceId = (typeof sourceRefId === 'string' && sourceRefId.startsWith('arc-center:'))
+                    ? null
+                    : sourceRefId;
+                if (!centerMatch && typeof sourceId === 'string' && sourceId && this.selectedSketchEntities.has(entitySelectId)) {
+                    const patterned = this.gridPatternSelectedSketchGeometry?.({
+                        centerRef: gridCenterRef,
                         sourceIds: [sourceId],
                         keepResultSelected: false
                     });

@@ -191,12 +191,14 @@ function deleteSelectedSketchEntities() {
             if (constraint?.type === 'circular_pattern') {
                 const data = constraint?.data || {};
                 for (const arr of (data?.copies || [])) {
-                    for (const id of (arr || [])) {
+                    const ids = Array.isArray(arr) ? arr : (Array.isArray(arr?.ids) ? arr.ids : []);
+                    for (const id of ids) {
                         if (removeIds.has(id)) return false;
                     }
                 }
                 for (const pairs of (data?.pointMaps || [])) {
-                    for (const pair of (pairs || [])) {
+                    const recPairs = Array.isArray(pairs) ? pairs : (Array.isArray(pairs?.pairs) ? pairs.pairs : []);
+                    for (const pair of recPairs) {
                         if (Array.isArray(pair) && removeIds.has(pair[1])) return false;
                     }
                 }

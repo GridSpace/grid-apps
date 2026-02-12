@@ -228,6 +228,11 @@ src/
     - observed after moving patterned elements with additional constraints in sketch
     - likely in drag ownership propagation / fallback solver interaction for `circular_pattern`
     - status: unresolved, needs focused repro + solver trace
+- sketch grid pattern mode (new, WIP):
+  - entered via `Pattern -> Grid`, requires exactly one selected sketch point as anchor
+  - creates two construction guide lines (U/V) from anchor with default `horizontal`/`vertical` constraints
+  - renders two always-visible count glyphs (`Hn`, `Vn`) near guide endpoints (double-click to edit counts)
+  - copies are regenerated from source using guide-line vectors (guide constraints can be removed for skewed grids)
   - mirror axis is highlighted purple while mode is active
   - each subsequently selected sketch entity is mirrored immediately across that axis
   - `Esc` or `Space` exits mirror mode

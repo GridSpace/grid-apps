@@ -150,7 +150,8 @@ const toolbar = {
         ]);
         const patternMenu = this.addMenu(container, 'Pattern', [
             { key: 'mirror', label: 'Mirror', onClick: () => api.interact.startSketchMirrorMode?.() },
-            { key: 'circular', label: 'Circular', onClick: () => api.interact.startSketchCircularPatternMode?.() }
+            { key: 'circular', label: 'Circular', onClick: () => api.interact.startSketchCircularPatternMode?.() },
+            { key: 'grid', label: 'Grid', onClick: () => api.interact.startSketchGridPatternMode?.() }
         ]);
         this.sketchToolMenus = {
             arc: arcMenu,
@@ -296,7 +297,7 @@ const toolbar = {
             }
         }
         if (this.sketchToolMenuItems) {
-            const toolKeys = ['arc-3pt', 'arc-center', 'arc-tangent', 'circle-center', 'circle-3pt', 'rect', 'rect-center', 'inscribed', 'circumscribed', 'mirror', 'circular'];
+            const toolKeys = ['arc-3pt', 'arc-center', 'arc-tangent', 'circle-center', 'circle-3pt', 'rect', 'rect-center', 'inscribed', 'circumscribed', 'mirror', 'circular', 'grid'];
             for (const key of toolKeys) {
                 const btn = this.sketchToolMenuItems[key];
                 if (!btn) continue;
@@ -310,6 +311,9 @@ const toolbar = {
                 }
                 if (key === 'circular') {
                     btn.classList.toggle('active', editing && !!api.interact?.sketchCircularPatternMode);
+                }
+                if (key === 'grid') {
+                    btn.classList.toggle('active', editing && !!api.interact?.sketchGridPatternMode);
                 }
             }
         }

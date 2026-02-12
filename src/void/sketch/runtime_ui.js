@@ -25,6 +25,7 @@ function constraintGlyphLabel(type) {
         dimension: 'D',
         polygon_pattern: 'PG',
         circular_pattern: 'CP',
+        grid_pattern: 'GP',
         mirror_point: 'MR',
         mirror_line: 'MR',
         mirror_arc: 'MR'
@@ -564,6 +565,15 @@ function getConstraintHoverHighlight(rec) {
         for (const id of sourceIds) out.add(id);
         return out;
     }
+    if (c?.type === 'grid_pattern') {
+        const centerRef = typeof c?.data?.centerPointId === 'string' ? c.data.centerPointId : refs[0];
+        if (centerRef) out.add(centerRef);
+        if (c?.data?.uLineId) out.add(c.data.uLineId);
+        if (c?.data?.vLineId) out.add(c.data.vLineId);
+        const sourceIds = Array.isArray(c?.data?.sourceIds) ? c.data.sourceIds : refs.slice(1);
+        for (const id of sourceIds) out.add(id);
+        return out;
+    }
     if (c?.type === 'arc_center_coincident' && refs.length >= 2) {
         const arcId = refs[0];
         const pointId = refs[1];
@@ -1029,6 +1039,13 @@ function getConstraintAnchorLocal(feature, constraint) {
         const center = pointLike(centerRef);
         if (center) return center;
     }
+    if (constraint?.type === 'grid_pattern') {
+        const centerRef = typeof constraint?.data?.centerPointId === 'string'
+            ? constraint.data.centerPointId
+            : refs[0];
+        const center = pointLike(centerRef);
+        if (center) return center;
+    }
 
     if (constraint?.type === 'mirror_line') {
         const src = byId.get(refs[1]);
@@ -1266,7 +1283,7 @@ function updateConstraintGlyphs(getApi, opts = {}) {
             );
         }
         const byDrag = draggingConstraintId === constraint?.id;
-        const alwaysVisible = constraint?.type === 'dimension' || constraint?.type === 'circular_pattern';
+        const alwaysVisible = constraint?.type === 'dimension' || constraint?.type === 'circular_pattern' || constraint?.type === 'grid_pattern';
         if (alwaysVisible || byEntity || byHover || byDrag) {
             visible.push(constraint);
         }
@@ -1294,6 +1311,61 @@ function updateConstraintGlyphs(getApi, opts = {}) {
     for (const { screen, items } of clusters.values()) {
         for (let i = 0; i < items.length; i++) {
             const c = items[i];
+            if (c?.type === 'grid_pattern') {
+                const feature = rec.feature;
+                const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+                const byId = new Map(entities.filter(e => e?.id).map(e => [e.id, e]));
+                const centerId = c?.data?.centerPointId;
+                const center = byId.get(centerId);
+                const mkEndpoint = lineId => {
+                    const line = byId.get(lineId);
+                    if (!line || line.type !== 'line' || !center) return null;
+                    const a = byId.get(line.a);
+                    const b = byId.get(line.b);
+                    if (!a || !b) return null;
+                    return line.a === centerId ? b : line.b === centerId ? a : b;
+                };
+                const hEnd = mkEndpoint(c?.data?.uLineId) || center || null;
+                const vEnd = mkEndpoint(c?.data?.vLineId) || center || null;
+                const hPos = hEnd ? this.projectConstraintAnchor(rec, { x: hEnd.x || 0, y: hEnd.y || 0 }, getApi) : null;
+                const vPos = vEnd ? this.projectConstraintAnchor(rec, { x: vEnd.x || 0, y: vEnd.y || 0 }, getApi) : null;
+                const entries = [
+                    { axis: 'h', label: `H${Math.max(1, Number(c?.data?.countH || 0) || 3)}`, pos: hPos || screen },
+                    { axis: 'v', label: `V${Math.max(1, Number(c?.data?.countV || 0) || 3)}`, pos: vPos || screen }
+                ];
+                for (const ent of entries) {
+                    const glyph = document.createElement('button');
+                    glyph.className = 'sketch-constraint-glyph';
+                    glyph.textContent = ent.label;
+                    glyph.style.left = `${Math.round(ent.pos.x)}px`;
+                    glyph.style.top = `${Math.round(ent.pos.y)}px`;
+                    if (selectedConstraintIds.has(c.id)) glyph.classList.add('selected');
+                    else if (hoveredConstraintId === c.id) glyph.classList.add('hover');
+                    glyph.title = `${ent.axis === 'h' ? 'horizontal' : 'vertical'} copies - double-click edit`;
+                    glyph.ondblclick = event => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        const api = getApi();
+                        api.interact?.editSketchGridPatternConstraint?.(c.id, ent.axis);
+                    };
+                    glyph.onmouseenter = () => {
+                        const api = getApi();
+                        api.interact?.setHoveredSketchConstraint?.(c.id);
+                    };
+                    glyph.onmouseleave = () => {
+                        const api = getApi();
+                        api.interact?.setHoveredSketchConstraint?.(null);
+                    };
+                    glyph.onmousedown = event => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        const api = getApi();
+                        api.interact?.selectSketchConstraint?.(c.id, event);
+                    };
+                    layer.appendChild(glyph);
+                }
+                continue;
+            }
             const isDimension = c?.type === 'dimension';
             let pos;
             if (isDimension) {

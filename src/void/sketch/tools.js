@@ -45,6 +45,7 @@ function setSketchTool(tool = 'select') {
     if (next !== 'select') {
         this.stopSketchMirrorMode?.();
         this.stopSketchCircularPatternMode?.();
+        this.stopSketchGridPatternMode?.();
     }
     if (next !== 'line') {
         this.cancelSketchLine();
@@ -189,6 +190,40 @@ function stopSketchCircularPatternMode() {
     return true;
 }
 
+function getSelectedSketchGridAnchor(feature) {
+    const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+    const byId = new Map(entities.filter(entity => entity?.id).map(entity => [entity.id, entity]));
+    const pointIds = [];
+    for (const id of this.selectedSketchEntities || []) {
+        const ent = byId.get(id);
+        if (ent?.type === 'point') pointIds.push(id);
+    }
+    const unique = [...new Set(pointIds)];
+    return unique.length === 1 ? unique[0] : null;
+}
+
+function startSketchGridPatternMode() {
+    const feature = this.getEditingSketchFeature();
+    if (!feature) return false;
+    const centerPointId = this.getSelectedSketchGridAnchor(feature);
+    if (!centerPointId) return false;
+    this.sketchGridPatternMode = true;
+    this.sketchGridPatternCenterRef = centerPointId;
+    this.stopSketchMirrorMode?.();
+    this.stopSketchCircularPatternMode?.();
+    this.setSketchTool('select');
+    this.updateSketchInteractionVisuals();
+    return true;
+}
+
+function stopSketchGridPatternMode() {
+    if (!this.sketchGridPatternMode && !this.sketchGridPatternCenterRef) return false;
+    this.sketchGridPatternMode = false;
+    this.sketchGridPatternCenterRef = null;
+    this.updateSketchInteractionVisuals();
+    return true;
+}
+
 function editSketchCircularPatternConstraint(constraintId) {
     const feature = this.getEditingSketchFeature();
     if (!feature || !constraintId) return false;
@@ -201,6 +236,21 @@ function editSketchCircularPatternConstraint(constraintId) {
     const value = Math.floor(Number(input));
     if (!Number.isFinite(value) || value < 2 || value > 256) return false;
     return !!this.updateCircularPatternConstraintCopies?.(constraintId, value);
+}
+
+function editSketchGridPatternConstraint(constraintId, axis = 'h') {
+    const feature = this.getEditingSketchFeature();
+    if (!feature || !constraintId) return false;
+    const constraints = Array.isArray(feature.constraints) ? feature.constraints : [];
+    const found = constraints.find(c => c?.id === constraintId && c?.type === 'grid_pattern');
+    if (!found) return false;
+    const key = axis === 'v' ? 'countV' : 'countH';
+    const current = Math.max(1, Number(found?.data?.[key] || 0) || 3);
+    const input = window.prompt(`${axis === 'v' ? 'Vertical' : 'Horizontal'} copies`, String(current));
+    if (input === null) return false;
+    const value = Math.floor(Number(input));
+    if (!Number.isFinite(value) || value < 1 || value > 256) return false;
+    return !!this.updateGridPatternConstraintCopies?.(constraintId, axis, value);
 }
 
 function handleSketchKeyDown(event) {
@@ -242,6 +292,9 @@ function handleSketchKeyDown(event) {
             return true;
         }
         if (this.stopSketchCircularPatternMode?.()) {
+            return true;
+        }
+        if (this.stopSketchGridPatternMode?.()) {
             return true;
         }
         return hadLine || hadArc || hadRect || hadMarquee;
@@ -430,7 +483,11 @@ export {
     getSelectedSketchPatternCenter,
     startSketchCircularPatternMode,
     stopSketchCircularPatternMode,
+    getSelectedSketchGridAnchor,
+    startSketchGridPatternMode,
+    stopSketchGridPatternMode,
     editSketchCircularPatternConstraint,
+    editSketchGridPatternConstraint,
     handleSketchKeyDown,
     selectSketchConstraint,
     setHoveredSketchConstraint,

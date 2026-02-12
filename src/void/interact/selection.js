@@ -99,6 +99,7 @@ function deselectAll() {
     this.cancelSketchLine?.();
     this.stopSketchMirrorMode?.();
     this.stopSketchCircularPatternMode?.();
+    this.stopSketchGridPatternMode?.();
     this.setSketchTool?.('select');
     this.updateHandleScreenScales();
     window.dispatchEvent(new CustomEvent('void-clear-selection'));

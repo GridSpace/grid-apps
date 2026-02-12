@@ -23,7 +23,11 @@ import {
     getSelectedSketchPatternCenter,
     startSketchCircularPatternMode,
     stopSketchCircularPatternMode,
+    getSelectedSketchGridAnchor,
+    startSketchGridPatternMode,
+    stopSketchGridPatternMode,
     editSketchCircularPatternConstraint,
+    editSketchGridPatternConstraint,
     handleSketchKeyDown,
     selectSketchConstraint,
     setHoveredSketchConstraint,
@@ -139,6 +143,14 @@ function updateCircularPatternConstraintCopies(constraintId, count) {
     return sketchCreate.updateCircularPatternConstraintCopies.call(this, constraintId, count);
 }
 
+function gridPatternSelectedSketchGeometry(options = {}) {
+    return sketchCreate.gridPatternSelectedSketchGeometry.call(this, options);
+}
+
+function updateGridPatternConstraintCopies(constraintId, axis = 'h', count = 3) {
+    return sketchCreate.updateGridPatternConstraintCopies.call(this, constraintId, axis, count);
+}
+
 function getSelectedSketchCircle(feature) {
     return sketchCreate.getSelectedSketchCircle.call(this, feature);
 }
@@ -200,6 +212,8 @@ function updateSketchInteractionVisuals() {
         mirrorAxisId: this.sketchMirrorAxisId || null,
         circularPatternMode: !!this.sketchCircularPatternMode,
         circularPatternCenterRef: this.sketchCircularPatternCenterRef || null,
+        gridPatternMode: !!this.sketchGridPatternMode,
+        gridPatternCenterRef: this.sketchGridPatternCenterRef || null,
         hoveredConstraintId: this.hoveredSketchConstraintId || null,
         selectedConstraintIds: Array.from(this.selectedSketchConstraints || []),
         previewLine: this.sketchLinePreview || externalLine,
@@ -345,7 +359,11 @@ export {
     getSelectedSketchPatternCenter,
     startSketchCircularPatternMode,
     stopSketchCircularPatternMode,
+    getSelectedSketchGridAnchor,
+    startSketchGridPatternMode,
+    stopSketchGridPatternMode,
     editSketchCircularPatternConstraint,
+    editSketchGridPatternConstraint,
     selectSketchConstraint,
     setHoveredSketchConstraint,
     useHoveredDerivedEdge,
@@ -427,6 +445,8 @@ export {
     mirrorSelectedSketchGeometry,
     circularPatternSelectedSketchGeometry,
     updateCircularPatternConstraintCopies,
+    gridPatternSelectedSketchGeometry,
+    updateGridPatternConstraintCopies,
     deleteSelectedSketchEntities,
     deleteSelectedSketchConstraints,
     findPointByCoord,

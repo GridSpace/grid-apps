@@ -65,6 +65,9 @@ function enforceWithFallback(sketch, opts = {}) {
                 case 'circular_pattern':
                     iterChanged = applyCircularPattern(c, points, lines, arcs, fixed, dragged, draggedArcs) || iterChanged;
                     break;
+                case 'grid_pattern':
+                    iterChanged = applyGridPattern(c, points, lines, arcs, fixed, dragged, draggedArcs) || iterChanged;
+                    break;
                 case 'horizontal':
                     iterChanged = applyHorizontal(c, points, lines, fixed) || iterChanged;
                     break;
@@ -347,6 +350,134 @@ function applyCircularPatternConstraints(constraints, points, lines, arcs, fixed
     for (const c of constraints || []) {
         if (c?.type !== 'circular_pattern') continue;
         changed = applyCircularPattern(c, points, lines, arcs, fixed, dragged, draggedArcs) || changed;
+    }
+    return changed;
+}
+
+function applyGridPattern(constraint, points, lines, arcs, fixed, dragged = new Set(), draggedArcs = new Set()) {
+    const data = constraint?.data || {};
+    const centerPointId = typeof data?.centerPointId === 'string' ? data.centerPointId : null;
+    const sourceIds = Array.isArray(data?.sourceIds) ? data.sourceIds.filter(Boolean) : [];
+    const uLineId = typeof data?.uLineId === 'string' ? data.uLineId : null;
+    const vLineId = typeof data?.vLineId === 'string' ? data.vLineId : null;
+    const pointMaps = Array.isArray(data?.pointMaps) ? data.pointMaps : [];
+    const copies = Array.isArray(data?.copies) ? data.copies : [];
+    const countH = Math.max(1, Math.min(256, Number(data?.countH || 0) || 0));
+    const countV = Math.max(1, Math.min(256, Number(data?.countV || 0) || 0));
+    if (!centerPointId || !uLineId || !vLineId || !sourceIds.length || countH < 1 || countV < 1) return false;
+    const center = points.get(centerPointId);
+    const uLine = lines.get(uLineId);
+    const vLine = lines.get(vLineId);
+    if (!center || !uLine || !vLine) return false;
+    const uOtherId = uLine.a === centerPointId ? uLine.b : uLine.a;
+    const vOtherId = vLine.a === centerPointId ? vLine.b : vLine.a;
+    const uOther = points.get(uOtherId);
+    const vOther = points.get(vOtherId);
+    if (!uOther || !vOther) return false;
+    const ux = (uOther.x || 0) - (center.x || 0);
+    const uy = (uOther.y || 0) - (center.y || 0);
+    const vx = (vOther.x || 0) - (center.x || 0);
+    const vy = (vOther.y || 0) - (center.y || 0);
+    let changed = false;
+
+    // Back-propagate dragged copy points/arcs to source.
+    for (const rec of pointMaps) {
+        const i = Number(rec?.i || 0);
+        const j = Number(rec?.j || 0);
+        const ox = i * ux + j * vx;
+        const oy = i * uy + j * vy;
+        for (const pair of (rec?.pairs || [])) {
+            if (!Array.isArray(pair) || pair.length < 2) continue;
+            const srcId = pair[0];
+            const dstId = pair[1];
+            if (!dragged?.has?.(dstId) || dragged?.has?.(srcId) || isFixed(srcId, fixed)) continue;
+            const src = points.get(srcId);
+            const dst = points.get(dstId);
+            if (!src || !dst) continue;
+            changed = setPoint(src, (dst.x || 0) - ox, (dst.y || 0) - oy) || changed;
+            dragged?.add?.(srcId);
+        }
+    }
+    for (const rec of copies) {
+        const i = Number(rec?.i || 0);
+        const j = Number(rec?.j || 0);
+        const ox = i * ux + j * vx;
+        const oy = i * uy + j * vy;
+        const ids = Array.isArray(rec?.ids) ? rec.ids : [];
+        for (let k = 0; k < sourceIds.length; k++) {
+            const srcId = sourceIds[k];
+            const dstId = ids[k];
+            if (!srcId || !dstId) continue;
+            if (!draggedArcs?.has?.(dstId) || draggedArcs?.has?.(srcId)) continue;
+            const srcArc = arcs.get(srcId);
+            const dstArc = arcs.get(dstId);
+            if (!srcArc || !dstArc) continue;
+            if (Number.isFinite(dstArc.cx) && Number.isFinite(dstArc.cy)) {
+                changed = setArcCenterAndMeta(
+                    srcArc,
+                    (dstArc.cx || 0) - ox,
+                    (dstArc.cy || 0) - oy,
+                    Number.isFinite(dstArc.radius) ? dstArc.radius : Number(srcArc.radius || 0),
+                    Number(dstArc.startAngle || 0),
+                    Number(dstArc.endAngle || 0),
+                    dstArc.ccw === undefined ? true : dstArc.ccw
+                ) || changed;
+                draggedArcs?.add?.(srcId);
+            }
+            if (Number.isFinite(dstArc.mx) && Number.isFinite(dstArc.my)) {
+                changed = setArcControl(srcArc, (dstArc.mx || 0) - ox, (dstArc.my || 0) - oy) || changed;
+            }
+        }
+    }
+
+    // Forward-propagate source entities -> copies.
+    for (const rec of pointMaps) {
+        const i = Number(rec?.i || 0);
+        const j = Number(rec?.j || 0);
+        const ox = i * ux + j * vx;
+        const oy = i * uy + j * vy;
+        for (const pair of (rec?.pairs || [])) {
+            if (!Array.isArray(pair) || pair.length < 2) continue;
+            const src = points.get(pair[0]);
+            const dst = points.get(pair[1]);
+            if (!src || !dst || isFixed(pair[1], fixed)) continue;
+            changed = setPoint(dst, (src.x || 0) + ox, (src.y || 0) + oy) || changed;
+        }
+    }
+    for (const rec of copies) {
+        const i = Number(rec?.i || 0);
+        const j = Number(rec?.j || 0);
+        const ox = i * ux + j * vx;
+        const oy = i * uy + j * vy;
+        const ids = Array.isArray(rec?.ids) ? rec.ids : [];
+        for (let k = 0; k < sourceIds.length; k++) {
+            const srcArc = arcs.get(sourceIds[k]);
+            const dstArc = arcs.get(ids[k]);
+            if (!srcArc || !dstArc) continue;
+            if (Number.isFinite(srcArc.cx) && Number.isFinite(srcArc.cy)) {
+                changed = setArcCenterAndMeta(
+                    dstArc,
+                    (srcArc.cx || 0) + ox,
+                    (srcArc.cy || 0) + oy,
+                    Number.isFinite(srcArc.radius) ? srcArc.radius : Number(dstArc.radius || 0),
+                    Number(srcArc.startAngle || 0),
+                    Number(srcArc.endAngle || 0),
+                    srcArc.ccw === undefined ? true : srcArc.ccw
+                ) || changed;
+            }
+            if (Number.isFinite(srcArc.mx) && Number.isFinite(srcArc.my)) {
+                changed = setArcControl(dstArc, (srcArc.mx || 0) + ox, (srcArc.my || 0) + oy) || changed;
+            }
+        }
+    }
+    return changed;
+}
+
+function applyGridPatternConstraints(constraints, points, lines, arcs, fixed, dragged = new Set(), draggedArcs = new Set()) {
+    let changed = false;
+    for (const c of constraints || []) {
+        if (c?.type !== 'grid_pattern') continue;
+        changed = applyGridPattern(c, points, lines, arcs, fixed, dragged, draggedArcs) || changed;
     }
     return changed;
 }
@@ -1801,6 +1932,7 @@ export {
     applyPolygonPattern,
     applyPolygonPatternConstraints,
     applyCircularPatternConstraints,
+    applyGridPatternConstraints,
     applyPointOnArcConstraints,
     applyArcCenterCoincidentConstraints,
     applyMidpointConstraints,

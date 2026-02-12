@@ -71,6 +71,8 @@ const interact = {
     sketchMirrorAxisId: null,
     sketchCircularPatternMode: false,
     sketchCircularPatternCenterRef: null,
+    sketchGridPatternMode: false,
+    sketchGridPatternCenterRef: null,
     sketchPointerSeq: 0,
     sketchMarquee: null,
     sketchMarqueeEl: null,

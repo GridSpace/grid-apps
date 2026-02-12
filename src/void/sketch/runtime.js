@@ -244,6 +244,8 @@ function createSketchRuntimeApi(getApi) {
                     mirrorAxisId: null,
                     circularPatternMode: false,
                     circularPatternCenterRef: null,
+                    gridPatternMode: false,
+                    gridPatternCenterRef: null,
                     hoveredProfileId: null,
                     selectedProfileIds: new Set(),
                     hoveredConstraintId: null,
@@ -689,6 +691,8 @@ function createSketchRuntimeApi(getApi) {
             rec.interaction.mirrorAxisId = interaction.mirrorAxisId || null;
             rec.interaction.circularPatternMode = !!interaction.circularPatternMode;
             rec.interaction.circularPatternCenterRef = interaction.circularPatternCenterRef || null;
+            rec.interaction.gridPatternMode = !!interaction.gridPatternMode;
+            rec.interaction.gridPatternCenterRef = interaction.gridPatternCenterRef || null;
             if (Object.prototype.hasOwnProperty.call(interaction, 'hoveredProfileId')) {
                 rec.interaction.hoveredProfileId = interaction.hoveredProfileId || null;
             }
@@ -721,6 +725,8 @@ function createSketchRuntimeApi(getApi) {
             rec.interaction.mirrorAxisId = null;
             rec.interaction.circularPatternMode = false;
             rec.interaction.circularPatternCenterRef = null;
+            rec.interaction.gridPatternMode = false;
+            rec.interaction.gridPatternCenterRef = null;
             rec.interaction.hoveredProfileId = null;
             rec.interaction.selectedProfileIds = new Set();
             rec.interaction.hoveredConstraintId = null;

@@ -1299,6 +1299,275 @@ function updateCircularPatternConstraintCopies(constraintId, count) {
     return true;
 }
 
+function getPatternLineDirection(sketch, centerPointId, lineId, fallback) {
+    const entities = Array.isArray(sketch?.entities) ? sketch.entities : [];
+    const byId = new Map(entities.filter(e => e?.id).map(e => [e.id, e]));
+    const line = byId.get(lineId);
+    const center = byId.get(centerPointId);
+    if (!line || line.type !== 'line' || !center || center.type !== 'point') return fallback;
+    const a = byId.get(line.a);
+    const b = byId.get(line.b);
+    if (!a || !b) return fallback;
+    const other = line.a === centerPointId ? b : line.b === centerPointId ? a : b;
+    const dx = (other.x || 0) - (center.x || 0);
+    const dy = (other.y || 0) - (center.y || 0);
+    if (Math.hypot(dx, dy) < SKETCH_MIN_LINE_LENGTH) return fallback;
+    return { x: dx, y: dy };
+}
+
+function rebuildGridPatternConstraintInSketch(sketch, constraint, axis = null, axisCount = null) {
+    if (!constraint || constraint.type !== 'grid_pattern') return false;
+    sketch.entities = Array.isArray(sketch.entities) ? sketch.entities : [];
+    sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
+    constraint.data = constraint.data || {};
+    const data = constraint.data;
+    const centerPointId = typeof data.centerPointId === 'string' ? data.centerPointId : null;
+    const sourceIds = Array.isArray(data.sourceIds) ? data.sourceIds.filter(id => typeof id === 'string' && id) : [];
+    const countH = Math.max(1, Math.min(256, Number((axis === 'h' ? axisCount : data.countH) || 0) || 3));
+    const countV = Math.max(1, Math.min(256, Number((axis === 'v' ? axisCount : data.countV) || 0) || 3));
+    if (!centerPointId || !sourceIds.length) return false;
+
+    const removeIds = new Set();
+    for (const rec of (data.pointMaps || [])) {
+        for (const pair of (rec?.pairs || [])) {
+            if (Array.isArray(pair) && typeof pair[1] === 'string') removeIds.add(pair[1]);
+        }
+    }
+    for (const rec of (data.copies || [])) {
+        for (const id of (rec?.ids || [])) {
+            if (typeof id === 'string') removeIds.add(id);
+        }
+    }
+    if (removeIds.size) {
+        sketch.entities = sketch.entities.filter(entity => !removeIds.has(entity?.id));
+        sketch.constraints = sketch.constraints.filter(c => {
+            if (!c || c === constraint) return true;
+            const refs = Array.isArray(c?.refs) ? c.refs : [];
+            return !refs.some(ref => removeIds.has(ref));
+        });
+    }
+
+    const byId = new Map(sketch.entities.filter(e => e?.id).map(e => [e.id, e]));
+    const center = byId.get(centerPointId);
+    if (!center || center.type !== 'point') return false;
+    const sourceEntities = sourceIds.map(id => byId.get(id)).filter(Boolean);
+    if (!sourceEntities.length) return false;
+    const sourcePointIds = new Set();
+    for (const entity of sourceEntities) {
+        if (entity.type === 'point') sourcePointIds.add(entity.id);
+        if (entity.type === 'line' || entity.type === 'arc') {
+            if (typeof entity.a === 'string') sourcePointIds.add(entity.a);
+            if (typeof entity.b === 'string') sourcePointIds.add(entity.b);
+            for (const pid of (entity?.data?.threePointIds || [])) {
+                if (typeof pid === 'string') sourcePointIds.add(pid);
+            }
+        }
+    }
+
+    const u = getPatternLineDirection(sketch, centerPointId, data.uLineId, { x: 20, y: 0 });
+    const v = getPatternLineDirection(sketch, centerPointId, data.vLineId, { x: 0, y: 20 });
+    const pointMaps = [];
+    const copies = [];
+    for (let i = 0; i < countH; i++) {
+        for (let j = 0; j < countV; j++) {
+            if (i === 0 && j === 0) continue;
+            const ox = i * (u.x || 0) + j * (v.x || 0);
+            const oy = i * (u.y || 0) + j * (v.y || 0);
+            const pointMap = new Map();
+            const pairs = [];
+            for (const srcPointId of sourcePointIds) {
+                const srcPoint = byId.get(srcPointId);
+                if (!srcPoint || srcPoint.type !== 'point') continue;
+                const id = this.newSketchEntityId('point');
+                const point = {
+                    id,
+                    type: 'point',
+                    x: (srcPoint.x || 0) + ox,
+                    y: (srcPoint.y || 0) + oy,
+                    fixed: srcPoint.fixed === true
+                };
+                sketch.entities.push(point);
+                byId.set(id, point);
+                pointMap.set(srcPointId, id);
+                pairs.push([srcPointId, id]);
+            }
+            const ids = [];
+            for (const src of sourceEntities) {
+                if (!src?.id) continue;
+                if (src.type === 'point') {
+                    const id = pointMap.get(src.id);
+                    if (id) ids.push(id);
+                    continue;
+                }
+                if (src.type === 'line') {
+                    const aId = pointMap.get(src.a);
+                    const bId = pointMap.get(src.b);
+                    if (!aId || !bId) continue;
+                    const id = this.newSketchEntityId('line');
+                    const line = { id, type: 'line', construction: src.construction === true, a: aId, b: bId };
+                    sketch.entities.push(line);
+                    byId.set(id, line);
+                    ids.push(id);
+                    continue;
+                }
+                if (src.type === 'arc') {
+                    const aId = pointMap.get(src.a);
+                    const bId = pointMap.get(src.b);
+                    if (!aId || !bId) continue;
+                    const id = this.newSketchEntityId('arc');
+                    const arc = {
+                        id,
+                        type: 'arc',
+                        construction: src.construction === true,
+                        a: aId,
+                        b: bId,
+                        ccw: src.ccw === undefined ? true : src.ccw
+                    };
+                    if (Number.isFinite(src.cx) && Number.isFinite(src.cy)) {
+                        arc.cx = (src.cx || 0) + ox;
+                        arc.cy = (src.cy || 0) + oy;
+                    }
+                    if (Number.isFinite(src.mx) && Number.isFinite(src.my)) {
+                        arc.mx = (src.mx || 0) + ox;
+                        arc.my = (src.my || 0) + oy;
+                    }
+                    if (src.data && typeof src.data === 'object') {
+                        arc.data = JSON.parse(JSON.stringify(src.data));
+                        if (Array.isArray(arc.data?.threePointIds)) {
+                            arc.data.threePointIds = arc.data.threePointIds.map(pid => pointMap.get(pid) || pid);
+                        }
+                    }
+                    if (src.startAngle !== undefined) arc.startAngle = src.startAngle;
+                    if (src.endAngle !== undefined) arc.endAngle = src.endAngle;
+                    if (Number.isFinite(src.radius)) arc.radius = src.radius;
+                    if (src.curveType) arc.curveType = src.curveType;
+                    if (src.curveDef) arc.curveDef = src.curveDef;
+                    if (src.circle !== undefined) arc.circle = src.circle;
+                    sketch.entities.push(arc);
+                    byId.set(id, arc);
+                    ids.push(id);
+                }
+            }
+            pointMaps.push({ i, j, pairs });
+            copies.push({ i, j, ids });
+        }
+    }
+
+    data.countH = countH;
+    data.countV = countV;
+    data.pointMaps = pointMaps;
+    data.copies = copies;
+    constraint.refs = [centerPointId, data.uLineId, data.vLineId, ...sourceIds];
+    return true;
+}
+
+function gridPatternSelectedSketchGeometry(options = {}) {
+    const feature = this.getEditingSketchFeature();
+    if (!feature) return false;
+    const entities = Array.isArray(feature.entities) ? feature.entities : [];
+    const byId = new Map(entities.filter(e => e?.id).map(e => [e.id, e]));
+    const selectedIds = new Set(this.selectedSketchEntities || []);
+    const centerRef = typeof options?.centerRef === 'string' ? options.centerRef : null;
+    if (!centerRef || !byId.get(centerRef) || byId.get(centerRef)?.type !== 'point') return false;
+    const sourceIdsOpt = Array.isArray(options?.sourceIds) ? options.sourceIds.filter(id => typeof id === 'string' && id) : null;
+    const sourceIds = (sourceIdsOpt || Array.from(selectedIds))
+        .filter(id => typeof id === 'string' && id !== centerRef && !id.startsWith('arc-center:'));
+    const sourceEntities = sourceIds.map(id => byId.get(id)).filter(entity => entity && (entity.type === 'point' || entity.type === 'line' || entity.type === 'arc'));
+    if (!sourceEntities.length) return false;
+    const normalizedSourceIds = sourceEntities.map(entity => entity.id);
+    const center = byId.get(centerRef);
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const entity of sourceEntities) {
+        if (entity.type === 'point') {
+            minX = Math.min(minX, entity.x || 0); maxX = Math.max(maxX, entity.x || 0);
+            minY = Math.min(minY, entity.y || 0); maxY = Math.max(maxY, entity.y || 0);
+            continue;
+        }
+        for (const pid of [entity.a, entity.b]) {
+            const p = byId.get(pid);
+            if (!p) continue;
+            minX = Math.min(minX, p.x || 0); maxX = Math.max(maxX, p.x || 0);
+            minY = Math.min(minY, p.y || 0); maxY = Math.max(maxY, p.y || 0);
+        }
+    }
+    const stepX = Math.max(10, Number.isFinite(maxX - minX) ? (maxX - minX) : 20);
+    const stepY = Math.max(10, Number.isFinite(maxY - minY) ? (maxY - minY) : 20);
+
+    let changed = false;
+    let constraintId = null;
+    api.features.update(feature.id, sketch => {
+        sketch.entities = Array.isArray(sketch.entities) ? sketch.entities : [];
+        sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
+        const hu = this.newSketchEntityId('point');
+        const hv = this.newSketchEntityId('point');
+        const lu = this.newSketchEntityId('line');
+        const lv = this.newSketchEntityId('line');
+        sketch.entities.push({ id: hu, type: 'point', x: (center.x || 0) + stepX, y: center.y || 0, fixed: false });
+        sketch.entities.push({ id: hv, type: 'point', x: center.x || 0, y: (center.y || 0) + stepY, fixed: false });
+        sketch.entities.push({ id: lu, type: 'line', construction: true, a: centerRef, b: hu });
+        sketch.entities.push({ id: lv, type: 'line', construction: true, a: centerRef, b: hv });
+        const constraint = {
+            id: this.newSketchEntityId('cst'),
+            type: 'grid_pattern',
+            refs: [centerRef, lu, lv, ...normalizedSourceIds],
+            data: {
+                centerPointId: centerRef,
+                sourceIds: normalizedSourceIds,
+                countH: 3,
+                countV: 3,
+                uLineId: lu,
+                vLineId: lv,
+                pointMaps: [],
+                copies: []
+            },
+            ui: { offset_px: { x: 0, y: -24 } },
+            created_at: Date.now()
+        };
+        this.toggleSketchConstraintInList(sketch, sketch.constraints, 'horizontal', [lu]);
+        this.toggleSketchConstraintInList(sketch, sketch.constraints, 'vertical', [lv]);
+        const ok = rebuildGridPatternConstraintInSketch.call(this, sketch, constraint);
+        if (!ok) return;
+        sketch.constraints.push(constraint);
+        constraintId = constraint.id;
+        changed = true;
+        enforceSketchConstraintsInPlace(sketch);
+    }, {
+        opType: 'feature.update',
+        payload: {
+            field: 'entities.add',
+            entity: 'grid-pattern'
+        }
+    });
+    if (!changed) return false;
+    this.selectedSketchConstraints?.clear?.();
+    if (constraintId) this.selectedSketchConstraints?.add?.(constraintId);
+    this.updateSketchInteractionVisuals();
+    return true;
+}
+
+function updateGridPatternConstraintCopies(constraintId, axis = 'h', count = 3) {
+    const feature = this.getEditingSketchFeature();
+    if (!feature || !constraintId) return false;
+    const nextCount = Math.max(1, Math.min(256, Math.floor(Number(count) || 0)));
+    if (!Number.isFinite(nextCount) || nextCount < 1) return false;
+    let updated = false;
+    api.features.update(feature.id, sketch => {
+        sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
+        const c = sketch.constraints.find(k => k?.id === constraintId && k?.type === 'grid_pattern');
+        if (!c) return;
+        const ok = rebuildGridPatternConstraintInSketch.call(this, sketch, c, axis, nextCount);
+        if (!ok) return;
+        updated = true;
+        enforceSketchConstraintsInPlace(sketch);
+    }, {
+        opType: 'feature.update',
+        payload: { field: 'constraints.grid_pattern.rebuild', id: constraintId, axis, count: nextCount }
+    });
+    if (!updated) return false;
+    this.updateSketchInteractionVisuals();
+    return true;
+}
+
 function getSelectedSketchCircle(feature) {
     const entities = Array.isArray(feature?.entities) ? feature.entities : [];
     const selected = entities.filter(entity => this.selectedSketchEntities.has(entity.id));
@@ -1851,5 +2120,7 @@ export {
     deriveSelectionsAtomic,
     refreshDerivedSketchGeometry,
     circularPatternSelectedSketchGeometry,
-    updateCircularPatternConstraintCopies
+    updateCircularPatternConstraintCopies,
+    gridPatternSelectedSketchGeometry,
+    updateGridPatternConstraintCopies
 };

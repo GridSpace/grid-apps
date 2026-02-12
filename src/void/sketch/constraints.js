@@ -8,6 +8,7 @@ import {
     getLineEndpointId,
     applyPolygonPatternConstraints,
     applyCircularPatternConstraints,
+    applyGridPatternConstraints,
     applyPointOnArcConstraints,
     applyArcCenterCoincidentConstraints,
     applyMidpointConstraints,
@@ -175,6 +176,7 @@ function enforceWithPlanegcs(sketch, opts = {}) {
     const draggedArcs = new Set(Array.isArray(opts?.draggedArcIds) ? opts.draggedArcIds : []);
     changed = applyPolygonPatternConstraints(constraints, pointEntityById, lineById, arcById, fixed, dragged) || changed;
     changed = applyCircularPatternConstraints(constraints, pointEntityById, lineById, arcById, fixed, dragged, draggedArcs) || changed;
+    changed = applyGridPatternConstraints(constraints, pointEntityById, lineById, arcById, fixed, dragged, draggedArcs) || changed;
     changed = applyThreePointCircleDefinitions(arcById, pointEntityById, fixed) || changed;
     changed = applyPointOnArcConstraints(constraints, pointEntityById, arcById, fixed) || changed;
     changed = applyArcCenterCoincidentConstraints(constraints, pointEntityById, lineById, arcById, fixed) || changed;
