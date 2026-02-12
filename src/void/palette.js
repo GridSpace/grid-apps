@@ -13,6 +13,8 @@ const VOID_PALETTE = {
         linesDerivedActual: 0xff9933,
         linesMirrorAxis: 0xb07cff,
         pointsGray: 0x747474,
+        pointsPrimitiveCore: 0x101010,
+        pointsRingIdle: 0x747474,
         pointsHover: 0xff9933,
         pointsEdit: 0xffffff,
         pointsSelected: 0x9ec7ff,

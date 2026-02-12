@@ -412,6 +412,8 @@ function applyEntityStyle(rec, mode, colors) {
         }
     }
     const sketchHovered = mode === 'hover';
+    const idleRingColor = colors.pointsRingIdle || colors.linesGray || 0x747474;
+    const primitivePointCore = colors.pointsPrimitiveCore || 0x101010;
 
     for (const [id, view] of rec.entityViews.entries()) {
         const selected = mode === 'edit' && selectedIds.has(id);
@@ -500,7 +502,7 @@ function applyEntityStyle(rec, mode, colors) {
                 }
             }
             if (parts.ringWhite?.material?.color) {
-                parts.ringWhite.material.color.setHex(0xffffff);
+                parts.ringWhite.material.color.setHex(mode === 'edit' ? 0xffffff : idleRingColor);
             }
             if (parts.ringBlack?.material?.color) {
                 parts.ringBlack.material.color.setHex(0x101010);
@@ -517,9 +519,13 @@ function applyEntityStyle(rec, mode, colors) {
                 circularPatternCenterRef === `arc-center:${id}`
             );
             const activeEdit = mode === 'edit' && (selected || hovered || constrained);
-            const pointColor = sketchHovered
+            const pointColor = activeEdit
                 ? (isPatternCenter ? (colors.linesMirrorAxis || 0xb07cff) : (colors.linesHover || colors.pointsHover))
-                : (attached ? baseLineColor : basePointColor);
+                : (attached
+                    ? (sketchHovered
+                        ? (isPatternCenter ? (colors.linesMirrorAxis || 0xb07cff) : (colors.linesHover || colors.pointsHover))
+                        : baseLineColor)
+                    : primitivePointCore);
             if (parts.core?.material?.color) {
                 parts.core.material.color.setHex(pointColor);
             }
@@ -537,7 +543,7 @@ function applyEntityStyle(rec, mode, colors) {
                 }
             }
             if (parts.ringWhite?.material?.color) {
-                parts.ringWhite.material.color.setHex(0xffffff);
+                parts.ringWhite.material.color.setHex(mode === 'edit' ? 0xffffff : idleRingColor);
             }
             if (parts.ringBlack?.material?.color) {
                 parts.ringBlack.material.color.setHex(0x101010);

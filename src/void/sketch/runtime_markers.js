@@ -176,22 +176,40 @@ function createSketchPointMarker(x = 0, y = 0, opts = {}, colors = {}) {
             sym.uniforms.uHighlight.value = v ? 1 : 0;
         }
     };
-    const ringWhite = { material: sym.material };
-    ringWhite.material.color = {
-        setHex(hex) {
-            if (sym.uniforms.uRingWhiteColor.value?.setHex) sym.uniforms.uRingWhiteColor.value.setHex(hex);
-        },
-        getHex() {
-            return sym.uniforms.uRingWhiteColor.value?.getHex?.() || 0xffffff;
+    const ringWhite = {
+        material: {
+            color: {
+                setHex(hex) {
+                    if (sym.uniforms.uRingWhiteColor.value?.setHex) sym.uniforms.uRingWhiteColor.value.setHex(hex);
+                },
+                getHex() {
+                    return sym.uniforms.uRingWhiteColor.value?.getHex?.() || 0xffffff;
+                }
+            },
+            get depthTest() {
+                return sym.material.depthTest;
+            },
+            set depthTest(v) {
+                sym.material.depthTest = !!v;
+            }
         }
     };
-    const ringBlack = { material: sym.material };
-    ringBlack.material.color = {
-        setHex(hex) {
-            if (sym.uniforms.uRingBlackColor.value?.setHex) sym.uniforms.uRingBlackColor.value.setHex(hex);
-        },
-        getHex() {
-            return sym.uniforms.uRingBlackColor.value?.getHex?.() || 0x101010;
+    const ringBlack = {
+        material: {
+            color: {
+                setHex(hex) {
+                    if (sym.uniforms.uRingBlackColor.value?.setHex) sym.uniforms.uRingBlackColor.value.setHex(hex);
+                },
+                getHex() {
+                    return sym.uniforms.uRingBlackColor.value?.getHex?.() || 0x101010;
+                }
+            },
+            get depthTest() {
+                return sym.material.depthTest;
+            },
+            set depthTest(v) {
+                sym.material.depthTest = !!v;
+            }
         }
     };
 
