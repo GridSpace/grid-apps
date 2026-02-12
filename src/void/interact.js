@@ -97,11 +97,12 @@ const interact = {
         if (!event || event.button !== 2 || !event.altKey) {
             return false;
         }
-        const { camera, container } = space.internals();
-        if (!camera || !container) {
+        const { camera, renderer } = space.internals();
+        const canvas = renderer?.domElement || null;
+        if (!camera || !canvas) {
             return false;
         }
-        const rect = container.getBoundingClientRect();
+        const rect = canvas.getBoundingClientRect();
         if (!rect.width || !rect.height) {
             return false;
         }

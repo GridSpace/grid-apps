@@ -290,6 +290,8 @@ function handleSketchMouseUp(event, intersections) {
     if (wasDrag) return true;
 
     if (tool === 'select') {
+        const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+        const entityById = new Map(entities.filter(e => e?.id).map(e => [e.id, e]));
         const mirrorMode = !!this.sketchMirrorMode;
         const mirrorAxisId = this.sketchMirrorAxisId || null;
         const circularMode = !!this.sketchCircularPatternMode;
@@ -301,6 +303,10 @@ function handleSketchMouseUp(event, intersections) {
             || (pointerDown?.hitId ? { id: pointerDown.hitId, type: pointerDown?.hitType || null } : null)
             || (this.hoveredSketchEntityId ? { id: this.hoveredSketchEntityId } : null);
         if (hit?.id) {
+            if (dist > SKETCH_DRAG_START_PX && pointerDown?.hitId) {
+                // Intended drag gesture that failed to initialize; do not toggle select on mouse-up.
+                return true;
+            }
             const isArcCenter = hit.type === 'arc-center';
             const arcCenterEntityId = isArcCenter
                 ? (String(hit.id).startsWith('arc-center:') ? String(hit.id).substring('arc-center:'.length) : String(hit.id))
@@ -318,9 +324,11 @@ function handleSketchMouseUp(event, intersections) {
                 const sourceId = (typeof sourceRefId === 'string' && sourceRefId.startsWith('arc-center:'))
                     ? sourceRefId.substring('arc-center:'.length)
                     : sourceRefId;
+                const sourceEntity = entityById.get(sourceId) || null;
+                const patternable = sourceEntity && (sourceEntity.type === 'line' || sourceEntity.type === 'arc');
                 if (sourceId === mirrorAxisId) {
                     this.selectedSketchEntities.add(mirrorAxisId);
-                } else if (typeof sourceId === 'string' && sourceId && this.selectedSketchEntities.has(entitySelectId)) {
+                } else if (patternable && typeof sourceId === 'string' && sourceId && this.selectedSketchEntities.has(entitySelectId)) {
                     const mirrored = this.mirrorSelectedSketchGeometry?.({
                         axisId: mirrorAxisId,
                         sourceIds: [sourceId],
@@ -340,7 +348,9 @@ function handleSketchMouseUp(event, intersections) {
                 const sourceId = (typeof sourceRefId === 'string' && sourceRefId.startsWith('arc-center:'))
                     ? null
                     : sourceRefId;
-                if (!centerMatch && typeof sourceId === 'string' && sourceId && this.selectedSketchEntities.has(entitySelectId)) {
+                const sourceEntity = sourceId ? (entityById.get(sourceId) || null) : null;
+                const patternable = sourceEntity && (sourceEntity.type === 'line' || sourceEntity.type === 'arc');
+                if (!centerMatch && patternable && typeof sourceId === 'string' && sourceId && this.selectedSketchEntities.has(entitySelectId)) {
                     const patterned = this.circularPatternSelectedSketchGeometry?.({
                         centerRef: circularCenterRef,
                         sourceIds: [sourceId],
@@ -356,7 +366,9 @@ function handleSketchMouseUp(event, intersections) {
                 const sourceId = (typeof sourceRefId === 'string' && sourceRefId.startsWith('arc-center:'))
                     ? null
                     : sourceRefId;
-                if (!centerMatch && typeof sourceId === 'string' && sourceId && this.selectedSketchEntities.has(entitySelectId)) {
+                const sourceEntity = sourceId ? (entityById.get(sourceId) || null) : null;
+                const patternable = sourceEntity && (sourceEntity.type === 'line' || sourceEntity.type === 'arc');
+                if (!centerMatch && patternable && typeof sourceId === 'string' && sourceId && this.selectedSketchEntities.has(entitySelectId)) {
                     const patterned = this.gridPatternSelectedSketchGeometry?.({
                         centerRef: gridCenterRef,
                         sourceIds: [sourceId],
@@ -846,7 +858,13 @@ function handleSketchDrag(delta, offset, isDone) {
                 if (p) refs.push(p);
             }
         }
-        if (!this.sketchPointerDown.local) return false;
+        const startLocal = this.sketchPointerDown.local
+            || this.getSketchHitLocalPoint(feature, { id: downId, type: downType })
+            || this.projectEventToSketchLocal(event, feature);
+        if (!startLocal) return false;
+        if (!this.sketchPointerDown.local) {
+            this.sketchPointerDown.local = { x: startLocal.x || 0, y: startLocal.y || 0 };
+        }
         const baseline = new Map();
         for (const ref of refs) baseline.set(ref, { x: ref.x || 0, y: ref.y || 0 });
         const arcControlBaseline = [];
@@ -868,7 +886,7 @@ function handleSketchDrag(delta, offset, isDone) {
             });
         }
         this.sketchDrag = {
-            start: { x: this.sketchPointerDown.local.x, y: this.sketchPointerDown.local.y },
+            start: { x: startLocal.x || 0, y: startLocal.y || 0 },
             baseline,
             arcControlBaseline,
             activeIds,

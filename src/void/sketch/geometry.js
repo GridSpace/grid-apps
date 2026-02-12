@@ -216,8 +216,8 @@ function resolveDerivedEdgeCandidate(event, intersections, feature) {
     if (!basis) return null;
     const vp = this.getEventViewportXY(event);
     if (!vp) return null;
-    const { camera, container } = space.internals();
-    const rect = container?.getBoundingClientRect?.();
+    const { camera, renderer } = space.internals();
+    const rect = renderer?.domElement?.getBoundingClientRect?.();
     if (!(camera && rect?.width && rect?.height && Number.isFinite(event?.clientX) && Number.isFinite(event?.clientY))) {
         return null;
     }
@@ -817,11 +817,12 @@ function distanceToSegmentPx(px, py, ax, ay, bx, by) {
 }
 
 function getEventViewportXY(event) {
-    const { container } = space.internals();
-    if (!container || !event) {
+    const { renderer } = space.internals();
+    const canvas = renderer?.domElement;
+    if (!canvas || !event) {
         return null;
     }
-    const rect = container.getBoundingClientRect();
+    const rect = canvas.getBoundingClientRect();
     return {
         x: event.clientX - rect.left,
         y: event.clientY - rect.top,

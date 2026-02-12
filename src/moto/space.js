@@ -406,15 +406,24 @@ function aspect() { return width() / height() }
  * relative to the container element. Accounts for container position offset.
  */
 function eventToNDC(event) {
-    if (!container) {
-        // Fallback for no container (shouldn't happen after init)
+    const canvas = renderer?.domElement || null;
+    const rect = canvas?.getBoundingClientRect?.();
+    if (!rect?.width || !rect?.height) {
+        if (!container) {
+            // Fallback for no container (shouldn't happen after init)
+            return {
+                x: (event.clientX / WIN.innerWidth) * 2 - 1,
+                y: -(event.clientY / WIN.innerHeight) * 2 + 1
+            };
+        }
+        const crect = container.getBoundingClientRect();
+        const x = event.clientX - crect.left;
+        const y = event.clientY - crect.top;
         return {
-            x: (event.clientX / WIN.innerWidth) * 2 - 1,
-            y: -(event.clientY / WIN.innerHeight) * 2 + 1
+            x: (x / crect.width) * 2 - 1,
+            y: -(y / crect.height) * 2 + 1
         };
     }
-
-    const rect = container.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
 
