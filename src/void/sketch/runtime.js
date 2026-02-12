@@ -102,6 +102,27 @@ function createSketchRuntimeApi(getApi) {
             this.updateConstraintGlyphs();
         },
 
+        syncFeature(featureId) {
+            if (!featureId) return this.sync();
+            this.bindViewControl();
+            const api = getApi();
+            const feature = api.features.findById(featureId);
+            if (!feature || feature.type !== 'sketch') {
+                return this.sync();
+            }
+            let rec = this.sketches.get(feature.id);
+            if (!rec) {
+                rec = this.createSketchRecord(feature);
+                this.sketches.set(feature.id, rec);
+                this.root?.add(rec.group);
+            } else {
+                rec.feature = feature;
+            }
+            this.updateSketchRecord(rec);
+            this.updatePointScreenScales();
+            this.updateConstraintGlyphs();
+        },
+
         bindViewControl() {
             const next = space.view?.ctrl || null;
             if (next === this._viewCtrlBound) {
@@ -686,7 +707,9 @@ function createSketchRuntimeApi(getApi) {
             rec.interaction.previewEnd = interaction.previewEnd || null;
             rec.interaction.previewMid = interaction.previewMid || null;
             this.applySketchState(rec);
-            this.updateConstraintGlyphs();
+            if (!this.mutatingIds?.has?.(featureId)) {
+                this.updateConstraintGlyphs();
+            }
         },
 
         clearEntityInteraction(featureId) {

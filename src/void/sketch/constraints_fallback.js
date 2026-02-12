@@ -251,6 +251,7 @@ function applyCircularPattern(constraint, points, lines, arcs, fixed, dragged = 
             if (!src || !dst) continue;
             const inv = rotatePatternPointAround(dst, center, -angle);
             changed = setPoint(src, inv.x, inv.y) || changed;
+            dragged?.add?.(srcId);
         }
         const stepCopies = Array.isArray(copies[step - 1]) ? copies[step - 1] : [];
         for (let i = 0; i < sourceIds.length; i++) {
@@ -274,6 +275,7 @@ function applyCircularPattern(constraint, points, lines, arcs, fixed, dragged = 
                     Number.isFinite(ea) ? ea - angle : Number(srcArc.endAngle || 0),
                     dstArc.ccw === undefined ? true : dstArc.ccw
                 ) || changed;
+                draggedArcs?.add?.(sourceId);
             }
             if (Number.isFinite(dstArc.mx) && Number.isFinite(dstArc.my)) {
                 const invM = rotatePatternPointAround({ x: dstArc.mx, y: dstArc.my }, center, -angle);

@@ -940,7 +940,7 @@ function handleSketchDrag(delta, offset, isDone) {
     }
     refreshThreePointCirclesFromDefinitions.call(this, feature);
     this.sketchDrag.moved = this.sketchDrag.moved || Math.hypot(dx, dy) > 0;
-    api.sketchRuntime.sync();
+    api.sketchRuntime?.syncFeature?.(feature.id);
     this.updateSketchInteractionVisuals();
     return true;
 }
