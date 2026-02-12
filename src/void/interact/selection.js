@@ -98,6 +98,7 @@ function deselectAll() {
     this.clearSketchSelection?.();
     this.cancelSketchLine?.();
     this.stopSketchMirrorMode?.();
+    this.stopSketchCircularPatternMode?.();
     this.setSketchTool?.('select');
     this.updateHandleScreenScales();
     window.dispatchEvent(new CustomEvent('void-clear-selection'));

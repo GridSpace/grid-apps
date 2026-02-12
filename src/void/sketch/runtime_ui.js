@@ -24,6 +24,7 @@ function constraintGlyphLabel(type) {
         midpoint: 'M',
         dimension: 'D',
         polygon_pattern: 'PG',
+        circular_pattern: 'CP',
         mirror_point: 'MR',
         mirror_line: 'MR',
         mirror_arc: 'MR'
@@ -389,6 +390,8 @@ function applyEntityStyle(rec, mode, colors) {
     const selectedIds = rec.interaction?.selectedIds || new Set();
     const mirrorMode = !!rec.interaction?.mirrorMode;
     const mirrorAxisId = rec.interaction?.mirrorAxisId || null;
+    const circularPatternMode = !!rec.interaction?.circularPatternMode;
+    const circularPatternCenterRef = rec.interaction?.circularPatternCenterRef || null;
     const hoveredProfileId = rec.interaction?.hoveredProfileId || null;
     const selectedProfileIds = rec.interaction?.selectedProfileIds || new Set();
     const constraintHighlight = this.getConstraintHoverHighlight(rec);
@@ -465,13 +468,18 @@ function applyEntityStyle(rec, mode, colors) {
         }
         if (view.type === 'arc-center') {
             const parts = view.object.userData?._markerParts || {};
+            const isPatternCenter = circularPatternMode && (
+                circularPatternCenterRef === id ||
+                circularPatternCenterRef === String(id || '').replace(/^arc-center:/, '')
+            );
             const activeEdit = mode === 'edit' && (
                 hoveredId === id ||
                 selectedIds.has(id) ||
-                constrained
+                constrained ||
+                isPatternCenter
             );
             const coreColor = sketchHovered
-                ? (colors.linesHover || colors.pointsHover)
+                ? (isPatternCenter ? (colors.linesMirrorAxis || 0xb07cff) : (colors.linesHover || colors.pointsHover))
                 : baseLineColor;
             view.object.visible = true;
             if (parts.core?.material?.color) {
@@ -487,7 +495,7 @@ function applyEntityStyle(rec, mode, colors) {
             if (parts.ringHighlight) {
                 parts.ringHighlight.visible = !!activeEdit;
                 if (parts.ringHighlight.color) {
-                    parts.ringHighlight.color.setHex(colors.linesHover || 0xff9933);
+                    parts.ringHighlight.color.setHex(isPatternCenter ? (colors.linesMirrorAxis || 0xb07cff) : (colors.linesHover || 0xff9933));
                 }
             }
             if (parts.ringWhite?.material?.color) {
@@ -503,9 +511,13 @@ function applyEntityStyle(rec, mode, colors) {
             const parts = view.object.userData?._markerParts || {};
             const attachments = pointAttachments.get(id) || [];
             const attached = attachments.length > 0;
+            const isPatternCenter = circularPatternMode && (
+                circularPatternCenterRef === id ||
+                circularPatternCenterRef === `arc-center:${id}`
+            );
             const activeEdit = mode === 'edit' && (selected || hovered || constrained);
             const pointColor = sketchHovered
-                ? (colors.linesHover || colors.pointsHover)
+                ? (isPatternCenter ? (colors.linesMirrorAxis || 0xb07cff) : (colors.linesHover || colors.pointsHover))
                 : (attached ? baseLineColor : basePointColor);
             if (parts.core?.material?.color) {
                 parts.core.material.color.setHex(pointColor);
@@ -520,7 +532,7 @@ function applyEntityStyle(rec, mode, colors) {
             if (parts.ringHighlight) {
                 parts.ringHighlight.visible = !!activeEdit;
                 if (parts.ringHighlight.color) {
-                    parts.ringHighlight.color.setHex(colors.linesHover || 0xff9933);
+                    parts.ringHighlight.color.setHex(isPatternCenter ? (colors.linesMirrorAxis || 0xb07cff) : (colors.linesHover || 0xff9933));
                 }
             }
             if (parts.ringWhite?.material?.color) {
@@ -545,6 +557,13 @@ function getConstraintHoverHighlight(rec) {
     const c = constraints.find(cst => cst?.id === hoveredConstraintId);
     if (!c) return out;
     const refs = Array.isArray(c.refs) ? c.refs : [];
+    if (c?.type === 'circular_pattern') {
+        const centerRef = typeof c?.data?.centerRef === 'string' ? c.data.centerRef : refs[0];
+        if (centerRef) out.add(centerRef);
+        const sourceIds = Array.isArray(c?.data?.sourceIds) ? c.data.sourceIds : refs.slice(1);
+        for (const id of sourceIds) out.add(id);
+        return out;
+    }
     if (c?.type === 'arc_center_coincident' && refs.length >= 2) {
         const arcId = refs[0];
         const pointId = refs[1];
@@ -1003,6 +1022,14 @@ function getConstraintAnchorLocal(feature, constraint) {
         return null;
     };
 
+    if (constraint?.type === 'circular_pattern') {
+        const centerRef = typeof constraint?.data?.centerRef === 'string'
+            ? constraint.data.centerRef
+            : refs[0];
+        const center = pointLike(centerRef);
+        if (center) return center;
+    }
+
     if (constraint?.type === 'mirror_line') {
         const src = byId.get(refs[1]);
         const dst = byId.get(refs[2]);
@@ -1239,7 +1266,7 @@ function updateConstraintGlyphs(getApi, opts = {}) {
             );
         }
         const byDrag = draggingConstraintId === constraint?.id;
-        const alwaysVisible = constraint?.type === 'dimension';
+        const alwaysVisible = constraint?.type === 'dimension' || constraint?.type === 'circular_pattern';
         if (alwaysVisible || byEntity || byHover || byDrag) {
             visible.push(constraint);
         }
@@ -1293,11 +1320,27 @@ function updateConstraintGlyphs(getApi, opts = {}) {
             const measured = isDimension ? computeDimensionMeasurement(rec.feature, c) : NaN;
             const mode = isDimension ? getDimensionMode(c) : 'driving';
             const isArcDim = isDimension ? isArcDimensionConstraint(rec.feature, c) : false;
-            glyph.textContent = isDimension
+            glyph.textContent = c?.type === 'circular_pattern'
+                ? String(Math.max(2, Number(c?.data?.count || 0) || 6))
+                : (isDimension
                 ? (mode === 'driven' ? formatMeasuredValue(measured) : formatDimensionLabel(c))
-                : this.constraintGlyphLabel(c.type);
+                : this.constraintGlyphLabel(c.type));
             glyph.style.left = `${Math.round(pos.x)}px`;
             glyph.style.top = `${Math.round(pos.y)}px`;
+            if (c?.type === 'circular_pattern') {
+                const leader = document.createElement('div');
+                leader.className = 'sketch-constraint-leader';
+                const dx = (pos.x || 0) - (screen.x || 0);
+                const dy = (pos.y || 0) - (screen.y || 0);
+                const len = Math.hypot(dx, dy);
+                if (len > 1) {
+                    leader.style.left = `${Math.round(screen.x)}px`;
+                    leader.style.top = `${Math.round(screen.y)}px`;
+                    leader.style.width = `${Math.round(len)}px`;
+                    leader.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`;
+                    layer.appendChild(leader);
+                }
+            }
             if (isDimension) {
                 glyph.classList.add('dimension');
                 glyph.classList.toggle('driven', mode === 'driven');
@@ -1322,8 +1365,17 @@ function updateConstraintGlyphs(getApi, opts = {}) {
             }
             glyph.title = isDimension
                 ? `${isArcDim ? 'diameter ' : ''}dimension (${mode}) - double-click edit, alt-click toggle driving/reference`
-                : (c.type || 'constraint');
+                : (c?.type === 'circular_pattern'
+                    ? 'circular pattern - double-click edit copy count'
+                    : (c.type || 'constraint'));
             glyph.ondblclick = event => {
+                if (c?.type === 'circular_pattern') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const api = getApi();
+                    api.interact?.editSketchCircularPatternConstraint?.(c.id);
+                    return;
+                }
                 if (!isDimension || mode !== 'driving') return;
                 event.preventDefault();
                 event.stopPropagation();

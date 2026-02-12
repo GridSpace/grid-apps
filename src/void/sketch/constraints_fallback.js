@@ -62,6 +62,9 @@ function enforceWithFallback(sketch, opts = {}) {
                 case 'polygon_pattern':
                     iterChanged = applyPolygonPattern(c, constraints, points, lines, arcs, fixed, dragged) || iterChanged;
                     break;
+                case 'circular_pattern':
+                    iterChanged = applyCircularPattern(c, points, lines, arcs, fixed, dragged, draggedArcs) || iterChanged;
+                    break;
                 case 'horizontal':
                     iterChanged = applyHorizontal(c, points, lines, fixed) || iterChanged;
                     break;
@@ -191,6 +194,111 @@ function applyPolygonPatternConstraints(constraints, points, lines, arcs, fixed,
     for (const c of constraints || []) {
         if (c?.type !== 'polygon_pattern') continue;
         changed = applyPolygonPattern(c, constraints, points, lines, arcs, fixed, dragged) || changed;
+    }
+    return changed;
+}
+
+function resolvePatternPointLike(ref, points, arcs) {
+    if (!ref) return null;
+    if (ref === SKETCH_VIRTUAL_ORIGIN_ID) return { x: 0, y: 0 };
+    if (typeof ref === 'string' && ref.startsWith('arc-center:')) {
+        const arc = arcs.get(ref.substring('arc-center:'.length));
+        const data = getArcCircleData(arc, points);
+        return data ? { x: data.cx, y: data.cy } : null;
+    }
+    const point = points.get(ref);
+    if (!point) return null;
+    return { x: point.x || 0, y: point.y || 0 };
+}
+
+function rotatePatternPointAround(point, center, angle) {
+    const dx = (point.x || 0) - (center.x || 0);
+    const dy = (point.y || 0) - (center.y || 0);
+    const ca = Math.cos(angle);
+    const sa = Math.sin(angle);
+    return {
+        x: (center.x || 0) + dx * ca - dy * sa,
+        y: (center.y || 0) + dx * sa + dy * ca
+    };
+}
+
+function applyCircularPattern(constraint, points, lines, arcs, fixed, dragged = new Set(), draggedArcs = new Set()) {
+    const data = constraint?.data || {};
+    const centerRef = typeof data?.centerRef === 'string'
+        ? data.centerRef
+        : (Array.isArray(constraint?.refs) ? constraint.refs[0] : null);
+    const sourceIds = Array.isArray(data?.sourceIds) ? data.sourceIds.filter(Boolean) : [];
+    const copies = Array.isArray(data?.copies) ? data.copies : [];
+    const pointMaps = Array.isArray(data?.pointMaps) ? data.pointMaps : [];
+    const count = Math.max(2, Math.min(256, Number(data?.count || 0) || 0));
+    if (!centerRef || !sourceIds.length || count < 2) return false;
+    const center = resolvePatternPointLike(centerRef, points, arcs);
+    if (!center) return false;
+
+    let changed = false;
+    for (let step = 1; step < count; step++) {
+        const angle = (Math.PI * 2 * step) / count;
+        const pointPairs = Array.isArray(pointMaps[step - 1]) ? pointMaps[step - 1] : [];
+        const pointMap = new Map();
+        for (const pair of pointPairs) {
+            if (!Array.isArray(pair) || pair.length < 2) continue;
+            pointMap.set(pair[0], pair[1]);
+        }
+        for (const [srcId, dstId] of pointMap.entries()) {
+            const src = points.get(srcId);
+            const dst = points.get(dstId);
+            if (!src || !dst || isFixed(dstId, fixed)) continue;
+            const rot = rotatePatternPointAround(src, center, angle);
+            changed = setPoint(dst, rot.x, rot.y) || changed;
+        }
+        const stepCopies = Array.isArray(copies[step - 1]) ? copies[step - 1] : [];
+        for (let i = 0; i < sourceIds.length; i++) {
+            const sourceId = sourceIds[i];
+            const copyId = stepCopies[i];
+            if (!sourceId || !copyId) continue;
+            const srcLine = lines.get(sourceId);
+            const dstLine = lines.get(copyId);
+            if (srcLine && dstLine) continue;
+            const srcArc = arcs.get(sourceId);
+            const dstArc = arcs.get(copyId);
+            if (srcArc && dstArc) {
+                if (draggedArcs?.has?.(copyId)) continue;
+                if (Number.isFinite(srcArc.cx) && Number.isFinite(srcArc.cy)) {
+                    const c = rotatePatternPointAround({ x: srcArc.cx, y: srcArc.cy }, center, angle);
+                    const sa = Number(srcArc.startAngle);
+                    const ea = Number(srcArc.endAngle);
+                    changed = setArcCenterAndMeta(
+                        dstArc,
+                        c.x,
+                        c.y,
+                        Number.isFinite(srcArc.radius) ? srcArc.radius : Number(dstArc.radius || 0),
+                        Number.isFinite(sa) ? sa + angle : Number(dstArc.startAngle || 0),
+                        Number.isFinite(ea) ? ea + angle : Number(dstArc.endAngle || 0),
+                        srcArc.ccw === undefined ? true : srcArc.ccw
+                    ) || changed;
+                }
+                if (Number.isFinite(srcArc.mx) && Number.isFinite(srcArc.my)) {
+                    const m = rotatePatternPointAround({ x: srcArc.mx, y: srcArc.my }, center, angle);
+                    changed = setArcControl(dstArc, m.x, m.y) || changed;
+                }
+                continue;
+            }
+            const srcPoint = points.get(sourceId);
+            const dstPoint = points.get(copyId);
+            if (srcPoint && dstPoint && !isFixed(copyId, fixed)) {
+                const rot = rotatePatternPointAround(srcPoint, center, angle);
+                changed = setPoint(dstPoint, rot.x, rot.y) || changed;
+            }
+        }
+    }
+    return changed;
+}
+
+function applyCircularPatternConstraints(constraints, points, lines, arcs, fixed, dragged = new Set(), draggedArcs = new Set()) {
+    let changed = false;
+    for (const c of constraints || []) {
+        if (c?.type !== 'circular_pattern') continue;
+        changed = applyCircularPattern(c, points, lines, arcs, fixed, dragged, draggedArcs) || changed;
     }
     return changed;
 }
@@ -1644,6 +1752,7 @@ export {
     getLineEndpointId,
     applyPolygonPattern,
     applyPolygonPatternConstraints,
+    applyCircularPatternConstraints,
     applyPointOnArcConstraints,
     applyArcCenterCoincidentConstraints,
     applyMidpointConstraints,

@@ -1,6 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { api } from '../api.js';
+import { SKETCH_VIRTUAL_ORIGIN_ID } from './constants.js';
 
 function getEditingSketchFeature() {
     const sketchId = api.sketchRuntime?.editingId;
@@ -43,6 +44,7 @@ function setSketchTool(tool = 'select') {
     this.sketchTool = next;
     if (next !== 'select') {
         this.stopSketchMirrorMode?.();
+        this.stopSketchCircularPatternMode?.();
     }
     if (next !== 'line') {
         this.cancelSketchLine();
@@ -131,6 +133,7 @@ function startSketchMirrorMode() {
     if (!axis?.id) return false;
     this.sketchMirrorMode = true;
     this.sketchMirrorAxisId = axis.id;
+    this.stopSketchCircularPatternMode?.();
     this.setSketchTool('select');
     this.updateSketchInteractionVisuals();
     return true;
@@ -142,6 +145,62 @@ function stopSketchMirrorMode() {
     this.sketchMirrorAxisId = null;
     this.updateSketchInteractionVisuals();
     return true;
+}
+
+function getSelectedSketchPatternCenter(feature) {
+    const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+    const byId = new Map(entities.filter(entity => entity?.id).map(entity => [entity.id, entity]));
+    const refs = [];
+    for (const id of this.selectedSketchEntities || []) {
+        if (id === SKETCH_VIRTUAL_ORIGIN_ID) {
+            refs.push(SKETCH_VIRTUAL_ORIGIN_ID);
+            continue;
+        }
+        const ent = byId.get(id);
+        if (ent?.type === 'point') refs.push(id);
+    }
+    for (const arcId of this.selectedSketchArcCenters || []) {
+        if (typeof arcId === 'string' && arcId) {
+            refs.push(`arc-center:${arcId}`);
+        }
+    }
+    const unique = [...new Set(refs)];
+    return unique.length === 1 ? unique[0] : null;
+}
+
+function startSketchCircularPatternMode() {
+    const feature = this.getEditingSketchFeature();
+    if (!feature) return false;
+    const centerRef = this.getSelectedSketchPatternCenter(feature);
+    if (!centerRef) return false;
+    this.sketchCircularPatternMode = true;
+    this.sketchCircularPatternCenterRef = centerRef;
+    this.stopSketchMirrorMode?.();
+    this.setSketchTool('select');
+    this.updateSketchInteractionVisuals();
+    return true;
+}
+
+function stopSketchCircularPatternMode() {
+    if (!this.sketchCircularPatternMode && !this.sketchCircularPatternCenterRef) return false;
+    this.sketchCircularPatternMode = false;
+    this.sketchCircularPatternCenterRef = null;
+    this.updateSketchInteractionVisuals();
+    return true;
+}
+
+function editSketchCircularPatternConstraint(constraintId) {
+    const feature = this.getEditingSketchFeature();
+    if (!feature || !constraintId) return false;
+    const constraints = Array.isArray(feature.constraints) ? feature.constraints : [];
+    const found = constraints.find(c => c?.id === constraintId && c?.type === 'circular_pattern');
+    if (!found) return false;
+    const current = Math.max(2, Number(found?.data?.count || 0) || 6);
+    const input = window.prompt('Pattern copies', String(current));
+    if (input === null) return false;
+    const value = Math.floor(Number(input));
+    if (!Number.isFinite(value) || value < 2 || value > 256) return false;
+    return !!this.updateCircularPatternConstraintCopies?.(constraintId, value);
 }
 
 function handleSketchKeyDown(event) {
@@ -180,6 +239,9 @@ function handleSketchKeyDown(event) {
             return true;
         }
         if (this.stopSketchMirrorMode?.()) {
+            return true;
+        }
+        if (this.stopSketchCircularPatternMode?.()) {
             return true;
         }
         return hadLine || hadArc || hadRect || hadMarquee;
@@ -365,6 +427,10 @@ export {
     getSelectedSketchMirrorAxis,
     startSketchMirrorMode,
     stopSketchMirrorMode,
+    getSelectedSketchPatternCenter,
+    startSketchCircularPatternMode,
+    stopSketchCircularPatternMode,
+    editSketchCircularPatternConstraint,
     handleSketchKeyDown,
     selectSketchConstraint,
     setHoveredSketchConstraint,

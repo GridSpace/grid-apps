@@ -148,17 +148,23 @@ const toolbar = {
                 api.interact.createSketchPolygonFromSelectedCircle?.('circumscribed');
             } }
         ]);
+        const patternMenu = this.addMenu(container, 'Pattern', [
+            { key: 'mirror', label: 'Mirror', onClick: () => api.interact.startSketchMirrorMode?.() },
+            { key: 'circular', label: 'Circular', onClick: () => api.interact.startSketchCircularPatternMode?.() }
+        ]);
         this.sketchToolMenus = {
             arc: arcMenu,
             circle: circleMenu,
             rect: rectMenu,
-            polygon: polyMenu
+            polygon: polyMenu,
+            pattern: patternMenu
         };
         this.sketchToolMenuItems = {
             ...arcMenu.items,
             ...circleMenu.items,
             ...rectMenu.items,
-            ...polyMenu.items
+            ...polyMenu.items,
+            ...patternMenu.items
         };
         container.appendChild(this.separator());
         this.sketchConstraintMenu = this.addMenu(container, 'Constraints', [
@@ -171,8 +177,7 @@ const toolbar = {
             { key: 'tangent', label: 'Tangent', onClick: () => api.interact.applySketchConstraint?.('tangent') },
             { key: 'midpoint', label: 'Midpoint', onClick: () => api.interact.applySketchConstraint?.('midpoint') },
             { key: 'coincident', label: 'Coincident', onClick: () => api.interact.applySketchConstraint?.('coincident') },
-            { key: 'fixed', label: 'Fixed', onClick: () => api.interact.applySketchConstraint?.('fixed') },
-            { key: 'mirror', label: 'Mirror', onClick: () => api.interact.startSketchMirrorMode?.() }
+            { key: 'fixed', label: 'Fixed', onClick: () => api.interact.applySketchConstraint?.('fixed') }
         ]);
         this.sketchConstraintButtons = this.sketchConstraintMenu.items;
 
@@ -291,7 +296,7 @@ const toolbar = {
             }
         }
         if (this.sketchToolMenuItems) {
-            const toolKeys = ['arc-3pt', 'arc-center', 'arc-tangent', 'circle-center', 'circle-3pt', 'rect', 'rect-center', 'inscribed', 'circumscribed'];
+            const toolKeys = ['arc-3pt', 'arc-center', 'arc-tangent', 'circle-center', 'circle-3pt', 'rect', 'rect-center', 'inscribed', 'circumscribed', 'mirror', 'circular'];
             for (const key of toolKeys) {
                 const btn = this.sketchToolMenuItems[key];
                 if (!btn) continue;
@@ -299,6 +304,12 @@ const toolbar = {
                 btn.classList.toggle('active', editing && key === tool);
                 if (key === 'inscribed' || key === 'circumscribed') {
                     btn.classList.remove('active');
+                }
+                if (key === 'mirror') {
+                    btn.classList.toggle('active', editing && !!api.interact?.sketchMirrorMode);
+                }
+                if (key === 'circular') {
+                    btn.classList.toggle('active', editing && !!api.interact?.sketchCircularPatternMode);
                 }
             }
         }
@@ -826,7 +837,8 @@ const toolbar = {
                     { key: 'I', desc: 'Coincident (points, point-line, point-arc, center-point)' },
                     { key: 'Shift+M', desc: 'Midpoint' },
                     { key: 'Shift+J', desc: 'Fixed (selected point(s))' },
-                    { key: 'M', desc: 'Toggle mirror mode (requires one selected line axis)' }
+                    { key: 'M', desc: 'Toggle mirror mode (requires one selected line axis)' },
+                    { key: '(Menu)', desc: 'Circular pattern mode (requires one selected center point)' }
                 ]
             },
             {

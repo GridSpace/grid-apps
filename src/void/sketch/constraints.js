@@ -7,6 +7,7 @@ import {
     captureFixedAnchors,
     getLineEndpointId,
     applyPolygonPatternConstraints,
+    applyCircularPatternConstraints,
     applyPointOnArcConstraints,
     applyArcCenterCoincidentConstraints,
     applyMidpointConstraints,
@@ -171,7 +172,9 @@ function enforceWithPlanegcs(sketch, opts = {}) {
 
     const fixed = captureFixedAnchors(constraints, pointEntityById);
     const dragged = new Set(Array.isArray(opts?.draggedPointIds) ? opts.draggedPointIds : []);
+    const draggedArcs = new Set(Array.isArray(opts?.draggedArcIds) ? opts.draggedArcIds : []);
     changed = applyPolygonPatternConstraints(constraints, pointEntityById, lineById, arcById, fixed, dragged) || changed;
+    changed = applyCircularPatternConstraints(constraints, pointEntityById, lineById, arcById, fixed, dragged, draggedArcs) || changed;
     changed = applyThreePointCircleDefinitions(arcById, pointEntityById, fixed) || changed;
     changed = applyPointOnArcConstraints(constraints, pointEntityById, arcById, fixed) || changed;
     changed = applyArcCenterCoincidentConstraints(constraints, pointEntityById, lineById, arcById, fixed) || changed;
@@ -181,7 +184,7 @@ function enforceWithPlanegcs(sketch, opts = {}) {
         if (!tChanged) break;
         changed = true;
     }
-    changed = applyMirrorConstraints(constraints, pointEntityById, lineById, arcById, fixed, dragged, new Set(Array.isArray(opts?.draggedArcIds) ? opts.draggedArcIds : [])) || changed;
+    changed = applyMirrorConstraints(constraints, pointEntityById, lineById, arcById, fixed, dragged, draggedArcs) || changed;
 
     // Final polish: reconcile constraints that are handled outside planegcs
     // (for example point_on_arc groups used by inscribed/circumscribed polygons)

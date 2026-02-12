@@ -1020,6 +1020,285 @@ function mirrorSelectedSketchGeometry(options = {}) {
     return true;
 }
 
+function resolvePatternCenterLocalFromRef(ref, byId) {
+    if (!ref) return null;
+    if (ref === '__sketch-origin__') return { x: 0, y: 0 };
+    if (typeof ref === 'string' && ref.startsWith('arc-center:')) {
+        const arcId = ref.substring('arc-center:'.length);
+        const arc = byId.get(arcId);
+        if (!arc || arc.type !== 'arc') return null;
+        const cx = Number(arc.cx);
+        const cy = Number(arc.cy);
+        if (Number.isFinite(cx) && Number.isFinite(cy)) return { x: cx, y: cy };
+        const aId = typeof arc?.a === 'string' ? arc.a : (typeof arc?.p1_id === 'string' ? arc.p1_id : null);
+        const bId = typeof arc?.b === 'string' ? arc.b : (typeof arc?.p2_id === 'string' ? arc.p2_id : null);
+        const a = byId.get(aId);
+        const b = byId.get(bId);
+        const mx = Number(arc?.mx);
+        const my = Number(arc?.my);
+        if (!a || !b || !Number.isFinite(mx) || !Number.isFinite(my)) return null;
+        const geom = computeArcGeometry.call(this, { x: a.x || 0, y: a.y || 0 }, { x: b.x || 0, y: b.y || 0 }, { x: mx, y: my });
+        if (!geom) return null;
+        return { x: geom.cx, y: geom.cy };
+    }
+    const p = byId.get(ref);
+    if (p?.type === 'point') return { x: p.x || 0, y: p.y || 0 };
+    return null;
+}
+
+function rotateLocalAroundCenter(local, center, angle) {
+    const dx = (local?.x || 0) - (center?.x || 0);
+    const dy = (local?.y || 0) - (center?.y || 0);
+    const ca = Math.cos(angle);
+    const sa = Math.sin(angle);
+    return {
+        x: (center?.x || 0) + dx * ca - dy * sa,
+        y: (center?.y || 0) + dx * sa + dy * ca
+    };
+}
+
+function rebuildCircularPatternConstraintInSketch(sketch, constraint, countIn = null) {
+    if (!constraint || constraint.type !== 'circular_pattern') return false;
+    sketch.entities = Array.isArray(sketch.entities) ? sketch.entities : [];
+    sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
+    constraint.data = constraint.data || {};
+    const data = constraint.data;
+    const sourceIds = Array.isArray(data.sourceIds) ? data.sourceIds.filter(id => typeof id === 'string' && id) : [];
+    const centerRef = typeof data.centerRef === 'string' ? data.centerRef : (Array.isArray(constraint.refs) ? constraint.refs[0] : null);
+    const count = Math.max(2, Math.min(256, Number(countIn ?? data.count) || 0));
+    if (!sourceIds.length || !centerRef) return false;
+    const entitiesById = new Map(sketch.entities.filter(e => e?.id).map(e => [e.id, e]));
+    const center = resolvePatternCenterLocalFromRef.call(this, centerRef, entitiesById);
+    if (!center) return false;
+
+    const removeIds = new Set();
+    for (const refs of data.pointMaps || []) {
+        for (const pair of refs || []) {
+            if (Array.isArray(pair) && typeof pair[1] === 'string') removeIds.add(pair[1]);
+        }
+    }
+    for (const refs of data.copies || []) {
+        for (const id of refs || []) {
+            if (typeof id === 'string') removeIds.add(id);
+        }
+    }
+    if (removeIds.size) {
+        sketch.entities = sketch.entities.filter(entity => !removeIds.has(entity?.id));
+        sketch.constraints = sketch.constraints.filter(c => {
+            if (!c || c === constraint) return true;
+            const refs = Array.isArray(c?.refs) ? c.refs : [];
+            return !refs.some(ref => removeIds.has(ref));
+        });
+    }
+
+    const refreshedById = new Map(sketch.entities.filter(e => e?.id).map(e => [e.id, e]));
+    const sourceEntities = sourceIds.map(id => refreshedById.get(id)).filter(Boolean);
+    if (!sourceEntities.length) return false;
+    const sourcePointIds = new Set();
+    for (const entity of sourceEntities) {
+        if (entity.type === 'point') {
+            sourcePointIds.add(entity.id);
+            continue;
+        }
+        const aId = typeof entity?.a === 'string' ? entity.a : (typeof entity?.p1_id === 'string' ? entity.p1_id : null);
+        const bId = typeof entity?.b === 'string' ? entity.b : (typeof entity?.p2_id === 'string' ? entity.p2_id : null);
+        if (aId) sourcePointIds.add(aId);
+        if (bId) sourcePointIds.add(bId);
+        if (entity.type === 'arc') {
+            for (const pid of (entity?.data?.threePointIds || [])) {
+                if (typeof pid === 'string') sourcePointIds.add(pid);
+            }
+        }
+    }
+
+    const stepAngle = (Math.PI * 2) / count;
+    const copyRefs = [];
+    const pointMapRefs = [];
+    for (let step = 1; step < count; step++) {
+        const angle = step * stepAngle;
+        const pointMap = new Map();
+        const pointPairs = [];
+        for (const srcPointId of sourcePointIds) {
+            const srcPoint = refreshedById.get(srcPointId);
+            if (!srcPoint || srcPoint.type !== 'point') continue;
+            const pos = rotateLocalAroundCenter({ x: srcPoint.x || 0, y: srcPoint.y || 0 }, center, angle);
+            const id = this.newSketchEntityId('point');
+            const point = {
+                id,
+                type: 'point',
+                x: pos.x,
+                y: pos.y,
+                fixed: srcPoint.fixed === true
+            };
+            sketch.entities.push(point);
+            refreshedById.set(id, point);
+            pointMap.set(srcPointId, id);
+            pointPairs.push([srcPointId, id]);
+        }
+        const stepCopyIds = [];
+        for (const src of sourceEntities) {
+            if (!src?.id) continue;
+            if (src.type === 'point') {
+                const id = pointMap.get(src.id);
+                if (id) stepCopyIds.push(id);
+                continue;
+            }
+            if (src.type === 'line') {
+                const aId = pointMap.get(src.a);
+                const bId = pointMap.get(src.b);
+                if (!aId || !bId) continue;
+                const id = this.newSketchEntityId('line');
+                const line = {
+                    id,
+                    type: 'line',
+                    construction: src.construction === true,
+                    a: aId,
+                    b: bId
+                };
+                sketch.entities.push(line);
+                refreshedById.set(id, line);
+                stepCopyIds.push(id);
+                continue;
+            }
+            if (src.type === 'arc') {
+                const aId = pointMap.get(src.a);
+                const bId = pointMap.get(src.b);
+                if (!aId || !bId) continue;
+                const id = this.newSketchEntityId('arc');
+                const arc = {
+                    id,
+                    type: 'arc',
+                    construction: src.construction === true,
+                    a: aId,
+                    b: bId,
+                    ccw: src.ccw === undefined ? true : src.ccw
+                };
+                if (Number.isFinite(src.cx) && Number.isFinite(src.cy)) {
+                    const c = rotateLocalAroundCenter({ x: src.cx, y: src.cy }, center, angle);
+                    arc.cx = c.x;
+                    arc.cy = c.y;
+                }
+                if (Number.isFinite(src.mx) && Number.isFinite(src.my)) {
+                    const m = rotateLocalAroundCenter({ x: src.mx, y: src.my }, center, angle);
+                    arc.mx = m.x;
+                    arc.my = m.y;
+                }
+                if (src.data && typeof src.data === 'object') {
+                    arc.data = JSON.parse(JSON.stringify(src.data));
+                    if (Array.isArray(arc.data?.threePointIds)) {
+                        arc.data.threePointIds = arc.data.threePointIds.map(pid => pointMap.get(pid) || pid);
+                    }
+                }
+                if (src.startAngle !== undefined) arc.startAngle = src.startAngle + angle;
+                if (src.endAngle !== undefined) arc.endAngle = src.endAngle + angle;
+                if (Number.isFinite(src.radius)) arc.radius = src.radius;
+                if (src.curveType) arc.curveType = src.curveType;
+                if (src.curveDef) arc.curveDef = src.curveDef;
+                if (src.circle !== undefined) arc.circle = src.circle;
+                sketch.entities.push(arc);
+                refreshedById.set(id, arc);
+                stepCopyIds.push(id);
+            }
+        }
+        pointMapRefs.push(pointPairs);
+        copyRefs.push(stepCopyIds);
+    }
+
+    constraint.refs = [centerRef, ...sourceIds];
+    data.centerRef = centerRef;
+    data.count = count;
+    data.sourceIds = sourceIds;
+    data.pointMaps = pointMapRefs;
+    data.copies = copyRefs;
+    return true;
+}
+
+function circularPatternSelectedSketchGeometry(options = {}) {
+    const feature = this.getEditingSketchFeature();
+    if (!feature) return false;
+    const entities = Array.isArray(feature.entities) ? feature.entities : [];
+    const byId = new Map(entities.filter(e => e?.id).map(e => [e.id, e]));
+    const selectedIds = new Set(this.selectedSketchEntities || []);
+    const centerRef = typeof options?.centerRef === 'string' ? options.centerRef : null;
+    const count = Math.max(2, Math.min(256, Number(options?.count) || 6));
+    const keepResultSelected = options?.keepResultSelected !== false;
+    if (!centerRef || !resolvePatternCenterLocalFromRef.call(this, centerRef, byId)) {
+        return false;
+    }
+    const sourceIdsOpt = Array.isArray(options?.sourceIds) ? options.sourceIds.filter(id => typeof id === 'string' && id) : null;
+    const sourceIds = (sourceIdsOpt || Array.from(selectedIds))
+        .filter(id => typeof id === 'string' && id !== centerRef && !id.startsWith('arc-center:'));
+    const sourceEntities = sourceIds.map(id => byId.get(id)).filter(entity => entity && (entity.type === 'point' || entity.type === 'line' || entity.type === 'arc'));
+    if (!sourceEntities.length) return false;
+    const normalizedSourceIds = sourceEntities.map(entity => entity.id);
+    let changed = false;
+    let constraintId = null;
+    api.features.update(feature.id, sketch => {
+        sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
+        const constraint = {
+            id: this.newSketchEntityId('cst'),
+            type: 'circular_pattern',
+            refs: [centerRef, ...normalizedSourceIds],
+            data: {
+                centerRef,
+                count,
+                sourceIds: normalizedSourceIds,
+                pointMaps: [],
+                copies: []
+            },
+            ui: { offset_px: { x: 0, y: -30 } },
+            created_at: Date.now()
+        };
+        const ok = rebuildCircularPatternConstraintInSketch.call(this, sketch, constraint, count);
+        if (!ok) return;
+        sketch.constraints.push(constraint);
+        constraintId = constraint.id;
+        changed = true;
+        enforceSketchConstraintsInPlace(sketch);
+    }, {
+        opType: 'feature.update',
+        payload: {
+            field: 'entities.add',
+            entity: 'circular-pattern',
+            count
+        }
+    });
+    if (!changed) return false;
+    if (!keepResultSelected) {
+        this.selectedSketchEntities.clear();
+        this.selectedSketchArcCenters?.clear?.();
+    } else if (constraintId) {
+        this.selectedSketchConstraints?.clear?.();
+        this.selectedSketchConstraints?.add?.(constraintId);
+    }
+    this.hoveredSketchEntityId = null;
+    this.updateSketchInteractionVisuals();
+    return true;
+}
+
+function updateCircularPatternConstraintCopies(constraintId, count) {
+    const feature = this.getEditingSketchFeature();
+    if (!feature || !constraintId) return false;
+    const nextCount = Math.max(2, Math.min(256, Math.floor(Number(count) || 0)));
+    if (!Number.isFinite(nextCount) || nextCount < 2) return false;
+    let updated = false;
+    api.features.update(feature.id, sketch => {
+        sketch.constraints = Array.isArray(sketch.constraints) ? sketch.constraints : [];
+        const c = sketch.constraints.find(k => k?.id === constraintId && k?.type === 'circular_pattern');
+        if (!c) return;
+        const ok = rebuildCircularPatternConstraintInSketch.call(this, sketch, c, nextCount);
+        if (!ok) return;
+        updated = true;
+        enforceSketchConstraintsInPlace(sketch);
+    }, {
+        opType: 'feature.update',
+        payload: { field: 'constraints.circular_pattern.rebuild', id: constraintId, count: nextCount }
+    });
+    if (!updated) return false;
+    this.updateSketchInteractionVisuals();
+    return true;
+}
+
 function getSelectedSketchCircle(feature) {
     const entities = Array.isArray(feature?.entities) ? feature.entities : [];
     const selected = entities.filter(entity => this.selectedSketchEntities.has(entity.id));
@@ -1570,5 +1849,7 @@ export {
     createDerivedSketchPoint,
     createDerivedSketchLine,
     deriveSelectionsAtomic,
-    refreshDerivedSketchGeometry
+    refreshDerivedSketchGeometry,
+    circularPatternSelectedSketchGeometry,
+    updateCircularPatternConstraintCopies
 };

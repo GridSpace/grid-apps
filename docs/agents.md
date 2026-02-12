@@ -218,6 +218,12 @@ src/
 - sketch runtime supports point/line/arc/circle/rectangle workflows
 - sketch mirror mode is now Onshape-style:
   - select exactly one line as mirror axis, then press `M` (or use Constraints -> Mirror)
+  - while mirror mode is active, clicking sketch entities mirrors them immediately and keeps the axis highlighted
+- sketch circular pattern mode (new, WIP):
+  - enter from `Pattern -> Circular` with exactly one selected center point (point/origin/arc-center)
+  - while active, clicking sketch entities creates linked circular copies around that center
+  - pattern constraint glyph stays visible, supports drag offset, and double-click edits copy count
+  - deleting the pattern glyph removes the driving pattern constraint and leaves copied geometry unbound
   - mirror axis is highlighted purple while mode is active
   - each subsequently selected sketch entity is mirrored immediately across that axis
   - `Esc` or `Space` exits mirror mode

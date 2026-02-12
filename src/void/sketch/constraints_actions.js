@@ -187,7 +187,21 @@ function deleteSelectedSketchEntities() {
         sketch.entities = keep;
         sketch.constraints = sketch.constraints.filter(constraint => {
             const refs = Array.isArray(constraint?.refs) ? constraint.refs : [];
-            return !refs.some(ref => removeIds.has(ref));
+            if (refs.some(ref => removeIds.has(ref))) return false;
+            if (constraint?.type === 'circular_pattern') {
+                const data = constraint?.data || {};
+                for (const arr of (data?.copies || [])) {
+                    for (const id of (arr || [])) {
+                        if (removeIds.has(id)) return false;
+                    }
+                }
+                for (const pairs of (data?.pointMaps || [])) {
+                    for (const pair of (pairs || [])) {
+                        if (Array.isArray(pair) && removeIds.has(pair[1])) return false;
+                    }
+                }
+            }
+            return true;
         });
         enforceSketchConstraintsInPlace(sketch);
     }, {

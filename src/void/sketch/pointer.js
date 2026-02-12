@@ -292,6 +292,8 @@ function handleSketchMouseUp(event, intersections) {
     if (tool === 'select') {
         const mirrorMode = !!this.sketchMirrorMode;
         const mirrorAxisId = this.sketchMirrorAxisId || null;
+        const circularMode = !!this.sketchCircularPatternMode;
+        const circularCenterRef = this.sketchCircularPatternCenterRef || null;
         const upHit = this.resolveSketchHit(event, intersections, feature);
         const hit = upHit
             || (pointerDown?.hitId ? { id: pointerDown.hitId, type: pointerDown?.hitType || null } : null)
@@ -309,10 +311,11 @@ function handleSketchMouseUp(event, intersections) {
                 this.selectedSketchEntities.add(entitySelectId);
                 if (arcCenterEntityId) this.selectedSketchArcCenters?.add?.(arcCenterEntityId);
             }
+            const sourceRefId = isArcCenter ? `arc-center:${arcCenterEntityId}` : entitySelectId;
             if (mirrorMode && mirrorAxisId) {
-                const sourceId = (typeof entitySelectId === 'string' && entitySelectId.startsWith('arc-center:'))
-                    ? entitySelectId.substring('arc-center:'.length)
-                    : entitySelectId;
+                const sourceId = (typeof sourceRefId === 'string' && sourceRefId.startsWith('arc-center:'))
+                    ? sourceRefId.substring('arc-center:'.length)
+                    : sourceRefId;
                 if (sourceId === mirrorAxisId) {
                     this.selectedSketchEntities.add(mirrorAxisId);
                 } else if (typeof sourceId === 'string' && sourceId && this.selectedSketchEntities.has(entitySelectId)) {
@@ -322,6 +325,26 @@ function handleSketchMouseUp(event, intersections) {
                         keepResultSelected: false
                     });
                     if (mirrored) {
+                        this.selectedSketchEntities.delete(entitySelectId);
+                        this.selectedSketchArcCenters?.delete?.(sourceId);
+                    }
+                }
+            } else if (circularMode && circularCenterRef) {
+                const centerMatch = sourceRefId === circularCenterRef
+                    || (typeof circularCenterRef === 'string' && circularCenterRef.startsWith('arc-center:')
+                        && sourceRefId === circularCenterRef.substring('arc-center:'.length))
+                    || (typeof sourceRefId === 'string' && sourceRefId.startsWith('arc-center:')
+                        && sourceRefId.substring('arc-center:'.length) === circularCenterRef);
+                const sourceId = (typeof sourceRefId === 'string' && sourceRefId.startsWith('arc-center:'))
+                    ? null
+                    : sourceRefId;
+                if (!centerMatch && typeof sourceId === 'string' && sourceId && this.selectedSketchEntities.has(entitySelectId)) {
+                    const patterned = this.circularPatternSelectedSketchGeometry?.({
+                        centerRef: circularCenterRef,
+                        sourceIds: [sourceId],
+                        keepResultSelected: false
+                    });
+                    if (patterned) {
                         this.selectedSketchEntities.delete(entitySelectId);
                         this.selectedSketchArcCenters?.delete?.(sourceId);
                     }

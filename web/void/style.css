@@ -273,6 +273,15 @@ body.left-panel-resizing * {
     background: #666;
 }
 
+.sketch-constraint-leader {
+    position: absolute;
+    height: 1px;
+    pointer-events: none;
+    z-index: 146;
+    background: rgba(176, 124, 255, 0.95);
+    transform-origin: 0 50%;
+}
+
 .sketch-dimension-line,
 .sketch-dimension-cap,
 .sketch-dimension-extension {

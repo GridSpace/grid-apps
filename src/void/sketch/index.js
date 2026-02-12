@@ -20,6 +20,10 @@ import {
     getSelectedSketchMirrorAxis,
     startSketchMirrorMode,
     stopSketchMirrorMode,
+    getSelectedSketchPatternCenter,
+    startSketchCircularPatternMode,
+    stopSketchCircularPatternMode,
+    editSketchCircularPatternConstraint,
     handleSketchKeyDown,
     selectSketchConstraint,
     setHoveredSketchConstraint,
@@ -127,6 +131,14 @@ function mirrorSelectedSketchGeometry(options = {}) {
     return sketchCreate.mirrorSelectedSketchGeometry.call(this, options);
 }
 
+function circularPatternSelectedSketchGeometry(options = {}) {
+    return sketchCreate.circularPatternSelectedSketchGeometry.call(this, options);
+}
+
+function updateCircularPatternConstraintCopies(constraintId, count) {
+    return sketchCreate.updateCircularPatternConstraintCopies.call(this, constraintId, count);
+}
+
 function getSelectedSketchCircle(feature) {
     return sketchCreate.getSelectedSketchCircle.call(this, feature);
 }
@@ -186,6 +198,8 @@ function updateSketchInteractionVisuals() {
         selectedIds: Array.from(this.selectedSketchEntities),
         mirrorMode: !!this.sketchMirrorMode,
         mirrorAxisId: this.sketchMirrorAxisId || null,
+        circularPatternMode: !!this.sketchCircularPatternMode,
+        circularPatternCenterRef: this.sketchCircularPatternCenterRef || null,
         hoveredConstraintId: this.hoveredSketchConstraintId || null,
         selectedConstraintIds: Array.from(this.selectedSketchConstraints || []),
         previewLine: this.sketchLinePreview || externalLine,
@@ -328,6 +342,10 @@ export {
     getSelectedSketchMirrorAxis,
     startSketchMirrorMode,
     stopSketchMirrorMode,
+    getSelectedSketchPatternCenter,
+    startSketchCircularPatternMode,
+    stopSketchCircularPatternMode,
+    editSketchCircularPatternConstraint,
     selectSketchConstraint,
     setHoveredSketchConstraint,
     useHoveredDerivedEdge,
@@ -407,6 +425,8 @@ export {
     refreshDerivedSketchGeometry,
     createSketchPolygonFromSelectedCircle,
     mirrorSelectedSketchGeometry,
+    circularPatternSelectedSketchGeometry,
+    updateCircularPatternConstraintCopies,
     deleteSelectedSketchEntities,
     deleteSelectedSketchConstraints,
     findPointByCoord,
