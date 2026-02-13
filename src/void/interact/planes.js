@@ -575,12 +575,27 @@ function selectSolidFace(hit, event) {
     const editingSketch = currentFeature?.type === 'sketch' && currentFeature?.id === currentFeatureId;
     const editingExtrude = currentFeature?.type === 'extrude' && currentFeature?.id === currentFeatureId;
     const editingBoolean = currentFeature?.type === 'boolean' && currentFeature?.id === currentFeatureId;
+    const editingChamfer = currentFeature?.type === 'chamfer' && currentFeature?.id === currentFeatureId;
     const extrudeOp = String(currentFeature?.params?.operation || 'new');
     const extrudeRole = properties.getExtrudePickRole?.() || 'profiles';
     const editingExtrudeTargets = editingExtrude
         && (extrudeOp === 'add' || extrudeOp === 'subtract')
         && extrudeRole === 'targets';
     const forceMulti = editingBoolean || editingExtrudeTargets;
+
+    if (editingChamfer) {
+        // In chamfer edit mode, face clicks should never clear existing edge picks.
+        // If we're close to a boundary, treat the face click as an edge pick.
+        const facePoint = hit?.intersection?.point || null;
+        const edge = (hit?.key && facePoint)
+            ? api.solids?.getFaceEdgeHit?.(hit.key, facePoint, 3.0)
+            : null;
+        if (edge?.key) {
+            this.selectSolidEdge({ ...edge, intersection: hit?.intersection || null }, event);
+        }
+        return;
+    }
+
     const multi = forceMulti || !!(event?.ctrlKey || event?.metaKey);
     if (!multi) {
         for (const selectedPlane of this.selectedPlanes || []) {
@@ -740,32 +755,33 @@ function selectSolidEdge(hit, event) {
         this.hoveredSolidFaceKey = null;
         api.solids?.clearFaceSelection?.();
     }
-    const selected = api.solids?.toggleSelectedEdge?.(key, multi) || [];
-    this.selectedSolidEdgeKeys = new Set(selected);
-    this.hoveredSolidEdgeKey = key;
-    api.solids?.setHoveredEdge?.(key);
     if (editingChamfer) {
-        const edgeRefs = selected
-            .map(edgeKey => {
-                const edge = api.solids?.getEdgeByKey?.(edgeKey);
-                if (!edge) return null;
-                const path = Array.isArray(edge.pathWorld) && edge.pathWorld.length >= 2
-                    ? edge.pathWorld.map(p => ({ x: Number(p.x || 0), y: Number(p.y || 0), z: Number(p.z || 0) }))
-                    : null;
-                const a = edge.aWorld ? { x: Number(edge.aWorld.x || 0), y: Number(edge.aWorld.y || 0), z: Number(edge.aWorld.z || 0) } : null;
-                const b = edge.bWorld ? { x: Number(edge.bWorld.x || 0), y: Number(edge.bWorld.y || 0), z: Number(edge.bWorld.z || 0) } : null;
-                return {
-                    key: edgeKey,
-                    solidId: edge.solidId,
-                    edgeIndex: edge.index,
-                    meshEdgeKey: edge.meshEdgeKey || null,
-                    meshEdgeKeys: Array.isArray(edge.meshEdgeKeys) ? edge.meshEdgeKeys.slice() : null,
-                    a,
-                    b,
-                    path
-                };
-            })
-            .filter(Boolean);
+        const edge = api.solids?.getEdgeByKey?.(key);
+        if (!edge) return;
+        const path = Array.isArray(edge.pathWorld) && edge.pathWorld.length >= 2
+            ? edge.pathWorld.map(p => ({ x: Number(p.x || 0), y: Number(p.y || 0), z: Number(p.z || 0) }))
+            : null;
+        const a = edge.aWorld ? { x: Number(edge.aWorld.x || 0), y: Number(edge.aWorld.y || 0), z: Number(edge.aWorld.z || 0) } : null;
+        const b = edge.bWorld ? { x: Number(edge.bWorld.x || 0), y: Number(edge.bWorld.y || 0), z: Number(edge.bWorld.z || 0) } : null;
+        const ref = {
+            key,
+            solidId: edge.solidId,
+            edgeIndex: edge.index,
+            meshEdgeKey: edge.meshEdgeKey || null,
+            meshEdgeKeys: Array.isArray(edge.meshEdgeKeys) ? edge.meshEdgeKeys.slice() : null,
+            a,
+            b,
+            path
+        };
+        const existing = Array.isArray(currentFeature?.input?.edges) ? currentFeature.input.edges.slice() : [];
+        const has = existing.some(item => String(item?.key || '') === String(key));
+        const edgeRefs = has
+            ? existing.filter(item => String(item?.key || '') !== String(key))
+            : [...existing, ref];
+        this.selectedSolidEdgeKeys = new Set(edgeRefs.map(item => String(item?.key || '')).filter(Boolean));
+        this.hoveredSolidEdgeKey = key;
+        api.solids?.setSelectedEdges?.(Array.from(this.selectedSolidEdgeKeys));
+        api.solids?.setHoveredEdge?.(key);
         api.features.update(currentFeature.id, feature => {
             feature.input = feature.input || {};
             feature.input.edges = edgeRefs;
@@ -774,7 +790,13 @@ function selectSolidEdge(hit, event) {
             payload: { field: 'edges.set', edges: edgeRefs }
         });
         properties.onChanged?.();
+        window.dispatchEvent(new CustomEvent('void-state-change'));
+        return;
     }
+    const selected = api.solids?.toggleSelectedEdge?.(key, multi) || [];
+    this.selectedSolidEdgeKeys = new Set(selected);
+    this.hoveredSolidEdgeKey = key;
+    api.solids?.setHoveredEdge?.(key);
     window.dispatchEvent(new CustomEvent('void-state-change'));
 }
 
