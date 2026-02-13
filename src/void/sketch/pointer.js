@@ -269,6 +269,9 @@ function handleSketchHover(event, intersections) {
         if (this.hoveredSolidFaceKey) {
             this.hoveredSolidFaceKey = null;
             api.solids?.setHoveredFace?.(null);
+            // Force immediate preview refresh so face boundaries disappear as
+            // soon as a sketch entity takes hover priority.
+            previewChanged = true;
         }
     }
     if (this.hoveredSolidFaceKey) {
