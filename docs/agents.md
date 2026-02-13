@@ -231,6 +231,11 @@ src/
     - `profile -> region`
     - `solid-face -> surface`
     - `solid-edge -> boundary-segment`
+  - resolver now sources canonical face/edge entity ids from solids runtime mappings when available:
+    - face key -> `surface:*` (stable)
+    - edge key -> `segment:*` (stable)
+    - loop edge key -> `boundary:*` (stable)
+    - falls back to synthetic legacy ids when mapping is unavailable
   - solids runtime now publishes a passive geometry snapshot into `document.geometry_store` on sync:
     - surfaces, boundaries, segments, points, regions, topology maps
     - still read-only; selection and ops remain on legacy paths for parity

@@ -60,13 +60,17 @@ function resolvePrimarySurfaceHit(intersections, options = {}) {
         if (!nearestSolidFace) {
             const solidFaceHit = api?.solids?.getFaceHitFromIntersections?.([hit]);
             if (solidFaceHit) {
+                const faceEntity = api?.solids?.resolveCanonicalFaceEntity?.(solidFaceHit.key) || null;
                 nearestSolidFace = {
                     type: 'solid-face',
                     distance: Number(hit?.distance) || 0,
                     hit: solidFaceHit,
+                    // Keep legacy id shape for behavior parity; attach canonical id
+                    // as metadata during migration.
                     entity: {
                         kind: 'surface',
-                        id: `surface:${solidFaceHit.key}`
+                        id: `surface:${solidFaceHit.key}`,
+                        canonical_id: faceEntity?.id || null
                     }
                 };
             }
@@ -74,74 +78,62 @@ function resolvePrimarySurfaceHit(intersections, options = {}) {
     }
 
     let nearestSolidEdge = null;
-    if (nearestSolidFace?.hit?.solidId) {
-        // First preference: real render-edge intersections on the same solid.
-        // This matches what is actually drawn (e.g. cylinder cap circles).
+    if (nearestSolidFace?.hit?.key && nearestSolidFace?.hit?.intersection?.point) {
+        // Primary path: resolve boundary from the currently hovered face itself.
+        // This keeps edge picks aligned with face boundaries and avoids cross-face
+        // edge steals (e.g. cylinder seam lines).
+        const edge = api?.solids?.getFaceEdgeHit?.(
+            nearestSolidFace.hit.key,
+            nearestSolidFace.hit.intersection.point,
+            edgeGateDistance
+        );
+        if (edge) {
+            nearestSolidEdge = {
+                type: 'solid-edge',
+                // Slightly prefer edge over owning face when near boundary.
+                distance: Math.max(0, (nearestSolidFace.distance || 0) - 1e-4),
+                hit: {
+                    ...edge,
+                    intersection: nearestSolidFace.hit.intersection
+                },
+                entity: {
+                    kind: 'boundary-segment',
+                    id: `segment:${edge.key}`,
+                    canonical_id: (api?.solids?.resolveCanonicalEdgeEntity?.(edge.key) || null)?.id || null
+                }
+            };
+        }
+    }
+
+    if (!nearestSolidEdge && nearestSolidFace?.hit?.solidId) {
+        // Fallback: use rendered edge intersections on the same solid.
         const sameSolidEdgeInts = intersections.filter(hit => {
             const obj = hit?.object;
             return obj?.userData?.solidEdge === true
                 && String(obj?.userData?.solidId || '') === String(nearestSolidFace.hit.solidId || '');
         });
-
         if (sameSolidEdgeInts.length) {
             const edgeHit = api?.solids?.getEdgeHitFromIntersections?.(sameSolidEdgeInts) || null;
             if (edgeHit?.aWorld && edgeHit?.bWorld) {
-                const facePoint = nearestSolidFace?.hit?.intersection?.point || null;
-                const line = facePoint ? new THREE.Line3(edgeHit.aWorld, edgeHit.bWorld) : null;
-                const near = line ? new THREE.Vector3() : null;
-                if (line && near) {
-                    line.closestPointToPoint(facePoint, true, near);
-                    const worldDist = near.distanceTo(facePoint);
-                    // Gate edge picks to local neighborhood of the currently hovered face.
-                    if (worldDist <= edgeGateDistance) {
-                        const faceEdge = api?.solids?.getFaceEdgeHit?.(nearestSolidFace.hit.key, near, edgeGateDistance) || null;
-                        const hitEdge = faceEdge || {
-                            key: `${edgeHit.solidId}:${edgeHit.index}`,
-                            solidId: edgeHit.solidId,
-                            index: edgeHit.index,
-                            aWorld: edgeHit.aWorld,
-                            bWorld: edgeHit.bWorld,
-                            midWorld: edgeHit.midWorld
-                        };
-                        nearestSolidEdge = {
-                            type: 'solid-edge',
-                            distance: Number(edgeHit?.intersection?.distance) || Math.max(0, (nearestSolidFace.distance || 0) - 1e-4),
-                            hit: {
-                                ...hitEdge,
-                                intersection: edgeHit.intersection || nearestSolidFace.hit.intersection
-                            },
-                            entity: {
-                                kind: 'boundary-segment',
-                                id: `segment:${hitEdge.key}`
-                            }
-                        };
-                    }
-                }
-            }
-        }
-    }
-
-    if (!nearestSolidEdge && nearestSolidFace?.hit?.key && nearestSolidFace?.hit?.intersection?.point) {
-        // Boundary fallback for planar faces (non-planar boundaries can contain seam artifacts).
-        const faceMeta = api?.solids?.getFaceByKey?.(nearestSolidFace.hit.key)?.meta || null;
-        if (faceMeta?.planar) {
-            const edge = api?.solids?.getFaceEdgeHit?.(
-                nearestSolidFace.hit.key,
-                nearestSolidFace.hit.intersection.point,
-                edgeGateDistance
-            );
-            if (edge) {
+                const hitEdge = {
+                    key: `${edgeHit.solidId}:${edgeHit.index}`,
+                    solidId: edgeHit.solidId,
+                    index: edgeHit.index,
+                    aWorld: edgeHit.aWorld,
+                    bWorld: edgeHit.bWorld,
+                    midWorld: edgeHit.midWorld
+                };
                 nearestSolidEdge = {
                     type: 'solid-edge',
-                    // Slightly prefer edge over owning face when near boundary.
-                    distance: Math.max(0, (nearestSolidFace.distance || 0) - 1e-4),
+                    distance: Number(edgeHit?.intersection?.distance) || Math.max(0, (nearestSolidFace.distance || 0) - 1e-4),
                     hit: {
-                        ...edge,
-                        intersection: nearestSolidFace.hit.intersection
+                        ...hitEdge,
+                        intersection: edgeHit.intersection || nearestSolidFace.hit.intersection
                     },
                     entity: {
                         kind: 'boundary-segment',
-                        id: `segment:${edge.key}`
+                        id: `segment:${hitEdge.key}`,
+                        canonical_id: (api?.solids?.resolveCanonicalEdgeEntity?.(hitEdge.key) || null)?.id || null
                     }
                 };
             }

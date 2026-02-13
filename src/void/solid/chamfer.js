@@ -405,6 +405,13 @@ function scaleMeshAroundCentroid(mesh, scale = 1.001) {
 function parseBoundarySegmentRef(boundarySegmentId) {
     const raw = String(boundarySegmentId || '');
     if (!raw) return null;
+    // Canonical geometry-graph ids are not directly resolvable to current
+    // chamfer cutters yet. Reject early to avoid mis-parsing into invalid
+    // legacy solidId/index refs.
+    if (raw.startsWith('boundary:')) return null;
+    if (raw.startsWith('segment:') && !raw.startsWith('segment:faceedge:') && !raw.startsWith('segment:faceedgeloop:')) {
+        return null;
+    }
     const norm = raw.startsWith('segment:') ? raw.substring('segment:'.length) : raw;
     if (norm.startsWith('faceedge:')) {
         const parts = norm.split(':');

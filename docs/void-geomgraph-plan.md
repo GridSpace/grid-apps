@@ -1,5 +1,36 @@
 # Void Geometry Graph Plan (Surfaces + Boundaries)
 
+## Progress Checkpoint (2026-02-13)
+1. Completed:
+2. `GeometryStore` is persisted in document state and populated from solids runtime snapshots.
+3. Selection pipeline was split to `interact/selection_resolver.js` and now emits typed candidates (`profile/solid-face/solid-edge`) with canonical entity descriptors.
+4. Extrude targets carry `region_id`; chamfer edge refs carry `boundary_segment_id` + entity metadata.
+5. New canonical mapping bridge is active in solids selection:
+6. face key -> canonical `surface` id
+7. edge key -> canonical `boundary-segment` id
+8. loop edge key -> canonical `boundary` id
+9. Resolver now consumes these mappings (`resolveCanonicalFaceEntity`, `resolveCanonicalEdgeEntity`) with backward-compatible fallback IDs.
+
+## Resume Pointers
+1. Canonical mapping source:
+2. `src/void/api/solids.js`:
+3. `buildGeometryStoreSnapshot()` map population
+4. `resolveCanonicalFaceEntity()`
+5. `resolveCanonicalEdgeEntity()`
+6. Canonical mapping consumer:
+7. `src/void/interact/selection_resolver.js`
+8. `resolvePrimarySurfaceHit()` entity assignment for face/edge candidates.
+9. Next refactor target:
+10. Remove remaining legacy synthetic key dependence in extrude/chamfer/property panel selection paths and pivot those to canonical ids first, with legacy only as migration fallback.
+11. Stability correction applied:
+12. Resolver now keeps legacy `entity.id` shape for active runtime compatibility.
+13. Canonical ids are attached as metadata (`entity.canonical_id`) but are not used as primary selection ids yet.
+14. Chamfer parser now rejects unresolved canonical `boundary:`/`segment:` ids to prevent accidental legacy mis-parse and solid corruption during edits.
+15. Boundary-hover correction applied:
+16. Face-edge resolution now prioritizes hovered-face boundary lookup before global solid edge intersections.
+17. Boundary extraction uses the same crease threshold as rendered edges (`SOLID_CREASE_ANGLE_DEG`) to reduce partial/extra loop mismatches.
+18. `getFaceEdgeHit()` now prefers closed-loop boundaries over open seam chains when both are near cursor.
+
 ## Target Architecture
 1. Adopt a single geometric graph centered on `surfaces` and `boundaries`, with solids as derived artifacts only.
 2. Treat every selectable thing as one of:

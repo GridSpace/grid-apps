@@ -363,7 +363,9 @@ function edgeKey(a, b) {
 
     function buildBoundarySegmentsFromGeometry(geometry) {
         if (!geometry) return [];
-        const edgesGeom = new THREE.EdgesGeometry(geometry, 1);
+        // Keep boundary extraction aligned with rendered edge topology.
+        // Using the same crease threshold avoids partial/extra loop artifacts.
+        const edgesGeom = new THREE.EdgesGeometry(geometry, SOLID_CREASE_ANGLE_DEG);
         const pos = edgesGeom.getAttribute?.('position');
         if (!pos) return [];
         const out = [];
@@ -551,6 +553,9 @@ function edgeKey(a, b) {
         _workerReqId: 0,
         _workerPending: new Map(),
         _rebuildSeq: 0,
+        _geomSurfaceIdByFaceKey: new Map(),
+        _geomSegmentIdByEdgeKey: new Map(),
+        _geomBoundaryIdByLoopKey: new Map(),
 
         async init() {
             await ensureKernel();
@@ -633,6 +638,9 @@ function edgeKey(a, b) {
         },
 
         buildGeometryStoreSnapshot() {
+            this._geomSurfaceIdByFaceKey = new Map();
+            this._geomSegmentIdByEdgeKey = new Map();
+            this._geomBoundaryIdByLoopKey = new Map();
             const surfaces = [];
             const boundaries = [];
             const segments = [];
@@ -689,6 +697,7 @@ function edgeKey(a, b) {
                             face_key: faceKey
                         }
                     });
+                    this._geomSurfaceIdByFaceKey.set(faceKey, surfaceId);
 
                     const surfaceSegmentIds = [];
                     for (let li = 0; li < loops.length; li++) {
@@ -706,6 +715,7 @@ function edgeKey(a, b) {
                         if (loopPoints.length < 2) continue;
 
                         const boundaryId = `boundary:${faceKey}:${li}`;
+                        this._geomBoundaryIdByLoopKey.set(`faceedgeloop:${solidId}:${faceId}:${li}`, boundaryId);
                         const boundarySegmentIds = [];
                         const stepCount = closed ? loopPoints.length : (loopPoints.length - 1);
                         for (let si = 0; si < stepCount; si++) {
@@ -731,6 +741,7 @@ function edgeKey(a, b) {
                                     edge_key: `faceedge:${faceKey}:${Number(loop?.segmentIndices?.[si] ?? si)}`
                                 }
                             });
+                            this._geomSegmentIdByEdgeKey.set(`faceedge:${faceKey}:${Number(loop?.segmentIndices?.[si] ?? si)}`, segmentId);
                             boundarySegmentIds.push(segmentId);
                             surfaceSegmentIds.push(segmentId);
                             topology.segment_to_surfaces[segmentId] = [surfaceId];
@@ -1215,20 +1226,46 @@ function edgeKey(a, b) {
             if (!solidId || !Number.isFinite(faceId)) return null;
             const segs = this.getFaceBoundarySegments(faceKey) || [];
             if (!segs.length) return null;
-            let bestIndex = -1;
-            let bestD2 = Infinity;
+            const loops = this.getFaceBoundaryLoops(faceKey) || [];
+            const segLoopMeta = new Map();
+            for (let li = 0; li < loops.length; li++) {
+                const loop = loops[li];
+                const segIndices = Array.isArray(loop?.segmentIndices) ? loop.segmentIndices : [];
+                for (const si of segIndices) {
+                    segLoopMeta.set(Number(si), { loopIndex: li, closed: !!loop?.closed });
+                }
+            }
+
+            let bestAnyIndex = -1;
+            let bestAnyD2 = Infinity;
+            let bestClosedIndex = -1;
+            let bestClosedD2 = Infinity;
             for (let i = 0; i < segs.length; i++) {
                 const seg = segs[i];
                 if (!seg?.a || !seg?.b) continue;
                 const d2 = distancePointToSegmentSquared(worldPoint, seg.a, seg.b);
-                if (d2 < bestD2) {
-                    bestD2 = d2;
-                    bestIndex = i;
+                if (d2 < bestAnyD2) {
+                    bestAnyD2 = d2;
+                    bestAnyIndex = i;
+                }
+                const meta = segLoopMeta.get(i);
+                if (meta?.closed && d2 < bestClosedD2) {
+                    bestClosedD2 = d2;
+                    bestClosedIndex = i;
                 }
             }
-            if (bestIndex < 0 || bestD2 > maxWorldDist * maxWorldDist) return null;
+            const maxD2 = maxWorldDist * maxWorldDist;
+            if (bestAnyIndex < 0 || bestAnyD2 > maxD2) return null;
+
+            // Prefer closed-loop boundaries over open seam chains when both are plausible.
+            let bestIndex = bestAnyIndex;
+            if (bestClosedIndex >= 0 && bestClosedD2 <= maxD2) {
+                const openPicked = !segLoopMeta.get(bestAnyIndex)?.closed;
+                if (openPicked || bestClosedD2 <= (bestAnyD2 * 1.5)) {
+                    bestIndex = bestClosedIndex;
+                }
+            }
             const seg = segs[bestIndex];
-            const loops = this.getFaceBoundaryLoops(faceKey) || [];
             const loopIndex = loops.findIndex(loop => Array.isArray(loop?.segmentIndices) && loop.segmentIndices.includes(bestIndex));
             if (loopIndex >= 0) {
                 const loop = loops[loopIndex];
@@ -1427,6 +1464,29 @@ function edgeKey(a, b) {
             const meta = view?.faceGroups?.get(faceId);
             if (!view || !meta) return null;
             return { key: `${solidId}:${faceId}`, solidId, faceId, view, meta };
+        },
+
+        resolveCanonicalFaceEntity(faceKey) {
+            const key = String(faceKey || '');
+            if (!key) return null;
+            return {
+                kind: 'surface',
+                id: this._geomSurfaceIdByFaceKey.get(key) || `surface:${key}`
+            };
+        },
+
+        resolveCanonicalEdgeEntity(edgeKey) {
+            const key = String(edgeKey || '');
+            if (!key) return null;
+            const loopBoundary = this._geomBoundaryIdByLoopKey.get(key);
+            if (loopBoundary) {
+                return { kind: 'boundary', id: loopBoundary };
+            }
+            const segId = this._geomSegmentIdByEdgeKey.get(key);
+            if (segId) {
+                return { kind: 'boundary-segment', id: segId };
+            }
+            return { kind: 'boundary-segment', id: `segment:${key}` };
         },
 
         getFaceBoundarySegments(key) {
