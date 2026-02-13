@@ -444,16 +444,20 @@ function getPrimarySurfaceHitFromIntersections(intersections) {
                     const worldDist = near.distanceTo(facePoint);
                     // Gate edge picks to local neighborhood of the currently hovered face.
                     if (worldDist <= 2.5) {
+                        const faceEdge = api.solids?.getFaceEdgeHit?.(nearestSolidFace.hit.key, near, 2.5) || null;
+                        const hitEdge = faceEdge || {
+                            key: `${edgeHit.solidId}:${edgeHit.index}`,
+                            solidId: edgeHit.solidId,
+                            index: edgeHit.index,
+                            aWorld: edgeHit.aWorld,
+                            bWorld: edgeHit.bWorld,
+                            midWorld: edgeHit.midWorld
+                        };
                         nearestSolidEdge = {
                             type: 'solid-edge',
                             distance: Number(edgeHit?.intersection?.distance) || Math.max(0, (nearestSolidFace.distance || 0) - 1e-4),
                             hit: {
-                                key: `${edgeHit.solidId}:${edgeHit.index}`,
-                                solidId: edgeHit.solidId,
-                                index: edgeHit.index,
-                                aWorld: edgeHit.aWorld,
-                                bWorld: edgeHit.bWorld,
-                                midWorld: edgeHit.midWorld,
+                                ...hitEdge,
                                 intersection: edgeHit.intersection || nearestSolidFace.hit.intersection
                             }
                         };

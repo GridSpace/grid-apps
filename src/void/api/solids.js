@@ -338,7 +338,8 @@ function createSolidsApi(getApi) {
                 normal,
                 xAxis,
                 planar,
-                boundarySegmentsLocal: null
+                boundarySegmentsLocal: null,
+                boundaryLoopsLocal: null
             });
             groupId++;
         }
@@ -358,6 +359,69 @@ function createSolidsApi(getApi) {
         }
         edgesGeom.dispose?.();
         return out;
+    }
+
+    function buildBoundaryLoopsFromSegments(segments = []) {
+        if (!Array.isArray(segments) || !segments.length) return [];
+        const quant = 1e6;
+        const nodeKey = (v) => `${Math.round(Number(v?.x || 0) * quant)},${Math.round(Number(v?.y || 0) * quant)},${Math.round(Number(v?.z || 0) * quant)}`;
+        const nodePos = new Map();
+        const nodeEdges = new Map();
+        const edgeNodes = [];
+        for (let i = 0; i < segments.length; i++) {
+            const seg = segments[i];
+            if (!seg?.a || !seg?.b) continue;
+            const ka = nodeKey(seg.a);
+            const kb = nodeKey(seg.b);
+            edgeNodes[i] = [ka, kb];
+            if (!nodePos.has(ka)) nodePos.set(ka, seg.a.clone());
+            if (!nodePos.has(kb)) nodePos.set(kb, seg.b.clone());
+            if (!nodeEdges.has(ka)) nodeEdges.set(ka, []);
+            if (!nodeEdges.has(kb)) nodeEdges.set(kb, []);
+            nodeEdges.get(ka).push(i);
+            nodeEdges.get(kb).push(i);
+        }
+        const used = new Set();
+        const loops = [];
+        for (let i = 0; i < segments.length; i++) {
+            if (used.has(i) || !edgeNodes[i]) continue;
+            let [startNode, nextNode] = edgeNodes[i];
+            const segIndices = [i];
+            const points = [nodePos.get(startNode)?.clone(), nodePos.get(nextNode)?.clone()].filter(Boolean);
+            used.add(i);
+            let prevEdge = i;
+            let closed = false;
+            for (let guard = 0; guard < segments.length + 4; guard++) {
+                if (nextNode === startNode) {
+                    closed = true;
+                    break;
+                }
+                const options = (nodeEdges.get(nextNode) || []).filter(edgeIndex => !used.has(edgeIndex) && edgeIndex !== prevEdge);
+                if (!options.length) break;
+                const edgeIndex = options[0];
+                const pair = edgeNodes[edgeIndex];
+                if (!pair) break;
+                const [a, b] = pair;
+                const newNode = a === nextNode ? b : a;
+                used.add(edgeIndex);
+                segIndices.push(edgeIndex);
+                const p = nodePos.get(newNode);
+                if (p) points.push(p.clone());
+                prevEdge = edgeIndex;
+                nextNode = newNode;
+            }
+            if (points.length >= 2) {
+                loops.push({ segmentIndices: segIndices, points, closed: closed && points.length >= 4 });
+            }
+        }
+        return loops;
+    }
+
+    function shouldPromoteLoopSelection(loop) {
+        const segCount = Array.isArray(loop?.segmentIndices) ? loop.segmentIndices.length : 0;
+        // Promote only dense boundary loops (typically tessellated circular edges).
+        // Keep low-segment polygon faces (rectangles, etc) selectable per-edge.
+        return segCount >= 10;
     }
 
     function makeFaceMaterials() {
@@ -787,6 +851,34 @@ function createSolidsApi(getApi) {
 
         getEdgeByKey(key) {
             const raw = String(key || '');
+            if (raw.startsWith('faceedgeloop:')) {
+                const parts = raw.split(':');
+                if (parts.length < 4) return null;
+                const loopIndex = Number(parts[parts.length - 1]);
+                const faceId = Number(parts[parts.length - 2]);
+                const solidId = parts.slice(1, -2).join(':');
+                if (!solidId || !Number.isFinite(faceId) || !Number.isFinite(loopIndex)) return null;
+                const loops = this.getFaceBoundaryLoops(`${solidId}:${faceId}`) || [];
+                const loop = loops[loopIndex];
+                if (!loop?.points?.length) return null;
+                const pathWorld = loop.points.map(p => p.clone());
+                if (loop.closed && pathWorld.length >= 2) {
+                    const first = pathWorld[0];
+                    const last = pathWorld[pathWorld.length - 1];
+                    if (first.distanceToSquared(last) > 1e-16) {
+                        pathWorld.push(first.clone());
+                    }
+                }
+                const segIndex = Number(loop.segmentIndices?.[0]);
+                return {
+                    key: raw,
+                    solidId,
+                    faceId,
+                    index: Number.isFinite(segIndex) ? segIndex : null,
+                    pathWorld,
+                    loop: true
+                };
+            }
             if (raw.startsWith('faceedge:')) {
                 const parts = raw.split(':');
                 if (parts.length < 4) return null;
@@ -848,6 +940,31 @@ function createSolidsApi(getApi) {
             }
             if (bestIndex < 0 || bestD2 > maxWorldDist * maxWorldDist) return null;
             const seg = segs[bestIndex];
+            const loops = this.getFaceBoundaryLoops(faceKey) || [];
+            const loopIndex = loops.findIndex(loop => Array.isArray(loop?.segmentIndices) && loop.segmentIndices.includes(bestIndex));
+            if (loopIndex >= 0) {
+                const loop = loops[loopIndex];
+                if (shouldPromoteLoopSelection(loop)) {
+                    const pathWorld = Array.isArray(loop?.points) ? loop.points.map(p => p.clone()) : [];
+                    if (loop?.closed && pathWorld.length >= 2) {
+                        const first = pathWorld[0];
+                        const last = pathWorld[pathWorld.length - 1];
+                        if (first.distanceToSquared(last) > 1e-16) {
+                            pathWorld.push(first.clone());
+                        }
+                    }
+                    if (pathWorld.length >= 2) {
+                        return {
+                            key: `faceedgeloop:${solidId}:${faceId}:${loopIndex}`,
+                            solidId,
+                            faceId,
+                            index: bestIndex,
+                            pathWorld,
+                            loop: true
+                        };
+                    }
+                }
+            }
             return {
                 key: `faceedge:${solidId}:${faceId}:${bestIndex}`,
                 solidId,
@@ -1047,6 +1164,29 @@ function createSolidsApi(getApi) {
                 });
             }
             return out;
+        },
+
+        getFaceBoundaryLoops(key) {
+            const face = this.getFaceByKey(key);
+            if (!face?.meta?.geometry) return [];
+            if (!Array.isArray(face.meta.boundarySegmentsLocal)) {
+                face.meta.boundarySegmentsLocal = buildBoundarySegmentsFromGeometry(face.meta.geometry);
+            }
+            if (!Array.isArray(face.meta.boundaryLoopsLocal)) {
+                face.meta.boundaryLoopsLocal = buildBoundaryLoopsFromSegments(face.meta.boundarySegmentsLocal || []);
+            }
+            const loops = face.meta.boundaryLoopsLocal || [];
+            if (!loops.length) return [];
+            const mesh = face?.view?.mesh || null;
+            if (!mesh?.matrixWorld) return [];
+            mesh.updateMatrixWorld?.(true);
+            return loops.map(loop => ({
+                segmentIndices: Array.isArray(loop.segmentIndices) ? loop.segmentIndices.slice() : [],
+                closed: !!loop.closed,
+                points: Array.isArray(loop.points)
+                    ? loop.points.map(p => p.clone().applyMatrix4(mesh.matrixWorld))
+                    : []
+            }));
         },
 
         setHoveredFace(key = null) {
@@ -1483,14 +1623,18 @@ function createSolidsApi(getApi) {
                 }
                 for (const item of wanted) {
                     const edge = this.getEdgeByKey(item.key);
-                    if (!edge?.aWorld || !edge?.bWorld) continue;
-                    const aLocal = view.group.worldToLocal(edge.aWorld.clone());
-                    const bLocal = view.group.worldToLocal(edge.bWorld.clone());
+                    const path = Array.isArray(edge?.pathWorld) && edge.pathWorld.length >= 2
+                        ? edge.pathWorld.map(p => view.group.worldToLocal(p.clone()))
+                        : (edge?.aWorld && edge?.bWorld)
+                            ? [view.group.worldToLocal(edge.aWorld.clone()), view.group.worldToLocal(edge.bWorld.clone())]
+                            : null;
+                    if (!path || path.length < 2) continue;
                     const geo = new LineGeometry();
-                    geo.setPositions([
-                        Number(aLocal.x || 0), Number(aLocal.y || 0), Number(aLocal.z || 0),
-                        Number(bLocal.x || 0), Number(bLocal.y || 0), Number(bLocal.z || 0)
-                    ]);
+                    const positions = [];
+                    for (const p of path) {
+                        positions.push(Number(p.x || 0), Number(p.y || 0), Number(p.z || 0));
+                    }
+                    geo.setPositions(positions);
                     const mat = new LineMaterial({
                         color: item.selected ? 0xff9933 : 0xffb366,
                         linewidth: item.selected ? 3.25 : 2.5,
