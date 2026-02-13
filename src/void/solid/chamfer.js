@@ -402,6 +402,39 @@ function scaleMeshAroundCentroid(mesh, scale = 1.001) {
     };
 }
 
+function parseBoundarySegmentRef(boundarySegmentId) {
+    const raw = String(boundarySegmentId || '');
+    if (!raw) return null;
+    const norm = raw.startsWith('segment:') ? raw.substring('segment:'.length) : raw;
+    if (norm.startsWith('faceedge:')) {
+        const parts = norm.split(':');
+        if (parts.length < 4) return null;
+        const edgeIndex = Number(parts[parts.length - 1]);
+        const faceId = Number(parts[parts.length - 2]);
+        const solidId = parts.slice(1, -2).join(':');
+        if (!solidId || !Number.isFinite(faceId) || !Number.isFinite(edgeIndex)) return null;
+        return { kind: 'faceedge', key: norm, solidId, faceId, edgeIndex };
+    }
+    if (norm.startsWith('faceedgeloop:')) {
+        const parts = norm.split(':');
+        if (parts.length < 4) return null;
+        const loopIndex = Number(parts[parts.length - 1]);
+        const faceId = Number(parts[parts.length - 2]);
+        const solidId = parts.slice(1, -2).join(':');
+        if (!solidId || !Number.isFinite(faceId) || !Number.isFinite(loopIndex)) return null;
+        return { kind: 'faceedgeloop', key: norm, solidId, faceId, loopIndex };
+    }
+    const splitAt = norm.lastIndexOf(':');
+    if (splitAt > 0 && splitAt < norm.length - 1) {
+        const solidId = norm.substring(0, splitAt);
+        const edgeIndex = Number(norm.substring(splitAt + 1));
+        if (solidId && Number.isFinite(edgeIndex)) {
+            return { kind: 'edge', key: norm, solidId, edgeIndex };
+        }
+    }
+    return null;
+}
+
 async function applyChamferFeature(solids, meshCache, feature, makeBodyId, bodySeqRef) {
     const refs = Array.isArray(feature?.input?.edges) ? feature.input.edges : [];
     const distance = Math.max(0.0001, Math.abs(Number(feature?.params?.distance ?? 1)));
@@ -410,7 +443,11 @@ async function applyChamferFeature(solids, meshCache, feature, makeBodyId, bodyS
 
     const bySolid = new Map();
     for (const ref of refs) {
-        const solidId = String(ref?.solidId || '');
+        let solidId = String(ref?.solidId || '');
+        if (!solidId) {
+            const parsed = parseBoundarySegmentRef(ref?.boundary_segment_id || ref?.entity?.id || ref?.key || null);
+            solidId = String(parsed?.solidId || '');
+        }
         if (!solidId) continue;
         const list = bySolid.get(solidId);
         if (list) list.push(ref);
@@ -428,6 +465,7 @@ async function applyChamferFeature(solids, meshCache, feature, makeBodyId, bodyS
         const tools = [];
         const usedEdgeKeys = new Set();
         for (const ref of solidRefs) {
+            const parsedRef = parseBoundarySegmentRef(ref?.boundary_segment_id || ref?.entity?.id || ref?.key || null);
             const meshEdgeKeys = Array.isArray(ref?.meshEdgeKeys) ? ref.meshEdgeKeys.filter(Boolean) : [];
             if (meshEdgeKeys.length) {
                 for (const mek of meshEdgeKeys) {
@@ -441,6 +479,17 @@ async function applyChamferFeature(solids, meshCache, feature, makeBodyId, bodyS
                     }
                 }
                 continue;
+            }
+            if (parsedRef?.key && !(Array.isArray(ref.path) && ref.path.length >= 2)) {
+                const built = buildCutterForMeshEdgeKey(adj, parsedRef.key, distance);
+                const cutter = built?.mesh || null;
+                const cutterKey = String(built?.key || parsedRef.key || '');
+                if (cutterKey && usedEdgeKeys.has(cutterKey)) continue;
+                if (cutter?.positions?.length && cutter?.indices?.length) {
+                    if (cutterKey) usedEdgeKeys.add(cutterKey);
+                    tools.push(cutter);
+                    continue;
+                }
             }
             if (ref?.meshEdgeKey && !(Array.isArray(ref.path) && ref.path.length >= 2)) {
                 const built = buildCutterForMeshEdgeKey(adj, ref.meshEdgeKey, distance);
@@ -577,6 +626,7 @@ async function applyChamferFeature(solids, meshCache, feature, makeBodyId, bodyS
                 parent: solidId,
                 edges: solidRefs.map(ref => ({
                     key: ref?.key || null,
+                    boundary_segment_id: ref?.boundary_segment_id || null,
                     solidId: ref?.solidId || null,
                     edgeIndex: ref?.edgeIndex ?? null
                 })),

@@ -24,6 +24,15 @@ function resolveExtrudeProfileRef(profile = {}) {
     return { regionId: regionId || null, sketchId, profileId, key };
 }
 
+function resolveChamferEdgeRefKey(edge = {}) {
+    const bid = String(edge?.boundary_segment_id || '');
+    if (bid) return bid;
+    const entityId = String(edge?.entity?.id || '');
+    if (entityId.startsWith('segment:')) return entityId.substring('segment:'.length);
+    const key = String(edge?.key || '');
+    return key || null;
+}
+
 const properties = {
     panel: null,
     header: null,
@@ -767,10 +776,11 @@ const properties = {
                     const updated = api.features.update(feature.id, item => {
                         item.input = item.input || {};
                         const current = Array.isArray(item.input.edges) ? item.input.edges : [];
-                        item.input.edges = current.filter(e => String(e?.key || '') !== String(edge?.key || ''));
+                        const removeKey = String(resolveChamferEdgeRefKey(edge) || '');
+                        item.input.edges = current.filter(e => String(resolveChamferEdgeRefKey(e) || '') !== removeKey);
                     }, {
                         opType: 'feature.update',
-                        payload: { field: 'edges.remove', key: edge?.key || null }
+                        payload: { field: 'edges.remove', key: resolveChamferEdgeRefKey(edge) || null }
                     });
                     if (updated) this.onChanged();
                 };
@@ -922,7 +932,11 @@ const properties = {
             return;
         }
         const keys = (Array.isArray(feature?.input?.edges) ? feature.input.edges : [])
-            .map(edge => String(edge?.key || ''))
+            .map(edge => {
+                const ref = resolveChamferEdgeRefKey(edge);
+                if (!ref) return null;
+                return String(ref).startsWith('segment:') ? String(ref).substring('segment:'.length) : String(ref);
+            })
             .filter(Boolean);
         api.interact.selectedSolidEdgeKeys = new Set(keys);
         api.solids?.setSelectedEdges?.(keys);

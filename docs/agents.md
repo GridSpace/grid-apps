@@ -243,6 +243,10 @@ src/
     - selection toggle in `interact/planes.js` keys on `region_id` when present
     - rebuild lookup resolves profile loops from `region_id` first, then legacy `sketchId/profileId`
     - snapshot profile loop maps now include both canonical and legacy keys for compatibility
+  - chamfer edge refs now carry canonical boundary metadata:
+    - `boundary_segment_id` and `entity: { kind: 'boundary-segment', id: 'segment:...' }`
+    - chamfer selection sync/remove resolves keys via canonical-or-legacy mapping
+    - chamfer apply can parse canonical boundary ids and falls back to legacy key/path mesh-edge strategies
 
 **Phase 2: Sketch System (Current Workstream)**
 - planegcs constraint solver integration is active

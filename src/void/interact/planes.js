@@ -675,6 +675,11 @@ function selectSolidEdge(hit, event) {
         const b = edge.bWorld ? { x: Number(edge.bWorld.x || 0), y: Number(edge.bWorld.y || 0), z: Number(edge.bWorld.z || 0) } : null;
         const ref = {
             key,
+            boundary_segment_id: String(key || ''),
+            entity: {
+                kind: 'boundary-segment',
+                id: `segment:${String(key || '')}`
+            },
             solidId: edge.solidId,
             edgeIndex: edge.index,
             meshEdgeKey: edge.meshEdgeKey || null,

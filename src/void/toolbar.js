@@ -458,6 +458,7 @@ const toolbar = {
         return keys.map(key => {
             const edge = api.solids?.getEdgeByKey?.(key);
             if (!edge) return null;
+            const boundarySegmentId = String(key || '');
             const path = Array.isArray(edge.pathWorld) && edge.pathWorld.length >= 2
                 ? edge.pathWorld.map(p => ({ x: Number(p.x || 0), y: Number(p.y || 0), z: Number(p.z || 0) }))
                 : null;
@@ -465,6 +466,11 @@ const toolbar = {
             const b = edge.bWorld ? { x: Number(edge.bWorld.x || 0), y: Number(edge.bWorld.y || 0), z: Number(edge.bWorld.z || 0) } : null;
             return {
                 key,
+                boundary_segment_id: boundarySegmentId,
+                entity: {
+                    kind: 'boundary-segment',
+                    id: `segment:${boundarySegmentId}`
+                },
                 solidId: edge.solidId,
                 edgeIndex: edge.index,
                 meshEdgeKey: edge.meshEdgeKey || null,
