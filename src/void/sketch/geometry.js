@@ -265,7 +265,7 @@ function resolveDerivedEdgeCandidate(event, intersections, feature) {
     const edgeHit = resolvedPrimary.hit || null;
     const edgeKey = String(edgeHit?.key || '');
     if (!edgeKey) return null;
-    const edge = api.solids?.getEdgeByKey?.(edgeKey) || edgeHit;
+    let edge = api.solids?.getEdgeByKey?.(edgeKey) || edgeHit;
     if (!edge) return null;
 
     let solidId = String(edge?.solidId || edgeHit?.solidId || '');
@@ -282,6 +282,45 @@ function resolveDerivedEdgeCandidate(event, intersections, feature) {
     }
     if (!solidId) return null;
     const faceKey = Number.isFinite(faceId) ? `${solidId}:${faceId}` : null;
+
+    // Promote dense closed loops (typically circles) to full-loop edge derive.
+    if (!edge?.pathWorld && edgeKey.startsWith('faceedge:')) {
+        const parts = edgeKey.split(':');
+        const segIndex = Number(parts[parts.length - 1]);
+        const fid = Number(parts[parts.length - 2]);
+        const sid = parts.slice(1, -2).join(':');
+        if (sid && Number.isFinite(fid) && Number.isFinite(segIndex)) {
+            const loops = api.solids?.getFaceBoundaryLoops?.(`${sid}:${fid}`) || [];
+            const loop = loops.find(lp => Array.isArray(lp?.segmentIndices) && lp.segmentIndices.includes(segIndex) && lp?.closed);
+            if (loop && Array.isArray(loop.points) && loop.points.length >= 8) {
+                const center = new THREE.Vector3();
+                for (const p of loop.points) center.add(p);
+                center.multiplyScalar(1 / loop.points.length);
+                let mean = 0;
+                const rr = [];
+                for (const p of loop.points) {
+                    const r = p.distanceTo(center);
+                    rr.push(r);
+                    mean += r;
+                }
+                mean /= Math.max(1, rr.length);
+                let varR = 0;
+                for (const r of rr) {
+                    const d = r - mean;
+                    varR += d * d;
+                }
+                const rel = mean > 1e-8 ? Math.sqrt(varR / Math.max(1, rr.length)) / mean : 1;
+                if (rel <= 0.12) {
+                    edge = {
+                        ...edge,
+                        key: `faceedgeloop:${sid}:${fid}:${loops.indexOf(loop)}`,
+                        pathWorld: loop.points.map(p => p.clone()),
+                        loop: true
+                    };
+                }
+            }
+        }
+    }
 
     let a = edge?.aWorld || null;
     let b = edge?.bWorld || null;
