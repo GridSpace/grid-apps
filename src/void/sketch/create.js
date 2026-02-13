@@ -2018,10 +2018,16 @@ function deriveSelectionsAtomic(feature, selection = {}) {
                 if (!aLocal || !bLocal) continue;
                 ensureLine(aLocal, bLocal, {
                     type: 'solid-edge',
+                    entity: {
+                        kind: 'boundary-segment',
+                        id: `segment:faceedge:${faceKey}:${segIndex}`
+                    },
                     solid_id: solidId,
                     solid_feature_id: faceTarget?.source?.solid_feature_id || null,
                     face_id: Number.isFinite(faceId) ? faceId : null,
                     face_frame: faceFrame || null,
+                    face_key: faceKey,
+                    boundary_segment_id: `faceedge:${faceKey}:${segIndex}`,
                     local_a: worldToFaceLocal(seg.a) || null,
                     local_b: worldToFaceLocal(seg.b) || null,
                     edge_index: segIndex,

@@ -234,6 +234,11 @@ src/
   - solids runtime now publishes a passive geometry snapshot into `document.geometry_store` on sync:
     - surfaces, boundaries, segments, points, regions, topology maps
     - still read-only; selection and ops remain on legacy paths for parity
+  - sketch profile/area selection now toggles multi by default (no cmd/meta required); clear remains on `space`/`esc`
+  - derive (`u`) path now carries canonical entity metadata for segment-backed sources:
+    - `source.entity.kind = boundary-segment`
+    - `source.entity.id = segment:faceedge:<faceKey>:<segIndex>`
+    - plus `source.face_key` and `source.boundary_segment_id` for migration bridging
 
 **Phase 2: Sketch System (Current Workstream)**
 - planegcs constraint solver integration is active

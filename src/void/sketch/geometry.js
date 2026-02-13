@@ -358,10 +358,16 @@ function resolveDerivedEdgeCandidate(event, intersections, feature) {
         hoverPoint: hoverPoint ? { ...hoverPoint, world: hoverWorld } : null,
         source: {
             type: 'solid-edge',
+            entity: {
+                kind: 'boundary-segment',
+                id: `segment:faceedge:${faceKey}:${best.segIndex}`
+            },
             solid_id: best.solidId,
             solid_feature_id: solid?.source?.feature_id || null,
             face_id: Number.isFinite(faceId) ? faceId : null,
             face_frame: faceFrame || null,
+            face_key: faceKey,
+            boundary_segment_id: `faceedge:${faceKey}:${best.segIndex}`,
             local_a: localA || null,
             local_b: localB || null,
             local_point: localP || null,

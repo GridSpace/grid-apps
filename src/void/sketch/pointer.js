@@ -417,7 +417,10 @@ function handleSketchMouseUp(event, intersections) {
                 }
                 const pointKind = derived?.hoverPoint?.kind || null;
                 if (pointKind && derived?.hoverPoint?.local) {
-                    const key = `point:${derived?.solidId || ''}:${derived?.index ?? -1}:${pointKind}`;
+                    const sourceEntityId = String(derived?.source?.entity?.id || '');
+                    const key = sourceEntityId
+                        ? `point:${sourceEntityId}:${pointKind}`
+                        : `point:${derived?.solidId || ''}:${derived?.index ?? -1}:${pointKind}`;
                     if (this.selectedDerivedSelections?.has?.(key)) {
                         this.selectedDerivedSelections.delete(key);
                     } else {
@@ -432,7 +435,10 @@ function handleSketchMouseUp(event, intersections) {
                         });
                     }
                 } else {
-                    const key = `edge:${derived?.solidId || ''}:${derived?.index ?? -1}`;
+                    const sourceEntityId = String(derived?.source?.entity?.id || '');
+                    const key = sourceEntityId
+                        ? `edge:${sourceEntityId}`
+                        : `edge:${derived?.solidId || ''}:${derived?.index ?? -1}`;
                     if (this.selectedDerivedSelections?.has?.(key)) {
                         this.selectedDerivedSelections.delete(key);
                     } else {

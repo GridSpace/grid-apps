@@ -454,15 +454,16 @@ function selectSketchProfile(hit, event) {
     }
 
     const key = `${hit.featureId}:${hit.profileId}`;
-    const multi = !!(event?.ctrlKey || event?.metaKey);
-    if (!multi) {
+    // Sketch area/profile picking should be toggle/multi by default.
+    // Space/Escape remains the clear/deselect route.
+    const multi = true;
+    if (!this.selectedSketchProfiles.size) {
         this.selectedSolidFaceKeys?.clear?.();
         this.selectedSolidEdgeKeys?.clear?.();
         this.hoveredSolidFaceKey = null;
         this.hoveredSolidEdgeKey = null;
         api.solids?.clearFaceSelection?.();
         api.solids?.clearEdgeSelection?.();
-        this.selectedSketchProfiles.clear();
     }
     if (this.selectedSketchProfiles.has(key)) {
         this.selectedSketchProfiles.delete(key);
