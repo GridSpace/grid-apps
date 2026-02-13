@@ -374,8 +374,6 @@ const toolbar = {
             const sketch = api.features.findById(sketchId);
             if (!sketch || sketch.type !== 'sketch') continue;
             out.push({
-                sketchId,
-                profileId,
                 region_id: `profile:${sketchId}:${profileId}`
             });
         }
@@ -458,7 +456,9 @@ const toolbar = {
         return keys.map(key => {
             const edge = api.solids?.getEdgeByKey?.(key);
             if (!edge) return null;
-            const boundarySegmentId = String(key || '');
+            const edgeEntity = api.solids?.resolveCanonicalEdgeEntity?.(key) || null;
+            const boundarySegmentId = String(edgeEntity?.id || '');
+            if (!boundarySegmentId) return null;
             const path = Array.isArray(edge.pathWorld) && edge.pathWorld.length >= 2
                 ? edge.pathWorld.map(p => ({ x: Number(p.x || 0), y: Number(p.y || 0), z: Number(p.z || 0) }))
                 : null;
@@ -468,8 +468,8 @@ const toolbar = {
                 key,
                 boundary_segment_id: boundarySegmentId,
                 entity: {
-                    kind: 'boundary-segment',
-                    id: `segment:${boundarySegmentId}`
+                    kind: String(edgeEntity?.kind || 'boundary-segment'),
+                    id: boundarySegmentId
                 },
                 solidId: edge.solidId,
                 edgeIndex: edge.index,
@@ -614,7 +614,7 @@ const toolbar = {
             const mode = String(existing?.params?.mode || 'add');
             const targets = Array.isArray(existing?.input?.targets)
                 ? existing.input.targets.filter(Boolean)
-                : (Array.isArray(existing?.input?.solids) ? existing.input.solids.filter(Boolean) : []);
+                : [];
             const tools = Array.isArray(existing?.input?.tools) ? existing.input.tools.filter(Boolean) : [];
             const selected = mode === 'subtract' ? Array.from(new Set([...targets, ...tools])) : targets;
             tree.selectedSolidIds = new Set(selected);

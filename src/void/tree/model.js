@@ -726,8 +726,7 @@ function renderSolidsSection() {
                         const mode = String(currentFeature?.params?.mode || 'add');
                         const role = properties.getBooleanPickRole?.() || 'targets';
                         const input = currentFeature?.input || {};
-                        const legacy = Array.isArray(input.solids) ? input.solids.filter(Boolean) : [];
-                        const targets = Array.isArray(input.targets) ? input.targets.filter(Boolean) : legacy;
+                        const targets = Array.isArray(input.targets) ? input.targets.filter(Boolean) : [];
                         const tools = Array.isArray(input.tools) ? input.tools.filter(Boolean) : [];
                         let nextTargets = targets.slice();
                         let nextTools = tools.slice();
@@ -758,7 +757,6 @@ function renderSolidsSection() {
                             feature.input = feature.input || {};
                             feature.input.targets = nextTargets;
                             feature.input.tools = nextTools;
-                            delete feature.input.solids;
                         }, {
                             opType: 'feature.update',
                             payload: { field: 'boolean.inputs', targets: nextTargets, tools: nextTools }

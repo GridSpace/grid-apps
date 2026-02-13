@@ -9,7 +9,7 @@
 6. face key -> canonical `surface` id
 7. edge key -> canonical `boundary-segment` id
 8. loop edge key -> canonical `boundary` id
-9. Resolver now consumes these mappings (`resolveCanonicalFaceEntity`, `resolveCanonicalEdgeEntity`) with backward-compatible fallback IDs.
+9. Resolver now consumes these mappings (`resolveCanonicalFaceEntity`, `resolveCanonicalEdgeEntity`) as primary IDs.
 
 ## Resume Pointers
 1. Canonical mapping source:
@@ -20,16 +20,16 @@
 6. Canonical mapping consumer:
 7. `src/void/interact/selection_resolver.js`
 8. `resolvePrimarySurfaceHit()` entity assignment for face/edge candidates.
-9. Next refactor target:
-10. Remove remaining legacy synthetic key dependence in extrude/chamfer/property panel selection paths and pivot those to canonical ids first, with legacy only as migration fallback.
-11. Stability correction applied:
-12. Resolver now keeps legacy `entity.id` shape for active runtime compatibility.
-13. Canonical ids are attached as metadata (`entity.canonical_id`) but are not used as primary selection ids yet.
-14. Chamfer parser now rejects unresolved canonical `boundary:`/`segment:` ids to prevent accidental legacy mis-parse and solid corruption during edits.
-15. Boundary-hover correction applied:
-16. Face-edge resolution now prioritizes hovered-face boundary lookup before global solid edge intersections.
-17. Boundary extraction uses the same crease threshold as rendered edges (`SOLID_CREASE_ANGLE_DEG`) to reduce partial/extra loop mismatches.
-18. `getFaceEdgeHit()` now prefers closed-loop boundaries over open seam chains when both are near cursor.
+9. Canonical hard cutover completed:
+10. Extrude profile refs resolve via `region_id` only.
+11. Chamfer refs resolve via canonical `segment:*` / `boundary:*` ids only.
+12. `input.solids` compatibility branches removed from solid-op edit paths.
+13. Boundary-hover correction applied:
+14. Face-edge resolution now prioritizes hovered-face boundary lookup before global solid edge intersections.
+15. Boundary extraction uses the same crease threshold as rendered edges (`SOLID_CREASE_ANGLE_DEG`) to reduce partial/extra loop mismatches.
+16. `getFaceEdgeHit()` now prefers closed-loop boundaries over open seam chains when both are near cursor.
+17. Follow-up TODO:
+18. During sketch editing, `Use (u)` should derive from other visible sketch entities (not only solids).
 
 ## Target Architecture
 1. Adopt a single geometric graph centered on `surfaces` and `boundaries`, with solids as derived artifacts only.

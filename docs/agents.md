@@ -235,7 +235,7 @@ src/
     - face key -> `surface:*` (stable)
     - edge key -> `segment:*` (stable)
     - loop edge key -> `boundary:*` (stable)
-    - falls back to synthetic legacy ids when mapping is unavailable
+    - canonical ids are now primary for selection entity payloads
   - solids runtime now publishes a passive geometry snapshot into `document.geometry_store` on sync:
     - surfaces, boundaries, segments, points, regions, topology maps
     - still read-only; selection and ops remain on legacy paths for parity
@@ -244,14 +244,13 @@ src/
     - `source.entity.kind = boundary-segment`
     - `source.entity.id = segment:faceedge:<faceKey>:<segIndex>`
     - plus `source.face_key` and `source.boundary_segment_id` for migration bridging
-  - extrude profile targets now carry `region_id` (canonical key), with runtime/rebuild fallback support:
-    - selection toggle in `interact/planes.js` keys on `region_id` when present
-    - rebuild lookup resolves profile loops from `region_id` first, then legacy `sketchId/profileId`
-    - snapshot profile loop maps now include both canonical and legacy keys for compatibility
+  - extrude profile targets now use `region_id` (canonical key) only in selection + rebuild paths
   - chamfer edge refs now carry canonical boundary metadata:
     - `boundary_segment_id` and `entity: { kind: 'boundary-segment', id: 'segment:...' }`
-    - chamfer selection sync/remove resolves keys via canonical-or-legacy mapping
-    - chamfer apply can parse canonical boundary ids and falls back to legacy key/path mesh-edge strategies
+    - chamfer selection sync/remove resolves through canonical boundary refs
+    - chamfer apply consumes canonical refs (legacy parse path removed)
+  - boolean/solid-op editing paths removed `input.solids` compatibility branches (use `targets/tools` only)
+  - TODO (tracked): during sketch editing, allow `Use (u)` derive from other visible sketch entities
 
 **Phase 2: Sketch System (Current Workstream)**
 - planegcs constraint solver integration is active

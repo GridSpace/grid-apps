@@ -13,24 +13,17 @@ const PANEL_MIN_TOP = 60;
 
 function resolveExtrudeProfileRef(profile = {}) {
     const regionId = String(profile?.region_id || profile?.regionId || '');
-    let sketchId = profile?.sketchId || null;
-    let profileId = profile?.profileId || null;
     const match = regionId.match(/^(?:region:)?profile:([^:]+):([^:]+)$/);
-    if ((!sketchId || !profileId) && match) {
-        sketchId = sketchId || match[1];
-        profileId = profileId || match[2];
-    }
-    const key = regionId || ((sketchId && profileId) ? `${sketchId}:${profileId}` : null);
-    return { regionId: regionId || null, sketchId, profileId, key };
+    if (!match) return { regionId: null, sketchId: null, profileId: null, key: null };
+    const sketchId = match[1];
+    const profileId = match[2];
+    return { regionId, sketchId, profileId, key: regionId };
 }
 
 function resolveChamferEdgeRefKey(edge = {}) {
-    const bid = String(edge?.boundary_segment_id || '');
-    if (bid) return bid;
-    const entityId = String(edge?.entity?.id || '');
-    if (entityId.startsWith('segment:')) return entityId.substring('segment:'.length);
-    const key = String(edge?.key || '');
-    return key || null;
+    const ref = String(edge?.boundary_segment_id || edge?.entity?.id || '');
+    if (!ref) return null;
+    return api.solids?.getEdgeKeyForBoundaryRef?.(ref) || null;
 }
 
 const properties = {
@@ -647,8 +640,7 @@ const properties = {
                 item.params.mode = next;
                 item.input = item.input || {};
                 if (!Array.isArray(item.input.targets)) {
-                    const legacy = Array.isArray(item.input.solids) ? item.input.solids : [];
-                    item.input.targets = legacy.filter(Boolean);
+                    item.input.targets = [];
                 }
                 if (!Array.isArray(item.input.tools)) {
                     item.input.tools = [];
@@ -700,12 +692,10 @@ const properties = {
                     remove.onclick = () => {
                         const updated = api.features.update(feature.id, item => {
                             item.input = item.input || {};
-                            const legacy = Array.isArray(item.input.solids) ? item.input.solids : [];
-                            const currentTargets = Array.isArray(item.input.targets) ? item.input.targets : legacy;
+                            const currentTargets = Array.isArray(item.input.targets) ? item.input.targets : [];
                             const currentTools = Array.isArray(item.input.tools) ? item.input.tools : [];
                             item.input.targets = currentTargets.filter(id => id && !(sectionKey === 'targets' && id === solidId));
                             item.input.tools = currentTools.filter(id => id && !(sectionKey === 'tools' && id === solidId));
-                            delete item.input.solids;
                         }, {
                             opType: 'feature.update',
                             payload: { field: `${sectionKey}.remove`, solidId }
@@ -944,8 +934,7 @@ const properties = {
 
     getBooleanInput(feature) {
         const input = feature?.input || {};
-        const legacy = Array.isArray(input.solids) ? input.solids : [];
-        const targets = Array.isArray(input.targets) ? input.targets : legacy;
+        const targets = Array.isArray(input.targets) ? input.targets : [];
         const tools = Array.isArray(input.tools) ? input.tools : [];
         return {
             targets: targets.filter(Boolean),

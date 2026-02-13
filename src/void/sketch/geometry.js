@@ -294,8 +294,8 @@ function resolveDerivedEdgeCandidate(event, intersections, feature) {
     if (pwm?.visible && pm?.visible) pointHits.push({ kind: 'mid', local: best.midLocal, dist: Math.hypot(vp.x - pwm.x, vp.y - pwm.y) });
     pointHits.sort((l, r) => l.dist - r.dist);
     const pointThreshold = Math.min(
-        SKETCH_HIT_POINT_PX * 1.8,
-        Math.max(SKETCH_HIT_POINT_PX * 0.8, bestSegDist + 3)
+        SKETCH_HIT_POINT_PX * 1.1,
+        Math.max(SKETCH_HIT_POINT_PX * 0.5, bestSegDist + 1.5)
     );
     const hoverPoint = pointHits[0] && pointHits[0].dist <= pointThreshold ? pointHits[0] : null;
     const hoverWorld = hoverPoint

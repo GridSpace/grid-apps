@@ -65,13 +65,7 @@ function resolvePrimarySurfaceHit(intersections, options = {}) {
                     type: 'solid-face',
                     distance: Number(hit?.distance) || 0,
                     hit: solidFaceHit,
-                    // Keep legacy id shape for behavior parity; attach canonical id
-                    // as metadata during migration.
-                    entity: {
-                        kind: 'surface',
-                        id: `surface:${solidFaceHit.key}`,
-                        canonical_id: faceEntity?.id || null
-                    }
+                    entity: faceEntity || null
                 };
             }
         }
@@ -96,11 +90,7 @@ function resolvePrimarySurfaceHit(intersections, options = {}) {
                     ...edge,
                     intersection: nearestSolidFace.hit.intersection
                 },
-                entity: {
-                    kind: 'boundary-segment',
-                    id: `segment:${edge.key}`,
-                    canonical_id: (api?.solids?.resolveCanonicalEdgeEntity?.(edge.key) || null)?.id || null
-                }
+                entity: api?.solids?.resolveCanonicalEdgeEntity?.(edge.key) || null
             };
         }
     }
@@ -126,18 +116,14 @@ function resolvePrimarySurfaceHit(intersections, options = {}) {
                 nearestSolidEdge = {
                     type: 'solid-edge',
                     distance: Number(edgeHit?.intersection?.distance) || Math.max(0, (nearestSolidFace.distance || 0) - 1e-4),
-                    hit: {
-                        ...hitEdge,
-                        intersection: edgeHit.intersection || nearestSolidFace.hit.intersection
-                    },
-                    entity: {
-                        kind: 'boundary-segment',
-                        id: `segment:${hitEdge.key}`,
-                        canonical_id: (api?.solids?.resolveCanonicalEdgeEntity?.(hitEdge.key) || null)?.id || null
-                    }
-                };
-            }
+                hit: {
+                    ...hitEdge,
+                    intersection: edgeHit.intersection || nearestSolidFace.hit.intersection
+                },
+                entity: api?.solids?.resolveCanonicalEdgeEntity?.(hitEdge.key) || null
+            };
         }
+    }
     }
 
     if (editingExtrudeProfiles) {

@@ -432,8 +432,6 @@ function selectSketchProfile(hit, event) {
             : [];
         const regionId = `profile:${hit.featureId}:${hit.profileId}`;
         const profile = {
-            sketchId: hit.featureId,
-            profileId: hit.profileId,
             region_id: regionId
         };
         if (loops.length) {
@@ -442,10 +440,10 @@ function selectSketchProfile(hit, event) {
         const updated = api.features.update(currentFeature.id, feature => {
             feature.input = feature.input || {};
             const current = Array.isArray(feature.input.profiles) ? feature.input.profiles : [];
-            const key = String(profile?.region_id || `${profile.sketchId}:${profile.profileId}`);
-            const has = current.some(p => String(p?.region_id || `${p?.sketchId}:${p?.profileId}`) === key);
+            const key = String(profile?.region_id || '');
+            const has = current.some(p => String(p?.region_id || '') === key);
             const next = has
-                ? current.filter(p => String(p?.region_id || `${p?.sketchId}:${p?.profileId}`) !== key)
+                ? current.filter(p => String(p?.region_id || '') !== key)
                 : [...current, profile];
             feature.input.profiles = next;
         }, {
@@ -598,8 +596,7 @@ function selectSolidFace(hit, event) {
         const mode = String(currentFeature?.params?.mode || 'add');
         const role = properties.getBooleanPickRole?.() || 'targets';
         const input = currentFeature?.input || {};
-        const legacy = Array.isArray(input.solids) ? input.solids.filter(Boolean) : [];
-        let targets = Array.isArray(input.targets) ? input.targets.filter(Boolean) : legacy;
+        let targets = Array.isArray(input.targets) ? input.targets.filter(Boolean) : [];
         let tools = Array.isArray(input.tools) ? input.tools.filter(Boolean) : [];
         if (hitSolidId) {
             if (mode === 'subtract') {
@@ -631,7 +628,6 @@ function selectSolidFace(hit, event) {
             feature.input = feature.input || {};
             feature.input.targets = targets.slice();
             feature.input.tools = tools.slice();
-            delete feature.input.solids;
         }, {
             opType: 'feature.update',
             payload: { field: 'boolean.inputs', targets, tools }
@@ -668,6 +664,9 @@ function selectSolidEdge(hit, event) {
     if (editingChamfer) {
         const edge = api.solids?.getEdgeByKey?.(key);
         if (!edge) return;
+        const edgeEntity = api.solids?.resolveCanonicalEdgeEntity?.(key) || null;
+        const refId = String(edgeEntity?.id || '');
+        if (!refId) return;
         const path = Array.isArray(edge.pathWorld) && edge.pathWorld.length >= 2
             ? edge.pathWorld.map(p => ({ x: Number(p.x || 0), y: Number(p.y || 0), z: Number(p.z || 0) }))
             : null;
@@ -675,10 +674,10 @@ function selectSolidEdge(hit, event) {
         const b = edge.bWorld ? { x: Number(edge.bWorld.x || 0), y: Number(edge.bWorld.y || 0), z: Number(edge.bWorld.z || 0) } : null;
         const ref = {
             key,
-            boundary_segment_id: String(key || ''),
+            boundary_segment_id: refId,
             entity: {
-                kind: 'boundary-segment',
-                id: `segment:${String(key || '')}`
+                kind: String(edgeEntity?.kind || 'boundary-segment'),
+                id: refId
             },
             solidId: edge.solidId,
             edgeIndex: edge.index,
@@ -689,13 +688,16 @@ function selectSolidEdge(hit, event) {
             path
         };
         const existing = Array.isArray(currentFeature?.input?.edges) ? currentFeature.input.edges.slice() : [];
-        const has = existing.some(item => String(item?.key || '') === String(key));
+        const has = existing.some(item => String(item?.boundary_segment_id || item?.entity?.id || '') === refId);
         const edgeRefs = has
-            ? existing.filter(item => String(item?.key || '') !== String(key))
+            ? existing.filter(item => String(item?.boundary_segment_id || item?.entity?.id || '') !== refId)
             : [...existing, ref];
-        this.selectedSolidEdgeKeys = new Set(edgeRefs.map(item => String(item?.key || '')).filter(Boolean));
+        const selectedKeys = edgeRefs
+            .map(item => api.solids?.getEdgeKeyForBoundaryRef?.(item?.boundary_segment_id || item?.entity?.id || ''))
+            .filter(Boolean);
+        this.selectedSolidEdgeKeys = new Set(selectedKeys);
         this.hoveredSolidEdgeKey = key;
-        api.solids?.setSelectedEdges?.(Array.from(this.selectedSolidEdgeKeys));
+        api.solids?.setSelectedEdges?.(selectedKeys);
         api.solids?.setHoveredEdge?.(key);
         api.features.update(currentFeature.id, feature => {
             feature.input = feature.input || {};

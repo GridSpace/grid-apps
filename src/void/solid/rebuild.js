@@ -9,15 +9,11 @@ const CLIPPER_SCALE = 100000;
 
 function resolveProfileTargetRef(profileTarget = {}) {
     const regionId = String(profileTarget?.region_id || profileTarget?.regionId || '');
-    let sketchId = profileTarget?.sketchId || null;
-    let profileId = profileTarget?.profileId || null;
     const match = regionId.match(/^(?:region:)?profile:([^:]+):([^:]+)$/);
-    if ((!sketchId || !profileId) && match) {
-        sketchId = sketchId || match[1];
-        profileId = profileId || match[2];
-    }
-    const key = regionId || ((sketchId && profileId) ? `${sketchId}:${profileId}` : null);
-    return { regionId: regionId || null, sketchId, profileId, key };
+    if (!match) return { regionId: null, sketchId: null, profileId: null, key: null };
+    const sketchId = match[1];
+    const profileId = match[2];
+    return { regionId, sketchId, profileId, key: regionId };
 }
 
 function profileLoopsFromRuntime(api, profileTarget) {
@@ -39,7 +35,7 @@ function profileLoopsFromSnapshot(snapshot, profileTarget) {
     const { sketchId, profileId, key } = resolveProfileTargetRef(profileTarget);
     if (!key || !sketchId || !profileId) return null;
     const map = snapshot?.profileLoops || {};
-    const loops = map[key] || map[`${sketchId}:${profileId}`];
+    const loops = map[key];
     if (!Array.isArray(loops) || !loops.length) return null;
     return loops
         .filter(loop => Array.isArray(loop) && loop.length >= 3)
@@ -300,9 +296,8 @@ async function rebuildGeneratedSolidsFromSnapshot(snapshot, options = {}) {
                     let primaryTarget = null;
                     const contributingProfileKeys = [];
                     for (const entry of sketchPack.entries) {
-                        const { sketchId, profileId } = resolveProfileTargetRef(entry?.profileTarget || {});
-                        if (!sketchId || !profileId) continue;
-                        const key = `${sketchId}:${profileId}`;
+                        const { key } = resolveProfileTargetRef(entry?.profileTarget || {});
+                        if (!key) continue;
                         let contributes = false;
                         const loops = Array.isArray(entry?.profileLoops) ? entry.profileLoops : [];
                         for (const loop of loops) {
@@ -321,8 +316,8 @@ async function rebuildGeneratedSolidsFromSnapshot(snapshot, options = {}) {
                         primaryTarget = sketchPack.entries[0]?.profileTarget || null;
                     }
                     const primaryRef = resolveProfileTargetRef(primaryTarget || {});
-                    if (!contributingProfileKeys.length && primaryRef?.sketchId && primaryRef?.profileId) {
-                        contributingProfileKeys.push(`${primaryRef.sketchId}:${primaryRef.profileId}`);
+                    if (!contributingProfileKeys.length && primaryRef?.key) {
+                        contributingProfileKeys.push(primaryRef.key);
                     }
                     const body = {
                         id,
@@ -425,12 +420,9 @@ async function rebuildGeneratedSolidsFromSnapshot(snapshot, options = {}) {
 
         if (feature?.type === 'boolean') {
             const mode = String(feature?.params?.mode || 'add');
-            const legacyTargets = Array.isArray(feature?.input?.solids)
-                ? feature.input.solids.map(id => String(id || '')).filter(Boolean)
-                : [];
             const targets = Array.isArray(feature?.input?.targets)
                 ? feature.input.targets.map(id => String(id || '')).filter(Boolean)
-                : legacyTargets;
+                : [];
             const tools = Array.isArray(feature?.input?.tools)
                 ? feature.input.tools.map(id => String(id || '')).filter(Boolean)
                 : [];
@@ -540,11 +532,7 @@ async function rebuildGeneratedSolids(api, options = {}) {
             if (!sketchId || !profileId) continue;
             const loops = profileLoopsFromRuntime(api, profileTarget);
             if (!loops?.length) continue;
-            const legacyKey = `${sketchId}:${profileId}`;
-            profileLoops[legacyKey] = loops;
-            if (key && key !== legacyKey) {
-                profileLoops[key] = loops;
-            }
+            profileLoops[key] = loops;
         }
     }
     const { solids, meshCache } = await rebuildGeneratedSolidsFromSnapshot({

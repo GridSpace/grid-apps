@@ -219,8 +219,8 @@ function updateSketchInteractionVisuals() {
         previewLine: this.sketchLinePreview || externalLine,
         previewExternalWorldLine: showExternalLine
             ? {
-                a: external?.aWorld || null,
-                b: external?.bWorld || null,
+                a: external?.a || null,
+                b: external?.b || null,
                 forceHover: true
             }
             : null,

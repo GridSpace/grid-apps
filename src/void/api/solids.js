@@ -11,15 +11,11 @@ const SOLID_CREASE_ANGLE_DEG = 30;
 function createSolidsApi(getApi) {
     function resolveProfileTargetRef(profileTarget = {}) {
         const regionId = String(profileTarget?.region_id || profileTarget?.regionId || '');
-        let sketchId = profileTarget?.sketchId || null;
-        let profileId = profileTarget?.profileId || null;
         const match = regionId.match(/^(?:region:)?profile:([^:]+):([^:]+)$/);
-        if ((!sketchId || !profileId) && match) {
-            sketchId = sketchId || match[1];
-            profileId = profileId || match[2];
-        }
-        const key = regionId || ((sketchId && profileId) ? `${sketchId}:${profileId}` : null);
-        return { regionId: regionId || null, sketchId, profileId, key };
+        if (!match) return { regionId: null, sketchId: null, profileId: null, key: null };
+        const sketchId = match[1];
+        const profileId = match[2];
+        return { regionId, sketchId, profileId, key: regionId };
     }
 
     function frameToBasis(frame) {
@@ -88,11 +84,7 @@ function createSolidsApi(getApi) {
                 if (!sketchId || !profileId) continue;
                 const loops = profileLoopsFromRuntime(api, profileTarget);
                 if (!loops?.length) continue;
-                const legacyKey = `${sketchId}:${profileId}`;
-                profileLoops[legacyKey] = loops;
-                if (key && key !== legacyKey) {
-                    profileLoops[key] = loops;
-                }
+                profileLoops[key] = loops;
             }
         }
         return { builtFeatures, sketchPlanes, profileLoops };
@@ -556,6 +548,8 @@ function edgeKey(a, b) {
         _geomSurfaceIdByFaceKey: new Map(),
         _geomSegmentIdByEdgeKey: new Map(),
         _geomBoundaryIdByLoopKey: new Map(),
+        _edgeKeyByGeomSegmentId: new Map(),
+        _loopKeyByGeomBoundaryId: new Map(),
 
         async init() {
             await ensureKernel();
@@ -641,6 +635,8 @@ function edgeKey(a, b) {
             this._geomSurfaceIdByFaceKey = new Map();
             this._geomSegmentIdByEdgeKey = new Map();
             this._geomBoundaryIdByLoopKey = new Map();
+            this._edgeKeyByGeomSegmentId = new Map();
+            this._loopKeyByGeomBoundaryId = new Map();
             const surfaces = [];
             const boundaries = [];
             const segments = [];
@@ -716,6 +712,7 @@ function edgeKey(a, b) {
 
                         const boundaryId = `boundary:${faceKey}:${li}`;
                         this._geomBoundaryIdByLoopKey.set(`faceedgeloop:${solidId}:${faceId}:${li}`, boundaryId);
+                        this._loopKeyByGeomBoundaryId.set(boundaryId, `faceedgeloop:${solidId}:${faceId}:${li}`);
                         const boundarySegmentIds = [];
                         const stepCount = closed ? loopPoints.length : (loopPoints.length - 1);
                         for (let si = 0; si < stepCount; si++) {
@@ -742,6 +739,7 @@ function edgeKey(a, b) {
                                 }
                             });
                             this._geomSegmentIdByEdgeKey.set(`faceedge:${faceKey}:${Number(loop?.segmentIndices?.[si] ?? si)}`, segmentId);
+                            this._edgeKeyByGeomSegmentId.set(segmentId, `faceedge:${faceKey}:${Number(loop?.segmentIndices?.[si] ?? si)}`);
                             boundarySegmentIds.push(segmentId);
                             surfaceSegmentIds.push(segmentId);
                             topology.segment_to_surfaces[segmentId] = [surfaceId];
@@ -1487,6 +1485,24 @@ function edgeKey(a, b) {
                 return { kind: 'boundary-segment', id: segId };
             }
             return { kind: 'boundary-segment', id: `segment:${key}` };
+        },
+
+        getEdgeKeyForBoundaryRef(refId) {
+            const raw = String(refId || '');
+            if (!raw) return null;
+            if (raw.startsWith('faceedge:') || raw.startsWith('faceedgeloop:')) {
+                return raw;
+            }
+            if (raw.startsWith('segment:faceedge:') || raw.startsWith('segment:faceedgeloop:')) {
+                return raw.substring('segment:'.length);
+            }
+            if (raw.startsWith('segment:')) {
+                return this._edgeKeyByGeomSegmentId.get(raw) || null;
+            }
+            if (raw.startsWith('boundary:')) {
+                return this._loopKeyByGeomBoundaryId.get(raw) || null;
+            }
+            return null;
         },
 
         getFaceBoundarySegments(key) {
