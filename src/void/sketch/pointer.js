@@ -254,9 +254,15 @@ function handleSketchHover(event, intersections) {
 
     const hit = this.resolveSketchHit(event, intersections, feature);
     const hasIntersections = Array.isArray(intersections) && intersections.length > 0;
-    let derived = hasIntersections
-        ? this.resolveDerivedEdgeCandidate(event, intersections, feature)
-        : (this.hoveredDerivedCandidate || null);
+    const primary = hasIntersections
+        ? (this.getPrimarySurfaceHitFromIntersections?.(intersections) || null)
+        : null;
+    let derived = null;
+    if (hasIntersections && primary?.type === 'solid-edge') {
+        derived = this.resolveDerivedEdgeCandidate(event, intersections, feature);
+    } else if (!hasIntersections) {
+        derived = this.hoveredDerivedCandidate || null;
+    }
     if (hit?.id) {
         // Current sketch entities take priority over any behind-surface derive targets.
         derived = null;

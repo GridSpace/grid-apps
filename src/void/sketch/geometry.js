@@ -333,7 +333,10 @@ function resolveDerivedEdgeCandidate(event, intersections, feature) {
     const bestSegDist = this.distanceToSegmentPx(vp.x, vp.y, pwa?.x || 0, pwa?.y || 0, pwb?.x || 0, pwb?.y || 0);
     // Only treat as edge-hover when pointer is genuinely near the edge.
     // Otherwise keep face-hover path active so full boundary preview renders.
-    if (!Number.isFinite(bestSegDist) || bestSegDist > (SKETCH_HIT_LINE_PX * 1.25)) {
+    // Edge mode should only activate when genuinely near a boundary.
+    // Otherwise allow face mode to show the full boundary set.
+    const edgeHoverPx = Math.max(2.5, SKETCH_HIT_LINE_PX * 0.65);
+    if (!Number.isFinite(bestSegDist) || bestSegDist > edgeHoverPx) {
         return null;
     }
     const pointHits = [];
