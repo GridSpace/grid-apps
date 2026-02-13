@@ -227,6 +227,13 @@ src/
   - `src/void/interact/planes.js#getPrimarySurfaceHitFromIntersections()` is now a thin delegate to the resolver
   - current behavior is parity-focused (same thresholds and tie-break order), giving a stable seam for future boundary/surface entity routing
   - resolver now accepts explicit `mode` + `intents` context (`SELECTION_MODES`, `SELECTION_INTENTS`) while preserving current behavior
+  - resolver candidates now carry passive canonical entity descriptors:
+    - `profile -> region`
+    - `solid-face -> surface`
+    - `solid-edge -> boundary-segment`
+  - solids runtime now publishes a passive geometry snapshot into `document.geometry_store` on sync:
+    - surfaces, boundaries, segments, points, regions, topology maps
+    - still read-only; selection and ops remain on legacy paths for parity
 
 **Phase 2: Sketch System (Current Workstream)**
 - planegcs constraint solver integration is active

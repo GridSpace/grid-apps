@@ -80,6 +80,22 @@ function createGeometryStoreApi(getApi) {
             return state;
         },
 
+        applySolidSnapshot(doc, snapshot = {}) {
+            const state = this.attachToDocument(doc) || this.defaultState();
+            state.surfaces = Array.isArray(snapshot.surfaces) ? snapshot.surfaces : [];
+            state.boundaries = Array.isArray(snapshot.boundaries) ? snapshot.boundaries : [];
+            state.segments = Array.isArray(snapshot.segments) ? snapshot.segments : [];
+            state.points = Array.isArray(snapshot.points) ? snapshot.points : [];
+            state.regions = Array.isArray(snapshot.regions) ? snapshot.regions : [];
+            state.topology = snapshot.topology && typeof snapshot.topology === 'object'
+                ? snapshot.topology
+                : state.topology;
+            state.meta = state.meta || {};
+            state.meta.feature_count = Number(snapshot?.meta?.feature_count) || state.meta.feature_count || 0;
+            state.meta.generated_at = Date.now();
+            return state;
+        },
+
         setFeatureFlags(flags = {}) {
             this.flags.geomGraphV2 = !!flags.geomGraphV2;
         },

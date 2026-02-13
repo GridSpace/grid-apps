@@ -502,6 +502,14 @@ function edgeKey(a, b) {
         };
     }
 
+    function quantPointKey(v) {
+        const q = 1e6;
+        const x = Math.round(Number(v?.x || 0) * q);
+        const y = Math.round(Number(v?.y || 0) * q);
+        const z = Math.round(Number(v?.z || 0) * q);
+        return `${x}:${y}:${z}`;
+    }
+
     return {
         _rebuildTimer: null,
         _rebuilding: false,
@@ -607,6 +615,147 @@ function edgeKey(a, b) {
             return Array.isArray(api.document.current?.generated?.solids)
                 ? api.document.current.generated.solids
                 : [];
+        },
+
+        buildGeometryStoreSnapshot() {
+            const surfaces = [];
+            const boundaries = [];
+            const segments = [];
+            const points = [];
+            const regions = [];
+            const pointIdByKey = new Map();
+            const topology = {
+                surface_to_segments: {},
+                segment_to_surfaces: {}
+            };
+
+            const getPointId = (p, role = 'boundary-vertex') => {
+                const key = quantPointKey(p);
+                let pid = pointIdByKey.get(key);
+                if (!pid) {
+                    pid = `point:${pointIdByKey.size}`;
+                    pointIdByKey.set(key, pid);
+                    points.push({
+                        id: pid,
+                        x: Number(p?.x || 0),
+                        y: Number(p?.y || 0),
+                        z: Number(p?.z || 0),
+                        role
+                    });
+                }
+                return pid;
+            };
+
+            for (const [solidId, view] of this._meshViews.entries()) {
+                if (!view?.faceGroups?.size) continue;
+                for (const [faceId, meta] of view.faceGroups.entries()) {
+                    const faceKey = `${solidId}:${faceId}`;
+                    const surfaceId = `surface:${faceKey}`;
+                    const loops = this.getFaceBoundaryLoops(faceKey) || [];
+                    const normal = meta?.normal || {};
+                    const center = meta?.center || {};
+                    surfaces.push({
+                        id: surfaceId,
+                        solid_id: solidId,
+                        face_id: faceId,
+                        type: meta?.planar ? 'planar' : 'curved',
+                        center: {
+                            x: Number(center.x || 0),
+                            y: Number(center.y || 0),
+                            z: Number(center.z || 0)
+                        },
+                        normal: {
+                            x: Number(normal.x || 0),
+                            y: Number(normal.y || 0),
+                            z: Number(normal.z || 1)
+                        },
+                        source: {
+                            type: 'solid-face',
+                            face_key: faceKey
+                        }
+                    });
+
+                    const surfaceSegmentIds = [];
+                    for (let li = 0; li < loops.length; li++) {
+                        const loop = loops[li];
+                        let loopPoints = Array.isArray(loop?.points) ? loop.points.slice() : [];
+                        if (loopPoints.length < 2) continue;
+                        const closed = !!loop?.closed;
+                        if (closed && loopPoints.length >= 3) {
+                            const first = loopPoints[0];
+                            const last = loopPoints[loopPoints.length - 1];
+                            if (first && last && first.distanceToSquared?.(last) <= 1e-16) {
+                                loopPoints = loopPoints.slice(0, -1);
+                            }
+                        }
+                        if (loopPoints.length < 2) continue;
+
+                        const boundaryId = `boundary:${faceKey}:${li}`;
+                        const boundarySegmentIds = [];
+                        const stepCount = closed ? loopPoints.length : (loopPoints.length - 1);
+                        for (let si = 0; si < stepCount; si++) {
+                            const a = loopPoints[si];
+                            const b = loopPoints[(si + 1) % loopPoints.length];
+                            if (!a || !b) continue;
+                            if (a.distanceToSquared?.(b) <= 1e-16) continue;
+                            const segmentId = `segment:${faceKey}:${li}:${si}`;
+                            const aId = getPointId(a, 'boundary-vertex');
+                            const bId = getPointId(b, 'boundary-vertex');
+                            const mid = a.clone().add(b).multiplyScalar(0.5);
+                            const midId = getPointId(mid, 'boundary-midpoint');
+                            segments.push({
+                                id: segmentId,
+                                boundary_id: boundaryId,
+                                kind: 'line',
+                                a: { x: Number(a.x || 0), y: Number(a.y || 0), z: Number(a.z || 0) },
+                                b: { x: Number(b.x || 0), y: Number(b.y || 0), z: Number(b.z || 0) },
+                                mid: { x: Number(mid.x || 0), y: Number(mid.y || 0), z: Number(mid.z || 0) },
+                                point_ids: [aId, bId, midId],
+                                source: {
+                                    type: 'solid-edge',
+                                    edge_key: `faceedge:${faceKey}:${Number(loop?.segmentIndices?.[si] ?? si)}`
+                                }
+                            });
+                            boundarySegmentIds.push(segmentId);
+                            surfaceSegmentIds.push(segmentId);
+                            topology.segment_to_surfaces[segmentId] = [surfaceId];
+                        }
+                        boundaries.push({
+                            id: boundaryId,
+                            surface_id: surfaceId,
+                            segment_ids: boundarySegmentIds,
+                            closed,
+                            source: {
+                                type: 'solid-face-loop',
+                                face_key: faceKey,
+                                loop_index: li
+                            }
+                        });
+                        regions.push({
+                            id: `region:${faceKey}:${li}`,
+                            surface_id: surfaceId,
+                            boundary_ids: [boundaryId],
+                            source: {
+                                type: 'surface-loop-region',
+                                face_key: faceKey,
+                                loop_index: li
+                            }
+                        });
+                    }
+                    topology.surface_to_segments[surfaceId] = surfaceSegmentIds;
+                }
+            }
+            return {
+                surfaces,
+                boundaries,
+                segments,
+                points,
+                regions,
+                topology,
+                meta: {
+                    feature_count: Number(getApi()?.features?.list?.()?.length || 0)
+                }
+            };
         },
 
         getSolidDependencySignature(solidId) {
@@ -799,6 +948,12 @@ function edgeKey(a, b) {
             }
             this.syncFaceOverlays();
             this.syncEdgeOverlays();
+            const api = getApi();
+            const doc = api?.document?.current || null;
+            if (doc) {
+                const snapshot = this.buildGeometryStoreSnapshot();
+                api.geometryStore?.applySolidSnapshot?.(doc, snapshot);
+            }
         },
 
         getPickMeshes() {

@@ -49,7 +49,11 @@ function resolvePrimarySurfaceHit(intersections, options = {}) {
             nearestProfile = {
                 type: 'profile',
                 distance: Number(hit?.distance) || 0,
-                hit: { featureId, profileId, object: obj, intersection: hit }
+                hit: { featureId, profileId, object: obj, intersection: hit },
+                entity: {
+                    kind: 'region',
+                    id: `profile:${featureId}:${profileId}`
+                }
             };
         }
 
@@ -59,7 +63,11 @@ function resolvePrimarySurfaceHit(intersections, options = {}) {
                 nearestSolidFace = {
                     type: 'solid-face',
                     distance: Number(hit?.distance) || 0,
-                    hit: solidFaceHit
+                    hit: solidFaceHit,
+                    entity: {
+                        kind: 'surface',
+                        id: `surface:${solidFaceHit.key}`
+                    }
                 };
             }
         }
@@ -101,6 +109,10 @@ function resolvePrimarySurfaceHit(intersections, options = {}) {
                             hit: {
                                 ...hitEdge,
                                 intersection: edgeHit.intersection || nearestSolidFace.hit.intersection
+                            },
+                            entity: {
+                                kind: 'boundary-segment',
+                                id: `segment:${hitEdge.key}`
                             }
                         };
                     }
@@ -126,6 +138,10 @@ function resolvePrimarySurfaceHit(intersections, options = {}) {
                     hit: {
                         ...edge,
                         intersection: nearestSolidFace.hit.intersection
+                    },
+                    entity: {
+                        kind: 'boundary-segment',
+                        id: `segment:${edge.key}`
                     }
                 };
             }
