@@ -434,7 +434,11 @@ function useHoveredDerivedEdge() {
     const selectedFaces = Array.from(this.selectedSolidFaceKeys || []);
     const hovered = this.hoveredDerivedCandidate || null;
     if (!selectedEdges.length && !selectedPoints.length && !selectedFaces.length) {
-        if (hovered?.aLocal && hovered?.bLocal) {
+        // Prefer hovered face derive over implicit edge derive when nothing is
+        // explicitly selected. This keeps `u` on face interiors intuitive.
+        if (this.hoveredSolidFaceKey) {
+            selectedFaces.push(this.hoveredSolidFaceKey);
+        } else if (hovered?.aLocal && hovered?.bLocal) {
             if (hovered?.hoverPoint?.local && (hovered?.hoverPoint?.kind === 'a' || hovered?.hoverPoint?.kind === 'b' || hovered?.hoverPoint?.kind === 'mid')) {
                 selectedPoints.push({
                     type: 'point',
@@ -449,8 +453,6 @@ function useHoveredDerivedEdge() {
                     source: hovered.source || null
                 });
             }
-        } else if (this.hoveredSolidFaceKey) {
-            selectedFaces.push(this.hoveredSolidFaceKey);
         }
     }
     const created = this.deriveSelectionsAtomic(feature, {

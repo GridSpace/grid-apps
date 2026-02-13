@@ -239,7 +239,9 @@ function resolveDerivedEdgeCandidate(event, intersections, feature) {
         const world = this.sketchLocalToWorld(local, basis);
         return api.overlay.project3Dto2D(world);
     };
-    const maxSegDist = Math.max(14, SKETCH_HIT_LINE_PX * 2.5);
+    // Keep edge-candidate pickup tight to boundary proximity.
+    // If this is too large, face-hover degrades into accidental edge-hover.
+    const maxSegDist = Math.max(6, SKETCH_HIT_LINE_PX * 0.9);
     const boundary = api.solids?.getFaceBoundarySegments?.(faceKey) || [];
     let best = null;
     let bestSegDist = Infinity;
