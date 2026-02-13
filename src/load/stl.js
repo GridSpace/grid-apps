@@ -13,14 +13,26 @@ const { Vector3, computeFaceNormal } = THREE;
  * @returns {Uint8Array} binary STL data
  */
 export function encode(recs, header = '') {
-    // Calculate total vertices
-    let vtot = 0;
-    for (let rec of recs) {
-        vtot += (rec.varr.length / 3);
+    // Calculate total triangles with strict validation.
+    let triCount = 0;
+    for (let rec of recs || []) {
+        const varr = rec?.varr;
+        const len = Number(varr?.length || 0);
+        if (!Number.isFinite(len) || len <= 0) continue;
+        if (len % 9 !== 0) {
+            // Ignore malformed record instead of corrupting output sizing.
+            continue;
+        }
+        triCount += Math.floor(len / 9);
+    }
+
+    const byteLen = 84 + triCount * 50;
+    if (!Number.isFinite(byteLen) || byteLen <= 84 || byteLen > 0x7fffffff) {
+        throw new RangeError(`invalid STL byte length: ${byteLen}`);
     }
 
     // Create STL buffer: 80 byte header + 4 byte count + (50 bytes per triangle)
-    let stl = new Uint8Array(80 + 4 + vtot/3 * 50);
+    let stl = new Uint8Array(byteLen);
     let dat = new DataView(stl.buffer);
     let pos = 84;
 
@@ -32,11 +44,12 @@ export function encode(recs, header = '') {
     }
 
     // Write triangle count at byte 80
-    dat.setInt32(80, vtot/3, true);
+    dat.setUint32(80, triCount, true);
 
     // Write triangles
     for (let rec of recs) {
         let { varr } = rec;
+        if (!varr || (varr.length % 9) !== 0) continue;
         for (let i = 0, l = varr.length; i < l;) {
             // Read three vertices
             let p0 = new Vector3(varr[i++], varr[i++], varr[i++]);
@@ -70,6 +83,97 @@ export function encode(recs, header = '') {
     }
 
     return stl;
+}
+
+/**
+ * Encode STL as chunked Blob to avoid large contiguous TypedArray allocation.
+ * Useful when JS heap is fragmented or under pressure.
+ * @param {Array} recs
+ * @param {String} header
+ * @param {Number} trisPerChunk
+ * @returns {Blob}
+ */
+export function encodeBlob(recs, header = '', trisPerChunk = 4096) {
+    let triCount = 0;
+    for (let rec of recs || []) {
+        const len = Number(rec?.varr?.length || 0);
+        if (!Number.isFinite(len) || len <= 0 || (len % 9) !== 0) continue;
+        triCount += Math.floor(len / 9);
+    }
+    const parts = [];
+    const head = new Uint8Array(84);
+    const headView = new DataView(head.buffer);
+    if (header) {
+        header.substring(0, 80).split('').forEach((c, i) => {
+            headView.setUint8(i, c.charCodeAt(0));
+        });
+    }
+    headView.setUint32(80, triCount, true);
+    parts.push(head);
+
+    const maxTris = Math.max(1, Math.floor(Number(trisPerChunk) || 4096));
+    const p0 = new Vector3();
+    const p1 = new Vector3();
+    const p2 = new Vector3();
+    for (let rec of recs || []) {
+        const varr = rec?.varr;
+        if (!varr || (varr.length % 9) !== 0) continue;
+        let i = 0;
+        while (i < varr.length) {
+            const tris = Math.min(maxTris, Math.floor((varr.length - i) / 9));
+            const buf = new Uint8Array(tris * 50);
+            const dat = new DataView(buf.buffer);
+            let pos = 0;
+            for (let t = 0; t < tris; t++) {
+                p0.set(varr[i++], varr[i++], varr[i++]);
+                p1.set(varr[i++], varr[i++], varr[i++]);
+                p2.set(varr[i++], varr[i++], varr[i++]);
+                const norm = computeFaceNormal(p0, p1, p2);
+                dat.setFloat32(pos +  0, norm.x, true);
+                dat.setFloat32(pos +  4, norm.y, true);
+                dat.setFloat32(pos +  8, norm.z, true);
+                dat.setFloat32(pos + 12, p0.x, true);
+                dat.setFloat32(pos + 16, p0.y, true);
+                dat.setFloat32(pos + 20, p0.z, true);
+                dat.setFloat32(pos + 24, p1.x, true);
+                dat.setFloat32(pos + 28, p1.y, true);
+                dat.setFloat32(pos + 32, p1.z, true);
+                dat.setFloat32(pos + 36, p2.x, true);
+                dat.setFloat32(pos + 40, p2.y, true);
+                dat.setFloat32(pos + 44, p2.z, true);
+                dat.setUint16(pos + 48, 0, true);
+                pos += 50;
+            }
+            parts.push(buf);
+        }
+    }
+    return new Blob(parts, { type: 'application/sla' });
+}
+
+export function encodeASCII(recs, name = 'solid') {
+    const out = [`solid ${String(name || 'solid').replace(/\s+/g, '_')}`];
+    const p0 = new Vector3();
+    const p1 = new Vector3();
+    const p2 = new Vector3();
+    for (const rec of recs || []) {
+        const varr = rec?.varr;
+        if (!varr || (varr.length % 9) !== 0) continue;
+        for (let i = 0; i < varr.length;) {
+            p0.set(varr[i++], varr[i++], varr[i++]);
+            p1.set(varr[i++], varr[i++], varr[i++]);
+            p2.set(varr[i++], varr[i++], varr[i++]);
+            const n = computeFaceNormal(p0, p1, p2);
+            out.push(`facet normal ${n.x} ${n.y} ${n.z}`);
+            out.push('  outer loop');
+            out.push(`    vertex ${p0.x} ${p0.y} ${p0.z}`);
+            out.push(`    vertex ${p1.x} ${p1.y} ${p1.z}`);
+            out.push(`    vertex ${p2.x} ${p2.y} ${p2.z}`);
+            out.push('  endloop');
+            out.push('endfacet');
+        }
+    }
+    out.push(`endsolid ${String(name || 'solid').replace(/\s+/g, '_')}`);
+    return out.join('\n');
 }
 
 export class STL {
