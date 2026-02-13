@@ -46,6 +46,7 @@ function createDocumentApi(getApi, cfg) {
                 generated: {
                     solids: []
                 },
+                geometry_store: api.geometryStore?.defaultState?.() || null,
                 scene: {
                     datum: api.datum.defaultState(),
                     origin: api.origin.defaultState()
@@ -113,6 +114,17 @@ function createDocumentApi(getApi, cfg) {
                 doc.generated.solids = [];
                 changed = true;
             }
+            if (!doc.geometry_store) {
+                doc.geometry_store = api.geometryStore?.defaultState?.() || null;
+                changed = true;
+            }
+            if (api.geometryStore?.normalize) {
+                const normalized = api.geometryStore.normalize(doc.geometry_store);
+                if (JSON.stringify(normalized) !== JSON.stringify(doc.geometry_store)) {
+                    doc.geometry_store = normalized;
+                    changed = true;
+                }
+            }
             if (!doc.scene) {
                 doc.scene = {};
                 changed = true;
@@ -157,6 +169,7 @@ function createDocumentApi(getApi, cfg) {
         hydrateRuntimeState(doc) {
             const api = getApi();
             if (!doc) return;
+            api.geometryStore?.hydrate?.(doc);
             const scene = doc.scene || {};
             const datumState = scene.datum || api.datum.defaultState();
             const originState = scene.origin || api.origin.defaultState();
@@ -251,6 +264,7 @@ function createDocumentApi(getApi, cfg) {
                 if (doc) {
                     const migrated = this.migrate(doc);
                     this.current = migrated.doc;
+                    api.geometryStore?.attachToDocument?.(this.current);
                     this.current.name = this.normalizeName(this.current.name);
                     this._redoStack = [];
                     this.hydrateRuntimeState(this.current);
@@ -395,6 +409,7 @@ function createDocumentApi(getApi, cfg) {
             } : null;
             const migrated = this.migrate(JSON.parse(JSON.stringify(revision.snapshot)));
             this.current = migrated.doc;
+            api.geometryStore?.attachToDocument?.(this.current);
             if (previousAtomicEdit && previousDocId && previousDocId === this.current?.id) {
                 const featureId = previousAtomicEdit.feature_id || null;
                 const hasFeature = featureId && Array.isArray(this.current?.features)

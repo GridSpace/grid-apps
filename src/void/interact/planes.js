@@ -4,6 +4,7 @@ import { THREE } from '../../ext/three.js';
 import { space } from '../../moto/space.js';
 import { api } from '../api.js';
 import { properties } from '../properties.js';
+import { resolveSelectionCandidate, SELECTION_INTENTS, SELECTION_MODES } from './selection_resolver.js';
 
 function isEditingExtrudeProfiles() {
     const currentFeatureId = properties.currentFeatureId || null;
@@ -395,124 +396,27 @@ function getSketchProfileHitFromIntersections(intersections) {
 }
 
 function getPrimarySurfaceHitFromIntersections(intersections) {
-    if (!Array.isArray(intersections)) return null;
+    const sketchEditing = !!(this.isSketchEditing && this.isSketchEditing());
     const retargetMode = !!(this.isSketchRetargetMode && this.isSketchRetargetMode());
     const editingExtrudeProfiles = isEditingExtrudeProfiles();
-    const SKETCH_FACE_EPSILON = 0.25;
-    let nearestProfile = null;
-    let nearestSolidFace = null;
-    for (const hit of intersections) {
-        const obj = hit?.object;
-        if (!obj) continue;
-        const profileId = obj.userData?.sketchProfileId || null;
-        const featureId = obj.userData?.sketchFeatureId || null;
-        if (!retargetMode && !nearestProfile && profileId && featureId) {
-            nearestProfile = {
-                type: 'profile',
-                distance: Number(hit?.distance) || 0,
-                hit: { featureId, profileId, object: obj, intersection: hit }
-            };
-        }
-        if (!nearestSolidFace) {
-            const solidFaceHit = api.solids?.getFaceHitFromIntersections?.([hit]);
-            if (solidFaceHit) {
-                nearestSolidFace = {
-                    type: 'solid-face',
-                    distance: Number(hit?.distance) || 0,
-                    hit: solidFaceHit
-                };
-            }
-        }
-    }
-    let nearestSolidEdge = null;
-    if (nearestSolidFace?.hit?.solidId) {
-        // First preference: real render-edge intersections on the same solid.
-        // This matches what is actually drawn (e.g. cylinder cap circles).
-        const sameSolidEdgeInts = intersections.filter(hit => {
-            const obj = hit?.object;
-            return obj?.userData?.solidEdge === true
-                && String(obj?.userData?.solidId || '') === String(nearestSolidFace.hit.solidId || '');
-        });
-        if (sameSolidEdgeInts.length) {
-            const edgeHit = api.solids?.getEdgeHitFromIntersections?.(sameSolidEdgeInts) || null;
-            if (edgeHit?.aWorld && edgeHit?.bWorld) {
-                const facePoint = nearestSolidFace?.hit?.intersection?.point || null;
-                const line = facePoint ? new THREE.Line3(edgeHit.aWorld, edgeHit.bWorld) : null;
-                const near = line ? new THREE.Vector3() : null;
-                if (line && near) {
-                    line.closestPointToPoint(facePoint, true, near);
-                    const worldDist = near.distanceTo(facePoint);
-                    // Gate edge picks to local neighborhood of the currently hovered face.
-                    if (worldDist <= 2.5) {
-                        const faceEdge = api.solids?.getFaceEdgeHit?.(nearestSolidFace.hit.key, near, 2.5) || null;
-                        const hitEdge = faceEdge || {
-                            key: `${edgeHit.solidId}:${edgeHit.index}`,
-                            solidId: edgeHit.solidId,
-                            index: edgeHit.index,
-                            aWorld: edgeHit.aWorld,
-                            bWorld: edgeHit.bWorld,
-                            midWorld: edgeHit.midWorld
-                        };
-                        nearestSolidEdge = {
-                            type: 'solid-edge',
-                            distance: Number(edgeHit?.intersection?.distance) || Math.max(0, (nearestSolidFace.distance || 0) - 1e-4),
-                            hit: {
-                                ...hitEdge,
-                                intersection: edgeHit.intersection || nearestSolidFace.hit.intersection
-                            }
-                        };
-                    }
-                }
-            }
-        }
-    }
-    if (!nearestSolidEdge && nearestSolidFace?.hit?.key && nearestSolidFace?.hit?.intersection?.point) {
-        // Boundary fallback for planar faces (non-planar boundaries can contain seam artifacts).
-        const faceMeta = api.solids?.getFaceByKey?.(nearestSolidFace.hit.key)?.meta || null;
-        if (faceMeta?.planar) {
-            const edge = api.solids?.getFaceEdgeHit?.(nearestSolidFace.hit.key, nearestSolidFace.hit.intersection.point, 2.5);
-            if (edge) {
-                nearestSolidEdge = {
-                    type: 'solid-edge',
-                    // Slightly prefer edge over owning face when near boundary.
-                    distance: Math.max(0, (nearestSolidFace.distance || 0) - 1e-4),
-                    hit: {
-                        ...edge,
-                        intersection: nearestSolidFace.hit.intersection
-                    }
-                };
-            }
-        }
-    }
-    if (editingExtrudeProfiles) {
-        return nearestProfile || null;
-    }
-    if (nearestProfile && nearestSolidEdge && nearestSolidFace) {
-        const nearest = [nearestProfile, nearestSolidEdge, nearestSolidFace]
-            .sort((a, b) => a.distance - b.distance)[0];
-        return nearest;
-    }
-    if (nearestProfile && nearestSolidEdge) {
-        const delta = nearestProfile.distance - nearestSolidEdge.distance;
-        if (delta <= SKETCH_FACE_EPSILON) return nearestProfile;
-        return nearestSolidEdge;
-    }
-    if (nearestProfile && nearestSolidFace) {
-        const delta = nearestProfile.distance - nearestSolidFace.distance;
-        if (delta <= SKETCH_FACE_EPSILON) {
-            return nearestProfile;
-        }
-        return nearestSolidFace;
-    }
-    if (nearestSolidEdge && nearestSolidFace) {
-        return nearestSolidEdge.distance <= nearestSolidFace.distance + SKETCH_FACE_EPSILON
-            ? nearestSolidEdge
-            : nearestSolidFace;
-    }
-    if (nearestProfile) return nearestProfile;
-    if (nearestSolidEdge) return nearestSolidEdge;
-    if (nearestSolidFace) return nearestSolidFace;
-    return null;
+    const mode = editingExtrudeProfiles
+        ? SELECTION_MODES.extrudeProfiles
+        : (sketchEditing
+            ? (retargetMode ? SELECTION_MODES.sketchRetarget : SELECTION_MODES.sketch)
+            : SELECTION_MODES.solid);
+    return resolveSelectionCandidate(intersections, {
+        api,
+        mode,
+        intents: [
+            SELECTION_INTENTS.profile,
+            SELECTION_INTENTS.solidEdge,
+            SELECTION_INTENTS.solidFace
+        ],
+        retargetMode,
+        editingExtrudeProfiles,
+        sketchFaceEpsilon: 0.25,
+        edgeGateDistance: 2.5
+    });
 }
 
 function selectSketchProfile(hit, event) {

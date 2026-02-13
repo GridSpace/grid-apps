@@ -10,6 +10,7 @@ import { createSketchApi } from './sketch/api.js';
 import { createSketchRuntimeApi } from './sketch/runtime.js';
 import { createDocumentApi } from './api/document.js';
 import { createSolidsApi } from './api/solids.js';
+import { createGeometryStoreApi } from './api/geometry_store.js';
 
 const DOC_SCHEMA_VERSION = 1;
 const ADMIN_CURRENT_DOC_KEY = 'current_doc_id';
@@ -59,6 +60,7 @@ const api = {
     sketchRuntime: null,
     features: null,
     solids: null,
+    geometryStore: null,
 
     // Selection management
     selection: {
@@ -104,5 +106,6 @@ api.document = createDocumentApi(() => api, {
     revString
 });
 api.solids = createSolidsApi(() => api);
+api.geometryStore = createGeometryStoreApi(() => api);
 
 export { api };

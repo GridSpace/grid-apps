@@ -1060,7 +1060,8 @@ const toolbar = {
             edgeHoverLineWidth: 2.5,
             edgeSelectedLineWidth: 3.25,
             fitPaddingPerspective: 0.5,
-            fitPaddingOrthographic: 0.9
+            fitPaddingOrthographic: 0.9,
+            geomGraphV2Enabled: false
         };
     },
 
@@ -1071,7 +1072,8 @@ const toolbar = {
             edgeHoverLineWidth: Math.max(0.5, Number(raw.edgeHoverLineWidth ?? d.edgeHoverLineWidth) || d.edgeHoverLineWidth),
             edgeSelectedLineWidth: Math.max(0.5, Number(raw.edgeSelectedLineWidth ?? d.edgeSelectedLineWidth) || d.edgeSelectedLineWidth),
             fitPaddingPerspective: Math.max(0.01, Number(raw.fitPaddingPerspective ?? d.fitPaddingPerspective) || d.fitPaddingPerspective),
-            fitPaddingOrthographic: Math.max(0.01, Number(raw.fitPaddingOrthographic ?? d.fitPaddingOrthographic) || d.fitPaddingOrthographic)
+            fitPaddingOrthographic: Math.max(0.01, Number(raw.fitPaddingOrthographic ?? d.fitPaddingOrthographic) || d.fitPaddingOrthographic),
+            geomGraphV2Enabled: !!(raw.geomGraphV2Enabled ?? d.geomGraphV2Enabled)
         };
     },
 
@@ -1115,6 +1117,9 @@ const toolbar = {
             perspective: prefs.fitPaddingPerspective,
             orthographic: prefs.fitPaddingOrthographic
         });
+        api.geometryStore?.setFeatureFlags?.({
+            geomGraphV2: prefs.geomGraphV2Enabled
+        });
         if (options.updateFields !== false) {
             this.syncPreferencesFields();
         }
@@ -1131,6 +1136,7 @@ const toolbar = {
         if (inputs.edgeSelectedLineWidth) inputs.edgeSelectedLineWidth.value = String(prefs.edgeSelectedLineWidth);
         if (inputs.fitPaddingPerspective) inputs.fitPaddingPerspective.value = String(prefs.fitPaddingPerspective);
         if (inputs.fitPaddingOrthographic) inputs.fitPaddingOrthographic.value = String(prefs.fitPaddingOrthographic);
+        if (inputs.geomGraphV2Enabled) inputs.geomGraphV2Enabled.checked = !!prefs.geomGraphV2Enabled;
     },
 
     buildPreferencesDialog() {
@@ -1171,6 +1177,28 @@ const toolbar = {
             this.preferencesInputs = this.preferencesInputs || {};
             this.preferencesInputs[key] = input;
         };
+        const makeToggleRow = (label, key, help = '') => {
+            const row = document.createElement('div');
+            row.className = 'doc-dialog-row prefs-row';
+            const name = document.createElement('div');
+            name.className = 'doc-dialog-name';
+            name.textContent = label;
+            if (help) {
+                name.title = help;
+                row.title = help;
+            }
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.className = 'prefs-input prefs-toggle';
+            if (help) {
+                input.title = help;
+            }
+            row.appendChild(name);
+            row.appendChild(input);
+            list.appendChild(row);
+            this.preferencesInputs = this.preferencesInputs || {};
+            this.preferencesInputs[key] = input;
+        };
 
         makeNumberRow(
             'Edge Loop Promotion Segments',
@@ -1202,6 +1230,11 @@ const toolbar = {
             '0.01',
             'Extra margin used by Fit view in orthographic mode. Tune this separately from perspective for CAD-like framing.'
         );
+        makeToggleRow(
+            'Geometry Graph V2',
+            'geomGraphV2Enabled',
+            'Enables phase rollout for surfaces/boundaries-based selection and topology. Default off while implementation is in progress.'
+        );
 
         const actions = document.createElement('div');
         actions.className = 'doc-dialog-actions';
@@ -1215,7 +1248,8 @@ const toolbar = {
                 edgeHoverLineWidth: Number(this.preferencesInputs?.edgeHoverLineWidth?.value),
                 edgeSelectedLineWidth: Number(this.preferencesInputs?.edgeSelectedLineWidth?.value),
                 fitPaddingPerspective: Number(this.preferencesInputs?.fitPaddingPerspective?.value),
-                fitPaddingOrthographic: Number(this.preferencesInputs?.fitPaddingOrthographic?.value)
+                fitPaddingOrthographic: Number(this.preferencesInputs?.fitPaddingOrthographic?.value),
+                geomGraphV2Enabled: !!this.preferencesInputs?.geomGraphV2Enabled?.checked
             }, { persist: true, updateFields: true });
         });
         applyBtn.classList.add('compact');

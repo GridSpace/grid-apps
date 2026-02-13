@@ -222,6 +222,11 @@ src/
 - Phase 0 scaffolding status:
   - new `GeometryStore` API is wired in parallel (no behavior change yet)
   - feature-flag rollout key is `void.geomGraphV2` (stored in preferences/admin)
+- Phase 1 in-progress status:
+  - surface/profile/edge hover ranking logic has been extracted into `src/void/interact/selection_resolver.js`
+  - `src/void/interact/planes.js#getPrimarySurfaceHitFromIntersections()` is now a thin delegate to the resolver
+  - current behavior is parity-focused (same thresholds and tie-break order), giving a stable seam for future boundary/surface entity routing
+  - resolver now accepts explicit `mode` + `intents` context (`SELECTION_MODES`, `SELECTION_INTENTS`) while preserving current behavior
 
 **Phase 2: Sketch System (Current Workstream)**
 - planegcs constraint solver integration is active

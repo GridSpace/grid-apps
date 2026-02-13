@@ -282,8 +282,10 @@ async function init() {
 
     // Restore last active document, or seed a new blank one.
     await api.document.restoreOrCreate();
+    api.geometryStore?.seedFromDocument?.(api.document.current);
     api.sketchRuntime.sync();
     await api.solids.rebuild('startup');
+    api.geometryStore?.seedFromDocument?.(api.document.current);
     toolbar.updateDocumentTitle();
     tree.render();
 
