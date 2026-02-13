@@ -425,23 +425,61 @@ function getPrimarySurfaceHitFromIntersections(intersections) {
         }
     }
     let nearestSolidEdge = null;
-    if (nearestSolidFace?.hit?.key && nearestSolidFace?.hit?.intersection?.point) {
-        const edge = api.solids?.getFaceEdgeHit?.(nearestSolidFace.hit.key, nearestSolidFace.hit.intersection.point, 2.5);
-        if (edge) {
-            nearestSolidEdge = {
-                type: 'solid-edge',
-                // Slightly prefer edge over owning face when near boundary.
-                distance: Math.max(0, (nearestSolidFace.distance || 0) - 1e-4),
-                hit: {
-                    ...edge,
-                    intersection: nearestSolidFace.hit.intersection
+    if (nearestSolidFace?.hit?.solidId) {
+        // First preference: real render-edge intersections on the same solid.
+        // This matches what is actually drawn (e.g. cylinder cap circles).
+        const sameSolidEdgeInts = intersections.filter(hit => {
+            const obj = hit?.object;
+            return obj?.userData?.solidEdge === true
+                && String(obj?.userData?.solidId || '') === String(nearestSolidFace.hit.solidId || '');
+        });
+        if (sameSolidEdgeInts.length) {
+            const edgeHit = api.solids?.getEdgeHitFromIntersections?.(sameSolidEdgeInts) || null;
+            if (edgeHit?.aWorld && edgeHit?.bWorld) {
+                const facePoint = nearestSolidFace?.hit?.intersection?.point || null;
+                const line = facePoint ? new THREE.Line3(edgeHit.aWorld, edgeHit.bWorld) : null;
+                const near = line ? new THREE.Vector3() : null;
+                if (line && near) {
+                    line.closestPointToPoint(facePoint, true, near);
+                    const worldDist = near.distanceTo(facePoint);
+                    // Gate edge picks to local neighborhood of the currently hovered face.
+                    if (worldDist <= 2.5) {
+                        nearestSolidEdge = {
+                            type: 'solid-edge',
+                            distance: Number(edgeHit?.intersection?.distance) || Math.max(0, (nearestSolidFace.distance || 0) - 1e-4),
+                            hit: {
+                                key: `${edgeHit.solidId}:${edgeHit.index}`,
+                                solidId: edgeHit.solidId,
+                                index: edgeHit.index,
+                                aWorld: edgeHit.aWorld,
+                                bWorld: edgeHit.bWorld,
+                                midWorld: edgeHit.midWorld,
+                                intersection: edgeHit.intersection || nearestSolidFace.hit.intersection
+                            }
+                        };
+                    }
                 }
-            };
+            }
         }
     }
-    // Do not fall back to raw global edge hits. That path can select far/occluded
-    // edges when the cursor leaves the body silhouette. Boundary edge selection
-    // should always be anchored to the currently hit face.
+    if (!nearestSolidEdge && nearestSolidFace?.hit?.key && nearestSolidFace?.hit?.intersection?.point) {
+        // Boundary fallback for planar faces (non-planar boundaries can contain seam artifacts).
+        const faceMeta = api.solids?.getFaceByKey?.(nearestSolidFace.hit.key)?.meta || null;
+        if (faceMeta?.planar) {
+            const edge = api.solids?.getFaceEdgeHit?.(nearestSolidFace.hit.key, nearestSolidFace.hit.intersection.point, 2.5);
+            if (edge) {
+                nearestSolidEdge = {
+                    type: 'solid-edge',
+                    // Slightly prefer edge over owning face when near boundary.
+                    distance: Math.max(0, (nearestSolidFace.distance || 0) - 1e-4),
+                    hit: {
+                        ...edge,
+                        intersection: nearestSolidFace.hit.intersection
+                    }
+                };
+            }
+        }
+    }
     if (editingExtrudeProfiles) {
         return nearestProfile || null;
     }
