@@ -115,8 +115,8 @@ function makeTriPrismMesh(a0, a1, a2, b0, b1, b2) {
         b2.x, b2.y, b2.z
     ]);
     const indices = new Uint32Array([
-        0, 1, 2,
-        3, 5, 4,
+        0, 2, 1,
+        3, 4, 5,
         0, 1, 4,
         0, 4, 3,
         1, 2, 5,
@@ -213,8 +213,11 @@ function buildCutterFromResolvedEdge(meshInfo, va, vb, tris, distance) {
     const spineA = add(a, mul(e, -ext));
     const spineB = add(b, mul(e, ext));
     let out = mul(add(i1, i2), -1);
-    if (length(out) <= 1e-8) out = mul(i1, -1);
-    else out = normalize(out);
+    if (length(out) <= 1e-8) {
+        out = mul(i1, -1);
+    } else {
+        out = normalize(out);
+    }
     const insideScale = distance * 1.8;
     const outsideScale = distance * 0.7;
     const a0 = add(spineA, mul(out, outsideScale));

@@ -298,6 +298,7 @@ src/
   - This is required for future derived geometry from non-datum faces/parts
   - When rendering world-space derived previews inside sketch runtime, convert world coords to parent-local before drawing (avoid double-transform rotation/offset artifacts)
   - For solid feature ops that derive cutters from selected edges (ex: chamfer), preserve mesh-topology edges (`indices` adjacency) instead of position-welding vertices for adjacency lookup. Position welding can pair non-adjacent triangles and rotate/offset generated cutters.
+  - Chamfer cutter prism winding matters: keep end-cap triangle winding outward/consistent with side faces. Reversed cap winding can make Manifold subtraction fail (`NotManifold`) even when cutter placement is correct.
 - Constraint rollout (checkpoint):
   - Solver-backed enforcement is active (planegcs + fallback)
   - Implemented:
