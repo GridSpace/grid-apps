@@ -1115,6 +1115,15 @@ body.left-panel-resizing * {
     gap: 8px;
     padding: 4px 6px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    transition: background-color 0.12s, color 0.12s;
+}
+
+.props-extrude-profile-row:hover {
+    background: rgba(90, 159, 212, 0.16);
+}
+
+.props-extrude-profile-row:hover .props-extrude-profile-text {
+    color: var(--text-primary);
 }
 
 .props-extrude-profile-row:last-child {

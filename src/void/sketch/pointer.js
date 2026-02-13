@@ -29,6 +29,19 @@ function collectArcCenterCoincidentPointIds(feature, arcId) {
     return out;
 }
 
+function getSketchHitTypeById(feature, id) {
+    if (!id) return null;
+    if (id === SKETCH_VIRTUAL_ORIGIN_ID) return 'point';
+    if (typeof id === 'string' && id.startsWith('arc-center:')) return 'arc-center';
+    const entities = Array.isArray(feature?.entities) ? feature.entities : [];
+    const entity = entities.find(item => item?.id === id) || null;
+    if (!entity) return null;
+    if (entity.type === 'point') return 'point';
+    if (entity.type === 'line') return 'line';
+    if (entity.type === 'arc') return 'arc';
+    return null;
+}
+
 function handleSketchPointerDown(event, intersections) {
     const feature = this.getEditingSketchFeature();
     if (!feature) {
@@ -39,13 +52,22 @@ function handleSketchPointerDown(event, intersections) {
     const seq = this.sketchPointerSeq;
     const local = this.projectEventToSketchLocal(event, feature);
     const hit = this.resolveSketchHit(event, intersections, feature);
-    const hitLocal = this.getSketchHitLocalPoint(feature, hit);
+    const hoveredId = this.hoveredSketchEntityId || null;
+    const hoveredType = getSketchHitTypeById(feature, hoveredId);
+    const preferHovered = this.getSketchTool() === 'select'
+        && hoveredId
+        && hoveredId !== SKETCH_VIRTUAL_ORIGIN_ID
+        && hoveredType;
+    const resolvedHit = preferHovered ? { id: hoveredId, type: hoveredType } : hit;
+    const hitLocal = this.getSketchHitLocalPoint(feature, resolvedHit);
 
     this.sketchPointerDown = {
         seq,
         local,
-        hitId: hit?.id || this.hoveredSketchEntityId || null,
-        hitType: hit?.type || null,
+        hitId: resolvedHit?.id || hoveredId || null,
+        hitType: resolvedHit?.type || hoveredType || null,
+        hoveredHitId: hoveredId || null,
+        hoveredHitType: hoveredType || null,
         clientX: event?.clientX ?? 0,
         clientY: event?.clientY ?? 0
     };
@@ -61,8 +83,8 @@ function handleSketchPointerDown(event, intersections) {
             return true;
         }
         this.sketchLineStart = start;
-        this.sketchLineStartRefId = ((hit?.type === 'point' || hit?.type === 'arc-center') && hit?.id && hit.id !== SKETCH_VIRTUAL_ORIGIN_ID)
-            ? normalizeArcCenterRefId(hit.type, hit.id)
+        this.sketchLineStartRefId = ((resolvedHit?.type === 'point' || resolvedHit?.type === 'arc-center') && resolvedHit?.id && resolvedHit.id !== SKETCH_VIRTUAL_ORIGIN_ID)
+            ? normalizeArcCenterRefId(resolvedHit.type, resolvedHit.id)
             : null;
         this.sketchLineStartSeq = seq;
         this.sketchLinePreview = { a: start, b: start };
@@ -74,7 +96,7 @@ function handleSketchPointerDown(event, intersections) {
             return true;
         }
         this.sketchRectStart = start;
-        this.sketchRectStartRefId = (hit?.type === 'point' && hit?.id && hit.id !== SKETCH_VIRTUAL_ORIGIN_ID) ? hit.id : null;
+        this.sketchRectStartRefId = (resolvedHit?.type === 'point' && resolvedHit?.id && resolvedHit.id !== SKETCH_VIRTUAL_ORIGIN_ID) ? resolvedHit.id : null;
         this.sketchRectStartSeq = seq;
         this.sketchRectPreview = this.makeSketchRectPreview(start, start, this.getSketchTool() === 'rect-center');
         this.updateSketchInteractionVisuals();
@@ -260,7 +282,10 @@ function handleSketchPointerMove(event) {
     if (!(event?.buttons & 1)) return false;
     if (this.sketchDrag) return false;
     if (this.pointerDistance(event, this.sketchPointerDown) < SKETCH_DRAG_START_PX) return false;
-    const downId = this.sketchPointerDown.hitId || this.hoveredSketchEntityId || null;
+    const downId = this.sketchPointerDown.hitId
+        || this.sketchPointerDown.hoveredHitId
+        || this.hoveredSketchEntityId
+        || null;
     if (downId && downId !== SKETCH_VIRTUAL_ORIGIN_ID) return false;
     if (!this.sketchMarquee) this.startSketchMarquee(feature, this.sketchPointerDown, event);
     else this.updateSketchMarquee(event);
@@ -301,6 +326,7 @@ function handleSketchMouseUp(event, intersections) {
         const upHit = this.resolveSketchHit(event, intersections, feature);
         const hit = upHit
             || (pointerDown?.hitId ? { id: pointerDown.hitId, type: pointerDown?.hitType || null } : null)
+            || (pointerDown?.hoveredHitId ? { id: pointerDown.hoveredHitId, type: pointerDown?.hoveredHitType || null } : null)
             || (this.hoveredSketchEntityId ? { id: this.hoveredSketchEntityId } : null);
         if (hit?.id) {
             if (dist > SKETCH_DRAG_START_PX && pointerDown?.hitId) {
@@ -811,8 +837,11 @@ function handleSketchDrag(delta, offset, isDone) {
 
     if (!this.sketchDrag) {
         if (Math.hypot(offset?.x || 0, offset?.y || 0) < SKETCH_DRAG_START_PX) return false;
-        const downId = this.sketchPointerDown.hitId || this.hoveredSketchEntityId || null;
-        const downType = this.sketchPointerDown.hitType || null;
+        const downId = this.sketchPointerDown.hitId
+            || this.sketchPointerDown.hoveredHitId
+            || this.hoveredSketchEntityId
+            || null;
+        const downType = this.sketchPointerDown.hitType || this.sketchPointerDown.hoveredHitType || null;
         const downArcId = downType === 'arc-center'
             ? (typeof downId === 'string'
                 ? (downId.startsWith('arc-center:') ? downId.substring('arc-center:'.length) : downId)

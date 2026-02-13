@@ -5,6 +5,16 @@ import { space } from '../../moto/space.js';
 import { api } from '../api.js';
 import { properties } from '../properties.js';
 
+function isEditingExtrudeProfiles() {
+    const currentFeatureId = properties.currentFeatureId || null;
+    const currentFeature = currentFeatureId ? api.features.findById(currentFeatureId) : null;
+    if (!currentFeature || currentFeature.type !== 'extrude' || currentFeature.id !== currentFeatureId) {
+        return false;
+    }
+    const role = properties.getExtrudePickRole?.() || 'profiles';
+    return role === 'profiles';
+}
+
 function getInteractiveObjects() {
     const objects = [];
     const retargetMode = !!(this.isSketchRetargetMode && this.isSketchRetargetMode());
@@ -137,6 +147,7 @@ function updateHandleScreenScales() {
 function handleHover(intersection, event, allIntersections) {
     const sketchEditing = !!(this.isSketchEditing && this.isSketchEditing());
     const retargetMode = !!(this.isSketchRetargetMode && this.isSketchRetargetMode());
+    const editingExtrudeProfiles = !sketchEditing && isEditingExtrudeProfiles();
     const primaryHit = this.getPrimarySurfaceHitFromIntersections(allIntersections || (intersection ? [intersection] : []));
 
     if (!sketchEditing || retargetMode) {
@@ -162,7 +173,7 @@ function handleHover(intersection, event, allIntersections) {
             this.hoveredSketchProfileKey = null;
             api.sketchRuntime?.setHoveredProfile(null);
         }
-        if (primaryHit?.type === 'solid-edge') {
+        if (!editingExtrudeProfiles && primaryHit?.type === 'solid-edge') {
             const solidEdgeHit = primaryHit.hit;
             this.hoveredSolidEdgeKey = solidEdgeHit.key;
             api.solids?.setHoveredEdge?.(solidEdgeHit.key);
@@ -179,7 +190,7 @@ function handleHover(intersection, event, allIntersections) {
             window.dispatchEvent(new CustomEvent('void-state-change'));
             return;
         }
-        if (primaryHit?.type === 'solid-face') {
+        if (!editingExtrudeProfiles && primaryHit?.type === 'solid-face') {
             const solidFaceHit = primaryHit.hit;
             this.hoveredSolidFaceKey = solidFaceHit.key;
             api.solids?.setHoveredFace?.(solidFaceHit.key);
@@ -337,6 +348,11 @@ function handleMouseUp(intersection, event, allIntersections) {
             this.selectSolidFace(primaryHit.hit, event);
             return;
         }
+        if (isEditingExtrudeProfiles()) {
+            // While editing extrude profiles, ignore non-profile clicks so solids/planes
+            // do not steal interaction from profile picking.
+            return;
+        }
     }
 
     const pointHit = this.getPointHitFromEvent(event);
@@ -381,6 +397,7 @@ function getSketchProfileHitFromIntersections(intersections) {
 function getPrimarySurfaceHitFromIntersections(intersections) {
     if (!Array.isArray(intersections)) return null;
     const retargetMode = !!(this.isSketchRetargetMode && this.isSketchRetargetMode());
+    const editingExtrudeProfiles = isEditingExtrudeProfiles();
     const SKETCH_FACE_EPSILON = 0.25;
     let nearestProfile = null;
     let nearestSolidFace = null;
@@ -439,6 +456,9 @@ function getPrimarySurfaceHitFromIntersections(intersections) {
                 }
             };
         }
+    }
+    if (editingExtrudeProfiles) {
+        return nearestProfile || null;
     }
     if (nearestProfile && nearestSolidEdge && nearestSolidFace) {
         const nearest = [nearestProfile, nearestSolidEdge, nearestSolidFace]
