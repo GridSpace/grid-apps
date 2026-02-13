@@ -434,25 +434,17 @@ function useHoveredDerivedEdge() {
     const selectedFaces = Array.from(this.selectedSolidFaceKeys || []);
     const hovered = this.hoveredDerivedCandidate || null;
     if (!selectedEdges.length && !selectedPoints.length && !selectedFaces.length) {
-        // Prefer hovered face derive over implicit edge derive when nothing is
-        // explicitly selected. This keeps `u` on face interiors intuitive.
-        if (this.hoveredSolidFaceKey) {
+        // `u` should prioritize the actively hovered derived edge candidate.
+        if (hovered?.aLocal && hovered?.bLocal) {
+            selectedEdges.push({
+                type: 'edge',
+                aLocal: hovered.aLocal,
+                bLocal: hovered.bLocal,
+                source: hovered.source || null
+            });
+        } else if (this.hoveredSolidFaceKey) {
+            // Face derive is fallback only when no discrete edge is hovered.
             selectedFaces.push(this.hoveredSolidFaceKey);
-        } else if (hovered?.aLocal && hovered?.bLocal) {
-            if (hovered?.hoverPoint?.local && (hovered?.hoverPoint?.kind === 'a' || hovered?.hoverPoint?.kind === 'b' || hovered?.hoverPoint?.kind === 'mid')) {
-                selectedPoints.push({
-                    type: 'point',
-                    local: hovered.hoverPoint.local,
-                    source: { ...(hovered.source || {}), local_point: null, point_kind: hovered.hoverPoint.kind || 'mid' }
-                });
-            } else {
-                selectedEdges.push({
-                    type: 'edge',
-                    aLocal: hovered.aLocal,
-                    bLocal: hovered.bLocal,
-                    source: hovered.source || null
-                });
-            }
         }
     }
     const created = this.deriveSelectionsAtomic(feature, {
@@ -461,6 +453,9 @@ function useHoveredDerivedEdge() {
         faces: selectedFaces
     });
     if (!created) return false;
+    // Prevent immediate face-boundary re-highlight after `u` when cursor is still nearby.
+    this.hoveredSolidFaceKey = null;
+    api.solids?.setHoveredFace?.(null);
     this.clearSketchSelection?.();
     return true;
 }

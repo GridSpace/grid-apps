@@ -254,9 +254,17 @@ function handleSketchHover(event, intersections) {
 
     const hit = this.resolveSketchHit(event, intersections, feature);
     const hasIntersections = Array.isArray(intersections) && intersections.length > 0;
-    const derived = hasIntersections
+    let derived = hasIntersections
         ? this.resolveDerivedEdgeCandidate(event, intersections, feature)
         : (this.hoveredDerivedCandidate || null);
+    if (hit?.id) {
+        // Current sketch entities take priority over any behind-surface derive targets.
+        derived = null;
+        if (this.hoveredSolidFaceKey) {
+            this.hoveredSolidFaceKey = null;
+            api.solids?.setHoveredFace?.(null);
+        }
+    }
     if (this.hoveredSolidFaceKey) {
         // In sketch mode boundary/projection previews replace solid-face fill hover.
         api.solids?.setHoveredFace?.(null);
