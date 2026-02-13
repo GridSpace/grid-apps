@@ -198,6 +198,10 @@ src/
 **Current implementation notes (important for agents)**
 - Direct-call architecture in `void:form` (no broker event bus in current runtime path)
 - `toolbar` wires real actions for docs, camera modes, undo/redo, and sketch creation
+- `toolbar` now includes a `Preferences` dialog (`⚙`) with persisted runtime tuning:
+  - solid edge loop-promotion threshold (segment count)
+  - solid edge hover/select `Line2` widths
+  - fit padding (perspective + orthographic)
 - `tree.render()` is still caller-driven for feature mutations; refresh explicitly after non-tree-originated changes
 - `src/main/void.js` currently enables overlay test primitives with a hardcoded `if (true)` block (debug scaffolding)
 - `Origin` in void is an overlay point (not `space.platform` origin)

@@ -617,6 +617,40 @@ body.left-panel-resizing * {
     width: min(630px, calc(100vw - 40px));
 }
 
+.preferences-dialog {
+    width: min(460px, calc(100vw - 40px));
+}
+
+.prefs-row {
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) minmax(92px, 0.38fr);
+    align-items: center;
+    gap: 10px;
+}
+
+.prefs-input {
+    width: 100%;
+    max-width: 132px;
+    justify-self: end;
+    height: 28px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0 8px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 12px;
+}
+
+.prefs-input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+#btn-preferences {
+    font-size: 15px;
+    line-height: 1;
+}
+
 .hotkeys-row {
     display: grid;
     grid-template-columns: 180px 1fr;

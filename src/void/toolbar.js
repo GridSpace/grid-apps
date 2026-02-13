@@ -29,10 +29,15 @@ const toolbar = {
     openDialogEl: null,
     openDialogListEl: null,
     hotkeysDialogEl: null,
+    preferencesDialogEl: null,
+    preferencesInputs: null,
+    preferencesState: null,
     exportDialogEl: null,
     exportDialogInfoEl: null,
     exportFilenameEl: null,
     exportStlZipEl: null,
+    preferencesStorageKey: 'void_preferences',
+    preferencesAdminKey: 'preferences',
 
     build() {
         const container = $('top-bar');
@@ -240,6 +245,9 @@ const toolbar = {
             }
             this.updateProjectionLabel();
         }, { id: 'btn-camera-toggle' });
+        this.addButton(container, '⚙', () => {
+            this.togglePreferencesDialog();
+        }, { id: 'btn-preferences' });
         this.addButton(container, '?', () => {
             this.toggleHotkeysDialog();
         }, { id: 'btn-hotkeys' });
@@ -262,9 +270,11 @@ const toolbar = {
 
         this.buildOpenDialog();
         this.buildExportDialog();
+        this.buildPreferencesDialog();
         this.buildHotkeysDialog();
         this.updateDocumentTitle();
         this.updateSketchControls();
+        this.loadPreferences();
         window.addEventListener('void-state-change', () => this.updateSketchControls());
         window.addEventListener('keydown', event => {
             const activeTag = document.activeElement?.tagName;
@@ -275,6 +285,7 @@ const toolbar = {
                 event.preventDefault();
             } else if (event.code === 'Escape' && !event.ctrlKey && !event.metaKey && !event.altKey) {
                 this.hideHotkeysDialog();
+                this.hidePreferencesDialog();
             }
         });
 
@@ -1030,6 +1041,209 @@ const toolbar = {
         });
 
         this.hotkeysDialogEl = backdrop;
+    },
+
+    getDefaultPreferences() {
+        return {
+            edgeLoopPromotionSegments: 10,
+            edgeHoverLineWidth: 2.5,
+            edgeSelectedLineWidth: 3.25,
+            fitPaddingPerspective: 0.5,
+            fitPaddingOrthographic: 0.9
+        };
+    },
+
+    normalizePreferences(raw = {}) {
+        const d = this.getDefaultPreferences();
+        return {
+            edgeLoopPromotionSegments: Math.max(3, Math.round(Number(raw.edgeLoopPromotionSegments ?? d.edgeLoopPromotionSegments) || d.edgeLoopPromotionSegments)),
+            edgeHoverLineWidth: Math.max(0.5, Number(raw.edgeHoverLineWidth ?? d.edgeHoverLineWidth) || d.edgeHoverLineWidth),
+            edgeSelectedLineWidth: Math.max(0.5, Number(raw.edgeSelectedLineWidth ?? d.edgeSelectedLineWidth) || d.edgeSelectedLineWidth),
+            fitPaddingPerspective: Math.max(0.01, Number(raw.fitPaddingPerspective ?? d.fitPaddingPerspective) || d.fitPaddingPerspective),
+            fitPaddingOrthographic: Math.max(0.01, Number(raw.fitPaddingOrthographic ?? d.fitPaddingOrthographic) || d.fitPaddingOrthographic)
+        };
+    },
+
+    async loadPreferences() {
+        const fallback = this.getDefaultPreferences();
+        let next = null;
+        try {
+            const raw = localStorage.getItem(this.preferencesStorageKey);
+            if (raw) {
+                next = JSON.parse(raw);
+            }
+        } catch {}
+        try {
+            const fromDb = await api.db?.admin?.get?.(this.preferencesAdminKey);
+            if (fromDb && typeof fromDb === 'object') {
+                next = { ...(next || {}), ...fromDb };
+            }
+        } catch {}
+        this.applyPreferences(next || fallback, { persist: false, updateFields: true });
+    },
+
+    async savePreferences(next = {}) {
+        const prefs = this.normalizePreferences(next);
+        try {
+            localStorage.setItem(this.preferencesStorageKey, JSON.stringify(prefs));
+        } catch {}
+        try {
+            await api.db?.admin?.put?.(this.preferencesAdminKey, prefs);
+        } catch {}
+    },
+
+    applyPreferences(next = {}, options = {}) {
+        const prefs = this.normalizePreferences(next);
+        this.preferencesState = prefs;
+        api.solids?.setRenderPreferences?.({
+            edgeLoopPromotionSegments: prefs.edgeLoopPromotionSegments,
+            edgeHoverLineWidth: prefs.edgeHoverLineWidth,
+            edgeSelectedLineWidth: prefs.edgeSelectedLineWidth
+        });
+        space.view.setFitPadding({
+            perspective: prefs.fitPaddingPerspective,
+            orthographic: prefs.fitPaddingOrthographic
+        });
+        if (options.updateFields !== false) {
+            this.syncPreferencesFields();
+        }
+        if (options.persist !== false) {
+            this.savePreferences(prefs);
+        }
+    },
+
+    syncPreferencesFields() {
+        const prefs = this.preferencesState || this.getDefaultPreferences();
+        const inputs = this.preferencesInputs || {};
+        if (inputs.edgeLoopPromotionSegments) inputs.edgeLoopPromotionSegments.value = String(prefs.edgeLoopPromotionSegments);
+        if (inputs.edgeHoverLineWidth) inputs.edgeHoverLineWidth.value = String(prefs.edgeHoverLineWidth);
+        if (inputs.edgeSelectedLineWidth) inputs.edgeSelectedLineWidth.value = String(prefs.edgeSelectedLineWidth);
+        if (inputs.fitPaddingPerspective) inputs.fitPaddingPerspective.value = String(prefs.fitPaddingPerspective);
+        if (inputs.fitPaddingOrthographic) inputs.fitPaddingOrthographic.value = String(prefs.fitPaddingOrthographic);
+    },
+
+    buildPreferencesDialog() {
+        if (this.preferencesDialogEl) return;
+        const backdrop = document.createElement('div');
+        backdrop.className = 'doc-dialog-backdrop hidden';
+
+        const dialog = document.createElement('div');
+        dialog.className = 'doc-dialog preferences-dialog';
+
+        const header = document.createElement('div');
+        header.className = 'doc-dialog-header';
+        header.textContent = 'Preferences';
+
+        const list = document.createElement('div');
+        list.className = 'doc-dialog-list';
+
+        const makeNumberRow = (label, key, step = '1', help = '') => {
+            const row = document.createElement('div');
+            row.className = 'doc-dialog-row prefs-row';
+            const name = document.createElement('div');
+            name.className = 'doc-dialog-name';
+            name.textContent = label;
+            if (help) {
+                name.title = help;
+                row.title = help;
+            }
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.step = String(step);
+            input.className = 'prefs-input';
+            if (help) {
+                input.title = help;
+            }
+            row.appendChild(name);
+            row.appendChild(input);
+            list.appendChild(row);
+            this.preferencesInputs = this.preferencesInputs || {};
+            this.preferencesInputs[key] = input;
+        };
+
+        makeNumberRow(
+            'Edge Loop Promotion Segments',
+            'edgeLoopPromotionSegments',
+            '1',
+            'Controls when a face boundary should be treated as one continuous edge loop instead of individual edge segments. Higher values reduce accidental full-loop picks on simple polygon faces.'
+        );
+        makeNumberRow(
+            'Edge Hover Line Width',
+            'edgeHoverLineWidth',
+            '0.1',
+            'Screen-space thickness (pixels) for hovered solid edges. Increase for easier visibility while inspecting dense geometry.'
+        );
+        makeNumberRow(
+            'Edge Selected Line Width',
+            'edgeSelectedLineWidth',
+            '0.1',
+            'Screen-space thickness (pixels) for selected solid edges. Typically slightly larger than hover for stronger feedback.'
+        );
+        makeNumberRow(
+            'Fit Padding (Perspective)',
+            'fitPaddingPerspective',
+            '0.01',
+            'Extra margin used by Fit view in perspective mode. Lower values fit tighter; higher values leave more border.'
+        );
+        makeNumberRow(
+            'Fit Padding (Orthographic)',
+            'fitPaddingOrthographic',
+            '0.01',
+            'Extra margin used by Fit view in orthographic mode. Tune this separately from perspective for CAD-like framing.'
+        );
+
+        const actions = document.createElement('div');
+        actions.className = 'doc-dialog-actions';
+        const defaultsBtn = this.addButton(actions, 'Defaults', () => {
+            this.applyPreferences(this.getDefaultPreferences(), { persist: true, updateFields: true });
+        });
+        defaultsBtn.classList.add('compact');
+        const applyBtn = this.addButton(actions, 'Apply', () => {
+            this.applyPreferences({
+                edgeLoopPromotionSegments: Number(this.preferencesInputs?.edgeLoopPromotionSegments?.value),
+                edgeHoverLineWidth: Number(this.preferencesInputs?.edgeHoverLineWidth?.value),
+                edgeSelectedLineWidth: Number(this.preferencesInputs?.edgeSelectedLineWidth?.value),
+                fitPaddingPerspective: Number(this.preferencesInputs?.fitPaddingPerspective?.value),
+                fitPaddingOrthographic: Number(this.preferencesInputs?.fitPaddingOrthographic?.value)
+            }, { persist: true, updateFields: true });
+        });
+        applyBtn.classList.add('compact');
+        const closeBtn = this.addButton(actions, 'Close', () => {
+            this.hidePreferencesDialog();
+        });
+        closeBtn.classList.add('compact');
+
+        dialog.appendChild(header);
+        dialog.appendChild(list);
+        dialog.appendChild(actions);
+        backdrop.appendChild(dialog);
+        document.body.appendChild(backdrop);
+
+        backdrop.addEventListener('click', event => {
+            if (event.target === backdrop) {
+                this.hidePreferencesDialog();
+            }
+        });
+
+        this.preferencesDialogEl = backdrop;
+        this.preferencesState = this.getDefaultPreferences();
+        this.syncPreferencesFields();
+    },
+
+    togglePreferencesDialog() {
+        if (!this.preferencesDialogEl) {
+            this.buildPreferencesDialog();
+        }
+        this.preferencesDialogEl.classList.toggle('hidden');
+        if (!this.preferencesDialogEl.classList.contains('hidden')) {
+            this.syncPreferencesFields();
+        }
+    },
+
+    hidePreferencesDialog() {
+        if (this.preferencesDialogEl) {
+            this.preferencesDialogEl.classList.add('hidden');
+        }
     },
 
     toggleHotkeysDialog() {

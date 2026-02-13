@@ -417,11 +417,11 @@ function createSolidsApi(getApi) {
         return loops;
     }
 
-    function shouldPromoteLoopSelection(loop) {
+    function shouldPromoteLoopSelection(loop, minSegments = 10) {
         const segCount = Array.isArray(loop?.segmentIndices) ? loop.segmentIndices.length : 0;
         // Promote only dense boundary loops (typically tessellated circular edges).
         // Keep low-segment polygon faces (rectangles, etc) selectable per-edge.
-        return segCount >= 10;
+        return segCount >= Math.max(3, Number(minSegments) || 10);
     }
 
     function makeFaceMaterials() {
@@ -466,6 +466,11 @@ function createSolidsApi(getApi) {
         _hoveredFaceKey: null,
         _selectedEdgeKeys: new Set(),
         _hoveredEdgeKey: null,
+        _renderPrefs: {
+            edgeLoopPromotionSegments: 10,
+            edgeHoverLineWidth: 2.5,
+            edgeSelectedLineWidth: 3.25
+        },
         _faceMats: null,
         _worker: null,
         _workerReady: false,
@@ -944,7 +949,7 @@ function createSolidsApi(getApi) {
             const loopIndex = loops.findIndex(loop => Array.isArray(loop?.segmentIndices) && loop.segmentIndices.includes(bestIndex));
             if (loopIndex >= 0) {
                 const loop = loops[loopIndex];
-                if (shouldPromoteLoopSelection(loop)) {
+                if (shouldPromoteLoopSelection(loop, this._renderPrefs?.edgeLoopPromotionSegments)) {
                     const pathWorld = Array.isArray(loop?.points) ? loop.points.map(p => p.clone()) : [];
                     if (loop?.closed && pathWorld.length >= 2) {
                         const first = pathWorld[0];
@@ -1249,6 +1254,22 @@ function createSolidsApi(getApi) {
 
         getSelectedEdgeKeys() {
             return Array.from(this._selectedEdgeKeys);
+        },
+
+        getRenderPreferences() {
+            return { ...(this._renderPrefs || {}) };
+        },
+
+        setRenderPreferences(next = {}) {
+            const curr = this._renderPrefs || {};
+            const merged = {
+                edgeLoopPromotionSegments: Math.max(3, Math.round(Number(next.edgeLoopPromotionSegments ?? curr.edgeLoopPromotionSegments ?? 10) || 10)),
+                edgeHoverLineWidth: Math.max(0.5, Number(next.edgeHoverLineWidth ?? curr.edgeHoverLineWidth ?? 2.5) || 2.5),
+                edgeSelectedLineWidth: Math.max(0.5, Number(next.edgeSelectedLineWidth ?? curr.edgeSelectedLineWidth ?? 3.25) || 3.25)
+            };
+            this._renderPrefs = merged;
+            this.syncEdgeOverlays();
+            return this.getRenderPreferences();
         },
 
         getSketchTargetForFaceKey(key) {
@@ -1637,7 +1658,9 @@ function createSolidsApi(getApi) {
                     geo.setPositions(positions);
                     const mat = new LineMaterial({
                         color: item.selected ? 0xff9933 : 0xffb366,
-                        linewidth: item.selected ? 3.25 : 2.5,
+                        linewidth: item.selected
+                            ? Number(this._renderPrefs?.edgeSelectedLineWidth || 3.25)
+                            : Number(this._renderPrefs?.edgeHoverLineWidth || 2.5),
                         transparent: true,
                         opacity: item.selected ? 0.95 : 0.85,
                         depthTest: false,
