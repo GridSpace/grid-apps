@@ -759,6 +759,7 @@ function selectSolidEdge(hit, event) {
                     solidId: edge.solidId,
                     edgeIndex: edge.index,
                     meshEdgeKey: edge.meshEdgeKey || null,
+                    meshEdgeKeys: Array.isArray(edge.meshEdgeKeys) ? edge.meshEdgeKeys.slice() : null,
                     a,
                     b,
                     path

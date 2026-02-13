@@ -925,6 +925,11 @@ function edgeKey(a, b) {
                         pathWorld.push(first.clone());
                     }
                 }
+                const meshEdgeKeys = [];
+                for (let i = 0; i + 1 < pathWorld.length; i++) {
+                    const mk = this.getNearestMeshEdgeKeyForWorldSegment(solidId, pathWorld[i], pathWorld[i + 1]);
+                    if (mk && !meshEdgeKeys.includes(mk)) meshEdgeKeys.push(mk);
+                }
                 const segIndex = Number(loop.segmentIndices?.[0]);
                 return {
                     key: raw,
@@ -933,7 +938,8 @@ function edgeKey(a, b) {
                     index: Number.isFinite(segIndex) ? segIndex : null,
                     pathWorld,
                     loop: true,
-                    meshEdgeKey: null
+                    meshEdgeKey: meshEdgeKeys[0] || null,
+                    meshEdgeKeys
                 };
             }
             if (raw.startsWith('faceedge:')) {
