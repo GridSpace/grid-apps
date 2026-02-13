@@ -239,6 +239,10 @@ src/
     - `source.entity.kind = boundary-segment`
     - `source.entity.id = segment:faceedge:<faceKey>:<segIndex>`
     - plus `source.face_key` and `source.boundary_segment_id` for migration bridging
+  - extrude profile targets now carry `region_id` (canonical key), with runtime/rebuild fallback support:
+    - selection toggle in `interact/planes.js` keys on `region_id` when present
+    - rebuild lookup resolves profile loops from `region_id` first, then legacy `sketchId/profileId`
+    - snapshot profile loop maps now include both canonical and legacy keys for compatibility
 
 **Phase 2: Sketch System (Current Workstream)**
 - planegcs constraint solver integration is active

@@ -11,6 +11,19 @@ const PROPS_PANEL_POS_KEY = 'props_panel_pos';
 const PANEL_MIN_LEFT = 10;
 const PANEL_MIN_TOP = 60;
 
+function resolveExtrudeProfileRef(profile = {}) {
+    const regionId = String(profile?.region_id || profile?.regionId || '');
+    let sketchId = profile?.sketchId || null;
+    let profileId = profile?.profileId || null;
+    const match = regionId.match(/^(?:region:)?profile:([^:]+):([^:]+)$/);
+    if ((!sketchId || !profileId) && match) {
+        sketchId = sketchId || match[1];
+        profileId = profileId || match[2];
+    }
+    const key = regionId || ((sketchId && profileId) ? `${sketchId}:${profileId}` : null);
+    return { regionId: regionId || null, sketchId, profileId, key };
+}
+
 const properties = {
     panel: null,
     header: null,
@@ -524,14 +537,15 @@ const properties = {
         });
         if (profiles.length) {
             for (const profile of profiles) {
-                const sketch = api.features.findById(profile?.sketchId);
+                const ref = resolveExtrudeProfileRef(profile);
+                const sketch = ref?.sketchId ? api.features.findById(ref.sketchId) : null;
                 const row = document.createElement('div');
                 row.className = 'props-extrude-profile-row';
                 row.onmouseenter = () => this.setExtrudeProfileHover(profile);
                 row.onmouseleave = () => this.setExtrudeProfileHover(null);
                 const text = document.createElement('div');
                 text.className = 'props-extrude-profile-text';
-                text.textContent = `${sketch?.name || profile?.sketchId || 'Sketch'} / ${profile?.profileId || 'region'}`;
+                text.textContent = `${sketch?.name || ref?.sketchId || 'Sketch'} / ${ref?.profileId || 'region'}`;
                 const remove = document.createElement('button');
                 remove.className = 'props-extrude-profile-remove';
                 remove.textContent = '×';
@@ -540,8 +554,14 @@ const properties = {
                     const updated = api.features.update(feature.id, item => {
                         item.input = item.input || {};
                         const current = Array.isArray(item.input.profiles) ? item.input.profiles : [];
+                        const removeKey = String(ref?.key || '');
                         item.input.profiles = current.filter(p => {
-                            return !(p?.sketchId === profile?.sketchId && p?.profileId === profile?.profileId);
+                            const pRef = resolveExtrudeProfileRef(p);
+                            const pKey = String(pRef?.key || '');
+                            if (removeKey && pKey) {
+                                return pKey !== removeKey;
+                            }
+                            return !(pRef?.sketchId === ref?.sketchId && pRef?.profileId === ref?.profileId);
                         });
                     }, {
                         opType: 'feature.update',
@@ -809,24 +829,28 @@ const properties = {
         }
         const profiles = Array.isArray(feature?.input?.profiles) ? feature.input.profiles : [];
         const keys = profiles
-            .map(p => (p?.sketchId && p?.profileId) ? `${p.sketchId}:${p.profileId}` : null)
+            .map(p => {
+                const ref = resolveExtrudeProfileRef(p);
+                return (ref?.sketchId && ref?.profileId) ? `${ref.sketchId}:${ref.profileId}` : null;
+            })
             .filter(Boolean);
-        const sketchIds = Array.from(new Set(profiles.map(p => p?.sketchId).filter(Boolean)));
+        const sketchIds = Array.from(new Set(profiles.map(p => resolveExtrudeProfileRef(p)?.sketchId).filter(Boolean)));
         api.interact.selectedSketchProfiles = new Set(keys);
         api.sketchRuntime?.setSelectedProfiles?.(keys);
         api.sketchRuntime?.setForcedVisible?.(sketchIds);
     },
 
     setExtrudeProfileHover(profile) {
-        const key = (profile?.sketchId && profile?.profileId)
-            ? `${profile.sketchId}:${profile.profileId}`
+        const ref = resolveExtrudeProfileRef(profile);
+        const key = (ref?.sketchId && ref?.profileId)
+            ? `${ref.sketchId}:${ref.profileId}`
             : null;
         const currentFeature = this.currentFeatureId ? api.features.findById(this.currentFeatureId) : null;
         const currentFeatureId = currentFeature?.type === 'extrude' ? currentFeature.id : null;
         const hoveredSolidIds = [];
-        if (profile?.sketchId && profile?.profileId) {
-            const sketchId = String(profile.sketchId);
-            const profileId = String(profile.profileId);
+        if (ref?.sketchId && ref?.profileId) {
+            const sketchId = String(ref.sketchId);
+            const profileId = String(ref.profileId);
             const profileKey = `${sketchId}:${profileId}`;
             const solids = api.solids?.list?.() || [];
             const scoped = currentFeatureId

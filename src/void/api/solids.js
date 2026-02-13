@@ -9,6 +9,19 @@ import { space } from '../../moto/space.js';
 const SOLID_CREASE_ANGLE_DEG = 30;
 
 function createSolidsApi(getApi) {
+    function resolveProfileTargetRef(profileTarget = {}) {
+        const regionId = String(profileTarget?.region_id || profileTarget?.regionId || '');
+        let sketchId = profileTarget?.sketchId || null;
+        let profileId = profileTarget?.profileId || null;
+        const match = regionId.match(/^(?:region:)?profile:([^:]+):([^:]+)$/);
+        if ((!sketchId || !profileId) && match) {
+            sketchId = sketchId || match[1];
+            profileId = profileId || match[2];
+        }
+        const key = regionId || ((sketchId && profileId) ? `${sketchId}:${profileId}` : null);
+        return { regionId: regionId || null, sketchId, profileId, key };
+    }
+
     function frameToBasis(frame) {
         if (!frame?.origin || !frame?.normal || !frame?.x_axis) return null;
         const origin = new THREE.Vector3(
@@ -44,8 +57,7 @@ function createSolidsApi(getApi) {
     }
 
     function profileLoopsFromRuntime(api, profileTarget) {
-        const sketchId = profileTarget?.sketchId || null;
-        const profileId = profileTarget?.profileId || null;
+        const { sketchId, profileId } = resolveProfileTargetRef(profileTarget);
         if (!sketchId || !profileId) return null;
         const rec = api.sketchRuntime?.getRecord?.(sketchId);
         const view = rec?.entityViews?.get?.(profileId);
@@ -72,12 +84,15 @@ function createSolidsApi(getApi) {
             if (feature?.type !== 'extrude') continue;
             const profiles = Array.isArray(feature?.input?.profiles) ? feature.input.profiles : [];
             for (const profileTarget of profiles) {
-                const sketchId = profileTarget?.sketchId || null;
-                const profileId = profileTarget?.profileId || null;
+                const { sketchId, profileId, key } = resolveProfileTargetRef(profileTarget);
                 if (!sketchId || !profileId) continue;
                 const loops = profileLoopsFromRuntime(api, profileTarget);
                 if (!loops?.length) continue;
-                profileLoops[`${sketchId}:${profileId}`] = loops;
+                const legacyKey = `${sketchId}:${profileId}`;
+                profileLoops[legacyKey] = loops;
+                if (key && key !== legacyKey) {
+                    profileLoops[key] = loops;
+                }
             }
         }
         return { builtFeatures, sketchPlanes, profileLoops };

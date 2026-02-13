@@ -430,17 +430,22 @@ function selectSketchProfile(hit, event) {
                 .filter(loop => Array.isArray(loop) && loop.length >= 3)
                 .map(loop => loop.map(p => ({ x: p?.x || 0, y: p?.y || 0 })))
             : [];
-        const profile = { sketchId: hit.featureId, profileId: hit.profileId };
+        const regionId = `profile:${hit.featureId}:${hit.profileId}`;
+        const profile = {
+            sketchId: hit.featureId,
+            profileId: hit.profileId,
+            region_id: regionId
+        };
         if (loops.length) {
             profile.loops = loops;
         }
         const updated = api.features.update(currentFeature.id, feature => {
             feature.input = feature.input || {};
             const current = Array.isArray(feature.input.profiles) ? feature.input.profiles : [];
-            const key = `${profile.sketchId}:${profile.profileId}`;
-            const has = current.some(p => `${p?.sketchId}:${p?.profileId}` === key);
+            const key = String(profile?.region_id || `${profile.sketchId}:${profile.profileId}`);
+            const has = current.some(p => String(p?.region_id || `${p?.sketchId}:${p?.profileId}`) === key);
             const next = has
-                ? current.filter(p => `${p?.sketchId}:${p?.profileId}` !== key)
+                ? current.filter(p => String(p?.region_id || `${p?.sketchId}:${p?.profileId}`) !== key)
                 : [...current, profile];
             feature.input.profiles = next;
         }, {

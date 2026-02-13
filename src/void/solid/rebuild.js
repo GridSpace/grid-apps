@@ -7,9 +7,21 @@ import { applyChamferFeature } from './chamfer.js';
 
 const CLIPPER_SCALE = 100000;
 
+function resolveProfileTargetRef(profileTarget = {}) {
+    const regionId = String(profileTarget?.region_id || profileTarget?.regionId || '');
+    let sketchId = profileTarget?.sketchId || null;
+    let profileId = profileTarget?.profileId || null;
+    const match = regionId.match(/^(?:region:)?profile:([^:]+):([^:]+)$/);
+    if ((!sketchId || !profileId) && match) {
+        sketchId = sketchId || match[1];
+        profileId = profileId || match[2];
+    }
+    const key = regionId || ((sketchId && profileId) ? `${sketchId}:${profileId}` : null);
+    return { regionId: regionId || null, sketchId, profileId, key };
+}
+
 function profileLoopsFromRuntime(api, profileTarget) {
-    const sketchId = profileTarget?.sketchId || null;
-    const profileId = profileTarget?.profileId || null;
+    const { sketchId, profileId } = resolveProfileTargetRef(profileTarget);
     if (!sketchId || !profileId) return null;
     const rec = api.sketchRuntime?.getRecord?.(sketchId);
     const view = rec?.entityViews?.get?.(profileId);
@@ -24,11 +36,10 @@ function profileLoopsFromRuntime(api, profileTarget) {
 }
 
 function profileLoopsFromSnapshot(snapshot, profileTarget) {
-    const sketchId = profileTarget?.sketchId || null;
-    const profileId = profileTarget?.profileId || null;
-    if (!sketchId || !profileId) return null;
+    const { sketchId, profileId, key } = resolveProfileTargetRef(profileTarget);
+    if (!key || !sketchId || !profileId) return null;
     const map = snapshot?.profileLoops || {};
-    const loops = map[`${sketchId}:${profileId}`];
+    const loops = map[key] || map[`${sketchId}:${profileId}`];
     if (!Array.isArray(loops) || !loops.length) return null;
     return loops
         .filter(loop => Array.isArray(loop) && loop.length >= 3)
@@ -265,8 +276,7 @@ async function rebuildGeneratedSolidsFromSnapshot(snapshot, options = {}) {
             const createdBodyIds = [];
             const bySketch = new Map();
             for (const profileTarget of profiles) {
-                const sketchId = profileTarget?.sketchId || null;
-                const profileId = profileTarget?.profileId || null;
+                const { sketchId, profileId } = resolveProfileTargetRef(profileTarget);
                 if (!sketchId || !profileId) continue;
                 const profileLoops = profileLoopsFromSnapshot(snapshot, profileTarget);
                 if (!profileLoops?.length) continue;
@@ -290,8 +300,7 @@ async function rebuildGeneratedSolidsFromSnapshot(snapshot, options = {}) {
                     let primaryTarget = null;
                     const contributingProfileKeys = [];
                     for (const entry of sketchPack.entries) {
-                        const sketchId = entry?.profileTarget?.sketchId || null;
-                        const profileId = entry?.profileTarget?.profileId || null;
+                        const { sketchId, profileId } = resolveProfileTargetRef(entry?.profileTarget || {});
                         if (!sketchId || !profileId) continue;
                         const key = `${sketchId}:${profileId}`;
                         let contributes = false;
@@ -311,8 +320,9 @@ async function rebuildGeneratedSolidsFromSnapshot(snapshot, options = {}) {
                     if (!primaryTarget) {
                         primaryTarget = sketchPack.entries[0]?.profileTarget || null;
                     }
-                    if (!contributingProfileKeys.length && primaryTarget?.sketchId && primaryTarget?.profileId) {
-                        contributingProfileKeys.push(`${primaryTarget.sketchId}:${primaryTarget.profileId}`);
+                    const primaryRef = resolveProfileTargetRef(primaryTarget || {});
+                    if (!contributingProfileKeys.length && primaryRef?.sketchId && primaryRef?.profileId) {
+                        contributingProfileKeys.push(`${primaryRef.sketchId}:${primaryRef.profileId}`);
                     }
                     const body = {
                         id,
@@ -526,12 +536,15 @@ async function rebuildGeneratedSolids(api, options = {}) {
         if (feature?.type !== 'extrude') continue;
         const profiles = Array.isArray(feature?.input?.profiles) ? feature.input.profiles : [];
         for (const profileTarget of profiles) {
-            const sketchId = profileTarget?.sketchId || null;
-            const profileId = profileTarget?.profileId || null;
+            const { sketchId, profileId, key } = resolveProfileTargetRef(profileTarget);
             if (!sketchId || !profileId) continue;
             const loops = profileLoopsFromRuntime(api, profileTarget);
             if (!loops?.length) continue;
-            profileLoops[`${sketchId}:${profileId}`] = loops;
+            const legacyKey = `${sketchId}:${profileId}`;
+            profileLoops[legacyKey] = loops;
+            if (key && key !== legacyKey) {
+                profileLoops[key] = loops;
+            }
         }
     }
     const { solids, meshCache } = await rebuildGeneratedSolidsFromSnapshot({

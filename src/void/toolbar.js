@@ -373,7 +373,11 @@ const toolbar = {
             if (!sketchId || !profileId) continue;
             const sketch = api.features.findById(sketchId);
             if (!sketch || sketch.type !== 'sketch') continue;
-            out.push({ sketchId, profileId });
+            out.push({
+                sketchId,
+                profileId,
+                region_id: `profile:${sketchId}:${profileId}`
+            });
         }
         return out;
     },
