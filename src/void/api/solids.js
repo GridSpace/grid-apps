@@ -419,9 +419,60 @@ function createSolidsApi(getApi) {
 
     function shouldPromoteLoopSelection(loop, minSegments = 10) {
         const segCount = Array.isArray(loop?.segmentIndices) ? loop.segmentIndices.length : 0;
-        // Promote only dense boundary loops (typically tessellated circular edges).
-        // Keep low-segment polygon faces (rectangles, etc) selectable per-edge.
-        return segCount >= Math.max(3, Number(minSegments) || 10);
+        const threshold = Math.max(3, Number(minSegments) || 10);
+        const pts = Array.isArray(loop?.points) ? loop.points : [];
+        if (pts.length < 4) return false;
+        const closed = !!loop?.closed;
+        if (!closed) return false;
+
+        // Strong circle-like detection: points at roughly constant radius from centroid.
+        // This should promote cylinder cap rings even when user tuning raises segment threshold.
+        const center = new THREE.Vector3();
+        for (const p of pts) center.add(p);
+        center.multiplyScalar(1 / pts.length);
+        let sumR = 0;
+        const radii = [];
+        for (const p of pts) {
+            const r = p.distanceTo(center);
+            radii.push(r);
+            sumR += r;
+        }
+        const meanR = sumR / Math.max(1, radii.length);
+        if (meanR > 1e-8) {
+            let varR = 0;
+            for (const r of radii) {
+                const d = r - meanR;
+                varR += d * d;
+            }
+            const sigmaR = Math.sqrt(varR / Math.max(1, radii.length));
+            const rel = sigmaR / meanR;
+            if (segCount >= 8 && rel <= 0.08) {
+                return true;
+            }
+        }
+
+        if (segCount < threshold) return false;
+
+        // Promote only "smooth" dense loops. Mixed straight/curved boundaries
+        // (with sharp corners) should remain segment-selectable.
+        let maxTurnDeg = 0;
+        let sharpTurnCount = 0;
+        const count = pts.length;
+        for (let i = 0; i < count; i++) {
+            const p0 = pts[(i - 1 + count) % count];
+            const p1 = pts[i];
+            const p2 = pts[(i + 1) % count];
+            if (!p0 || !p1 || !p2) continue;
+            const v1 = new THREE.Vector3().subVectors(p1, p0).normalize();
+            const v2 = new THREE.Vector3().subVectors(p2, p1).normalize();
+            if (!Number.isFinite(v1.lengthSq()) || !Number.isFinite(v2.lengthSq())) continue;
+            const dot = Math.max(-1, Math.min(1, v1.dot(v2)));
+            const turnDeg = Math.acos(dot) * 180 / Math.PI;
+            if (turnDeg > maxTurnDeg) maxTurnDeg = turnDeg;
+            if (turnDeg > 85) sharpTurnCount++;
+        }
+        if (sharpTurnCount >= 3) return false;
+        return maxTurnDeg <= 80;
     }
 
     function makeFaceMaterials() {

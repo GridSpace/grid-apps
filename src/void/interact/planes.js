@@ -728,8 +728,8 @@ function selectSolidEdge(hit, event) {
     const currentFeatureId = properties.currentFeatureId || null;
     const currentFeature = currentFeatureId ? api.features.findById(currentFeatureId) : null;
     const editingChamfer = currentFeature?.type === 'chamfer' && currentFeature?.id === currentFeatureId;
-    const multi = editingChamfer || !!(event?.ctrlKey || event?.metaKey);
-    if (!multi) {
+    const multi = true;
+    if (!this.selectedSolidEdgeKeys?.size) {
         for (const selectedPlane of this.selectedPlanes || []) {
             selectedPlane.setSelected(false);
         }
