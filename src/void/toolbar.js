@@ -454,10 +454,18 @@ const toolbar = {
         return keys.map(key => {
             const edge = api.solids?.getEdgeByKey?.(key);
             if (!edge) return null;
+            const path = Array.isArray(edge.pathWorld) && edge.pathWorld.length >= 2
+                ? edge.pathWorld.map(p => ({ x: Number(p.x || 0), y: Number(p.y || 0), z: Number(p.z || 0) }))
+                : null;
+            const a = edge.aWorld ? { x: Number(edge.aWorld.x || 0), y: Number(edge.aWorld.y || 0), z: Number(edge.aWorld.z || 0) } : null;
+            const b = edge.bWorld ? { x: Number(edge.bWorld.x || 0), y: Number(edge.bWorld.y || 0), z: Number(edge.bWorld.z || 0) } : null;
             return {
                 key,
                 solidId: edge.solidId,
-                edgeIndex: edge.index
+                edgeIndex: edge.index,
+                a,
+                b,
+                path
             };
         }).filter(Boolean);
     },

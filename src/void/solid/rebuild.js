@@ -3,6 +3,7 @@
 import { buildSeedProvenance } from './provenance.js';
 import { extrudePolygons, booleanMeshes } from './kernel.js';
 import { ClipperLib } from '../../ext/clip2.esm.js';
+import { applyChamferFeature } from './chamfer.js';
 
 const CLIPPER_SCALE = 100000;
 
@@ -488,6 +489,22 @@ async function rebuildGeneratedSolidsFromSnapshot(snapshot, options = {}) {
                 };
                 meshCache.set(id, result.mesh);
                 solids.push(body);
+            }
+            continue;
+        }
+
+        if (feature?.type === 'chamfer') {
+            const bodySeqRef = { value: bodySeq };
+            const changed = await applyChamferFeature(
+                solids,
+                meshCache,
+                feature,
+                makeBodyId,
+                bodySeqRef
+            );
+            bodySeq = bodySeqRef.value;
+            if (changed) {
+                // keep processing downstream features against updated solids
             }
         }
     }
