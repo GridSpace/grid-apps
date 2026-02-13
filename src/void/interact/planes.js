@@ -439,24 +439,9 @@ function getPrimarySurfaceHitFromIntersections(intersections) {
             };
         }
     }
-    if (!nearestSolidEdge) {
-        const fallback = api.solids?.getEdgeHitFromIntersections?.(intersections);
-        if (fallback) {
-            nearestSolidEdge = {
-                type: 'solid-edge',
-                distance: Number(fallback?.intersection?.distance) || 0,
-                hit: {
-                    key: `${fallback.solidId}:${fallback.index}`,
-                    solidId: fallback.solidId,
-                    index: fallback.index,
-                    aWorld: fallback.aWorld,
-                    bWorld: fallback.bWorld,
-                    midWorld: fallback.midWorld,
-                    intersection: fallback.intersection
-                }
-            };
-        }
-    }
+    // Do not fall back to raw global edge hits. That path can select far/occluded
+    // edges when the cursor leaves the body silhouette. Boundary edge selection
+    // should always be anchored to the currently hit face.
     if (editingExtrudeProfiles) {
         return nearestProfile || null;
     }

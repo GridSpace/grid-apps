@@ -1,8 +1,10 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { THREE, BufferGeometryUtils } from '../../ext/three.js';
+import { Line2, LineGeometry, LineMaterial } from '../../ext/three.js';
 import { ensureKernel } from '../solid/kernel.js';
 import { rebuildGeneratedSolids } from '../solid/rebuild.js';
+import { space } from '../../moto/space.js';
 
 const SOLID_CREASE_ANGLE_DEG = 30;
 
@@ -644,7 +646,9 @@ function createSolidsApi(getApi) {
                     view.indexedGeometry = built.indexed;
                     view.edges.geometry = new THREE.EdgesGeometry(built.render, SOLID_CREASE_ANGLE_DEG);
                 }
-                const faceData = buildSurfaceRegionData(view.indexedGeometry || view.mesh.geometry);
+                // Build selectable face regions from the same geometry used for ray hits.
+                // This keeps surface-region hover/selection aligned with rendered shading.
+                const faceData = buildSurfaceRegionData(view.mesh.geometry || view.indexedGeometry);
                 view.faceTriToGroup = faceData.triToGroup;
                 view.faceGroups = faceData.groups;
                 for (const [faceId, face] of faceData.groups.entries()) {
@@ -1453,6 +1457,9 @@ function createSolidsApi(getApi) {
         },
 
         syncEdgeOverlays() {
+            const { renderer } = space.internals();
+            const rw = Math.max(1, Number(renderer?.domElement?.clientWidth || renderer?.domElement?.width || window.innerWidth || 1));
+            const rh = Math.max(1, Number(renderer?.domElement?.clientHeight || renderer?.domElement?.height || window.innerHeight || 1));
             for (const [solidId, view] of this._meshViews.entries()) {
                 if (!view?.edgeOverlays) continue;
                 while (view.edgeOverlays.children.length) {
@@ -1479,15 +1486,23 @@ function createSolidsApi(getApi) {
                     if (!edge?.aWorld || !edge?.bWorld) continue;
                     const aLocal = view.group.worldToLocal(edge.aWorld.clone());
                     const bLocal = view.group.worldToLocal(edge.bWorld.clone());
-                    const geo = new THREE.BufferGeometry().setFromPoints([aLocal, bLocal]);
-                    const mat = new THREE.LineBasicMaterial({
+                    const geo = new LineGeometry();
+                    geo.setPositions([
+                        Number(aLocal.x || 0), Number(aLocal.y || 0), Number(aLocal.z || 0),
+                        Number(bLocal.x || 0), Number(bLocal.y || 0), Number(bLocal.z || 0)
+                    ]);
+                    const mat = new LineMaterial({
                         color: item.selected ? 0xff9933 : 0xffb366,
+                        linewidth: item.selected ? 3.25 : 2.5,
                         transparent: true,
                         opacity: item.selected ? 0.95 : 0.85,
                         depthTest: false,
-                        depthWrite: false
+                        depthWrite: false,
+                        dashed: false
                     });
-                    const line = new THREE.Line(geo, mat);
+                    mat.resolution.set(rw, rh);
+                    const line = new Line2(geo, mat);
+                    line.frustumCulled = false;
                     line.renderOrder = 80;
                     view.edgeOverlays.add(line);
                 }
