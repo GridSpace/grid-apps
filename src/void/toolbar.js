@@ -463,6 +463,7 @@ const toolbar = {
                 key,
                 solidId: edge.solidId,
                 edgeIndex: edge.index,
+                meshEdgeKey: edge.meshEdgeKey || null,
                 a,
                 b,
                 path
@@ -490,7 +491,8 @@ const toolbar = {
                 edges
             },
             params: {
-                distance: 1
+                distance: 1,
+                showCutters: false
             },
             result: null
         };

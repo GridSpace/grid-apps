@@ -145,9 +145,9 @@ function createSolidsApi(getApi) {
         return out;
     }
 
-    function edgeKey(a, b) {
-        return a < b ? `${a}:${b}` : `${b}:${a}`;
-    }
+function edgeKey(a, b) {
+    return a < b ? `${a}:${b}` : `${b}:${a}`;
+}
 
     function distancePointToSegmentSquared(p, a, b) {
         const ab = new THREE.Vector3().subVectors(b, a);
@@ -932,7 +932,8 @@ function createSolidsApi(getApi) {
                     faceId,
                     index: Number.isFinite(segIndex) ? segIndex : null,
                     pathWorld,
-                    loop: true
+                    loop: true,
+                    meshEdgeKey: null
                 };
             }
             if (raw.startsWith('faceedge:')) {
@@ -945,6 +946,7 @@ function createSolidsApi(getApi) {
                 const segs = this.getFaceBoundarySegments(`${solidId}:${faceId}`) || [];
                 const seg = segs[segIndex];
                 if (!seg?.a || !seg?.b) return null;
+                const meshEdgeKey = this.getNearestMeshEdgeKeyForWorldSegment(solidId, seg.a, seg.b);
                 return {
                     key: raw,
                     solidId,
@@ -952,7 +954,8 @@ function createSolidsApi(getApi) {
                     faceId,
                     aWorld: seg.a,
                     bWorld: seg.b,
-                    midWorld: seg.mid || seg.a.clone().add(seg.b).multiplyScalar(0.5)
+                    midWorld: seg.mid || seg.a.clone().add(seg.b).multiplyScalar(0.5),
+                    meshEdgeKey: meshEdgeKey || null
                 };
             }
             const splitAt = raw.lastIndexOf(':');
@@ -964,14 +967,67 @@ function createSolidsApi(getApi) {
             if (!edgeObj) return null;
             const seg = this.getEdgeSegmentWorld(edgeObj, edgeIndex);
             if (!seg) return null;
+            const meshEdgeKey = this.getNearestMeshEdgeKeyForWorldSegment(solidId, seg.a, seg.b);
             return {
                 key: `${solidId}:${edgeIndex}`,
                 solidId,
                 index: edgeIndex,
                 aWorld: seg.a,
                 bWorld: seg.b,
-                midWorld: seg.a.clone().add(seg.b).multiplyScalar(0.5)
+                midWorld: seg.a.clone().add(seg.b).multiplyScalar(0.5),
+                meshEdgeKey: meshEdgeKey || null
             };
+        },
+
+        getNearestMeshEdgeKeyForWorldSegment(solidId, aWorld, bWorld) {
+            if (!solidId || !aWorld || !bWorld) return null;
+            const view = this._meshViews.get(String(solidId));
+            const geo = view?.indexedGeometry;
+            const pos = geo?.getAttribute?.('position')?.array;
+            const idx = geo?.getIndex?.()?.array;
+            const mesh = view?.mesh;
+            if (!pos?.length || !idx?.length || !mesh?.matrixWorld) return null;
+            mesh.updateMatrixWorld?.(true);
+            const reqA = aWorld.clone ? aWorld.clone() : new THREE.Vector3(Number(aWorld.x || 0), Number(aWorld.y || 0), Number(aWorld.z || 0));
+            const reqB = bWorld.clone ? bWorld.clone() : new THREE.Vector3(Number(bWorld.x || 0), Number(bWorld.y || 0), Number(bWorld.z || 0));
+            const scoreSegment = (ea, eb) => {
+                const d1 = ea.distanceTo(reqA) + eb.distanceTo(reqB);
+                const d2 = ea.distanceTo(reqB) + eb.distanceTo(reqA);
+                return Math.min(d1, d2);
+            };
+            const edgeToTris = new Map();
+            const edgeVerts = new Map();
+            const triCount = Math.floor(idx.length / 3);
+            for (let t = 0; t < triCount; t++) {
+                const i0 = idx[t * 3];
+                const i1 = idx[t * 3 + 1];
+                const i2 = idx[t * 3 + 2];
+                const edges = [[i0, i1], [i1, i2], [i2, i0]];
+                for (const [va, vb] of edges) {
+                    const ek = edgeKey(va, vb);
+                    const list = edgeToTris.get(ek);
+                    if (list) list.push(t);
+                    else edgeToTris.set(ek, [t]);
+                    if (!edgeVerts.has(ek)) edgeVerts.set(ek, [va, vb]);
+                }
+            }
+            let bestKey = null;
+            let bestScore = Infinity;
+            for (const [ek, tris] of edgeToTris.entries()) {
+                if (!Array.isArray(tris) || tris.length < 2) continue;
+                const rep = edgeVerts.get(ek);
+                const va = Number(rep?.[0]);
+                const vb = Number(rep?.[1]);
+                if (!Number.isFinite(va) || !Number.isFinite(vb)) continue;
+                const pa = new THREE.Vector3(pos[va * 3], pos[va * 3 + 1], pos[va * 3 + 2]).applyMatrix4(mesh.matrixWorld);
+                const pb = new THREE.Vector3(pos[vb * 3], pos[vb * 3 + 1], pos[vb * 3 + 2]).applyMatrix4(mesh.matrixWorld);
+                const score = scoreSegment(pa, pb);
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestKey = ek;
+                }
+            }
+            return bestKey;
         },
 
         getFaceEdgeHit(faceKey, worldPoint, maxWorldDist = 2.5) {

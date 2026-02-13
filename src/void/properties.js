@@ -713,6 +713,16 @@ const properties = {
             });
             if (updated) this.onChanged();
         }));
+        this.body.appendChild(this.createCheckboxField('Show cutters', params.showCutters === true, checked => {
+            const updated = api.features.update(feature.id, item => {
+                item.params = item.params || {};
+                item.params.showCutters = checked === true;
+            }, {
+                opType: 'feature.update',
+                payload: { field: 'showCutters', value: checked === true }
+            });
+            if (updated) this.onChanged();
+        }));
 
         const edges = Array.isArray(feature?.input?.edges) ? feature.input.edges : [];
         const edgeArea = this.createSolidPickerArea({

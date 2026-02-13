@@ -758,6 +758,7 @@ function selectSolidEdge(hit, event) {
                     key: edgeKey,
                     solidId: edge.solidId,
                     edgeIndex: edge.index,
+                    meshEdgeKey: edge.meshEdgeKey || null,
                     a,
                     b,
                     path

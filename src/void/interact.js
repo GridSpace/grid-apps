@@ -140,7 +140,16 @@ const interact = {
             let handled = false;
             switch (event.code) {
                 case 'Space':
-                    this.deselectAll();
+                    {
+                        const currentFeatureId = properties.currentFeatureId || null;
+                        const currentFeature = currentFeatureId ? api.features.findById(currentFeatureId) : null;
+                        const editingChamfer = currentFeature?.type === 'chamfer' && currentFeature?.id === currentFeatureId;
+                        if (editingChamfer) {
+                            handled = true;
+                            break;
+                        }
+                        this.deselectAll();
+                    }
                     handled = true;
                     break;
                 case 'KeyN':
