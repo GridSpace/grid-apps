@@ -218,6 +218,10 @@ src/
   - current known issue: circle-in-box (`min` to two orthogonal lines) can feel jerky while drag-resizing radius
   - current implementation favors deterministic branching for line targets; revisit with solver-side branch lock per drag gesture if needed
 - Known regression history: commit `5093eec4` introduced an overly permissive derived-edge proximity gate (`segLen * 0.35`) in `resolveDerivedEdgeCandidate`; this causes incorrect face/edge picks in sketch derive hover. Keep tight gate (`2.5`) unless replaced with a screen-space metric.
+- Geometry graph refactor plan is tracked in `docs/void-geomgraph-plan.md` (surfaces + boundaries as canonical entities; solids as derived artifacts).
+- Phase 0 scaffolding status:
+  - new `GeometryStore` API is wired in parallel (no behavior change yet)
+  - feature-flag rollout key is `void.geomGraphV2` (stored in preferences/admin)
 
 **Phase 2: Sketch System (Current Workstream)**
 - planegcs constraint solver integration is active
