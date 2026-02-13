@@ -218,26 +218,52 @@ function handleHover(intersection, event, allIntersections) {
             api.solids?.setHoveredEdge?.(null);
             window.dispatchEvent(new CustomEvent('void-state-change'));
         }
-    } else if (primaryHit?.type === 'solid-face') {
-        const solidFaceHit = primaryHit.hit;
-        this.hoveredSolidFaceKey = solidFaceHit.key;
-        api.solids?.setHoveredFace?.(solidFaceHit.key);
-        this.hoverIntersection = solidFaceHit.intersection || intersection || null;
-        this.setHoveredPoint(null);
-        this.hoveredSketchProfileKey = null;
-        api.sketchRuntime?.setHoveredProfile?.(null);
-        if (this.hoveredPlane && !this.hoveredPlane.isSelected()) {
-            this.hoveredPlane.setHovered(false);
-            this.hoveredPlane = null;
+    } else {
+        let nextFaceKey = null;
+        let nextIntersection = intersection || null;
+        if (primaryHit?.type === 'solid-edge') {
+            const edge = primaryHit.hit || null;
+            const solidId = String(edge?.solidId || '');
+            const faceId = Number(edge?.faceId);
+            if (solidId && Number.isFinite(faceId)) {
+                nextFaceKey = `${solidId}:${faceId}`;
+            } else {
+                const raw = String(edge?.key || '');
+                if (raw.startsWith('faceedge:') || raw.startsWith('faceedgeloop:')) {
+                    const parts = raw.split(':');
+                    const fid = Number(parts[parts.length - 2]);
+                    const sid = parts.slice(1, -2).join(':');
+                    if (sid && Number.isFinite(fid)) nextFaceKey = `${sid}:${fid}`;
+                }
+            }
+            nextIntersection = edge?.intersection || nextIntersection;
+        } else if (primaryHit?.type === 'solid-face') {
+            const face = primaryHit.hit || null;
+            nextFaceKey = String(face?.key || '') || null;
+            nextIntersection = face?.intersection || nextIntersection;
         }
-        this.updateSketchInteractionVisuals?.();
-        window.dispatchEvent(new CustomEvent('void-state-change'));
-        return;
-    } else if (this.hoveredSolidFaceKey) {
-        this.hoveredSolidFaceKey = null;
-        api.solids?.setHoveredFace?.(null);
-        this.updateSketchInteractionVisuals?.();
-        window.dispatchEvent(new CustomEvent('void-state-change'));
+        if (nextFaceKey) {
+            this.hoveredSolidFaceKey = nextFaceKey;
+            // In sketch mode we render boundaries/projections, never solid-face fill hover.
+            api.solids?.setHoveredFace?.(null);
+            this.hoverIntersection = nextIntersection;
+            this.setHoveredPoint(null);
+            this.hoveredSketchProfileKey = null;
+            api.sketchRuntime?.setHoveredProfile?.(null);
+            if (this.hoveredPlane && !this.hoveredPlane.isSelected()) {
+                this.hoveredPlane.setHovered(false);
+                this.hoveredPlane = null;
+            }
+            this.updateSketchInteractionVisuals?.();
+            window.dispatchEvent(new CustomEvent('void-state-change'));
+            return;
+        }
+        if (this.hoveredSolidFaceKey) {
+            this.hoveredSolidFaceKey = null;
+            api.solids?.setHoveredFace?.(null);
+            this.updateSketchInteractionVisuals?.();
+            window.dispatchEvent(new CustomEvent('void-state-change'));
+        }
     }
 
     const pointHit = this.getPointHitFromEvent(event);

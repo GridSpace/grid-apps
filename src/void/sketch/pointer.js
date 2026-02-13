@@ -253,13 +253,13 @@ function handleSketchHover(event, intersections) {
     }
 
     const hit = this.resolveSketchHit(event, intersections, feature);
-    const derived = this.resolveDerivedEdgeCandidate(event, intersections, feature);
+    const hasIntersections = Array.isArray(intersections) && intersections.length > 0;
+    const derived = hasIntersections
+        ? this.resolveDerivedEdgeCandidate(event, intersections, feature)
+        : (this.hoveredDerivedCandidate || null);
     if (this.hoveredSolidFaceKey) {
-        if (derived) {
-            api.solids?.setHoveredFace?.(null);
-        } else {
-            api.solids?.setHoveredFace?.(this.hoveredSolidFaceKey);
-        }
+        // In sketch mode boundary/projection previews replace solid-face fill hover.
+        api.solids?.setHoveredFace?.(null);
     }
     const prevDerived = this.hoveredDerivedCandidate || null;
     this.hoveredDerivedCandidate = derived || null;

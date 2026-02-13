@@ -719,12 +719,15 @@ function applyPreviewLine(rec, mode, editing, colors) {
 
 function applyPreviewExternalWorld(rec, mode, editing, colors) {
     const line = rec.previewExternalWorldLine;
+    const segments = rec.previewExternalWorldSegments;
     const point = rec.previewExternalWorldPoint;
     const srcLine = rec.interaction?.previewExternalWorldLine;
+    const srcSegments = rec.interaction?.previewExternalWorldSegments;
     const srcPoint = rec.interaction?.previewExternalWorldPoint;
-    const forceHover = !!(srcLine?.forceHover || srcPoint?.forceHover);
+    const forceHover = !!(srcLine?.forceHover || srcPoint?.forceHover || (Array.isArray(srcSegments) && srcSegments.length));
     if (!(editing || forceHover)) {
         if (line) line.visible = false;
+        if (segments) segments.visible = false;
         if (point) point.visible = false;
         return;
     }
@@ -738,11 +741,43 @@ function applyPreviewExternalWorld(rec, mode, editing, colors) {
             line.parent.worldToLocal(b);
         }
         setLineObjectPoints(line, [a, b]);
-        setLineObjectStyle(line, colors.linesDerivedActual || 0x39d7ff, colors.lineWidths?.hover || 3.0, false);
+        setLineObjectStyle(line, colors.linesHover || 0xff9933, colors.lineWidths?.hover || 3.0, false);
         line.visible = true;
         line.renderOrder = 60;
     } else if (line) {
         line.visible = false;
+    }
+    if (segments && Array.isArray(srcSegments) && srcSegments.length) {
+        const verts = [];
+        const parent = segments.parent || null;
+        if (parent?.worldToLocal) parent.updateMatrixWorld?.(true);
+        for (const seg of srcSegments) {
+            const sa = seg?.a;
+            const sb = seg?.b;
+            if (!sa || !sb) continue;
+            const a = new THREE.Vector3(sa.x || 0, sa.y || 0, sa.z || 0);
+            const b = new THREE.Vector3(sb.x || 0, sb.y || 0, sb.z || 0);
+            if (parent?.worldToLocal) {
+                parent.worldToLocal(a);
+                parent.worldToLocal(b);
+            }
+            verts.push(a.x, a.y, a.z);
+            verts.push(b.x, b.y, b.z);
+        }
+        if (segments.material?.isLineMaterial && segments.geometry?.setPositions) {
+            segments.geometry.setPositions(verts);
+            segments.computeLineDistances?.();
+            segments.geometry.computeBoundingSphere?.();
+        } else {
+            segments.geometry?.dispose?.();
+            segments.geometry = new THREE.BufferGeometry();
+            segments.geometry.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+        }
+        setLineObjectStyle(segments, colors.linesHover || 0xff9933, colors.lineWidths?.hover || 3.0, false);
+        segments.visible = true;
+        segments.renderOrder = 60;
+    } else if (segments) {
+        segments.visible = false;
     }
     if (point && srcPoint) {
         const p = new THREE.Vector3(srcPoint.x || 0, srcPoint.y || 0, srcPoint.z || 0);
@@ -1038,6 +1073,7 @@ function updatePointScreenScales(opts) {
         syncLineRes(rec.previewRect);
         syncLineRes(rec.previewFaceSegments);
         syncLineRes(rec.previewExternalWorldLine);
+        syncLineRes(rec.previewExternalWorldSegments);
         if (rec.previewStart) updateScale(rec.previewStart);
         if (rec.previewEnd) updateScale(rec.previewEnd);
         if (rec.previewArcCenter) updateScale(rec.previewArcCenter);

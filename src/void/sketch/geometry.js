@@ -216,96 +216,148 @@ function resolveDerivedEdgeCandidate(event, intersections, feature) {
     if (!basis) return null;
     const vp = this.getEventViewportXY(event);
     if (!vp) return null;
-    const { camera, renderer } = space.internals();
-    const rect = renderer?.domElement?.getBoundingClientRect?.();
-    if (!(camera && rect?.width && rect?.height && Number.isFinite(event?.clientX) && Number.isFinite(event?.clientY))) {
-        return null;
+
+    const primary = this.getPrimarySurfaceHitFromIntersections?.(intersections || []) || null;
+    let resolvedPrimary = null;
+    if (primary?.type === 'solid-edge') {
+        resolvedPrimary = primary;
+    } else {
+        const directEdgeHit = api.solids?.getEdgeHitFromIntersections?.(intersections || []) || null;
+        if (directEdgeHit?.aWorld && directEdgeHit?.bWorld) {
+            const directKey = `${directEdgeHit.solidId}:${directEdgeHit.index}`;
+            const entity = api.solids?.resolveCanonicalEdgeEntity?.(directKey) || null;
+            resolvedPrimary = {
+                type: 'solid-edge',
+                hit: {
+                    key: directKey,
+                    solidId: directEdgeHit.solidId,
+                    index: directEdgeHit.index,
+                    aWorld: directEdgeHit.aWorld,
+                    bWorld: directEdgeHit.bWorld,
+                    midWorld: directEdgeHit.midWorld || directEdgeHit.aWorld.clone().add(directEdgeHit.bWorld).multiplyScalar(0.5),
+                    intersection: directEdgeHit.intersection || null,
+                    entity
+                },
+                entity
+            };
+        }
     }
-    const ndc = new THREE.Vector2(
-        ((event.clientX - rect.left) / rect.width) * 2 - 1,
-        -(((event.clientY - rect.top) / rect.height) * 2 - 1)
-    );
-    const ray = new THREE.Raycaster();
-    ray.setFromCamera(ndc, camera);
-    const meshInts = ray.intersectObjects(api.solids?.getPickMeshes?.() || [], false) || [];
-    const faceHit = api.solids?.getFaceHitFromIntersections?.(meshInts) || null;
-    const faceKey = faceHit?.key || null;
-    const frontSolidId = faceHit?.solidId || null;
-    if (!faceKey || !frontSolidId) return null;
-    const faceIdRaw = String(faceKey).split(':').slice(-1)[0];
-    const faceId = Number(faceIdRaw);
-    const facePoint = faceHit?.intersection?.point || null;
+    if (!resolvedPrimary) {
+        const faceHit = primary?.type === 'solid-face'
+            ? primary.hit
+            : (api.solids?.getFaceHitFromIntersections?.(intersections || []) || null);
+        const fkey = String(faceHit?.key || '');
+        const ip = faceHit?.intersection?.point || null;
+        if (fkey && ip) {
+            const promoted = api.solids?.getFaceEdgeHit?.(fkey, ip, 3.5) || null;
+            if (promoted) {
+                const entity = api.solids?.resolveCanonicalEdgeEntity?.(promoted.key) || null;
+                resolvedPrimary = {
+                    type: 'solid-edge',
+                    hit: { ...promoted, intersection: faceHit.intersection, entity },
+                    entity
+                };
+            }
+        }
+    }
+    if (!resolvedPrimary || resolvedPrimary.type !== 'solid-edge') return null;
+
+    const edgeHit = resolvedPrimary.hit || null;
+    const edgeKey = String(edgeHit?.key || '');
+    if (!edgeKey) return null;
+    const edge = api.solids?.getEdgeByKey?.(edgeKey) || edgeHit;
+    if (!edge) return null;
+
+    let solidId = String(edge?.solidId || edgeHit?.solidId || '');
+    let faceId = Number(edge?.faceId ?? edgeHit?.faceId);
+    if ((!solidId || !Number.isFinite(faceId)) && edgeKey.startsWith('faceedge:')) {
+        const parts = edgeKey.split(':');
+        faceId = Number(parts[parts.length - 2]);
+        solidId = parts.slice(1, -2).join(':');
+    }
+    if ((!solidId || !Number.isFinite(faceId)) && edgeKey.startsWith('faceedgeloop:')) {
+        const parts = edgeKey.split(':');
+        faceId = Number(parts[parts.length - 2]);
+        solidId = parts.slice(1, -2).join(':');
+    }
+    if (!solidId) return null;
+    const faceKey = Number.isFinite(faceId) ? `${solidId}:${faceId}` : null;
+
+    let a = edge?.aWorld || null;
+    let b = edge?.bWorld || null;
+    if ((!a || !b) && Array.isArray(edge?.pathWorld) && edge.pathWorld.length >= 2) {
+        const path = edge.pathWorld;
+        const hitPoint = edgeHit?.intersection?.point || null;
+        let bestI = 0;
+        let bestD2 = Infinity;
+        for (let i = 0; i + 1 < path.length; i++) {
+            const pa = path[i];
+            const pb = path[i + 1];
+            if (!pa || !pb) continue;
+            const ab = pb.clone().sub(pa);
+            const ap = (hitPoint || pa).clone().sub(pa);
+            const len2 = Math.max(1e-12, ab.lengthSq());
+            const t = Math.max(0, Math.min(1, ap.dot(ab) / len2));
+            const cp = pa.clone().addScaledVector(ab, t);
+            const d2 = (hitPoint || pa).distanceToSquared(cp);
+            if (d2 < bestD2) {
+                bestD2 = d2;
+                bestI = i;
+            }
+        }
+        a = path[bestI];
+        b = path[bestI + 1];
+    }
+    if (!a || !b) return null;
+    a = a.clone ? a.clone() : new THREE.Vector3(Number(a.x || 0), Number(a.y || 0), Number(a.z || 0));
+    b = b.clone ? b.clone() : new THREE.Vector3(Number(b.x || 0), Number(b.y || 0), Number(b.z || 0));
+    const mid = edge?.midWorld
+        ? (edge.midWorld.clone ? edge.midWorld.clone() : new THREE.Vector3(Number(edge.midWorld.x || 0), Number(edge.midWorld.y || 0), Number(edge.midWorld.z || 0)))
+        : a.clone().add(b).multiplyScalar(0.5);
+
     const toSketchScreen = local => {
         const world = this.sketchLocalToWorld(local, basis);
         return api.overlay.project3Dto2D(world);
     };
-    // Keep edge-candidate pickup tight to boundary proximity.
-    // If this is too large, face-hover degrades into accidental edge-hover.
-    const maxSegDist = Math.max(6, SKETCH_HIT_LINE_PX * 0.9);
-    const boundary = api.solids?.getFaceBoundarySegments?.(faceKey) || [];
-    let best = null;
-    let bestSegDist = Infinity;
-    for (let i = 0; i < boundary.length; i++) {
-        const seg = boundary[i];
-        if (!seg?.a || !seg?.b) continue;
-        const paWorld = api.overlay.project3Dto2D(seg.a);
-        const pbWorld = api.overlay.project3Dto2D(seg.b);
-        if (!paWorld?.visible || !pbWorld?.visible) continue;
-        const segDist = this.distanceToSegmentPx(vp.x, vp.y, paWorld.x, paWorld.y, pbWorld.x, pbWorld.y);
-        if (!Number.isFinite(segDist) || segDist > maxSegDist || segDist >= bestSegDist) continue;
-        if (facePoint) {
-            const line = new THREE.Line3(seg.a, seg.b);
-            const near = new THREE.Vector3();
-            line.closestPointToPoint(facePoint, true, near);
-            const worldDist = near.distanceTo(facePoint);
-            // Prefer segments actually near the hovered point on face.
-            if (worldDist > 2.5) continue;
-        }
-        const mid = seg.mid || seg.a.clone().add(seg.b).multiplyScalar(0.5);
-        const aLocal = this.worldToSketchLocal(seg.a, basis);
-        const bLocal = this.worldToSketchLocal(seg.b, basis);
-        const midLocal = this.worldToSketchLocal(mid, basis);
-        if (!aLocal || !bLocal || !midLocal) continue;
-        const pa = toSketchScreen(aLocal);
-        const pb = toSketchScreen(bLocal);
-        if (!pa?.visible || !pb?.visible) continue;
-        bestSegDist = segDist;
-        best = {
-            solidId: frontSolidId,
-            segIndex: i,
-            a: seg.a,
-            b: seg.b,
-            mid,
-            aLocal,
-            bLocal,
-            midLocal,
-            pa,
-            pb
-        };
+    const aLocal = this.worldToSketchLocal(a, basis);
+    const bLocal = this.worldToSketchLocal(b, basis);
+    const midLocal = this.worldToSketchLocal(mid, basis);
+    if (!aLocal || !bLocal || !midLocal) return null;
+    const pm = toSketchScreen(midLocal);
+    const pwa = api.overlay.project3Dto2D(a);
+    const pwb = api.overlay.project3Dto2D(b);
+    const pwm = api.overlay.project3Dto2D(mid);
+    const pa = toSketchScreen(aLocal);
+    const pb = toSketchScreen(bLocal);
+    if (!pa?.visible || !pb?.visible) return null;
+    const bestSegDist = this.distanceToSegmentPx(vp.x, vp.y, pwa?.x || 0, pwa?.y || 0, pwb?.x || 0, pwb?.y || 0);
+    // Only treat as edge-hover when pointer is genuinely near the edge.
+    // Otherwise keep face-hover path active so full boundary preview renders.
+    if (!Number.isFinite(bestSegDist) || bestSegDist > (SKETCH_HIT_LINE_PX * 1.25)) {
+        return null;
     }
-    if (!best) return null;
-    const pm = toSketchScreen(best.midLocal);
-    const pwa = api.overlay.project3Dto2D(best.a);
-    const pwb = api.overlay.project3Dto2D(best.b);
-    const pwm = api.overlay.project3Dto2D(best.mid);
     const pointHits = [];
-    if (pwa?.visible) pointHits.push({ kind: 'a', local: best.aLocal, dist: Math.hypot(vp.x - pwa.x, vp.y - pwa.y) });
-    if (pwb?.visible) pointHits.push({ kind: 'b', local: best.bLocal, dist: Math.hypot(vp.x - pwb.x, vp.y - pwb.y) });
-    if (pwm?.visible && pm?.visible) pointHits.push({ kind: 'mid', local: best.midLocal, dist: Math.hypot(vp.x - pwm.x, vp.y - pwm.y) });
+    if (pwa?.visible) pointHits.push({ kind: 'a', local: aLocal, dist: Math.hypot(vp.x - pwa.x, vp.y - pwa.y) });
+    if (pwb?.visible) pointHits.push({ kind: 'b', local: bLocal, dist: Math.hypot(vp.x - pwb.x, vp.y - pwb.y) });
+    if (pwm?.visible && pm?.visible) pointHits.push({ kind: 'mid', local: midLocal, dist: Math.hypot(vp.x - pwm.x, vp.y - pwm.y) });
     pointHits.sort((l, r) => l.dist - r.dist);
     const pointThreshold = Math.min(
-        SKETCH_HIT_POINT_PX * 1.1,
-        Math.max(SKETCH_HIT_POINT_PX * 0.5, bestSegDist + 1.5)
+        SKETCH_HIT_POINT_PX * 0.45,
+        Math.max(2.25, bestSegDist * 0.35 + 0.5)
     );
-    const hoverPoint = pointHits[0] && pointHits[0].dist <= pointThreshold ? pointHits[0] : null;
+    const hoverPoint = pointHits[0]
+        && pointHits[0].dist <= pointThreshold
+        && pointHits[0].dist <= (bestSegDist * 0.8)
+        ? pointHits[0]
+        : null;
     const hoverWorld = hoverPoint
         ? (hoverPoint.kind === 'a'
-            ? { x: best.a.x, y: best.a.y, z: best.a.z }
+            ? { x: a.x, y: a.y, z: a.z }
             : hoverPoint.kind === 'b'
-                ? { x: best.b.x, y: best.b.y, z: best.b.z }
-                : { x: best.mid.x, y: best.mid.y, z: best.mid.z })
+                ? { x: b.x, y: b.y, z: b.z }
+                : { x: mid.x, y: mid.y, z: mid.z })
         : null;
-    const solid = api.solids?.list?.().find?.(item => item?.id === best.solidId) || null;
+    const solid = api.solids?.list?.().find?.(item => item?.id === solidId) || null;
     const target = api.solids?.getSketchTargetForFaceKey?.(faceKey) || null;
     const faceFrame = target?.frame || null;
     const frameBasis = (() => {
@@ -342,40 +394,45 @@ function resolveDerivedEdgeCandidate(event, intersections, feature) {
             y: rel.dot(frameBasis.yAxis)
         };
     };
-    const localA = toFaceLocal(best.a);
-    const localB = toFaceLocal(best.b);
+    const localA = toFaceLocal(a);
+    const localB = toFaceLocal(b);
     const localP = hoverWorld ? toFaceLocal(new THREE.Vector3(hoverWorld.x, hoverWorld.y, hoverWorld.z)) : null;
+    const canonicalEntity = resolvedPrimary?.entity || edgeHit?.entity || null;
+    const canonicalEntityId = String(canonicalEntity?.id || '');
+    const canonicalEntityKind = String(canonicalEntity?.kind || 'boundary-segment');
     return {
         type: 'solid-edge',
-        solidId: best.solidId,
+        solidId,
         solidFeatureId: solid?.source?.feature_id || null,
-        index: best.segIndex,
+        index: Number(edgeHit?.index ?? 0),
         segDist: bestSegDist,
-        aLocal: best.aLocal,
-        bLocal: best.bLocal,
-        midLocal: best.midLocal,
-        aWorld: { x: best.a.x, y: best.a.y, z: best.a.z },
-        bWorld: { x: best.b.x, y: best.b.y, z: best.b.z },
-        midWorld: { x: best.mid.x, y: best.mid.y, z: best.mid.z },
+        aLocal,
+        bLocal,
+        midLocal,
+        aWorld: { x: a.x, y: a.y, z: a.z },
+        bWorld: { x: b.x, y: b.y, z: b.z },
+        midWorld: { x: mid.x, y: mid.y, z: mid.z },
+        a: { x: a.x, y: a.y, z: a.z },
+        b: { x: b.x, y: b.y, z: b.z },
         hoverPoint: hoverPoint ? { ...hoverPoint, world: hoverWorld } : null,
         source: {
             type: 'solid-edge',
             entity: {
-                kind: 'boundary-segment',
-                id: `segment:faceedge:${faceKey}:${best.segIndex}`
+                kind: canonicalEntityKind,
+                id: canonicalEntityId
             },
-            solid_id: best.solidId,
+            solid_id: solidId,
             solid_feature_id: solid?.source?.feature_id || null,
             face_id: Number.isFinite(faceId) ? faceId : null,
             face_frame: faceFrame || null,
-            face_key: faceKey,
-            boundary_segment_id: `faceedge:${faceKey}:${best.segIndex}`,
+            face_key: faceKey || null,
+            boundary_segment_id: canonicalEntityId,
             local_a: localA || null,
             local_b: localB || null,
             local_point: localP || null,
-            edge_index: best.segIndex,
-            a: { x: best.a.x, y: best.a.y, z: best.a.z },
-            b: { x: best.b.x, y: best.b.y, z: best.b.z }
+            edge_index: Number(edge?.index ?? edgeHit?.index ?? 0),
+            a: { x: a.x, y: a.y, z: a.z },
+            b: { x: b.x, y: b.y, z: b.z }
         }
     };
 }
@@ -384,13 +441,12 @@ function projectFaceBoundaryToSketch(feature, faceKey) {
     if (!feature || !faceKey) return null;
     const basis = this.getSketchBasis(feature);
     if (!basis) return null;
-    const segments = api.solids?.getFaceBoundarySegments?.(faceKey) || [];
-    if (!segments.length) return null;
+    const segs = api.solids?.getFaceBoundarySegments?.(faceKey) || [];
+    if (!segs.length) return null;
     const out = [];
-    for (const seg of segments) {
-        if (!seg?.a || !seg?.b) continue;
-        const a = this.worldToSketchLocal(seg.a, basis);
-        const b = this.worldToSketchLocal(seg.b, basis);
+    for (const seg of segs) {
+        const a = this.worldToSketchLocal(seg?.a || null, basis);
+        const b = this.worldToSketchLocal(seg?.b || null, basis);
         if (!a || !b) continue;
         out.push({ a, b });
     }

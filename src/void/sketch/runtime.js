@@ -212,6 +212,10 @@ function createSketchRuntimeApi(getApi) {
             previewExternalWorldLine.visible = false;
             previewExternalWorldLine.renderOrder = 60;
             group.add(previewExternalWorldLine);
+            const previewExternalWorldSegments = this.createFatSegments([], SKETCH_COLORS.linesDerivedActual, SKETCH_COLORS.lineWidths.hover);
+            previewExternalWorldSegments.visible = false;
+            previewExternalWorldSegments.renderOrder = 60;
+            group.add(previewExternalWorldSegments);
             const previewExternalWorldPoint = this.createArcCenterMarker(0, 0);
             previewExternalWorldPoint.visible = false;
             previewExternalWorldPoint.renderOrder = 60;
@@ -235,6 +239,7 @@ function createSketchRuntimeApi(getApi) {
                 previewRect,
                 previewFaceSegments,
                 previewExternalWorldLine,
+                previewExternalWorldSegments,
                 previewExternalWorldPoint,
                 entityViews: new Map(),
                 interaction: {
@@ -255,6 +260,7 @@ function createSketchRuntimeApi(getApi) {
                     previewRect: null,
                     previewFaceSegments: null,
                     previewExternalWorldLine: null,
+                    previewExternalWorldSegments: null,
                     previewExternalWorldPoint: null,
                     previewStart: null,
                     previewEnd: null,
@@ -706,6 +712,7 @@ function createSketchRuntimeApi(getApi) {
             rec.interaction.previewRect = interaction.previewRect || null;
             rec.interaction.previewFaceSegments = interaction.previewFaceSegments || null;
             rec.interaction.previewExternalWorldLine = interaction.previewExternalWorldLine || null;
+            rec.interaction.previewExternalWorldSegments = interaction.previewExternalWorldSegments || null;
             rec.interaction.previewExternalWorldPoint = interaction.previewExternalWorldPoint || null;
             rec.interaction.previewStart = interaction.previewStart || null;
             rec.interaction.previewEnd = interaction.previewEnd || null;
@@ -736,6 +743,7 @@ function createSketchRuntimeApi(getApi) {
             rec.interaction.previewRect = null;
             rec.interaction.previewFaceSegments = null;
             rec.interaction.previewExternalWorldLine = null;
+            rec.interaction.previewExternalWorldSegments = null;
             rec.interaction.previewExternalWorldPoint = null;
             rec.interaction.previewStart = null;
             rec.interaction.previewEnd = null;
