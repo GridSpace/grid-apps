@@ -436,12 +436,31 @@ function useHoveredDerivedEdge() {
     if (!selectedEdges.length && !selectedPoints.length && !selectedFaces.length) {
         // `u` should prioritize the actively hovered derived edge candidate.
         if (hovered?.aLocal && hovered?.bLocal) {
-            selectedEdges.push({
-                type: 'edge',
-                aLocal: hovered.aLocal,
-                bLocal: hovered.bLocal,
-                source: hovered.source || null
-            });
+            if (Array.isArray(hovered?.pathLocalSegments) && hovered.pathLocalSegments.length > 1) {
+                const worldSegs = Array.isArray(hovered?.pathWorldSegments) ? hovered.pathWorldSegments : [];
+                for (let i = 0; i < hovered.pathLocalSegments.length; i++) {
+                    const seg = hovered.pathLocalSegments[i];
+                    const wseg = worldSegs[i] || null;
+                    if (!seg?.a || !seg?.b) continue;
+                    selectedEdges.push({
+                        type: 'edge',
+                        aLocal: seg.a,
+                        bLocal: seg.b,
+                        source: {
+                            ...(hovered.source || {}),
+                            a: wseg?.a || hovered?.source?.a || null,
+                            b: wseg?.b || hovered?.source?.b || null
+                        }
+                    });
+                }
+            } else {
+                selectedEdges.push({
+                    type: 'edge',
+                    aLocal: hovered.aLocal,
+                    bLocal: hovered.bLocal,
+                    source: hovered.source || null
+                });
+            }
         } else if (this.hoveredSolidFaceKey) {
             // Face derive is fallback only when no discrete edge is hovered.
             selectedFaces.push(this.hoveredSolidFaceKey);

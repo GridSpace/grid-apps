@@ -12,8 +12,8 @@ const PANEL_MIN_LEFT = 10;
 const PANEL_MIN_TOP = 60;
 
 function resolveExtrudeProfileRef(profile = {}) {
-    const regionId = String(profile?.region_id || profile?.regionId || '');
-    const match = regionId.match(/^(?:region:)?profile:([^:]+):([^:]+)$/);
+    const regionId = String(profile?.region_id || '');
+    const match = regionId.match(/^profile:([^:]+):([^:]+)$/);
     if (!match) return { regionId: null, sketchId: null, profileId: null, key: null };
     const sketchId = match[1];
     const profileId = match[2];

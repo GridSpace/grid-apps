@@ -283,7 +283,8 @@ function resolveDerivedEdgeCandidate(event, intersections, feature) {
     if (!solidId) return null;
     const faceKey = Number.isFinite(faceId) ? `${solidId}:${faceId}` : null;
 
-    // Promote dense closed loops (typically circles) to full-loop edge derive.
+    // Promote short-segment hits to their boundary loop (polyline semantics),
+    // while long segments remain individually selectable.
     if (!edge?.pathWorld && edgeKey.startsWith('faceedge:')) {
         const parts = edgeKey.split(':');
         const segIndex = Number(parts[parts.length - 1]);
@@ -292,25 +293,12 @@ function resolveDerivedEdgeCandidate(event, intersections, feature) {
         if (sid && Number.isFinite(fid) && Number.isFinite(segIndex)) {
             const loops = api.solids?.getFaceBoundaryLoops?.(`${sid}:${fid}`) || [];
             const loop = loops.find(lp => Array.isArray(lp?.segmentIndices) && lp.segmentIndices.includes(segIndex) && lp?.closed);
-            if (loop && Array.isArray(loop.points) && loop.points.length >= 8) {
-                const center = new THREE.Vector3();
-                for (const p of loop.points) center.add(p);
-                center.multiplyScalar(1 / loop.points.length);
-                let mean = 0;
-                const rr = [];
-                for (const p of loop.points) {
-                    const r = p.distanceTo(center);
-                    rr.push(r);
-                    mean += r;
-                }
-                mean /= Math.max(1, rr.length);
-                let varR = 0;
-                for (const r of rr) {
-                    const d = r - mean;
-                    varR += d * d;
-                }
-                const rel = mean > 1e-8 ? Math.sqrt(varR / Math.max(1, rr.length)) / mean : 1;
-                if (rel <= 0.12) {
+            if (loop && Array.isArray(loop.points) && loop.points.length >= 3) {
+                const segs = api.solids?.getFaceBoundarySegments?.(`${sid}:${fid}`) || [];
+                const seg = segs[segIndex];
+                const hoveredLen = seg?.a && seg?.b ? seg.a.distanceTo(seg.b) : Infinity;
+                const shortSegThreshold = 6;
+                if (Number.isFinite(hoveredLen) && hoveredLen <= shortSegThreshold) {
                     edge = {
                         ...edge,
                         key: `faceedgeloop:${sid}:${fid}:${loops.indexOf(loop)}`,
@@ -439,6 +427,23 @@ function resolveDerivedEdgeCandidate(event, intersections, feature) {
     const localA = toFaceLocal(a);
     const localB = toFaceLocal(b);
     const localP = hoverWorld ? toFaceLocal(new THREE.Vector3(hoverWorld.x, hoverWorld.y, hoverWorld.z)) : null;
+    const pathWorldSegments = [];
+    const pathLocalSegments = [];
+    if (Array.isArray(edge?.pathWorld) && edge.pathWorld.length >= 2) {
+        for (let i = 0; i + 1 < edge.pathWorld.length; i++) {
+            const wa = edge.pathWorld[i];
+            const wb = edge.pathWorld[i + 1];
+            if (!wa || !wb) continue;
+            const la = this.worldToSketchLocal(wa, basis);
+            const lb = this.worldToSketchLocal(wb, basis);
+            if (!la || !lb) continue;
+            pathLocalSegments.push({ a: la, b: lb });
+            pathWorldSegments.push({
+                a: { x: Number(wa.x || 0), y: Number(wa.y || 0), z: Number(wa.z || 0) },
+                b: { x: Number(wb.x || 0), y: Number(wb.y || 0), z: Number(wb.z || 0) }
+            });
+        }
+    }
     const canonicalEntity = resolvedPrimary?.entity || edgeHit?.entity || null;
     const canonicalEntityId = String(canonicalEntity?.id || '');
     const canonicalEntityKind = String(canonicalEntity?.kind || 'boundary-segment');
@@ -454,6 +459,8 @@ function resolveDerivedEdgeCandidate(event, intersections, feature) {
         aWorld: { x: a.x, y: a.y, z: a.z },
         bWorld: { x: b.x, y: b.y, z: b.z },
         midWorld: { x: mid.x, y: mid.y, z: mid.z },
+        pathLocalSegments: pathLocalSegments.length ? pathLocalSegments : null,
+        pathWorldSegments: pathWorldSegments.length ? pathWorldSegments : null,
         a: { x: a.x, y: a.y, z: a.z },
         b: { x: b.x, y: b.y, z: b.z },
         hoverPoint: hoverPoint ? { ...hoverPoint, world: hoverWorld } : null,

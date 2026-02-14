@@ -4,9 +4,6 @@ function createGeometryStoreApi(getApi) {
     return {
         schemaVersion: 1,
         state: null,
-        flags: {
-            geomGraphV2: false
-        },
 
         defaultState() {
             return {
@@ -94,14 +91,6 @@ function createGeometryStoreApi(getApi) {
             state.meta.feature_count = Number(snapshot?.meta?.feature_count) || state.meta.feature_count || 0;
             state.meta.generated_at = Date.now();
             return state;
-        },
-
-        setFeatureFlags(flags = {}) {
-            this.flags.geomGraphV2 = !!flags.geomGraphV2;
-        },
-
-        isGeomGraphV2Enabled() {
-            return !!this.flags.geomGraphV2;
         }
     };
 }

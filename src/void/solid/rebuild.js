@@ -8,8 +8,8 @@ import { applyChamferFeature } from './chamfer.js';
 const CLIPPER_SCALE = 100000;
 
 function resolveProfileTargetRef(profileTarget = {}) {
-    const regionId = String(profileTarget?.region_id || profileTarget?.regionId || '');
-    const match = regionId.match(/^(?:region:)?profile:([^:]+):([^:]+)$/);
+    const regionId = String(profileTarget?.region_id || '');
+    const match = regionId.match(/^profile:([^:]+):([^:]+)$/);
     if (!match) return { regionId: null, sketchId: null, profileId: null, key: null };
     const sketchId = match[1];
     const profileId = match[2];

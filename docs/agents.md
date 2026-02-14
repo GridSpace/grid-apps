@@ -220,8 +220,7 @@ src/
 - Known regression history: commit `5093eec4` introduced an overly permissive derived-edge proximity gate (`segLen * 0.35`) in `resolveDerivedEdgeCandidate`; this causes incorrect face/edge picks in sketch derive hover. Keep tight gate (`2.5`) unless replaced with a screen-space metric.
 - Geometry graph refactor plan is tracked in `docs/void-geomgraph-plan.md` (surfaces + boundaries as canonical entities; solids as derived artifacts).
 - Phase 0 scaffolding status:
-  - new `GeometryStore` API is wired in parallel (no behavior change yet)
-  - feature-flag rollout key is `void.geomGraphV2` (stored in preferences/admin)
+  - new `GeometryStore` API is wired as the single active path (no rollout flags)
 - Phase 1 in-progress status:
   - surface/profile/edge hover ranking logic has been extracted into `src/void/interact/selection_resolver.js`
   - `src/void/interact/planes.js#getPrimarySurfaceHitFromIntersections()` is now a thin delegate to the resolver

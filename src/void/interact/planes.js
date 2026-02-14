@@ -430,6 +430,7 @@ function getPrimarySurfaceHitFromIntersections(intersections) {
         : (sketchEditing
             ? (retargetMode ? SELECTION_MODES.sketchRetarget : SELECTION_MODES.sketch)
             : SELECTION_MODES.solid);
+    const edgeGateDistance = (sketchEditing && !retargetMode && !editingExtrudeProfiles) ? 0.5 : 2.5;
     return resolveSelectionCandidate(intersections, {
         api,
         mode,
@@ -441,7 +442,7 @@ function getPrimarySurfaceHitFromIntersections(intersections) {
         retargetMode,
         editingExtrudeProfiles,
         sketchFaceEpsilon: 0.25,
-        edgeGateDistance: 2.5
+        edgeGateDistance
     });
 }
 

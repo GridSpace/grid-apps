@@ -193,7 +193,8 @@ function updateSketchInteractionVisuals() {
         && !this.sketchRectStart;
     const externalPointLocal = canShowExternalPreview ? (external?.hoverPoint?.local || null) : null;
     const showExternalPoint = !!externalPointLocal;
-    const showExternalLine = canShowExternalPreview && !!external?.aLocal && !!external?.bLocal;
+    const showExternalSegments = canShowExternalPreview && Array.isArray(external?.pathLocalSegments) && external.pathLocalSegments.length > 1;
+    const showExternalLine = canShowExternalPreview && !showExternalSegments && !!external?.aLocal && !!external?.bLocal;
     const externalLine = showExternalLine
         ? { a: external.aLocal, b: external.bLocal, forceHover: true, projected: true }
         : null;
@@ -202,10 +203,14 @@ function updateSketchInteractionVisuals() {
         : null;
     const externalEnd = null;
     const externalPointWorld = showExternalPoint ? (external?.hoverPoint?.world || null) : null;
-    const projectedFaceSegments = !showExternalPoint && !showExternalLine && this.hoveredSolidFaceKey
+    const projectedFaceSegments = showExternalSegments
+        ? external.pathLocalSegments
+        : (!showExternalPoint && !showExternalLine && this.hoveredSolidFaceKey
         ? this.projectFaceBoundaryToSketch(feature, this.hoveredSolidFaceKey)
-        : null;
-    const sourceFaceWorldSegments = !showExternalPoint && !showExternalLine && this.hoveredSolidFaceKey
+        : null);
+    const sourceFaceWorldSegments = showExternalSegments
+        ? (external.pathWorldSegments || null)
+        : (!showExternalPoint && !showExternalLine && this.hoveredSolidFaceKey
         ? (() => {
             const faceSegments = api.solids?.getFaceBoundarySegments?.(this.hoveredSolidFaceKey) || [];
             if (!faceSegments.length) return null;
@@ -221,7 +226,7 @@ function updateSketchInteractionVisuals() {
             }
             return out.length ? out : null;
         })()
-        : null;
+        : null);
     api.sketchRuntime?.setEntityInteraction(feature.id, {
         hoveredId: this.sketchDrag ? dragHoverId : this.hoveredSketchEntityId,
         selectedIds: Array.from(this.selectedSketchEntities),

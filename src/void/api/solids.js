@@ -10,8 +10,8 @@ const SOLID_CREASE_ANGLE_DEG = 30;
 
 function createSolidsApi(getApi) {
     function resolveProfileTargetRef(profileTarget = {}) {
-        const regionId = String(profileTarget?.region_id || profileTarget?.regionId || '');
-        const match = regionId.match(/^(?:region:)?profile:([^:]+):([^:]+)$/);
+        const regionId = String(profileTarget?.region_id || '');
+        const match = regionId.match(/^profile:([^:]+):([^:]+)$/);
         if (!match) return { regionId: null, sketchId: null, profileId: null, key: null };
         const sketchId = match[1];
         const profileId = match[2];

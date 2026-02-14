@@ -128,7 +128,7 @@
 4. Phase 3: Route extrude inputs to `region_id`.
 5. Phase 4: Route chamfer inputs to `segment_id`.
 6. Phase 5: Remove legacy face/edge ad-hoc paths.
-7. Use feature flag `void.geomGraphV2` during rollout.
+7. Forward-only: remove rollout toggles and legacy branching once parity is reached.
 
 ## Performance and Worker Plan
 1. Keep all heavy geometry graph and topology steps in worker.
