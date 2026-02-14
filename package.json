@@ -104,6 +104,7 @@
         "clean": "rm -rf alt build data dist src/pack src.old tmp web.old .bcache",
         "dev": "npm run pack-dev && gs-app-server --debug --single",
         "docs-build": "docusaurus build --config conf/docusaurus.config.js",
+        "docs-clean": "prettier --config ./conf/prettier.config.js ./docs --write",
         "docs-check": "prettier --config ./conf/prettier.config.js ./docs --check",
         "docs-dev": "docusaurus start --config conf/docusaurus.config.js",
         "docs-serve": "docusaurus serve --config conf/docusaurus.config.js --port 4004",
