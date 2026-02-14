@@ -169,7 +169,6 @@ const interact = {
         window.addEventListener('mousemove', event => {
             if (this.isSketchEditing() && !this.isSketchRetargetMode()) {
                 this.handleSketchPointerMove?.(event);
-                this.handleSketchHover(event);
             }
         });
 

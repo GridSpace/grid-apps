@@ -438,9 +438,15 @@ function useHoveredDerivedEdge() {
         if (hovered?.aLocal && hovered?.bLocal) {
             if (Array.isArray(hovered?.pathLocalSegments) && hovered.pathLocalSegments.length > 1) {
                 const worldSegs = Array.isArray(hovered?.pathWorldSegments) ? hovered.pathWorldSegments : [];
+                const segKeys = Array.isArray(hovered?.pathSegmentKeys) ? hovered.pathSegmentKeys : [];
+                const segEntityIds = Array.isArray(hovered?.pathSegmentEntityIds) ? hovered.pathSegmentEntityIds : [];
                 for (let i = 0; i < hovered.pathLocalSegments.length; i++) {
                     const seg = hovered.pathLocalSegments[i];
                     const wseg = worldSegs[i] || null;
+                    const segKey = String(segKeys[i] || '');
+                    const segEntityId = String(segEntityIds[i] || '');
+                    const segKeyParts = segKey ? segKey.split(':') : [];
+                    const segIndex = segKeyParts.length >= 4 ? Number(segKeyParts[segKeyParts.length - 1]) : NaN;
                     if (!seg?.a || !seg?.b) continue;
                     selectedEdges.push({
                         type: 'edge',
@@ -448,8 +454,18 @@ function useHoveredDerivedEdge() {
                         bLocal: seg.b,
                         source: {
                             ...(hovered.source || {}),
+                            entity: segEntityId
+                                ? { kind: 'boundary-segment', id: segEntityId }
+                                : (hovered?.source?.entity || null),
+                            boundary_segment_id: segEntityId || String(hovered?.source?.boundary_segment_id || ''),
+                            edge_key: segKey || String(hovered?.source?.edge_key || ''),
+                            edge_index: Number.isFinite(segIndex)
+                                ? segIndex
+                                : Number(hovered?.source?.edge_index ?? i),
                             a: wseg?.a || hovered?.source?.a || null,
-                            b: wseg?.b || hovered?.source?.b || null
+                            b: wseg?.b || hovered?.source?.b || null,
+                            local_a: seg.a,
+                            local_b: seg.b
                         }
                     });
                 }
@@ -466,11 +482,12 @@ function useHoveredDerivedEdge() {
             selectedFaces.push(this.hoveredSolidFaceKey);
         }
     }
-    const created = this.deriveSelectionsAtomic(feature, {
+    const payload = {
         edges: selectedEdges,
         points: selectedPoints,
         faces: selectedFaces
-    });
+    };
+    const created = this.deriveSelectionsAtomic(feature, payload);
     if (!created) return false;
     // Prevent immediate face-boundary re-highlight after `u` when cursor is still nearby.
     this.hoveredSolidFaceKey = null;

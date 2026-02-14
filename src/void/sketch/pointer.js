@@ -258,10 +258,10 @@ function handleSketchHover(event, intersections) {
         ? (this.getPrimarySurfaceHitFromIntersections?.(intersections) || null)
         : null;
     let derived = null;
-    if (hasIntersections && primary?.type === 'solid-edge') {
+    if (hasIntersections) {
+        // Resolve from actual edge-distance each frame instead of trusting
+        // primary hit type ordering, which can be unstable across reloads.
         derived = this.resolveDerivedEdgeCandidate(event, intersections, feature);
-    } else if (!hasIntersections) {
-        derived = this.hoveredDerivedCandidate || null;
     }
     if (hit?.id) {
         // Current sketch entities take priority over any behind-surface derive targets.

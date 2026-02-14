@@ -212,17 +212,21 @@ function updateSketchInteractionVisuals() {
         ? (external.pathWorldSegments || null)
         : (!showExternalPoint && !showExternalLine && this.hoveredSolidFaceKey
         ? (() => {
-            const faceSegments = api.solids?.getFaceBoundarySegments?.(this.hoveredSolidFaceKey) || [];
-            if (!faceSegments.length) return null;
+            const loops = api.solids?.getFaceBoundaryLoops?.(this.hoveredSolidFaceKey) || [];
+            if (!loops.length) return null;
             const out = [];
-            for (const seg of faceSegments) {
-                const a = seg?.a;
-                const b = seg?.b;
-                if (!a || !b) continue;
-                out.push({
-                    a: { x: Number(a.x || 0), y: Number(a.y || 0), z: Number(a.z || 0) },
-                    b: { x: Number(b.x || 0), y: Number(b.y || 0), z: Number(b.z || 0) }
-                });
+            for (const loop of loops) {
+                const points = Array.isArray(loop?.points) ? loop.points : [];
+                if (points.length < 2) continue;
+                for (let i = 0; i + 1 < points.length; i++) {
+                    const a = points[i];
+                    const b = points[i + 1];
+                    if (!a || !b) continue;
+                    out.push({
+                        a: { x: Number(a.x || 0), y: Number(a.y || 0), z: Number(a.z || 0) },
+                        b: { x: Number(b.x || 0), y: Number(b.y || 0), z: Number(b.z || 0) }
+                    });
+                }
             }
             return out.length ? out : null;
         })()
