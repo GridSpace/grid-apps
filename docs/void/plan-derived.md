@@ -52,3 +52,17 @@ Each derived entity should keep:
 3. Remove fallback editing/solver paths for derived entities.
 4. Add stale/error UI and repair actions (rebind, delete link).
 
+## Status
+- Current state: planned, not implemented end-to-end.
+- Existing behavior: mixed interactive derive paths with mutable outcomes and fallback logic.
+- Known pain points: unstable derive outcomes, degenerates, and inconsistent rebuild coupling.
+
+## Next Milestone
+1. Introduce derived-link schema in sketch entity storage.
+2. Enforce immutability in interaction layer (block drag/edit, allow select/delete).
+3. Rebuild derived entities from links during sketch rebuild.
+4. Verify with regression scenario:
+   - Sketch A -> Extrude A
+   - Sketch B derived from A/solid boundaries
+   - Edit Sketch A
+   - Confirm Sketch B derived entities and downstream solids update deterministically.
