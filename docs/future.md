@@ -64,7 +64,7 @@
 - `F` allow import, rotation, scaling of stock
 - `F` get gcode coordinates off a part with point/click or hover?
 - `F` include tools in default devices (Carvera)
-- `F` add {progress} substitution and maybe {time-remaining} if can be calc'd
+- `F` add `{progress}` substitution and maybe `{time-remaining}` if can be calc'd
 - `F` import and follow 2D paths (conformed like pocket contours)
 - `F` add `plunge max` to contouring that can override z feed limit
 - `F` add lead-in milling (requires adding clamp / no go areas)

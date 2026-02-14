@@ -292,7 +292,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 ## Kiri:Moto
 
 - added batch processing to object adds/removes to speedup complex workspace restore
-- substitute some prusa slicer [variables] with KM {variables} on import
+- substitute some prusa slicer [variables] with KM `{variables}` on import
 - fix CNC output order for tool changes an spindle speed updates
 - add CNC pocket operation using surface selection
 - fix dog-bones on outlines cut by tabs
