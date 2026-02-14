@@ -135,7 +135,7 @@ function findClosedCurveLoops(feature, entities, pointById) {
         } else if (curve.type === 'arc') {
             const [a, b] = this.getArcEndpoints(curve, pointById);
             if (a && b) {
-                poly = this.getArcRenderPoints(curve, a, b, 64);
+                poly = this.getArcRenderPoints(curve, a, b, this.getArcSegmentsFor?.(curve, a, b, 'profile') || 64);
             }
         }
         if (!poly || poly.length < 2) continue;

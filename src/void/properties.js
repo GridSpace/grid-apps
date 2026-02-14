@@ -283,8 +283,13 @@ const properties = {
             }
         }
         this.panel.classList.add('hidden');
-        api.sketchRuntime?.setEditing(null);
         api.interact?.clearSketchSelection?.();
+        api.sketchRuntime?.setEditing(null);
+        if (editedFeatureId) {
+            api.sketchRuntime?.clearEntityInteraction?.(editedFeatureId);
+        }
+        api.sketchRuntime?.setSelectedProfiles?.([]);
+        api.sketchRuntime?.setHoveredProfile?.(null);
         this.syncExtrudeProfileSelection(null);
         this.syncExtrudeTargetSelection(null);
         this.syncBooleanSolidSelection(null);

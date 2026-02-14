@@ -1069,6 +1069,7 @@ const toolbar = {
             edgeLoopPromotionSegments: 10,
             edgeHoverLineWidth: 2.5,
             edgeSelectedLineWidth: 3.25,
+            sketchArcSegmentLength: 2.5,
             fitPaddingPerspective: 0.5,
             fitPaddingOrthographic: 0.9
         };
@@ -1080,6 +1081,10 @@ const toolbar = {
             edgeLoopPromotionSegments: Math.max(3, Math.round(Number(raw.edgeLoopPromotionSegments ?? d.edgeLoopPromotionSegments) || d.edgeLoopPromotionSegments)),
             edgeHoverLineWidth: Math.max(0.5, Number(raw.edgeHoverLineWidth ?? d.edgeHoverLineWidth) || d.edgeHoverLineWidth),
             edgeSelectedLineWidth: Math.max(0.5, Number(raw.edgeSelectedLineWidth ?? d.edgeSelectedLineWidth) || d.edgeSelectedLineWidth),
+            sketchArcSegmentLength: Math.max(
+                0.05,
+                Number(raw.sketchArcSegmentLength ?? raw.sketchArcSegments ?? d.sketchArcSegmentLength) || d.sketchArcSegmentLength
+            ),
             fitPaddingPerspective: Math.max(0.01, Number(raw.fitPaddingPerspective ?? d.fitPaddingPerspective) || d.fitPaddingPerspective),
             fitPaddingOrthographic: Math.max(0.01, Number(raw.fitPaddingOrthographic ?? d.fitPaddingOrthographic) || d.fitPaddingOrthographic)
         };
@@ -1121,6 +1126,9 @@ const toolbar = {
             edgeHoverLineWidth: prefs.edgeHoverLineWidth,
             edgeSelectedLineWidth: prefs.edgeSelectedLineWidth
         });
+        api.sketchRuntime?.setRenderPreferences?.({
+            arcSegmentLength: prefs.sketchArcSegmentLength
+        });
         space.view.setFitPadding({
             perspective: prefs.fitPaddingPerspective,
             orthographic: prefs.fitPaddingOrthographic
@@ -1139,6 +1147,7 @@ const toolbar = {
         if (inputs.edgeLoopPromotionSegments) inputs.edgeLoopPromotionSegments.value = String(prefs.edgeLoopPromotionSegments);
         if (inputs.edgeHoverLineWidth) inputs.edgeHoverLineWidth.value = String(prefs.edgeHoverLineWidth);
         if (inputs.edgeSelectedLineWidth) inputs.edgeSelectedLineWidth.value = String(prefs.edgeSelectedLineWidth);
+        if (inputs.sketchArcSegmentLength) inputs.sketchArcSegmentLength.value = String(prefs.sketchArcSegmentLength);
         if (inputs.fitPaddingPerspective) inputs.fitPaddingPerspective.value = String(prefs.fitPaddingPerspective);
         if (inputs.fitPaddingOrthographic) inputs.fitPaddingOrthographic.value = String(prefs.fitPaddingOrthographic);
     },
@@ -1201,6 +1210,12 @@ const toolbar = {
             'Screen-space thickness (pixels) for selected solid edges. Typically slightly larger than hover for stronger feedback.'
         );
         makeNumberRow(
+            'Sketch Arc Segment Length',
+            'sketchArcSegmentLength',
+            '0.05',
+            'Target segment length (in sketch units) used to tessellate arcs/circles. Lower values increase smoothness at higher cost.'
+        );
+        makeNumberRow(
             'Fit Padding (Perspective)',
             'fitPaddingPerspective',
             '0.01',
@@ -1223,6 +1238,7 @@ const toolbar = {
                 edgeLoopPromotionSegments: Number(this.preferencesInputs?.edgeLoopPromotionSegments?.value),
                 edgeHoverLineWidth: Number(this.preferencesInputs?.edgeHoverLineWidth?.value),
                 edgeSelectedLineWidth: Number(this.preferencesInputs?.edgeSelectedLineWidth?.value),
+                sketchArcSegmentLength: Number(this.preferencesInputs?.sketchArcSegmentLength?.value),
                 fitPaddingPerspective: Number(this.preferencesInputs?.fitPaddingPerspective?.value),
                 fitPaddingOrthographic: Number(this.preferencesInputs?.fitPaddingOrthographic?.value)
             }, { persist: true, updateFields: true });

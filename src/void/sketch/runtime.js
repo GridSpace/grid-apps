@@ -36,6 +36,9 @@ function createSketchRuntimeApi(getApi) {
         _cameraSyncQueued: false,
         _viewCtrlBound: null,
         _viewCtrlChangeHandler: null,
+        _renderPrefs: {
+            arcSegmentLength: 2.5
+        },
 
         init(world) {
             if (this.root) return;
@@ -477,7 +480,7 @@ function createSketchRuntimeApi(getApi) {
                 if (entity.type === 'arc' && entity.a && entity.b) {
                     const [a, b] = this.getArcEndpoints(entity, pointById);
                     if (!a || !b) continue;
-                    const points = this.getArcRenderPoints(entity, a, b, 48);
+                    const points = this.getArcRenderPoints(entity, a, b, this.getArcSegmentsFor(entity, a, b, 'entity'));
                     if (points.length < 2) continue;
                     const material = entity.construction
                         ? new THREE.LineDashedMaterial({
@@ -762,6 +765,78 @@ function createSketchRuntimeApi(getApi) {
 
         getArcRenderPoints(arc, a, b, segments = 32) {
             return arcOps.getArcRenderPoints(arc, a, b, segments);
+        },
+
+        getArcLength(arc, a, b) {
+            if (!arc) return 0;
+            const cx = Number(arc?.cx);
+            const cy = Number(arc?.cy);
+            let radius = Number(arc?.radius);
+            if (!Number.isFinite(radius) || radius <= 0) {
+                if (a && Number.isFinite(cx) && Number.isFinite(cy)) {
+                    radius = Math.hypot((a.x || 0) - cx, (a.y || 0) - cy);
+                } else {
+                    radius = 0;
+                }
+            }
+            if (isCircleCurve(arc)) {
+                return radius > 0 ? (Math.PI * 2 * radius) : 0;
+            }
+            if (!Number.isFinite(radius) || radius <= 0) {
+                if (a && b) {
+                    return Math.hypot((b.x || 0) - (a.x || 0), (b.y || 0) - (a.y || 0));
+                }
+                return 0;
+            }
+            let startAngle = Number(arc?.startAngle);
+            let endAngle = Number(arc?.endAngle);
+            let ccw = arc?.ccw !== false;
+            if (Number.isFinite(arc?.mx) && Number.isFinite(arc?.my) && a && b) {
+                const geom = this.computeArcFromThreePoints(
+                    { x: a.x || 0, y: a.y || 0 },
+                    { x: b.x || 0, y: b.y || 0 },
+                    { x: arc.mx, y: arc.my }
+                );
+                if (geom) {
+                    startAngle = geom.startAngle;
+                    endAngle = geom.endAngle;
+                    ccw = geom.ccw;
+                }
+            }
+            if (!Number.isFinite(startAngle) || !Number.isFinite(endAngle)) {
+                if (a && b) {
+                    return Math.hypot((b.x || 0) - (a.x || 0), (b.y || 0) - (a.y || 0));
+                }
+                return 0;
+            }
+            const tau = Math.PI * 2;
+            let sweep;
+            if (ccw) {
+                sweep = (endAngle - startAngle) % tau;
+                if (sweep < 0) sweep += tau;
+            } else {
+                sweep = (startAngle - endAngle) % tau;
+                if (sweep < 0) sweep += tau;
+            }
+            return Math.abs(sweep) * radius;
+        },
+
+        getArcSegmentsFor(arc, a, b, mode = 'entity') {
+            const unit = Math.max(0.05, Number(this._renderPrefs?.arcSegmentLength || 2.5) || 2.5);
+            const arcLength = Math.max(0, Number(this.getArcLength(arc, a, b) || 0));
+            const base = Math.ceil(arcLength / unit);
+            if (mode === 'profile') return Math.max(24, Math.min(768, base));
+            if (mode === 'preview') return Math.max(16, Math.min(768, base));
+            return Math.max(12, Math.min(768, base));
+        },
+
+        setRenderPreferences(next = {}) {
+            if (!next || typeof next !== 'object') return;
+            if (next.arcSegmentLength !== undefined) {
+                const value = Math.max(0.05, Number(next.arcSegmentLength) || 2.5);
+                this._renderPrefs.arcSegmentLength = value;
+            }
+            this.sync();
         },
 
         getArcCenterLocal(arc, a, b) {

@@ -951,7 +951,7 @@ function applyPreviewArc(rec, mode, editing, colors) {
         return;
     }
     if ((preview.mode === 'arc' || preview.mode === 'circle') && Number.isFinite(preview.cx) && Number.isFinite(preview.cy)) {
-        const pts = this.getArcRenderPoints(preview, preview.a, preview.b, 48);
+        const pts = this.getArcRenderPoints(preview, preview.a, preview.b, this.getArcSegmentsFor?.(preview, preview.a, preview.b, 'preview') || 48);
         if (pts.length >= 2) {
             setLineObjectPoints(rec.previewArc, pts.map(p => ({ x: p.x || 0, y: p.y || 0, z: 0 })));
             setLineObjectStyle(rec.previewArc, mode === 'edit' ? colors.linesEdit : colors.linesHover, colors.lineWidths?.hover || 3.0, false);
