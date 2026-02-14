@@ -955,9 +955,14 @@ const properties = {
         }
         const keys = (Array.isArray(feature?.input?.edges) ? feature.input.edges : [])
             .map(edge => {
-                const ref = resolveChamferEdgeRefKey(edge);
-                if (!ref) return null;
-                return String(ref).startsWith('segment:') ? String(ref).substring('segment:'.length) : String(ref);
+                const mapped = resolveChamferEdgeRefKey(edge);
+                if (mapped) {
+                    return String(mapped).startsWith('segment:')
+                        ? String(mapped).substring('segment:'.length)
+                        : String(mapped);
+                }
+                const explicit = String(edge?.key || '').trim();
+                return explicit || null;
             })
             .filter(Boolean);
         api.interact.selectedSolidEdgeKeys = new Set(keys);

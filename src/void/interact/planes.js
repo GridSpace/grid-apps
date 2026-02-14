@@ -6,6 +6,42 @@ import { api } from '../api.js';
 import { properties } from '../properties.js';
 import { resolveSelectionCandidate, SELECTION_INTENTS, SELECTION_MODES } from './selection_resolver.js';
 
+function resolveChamferEdgeIdentity(edge = {}) {
+    const key = String(edge?.key || '').trim();
+    if (key) return `key:${key}`;
+    const ref = String(edge?.boundary_segment_id || edge?.entity?.id || '').trim();
+    const mapped = String(api.solids?.getEdgeKeyForBoundaryRef?.(ref) || '').trim();
+    if (mapped) return `mapped:${mapped}`;
+    if (ref) return `ref:${ref}`;
+    const solidId = String(edge?.solidId || '').trim();
+    const edgeIndex = Number(edge?.edgeIndex);
+    if (solidId && Number.isFinite(edgeIndex)) {
+        return `idx:${solidId}:${edgeIndex}`;
+    }
+    return null;
+}
+
+function buildChamferEdgeIdentitySet(edge = {}) {
+    const set = new Set();
+    const add = (value) => {
+        const v = String(value || '').trim();
+        if (v) set.add(v);
+    };
+    add(resolveChamferEdgeIdentity(edge));
+    const key = String(edge?.key || '').trim();
+    if (key) {
+        add(`key:${key}`);
+        add(`mapped:${key}`);
+    }
+    const ref = String(edge?.boundary_segment_id || edge?.entity?.id || '').trim();
+    if (ref) {
+        add(`ref:${ref}`);
+        const mapped = String(api.solids?.getEdgeKeyForBoundaryRef?.(ref) || '').trim();
+        if (mapped) add(`mapped:${mapped}`);
+    }
+    return set;
+}
+
 function isEditingExtrudeProfiles() {
     const currentFeatureId = properties.currentFeatureId || null;
     const currentFeature = currentFeatureId ? api.features.findById(currentFeatureId) : null;
@@ -414,6 +450,10 @@ function handleMouseUp(intersection, event, allIntersections) {
         return;
     }
 
+    const currentFeatureId = properties.currentFeatureId || null;
+    const currentFeature = currentFeatureId ? api.features.findById(currentFeatureId) : null;
+    const editingChamfer = currentFeature?.type === 'chamfer' && currentFeature?.id === currentFeatureId;
+
     if (!(this.isSketchEditing && this.isSketchEditing()) || (this.isSketchRetargetMode && this.isSketchRetargetMode())) {
         const primaryHit = this.getPrimarySurfaceHitFromIntersections(allIntersections || (intersection ? [intersection] : []));
         if (primaryHit?.type === 'profile') {
@@ -446,6 +486,9 @@ function handleMouseUp(intersection, event, allIntersections) {
         if (!inViewport) {
             return;
         }
+        if (editingChamfer) {
+            return;
+        }
         if (!event.ctrlKey && !event.metaKey) {
             this.deselectAll();
         }
@@ -457,6 +500,9 @@ function handleMouseUp(intersection, event, allIntersections) {
     if (plane) {
         this.selectPlane(plane, event);
     } else if (!event.ctrlKey && !event.metaKey) {
+        if (editingChamfer) {
+            return;
+        }
         this.deselectAll();
     }
 }
@@ -770,7 +816,7 @@ function selectSolidEdge(hit, event) {
         const a = edge.aWorld ? { x: Number(edge.aWorld.x || 0), y: Number(edge.aWorld.y || 0), z: Number(edge.aWorld.z || 0) } : null;
         const b = edge.bWorld ? { x: Number(edge.bWorld.x || 0), y: Number(edge.bWorld.y || 0), z: Number(edge.bWorld.z || 0) } : null;
         const ref = {
-            key,
+            key: edge.key,
             boundary_segment_id: refId,
             entity: {
                 kind: String(edgeEntity?.kind || 'boundary-segment'),
@@ -785,17 +831,35 @@ function selectSolidEdge(hit, event) {
             path
         };
         const existing = Array.isArray(currentFeature?.input?.edges) ? currentFeature.input.edges.slice() : [];
-        const has = existing.some(item => String(item?.boundary_segment_id || item?.entity?.id || '') === refId);
+        const refIds = buildChamferEdgeIdentitySet(ref);
+        const has = existing.some(item => {
+            const ids = buildChamferEdgeIdentitySet(item);
+            for (const id of ids) {
+                if (refIds.has(id)) return true;
+            }
+            return false;
+        });
         const edgeRefs = has
-            ? existing.filter(item => String(item?.boundary_segment_id || item?.entity?.id || '') !== refId)
+            ? existing.filter(item => {
+                const ids = buildChamferEdgeIdentitySet(item);
+                for (const id of ids) {
+                    if (refIds.has(id)) return false;
+                }
+                return true;
+            })
             : [...existing, ref];
         const selectedKeys = edgeRefs
-            .map(item => api.solids?.getEdgeKeyForBoundaryRef?.(item?.boundary_segment_id || item?.entity?.id || ''))
+            .map(item => {
+                const mappedByRef = api.solids?.getEdgeKeyForBoundaryRef?.(item?.boundary_segment_id || item?.entity?.id || '');
+                if (mappedByRef) return mappedByRef;
+                const explicitKey = String(item?.key || '').trim();
+                return explicitKey || null;
+            })
             .filter(Boolean);
         this.selectedSolidEdgeKeys = new Set(selectedKeys);
-        this.hoveredSolidEdgeKey = key;
+        this.hoveredSolidEdgeKey = edge.key;
         api.solids?.setSelectedEdges?.(selectedKeys);
-        api.solids?.setHoveredEdge?.(key);
+        api.solids?.setHoveredEdge?.(edge.key);
         api.features.update(currentFeature.id, feature => {
             feature.input = feature.input || {};
             feature.input.edges = edgeRefs;
