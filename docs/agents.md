@@ -219,6 +219,15 @@ src/
   - current implementation favors deterministic branching for line targets; revisit with solver-side branch lock per drag gesture if needed
 - Known regression history: commit `5093eec4` introduced an overly permissive derived-edge proximity gate (`segLen * 0.35`) in `resolveDerivedEdgeCandidate`; this causes incorrect face/edge picks in sketch derive hover. Keep tight gate (`2.5`) unless replaced with a screen-space metric.
 - Geometry graph refactor plan is tracked in `docs/void-geomgraph-plan.md` (surfaces + boundaries as canonical entities; solids as derived artifacts).
+- Terminology (use consistently in code/docs/issues):
+  - `segment`: one boundary edge between two 3D points
+  - `chain`: ordered open polyline of connected segments
+  - `loop`: ordered closed polyline of connected segments
+  - `surface`: bounded face patch on a solid (planar or curved)
+  - `region`: selectable enclosed 2D sketch profile area
+- TODO (open): de-dup overlapping boundary projections/derives in sketch `Use (u)` flow.
+  - Symptom: side faces on cubes/cylinders/arc-cutouts can project/derive overlapping duplicate lines.
+  - Requirement: de-dup identical segments/chains by geometric equivalence (endpoint tolerance + chain shape/length), not by source face id.
 - Phase 0 scaffolding status:
   - new `GeometryStore` API is wired as the single active path (no rollout flags)
 - Phase 1 in-progress status:
