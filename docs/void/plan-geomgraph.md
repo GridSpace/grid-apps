@@ -1,6 +1,7 @@
 # Void Geometry Graph Plan (Surfaces + Boundaries)
 
 ## Progress Checkpoint (2026-02-13)
+
 1. Completed:
 2. `GeometryStore` is persisted in document state and populated from solids runtime snapshots.
 3. Selection pipeline was split to `interact/selection_resolver.js` and now emits typed candidates (`profile/solid-face/solid-edge`) with canonical entity descriptors.
@@ -12,6 +13,7 @@
 9. Resolver now consumes these mappings (`resolveCanonicalFaceEntity`, `resolveCanonicalEdgeEntity`) as primary IDs.
 
 ## Resume Pointers
+
 1. Canonical mapping source:
 2. `src/void/api/solids.js`:
 3. `buildGeometryStoreSnapshot()` map population
@@ -32,6 +34,7 @@
 18. During sketch editing, `Use (u)` should derive from other visible sketch entities (not only solids).
 
 ## Target Architecture
+
 1. Adopt a single geometric graph centered on `surfaces` and `boundaries`, with solids as derived artifacts only.
 2. Treat every selectable thing as one of:
 3. `SurfaceRegion` (planar/non-planar bounded patch).
@@ -40,6 +43,7 @@
 6. `BoundaryPoint` (segment endpoint, midpoint, center, intersection, projected point).
 
 ## Core Data Model
+
 1. Add `GeometryStore` (document-persisted, versioned):
 2. `surface_id`, `type` (`planar|curved`), `frame` (for planar), `source` provenance.
 3. `boundary_id`, `surface_id`, ordered `segment_ids`, orientation, closure, area sign, nesting depth.
@@ -54,6 +58,7 @@
 12. Supports nearest-hit resolution with tolerance and tie-break rules.
 
 ## Selection and Hover System
+
 1. Replace mode-specific picking with one `SelectionResolver` pipeline.
 2. Input: ray hits + current mode + intent mask.
 3. Output: ranked candidates of `point/segment/boundary/surface/region`.
@@ -73,6 +78,7 @@
 17. No cross-picker stealing while dialog active.
 
 ## Geometry Build Pipeline
+
 1. Introduce staged rebuild in worker:
 2. Stage A: Feature evaluation -> sketch geometry on target surfaces.
 3. Stage B: Boundary graph build per surface (loop extraction, splitting, nesting).
@@ -84,6 +90,7 @@
 9. Recompute only invalidated downstream stages.
 
 ## Sketch Integration
+
 1. Sketches bind to `surface_id` + local frame, not transient face index.
 2. `Use (u)` creates `derived segment/point` referencing source `segment_id/point_id`.
 3. Derived geometry stores transform relation to host surface frame.
@@ -91,24 +98,28 @@
 5. Closed-area detection uses `boundary/region` graph directly (no separate ad-hoc fill path).
 
 ## Extrude Integration
+
 1. Extrude input stores selected `region_id`s, not ad-hoc loops.
 2. Region hover/selection always from boundary graph.
 3. Live preview reads from current region snapshots.
 4. Targets/tools in add/subtract reference resulting body ids, but source remains region-driven.
 
 ## Chamfer Integration
+
 1. Chamfer input stores `boundary_segment_id`s (or section ids for partial edges).
 2. Face click expands to boundary segments by adjacency policy.
 3. No selection against regenerated transient mesh during edit.
 4. Preview and final solve read same boundary refs to avoid drift.
 
 ## Projection / Derive Reliability
+
 1. Stop pre-projecting everything.
 2. Resolve hovered source entity first.
 3. Project only selected/hovered entity into current sketch frame.
 4. Keep source and projected visuals separate but linked by shared entity id.
 
 ## Planar/Non-Planar Classification
+
 1. Surface classification at creation:
 2. Planar stores orthonormal frame and scalar offset.
 3. Curved stores param evaluator and principal directions where available.
@@ -116,12 +127,14 @@
 5. Sketch-on-face initially allowed only on planar surfaces; curved support can be staged later.
 
 ## Document Persistence
+
 1. Persist `GeometryStore` plus feature list and timeline.
 2. Persist only canonical geometry entities, not transient mesh selections.
 3. Add schema version bump and hard reset path (allowed in this project stage).
 4. Undo/redo stores deltas against `GeometryStore` entities for atomic operations.
 
 ## Migration Strategy
+
 1. Phase 0: Add new store in parallel, keep existing runtime behavior.
 2. Phase 1: Route hover/selection to `SelectionResolver` while existing builders stay.
 3. Phase 2: Route sketch profiles/areas to `boundary/region`.
@@ -131,12 +144,14 @@
 7. Forward-only: remove rollout toggles and legacy branching once parity is reached.
 
 ## Performance and Worker Plan
+
 1. Keep all heavy geometry graph and topology steps in worker.
 2. Main thread receives compact immutable snapshots and draw buffers.
 3. Use incremental invalidation by dependency DAG from edited feature forward.
 4. Add rebuild budget logging per stage to catch regressions early.
 
 ## Testing Plan
+
 1. Unit tests:
 2. Boundary extraction and nesting.
 3. Region fill-rule behavior (self-intersecting + nested bulls-eye cases).
@@ -152,6 +167,7 @@
 13. Determinism check: same doc state yields same entity ids/topology signatures.
 
 ## Deliverables Sequence
+
 1. `GeometryStore` + ids + schema.
 2. `SelectionResolver` + mode masks.
 3. `BoundaryGraphBuilder` + `RegionBuilder`.
@@ -161,6 +177,7 @@
 7. Legacy path removal and cleanup docs.
 
 ## Acceptance Criteria
+
 1. Hover/select behavior is identical and predictable across sketch/solid/chamfer modes.
 2. Derived sketches follow upstream changes without requiring manual edit-open.
 3. Extrude/chamfer operate on stable references, not transient mesh hits.

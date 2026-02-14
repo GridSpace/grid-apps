@@ -6,11 +6,11 @@ Quick reference for AI agents working on this project.
 
 **gs-apps** is a monorepo containing three Grid.Space web applications:
 
-| App | Purpose | Status | Entry Point |
-|-----|---------|--------|-------------|
+| App           | Purpose                       | Status     | Entry Point        |
+| ------------- | ----------------------------- | ---------- | ------------------ |
 | **kiri:moto** | Multi-axis CNC/FDM/SLA slicer | Production | `src/main/kiri.js` |
-| **mesh:tool** | 3D mesh editor & repair | Active dev | `src/main/mesh.js` |
-| **void:form** | Parametric CAD modeler | Phase 1 | `src/main/void.js` |
+| **mesh:tool** | 3D mesh editor & repair       | Active dev | `src/main/mesh.js` |
+| **void:form** | Parametric CAD modeler        | Phase 1    | `src/main/void.js` |
 
 All three share common infrastructure in `src/moto/`, `src/geo/`, `src/load/`, and `src/ext/`.
 
@@ -19,9 +19,11 @@ All three share common infrastructure in `src/moto/`, `src/geo/`, `src/load/`, a
 ## 1. KIRI:MOTO - CNC/FDM/SLA Slicer
 
 ### Purpose
+
 Multi-mode manufacturing tool for slicing 3D models for CNC milling, 3D printing, laser cutting, SLA, wire EDM, and waterjet.
 
 ### Architecture
+
 ```
 src/
 ├── main/kiri.js           # Bootstrap entry point (2.3KB)
@@ -54,6 +56,7 @@ src/
 ```
 
 ### Key Features
+
 - **Multi-threaded slicing**: Web Worker pool (up to 4 minions)
 - **Multiple modes**: CAM, FDM, LASER, SLA, WEDM, WJET
 - **Device profiles**: JSON-based machine configs (`src/cli/`)
@@ -61,16 +64,19 @@ src/
 - **Tabs interface**: Multi-document workspace
 
 ### Routes
+
 - `/kiri/` - Main slicer interface
 - `/lib/pack/kiri-main.js` - Main bundle (~28KB minified)
 - `/lib/pack/kiri-work.js` - Worker bundle
 - `/lib/pack/kiri-eng.js` - Engine bundle
 
 ### Documentation
+
 - Full docs: `/Users/stewart/Code/gs-apps/docs/kiri-moto/`
 - API reference: `/Users/stewart/Code/gs-apps/docs/kiri-moto/apis.md`
 
 ### Database (IndexedDB)
+
 - Device profiles, process settings, print history
 - Workspace restoration
 
@@ -79,9 +85,11 @@ src/
 ## 2. MESH:TOOL - 3D Mesh Editor
 
 ### Purpose
+
 Direct 3D mesh editing, boolean operations, mesh repair, face/edge selection, and 2D sketch system.
 
 ### Architecture
+
 ```
 src/
 ├── main/mesh.js          # Bootstrap entry point (29KB)
@@ -100,6 +108,7 @@ src/
 ```
 
 ### Key Features
+
 - **Mode-based UI**: Object, Tool, Face, Surface, Edge, Sketch modes
 - **Boolean operations**: Union, intersect, difference (Manifold WASM)
 - **Mesh repair**: Heal, clean, triangulate
@@ -109,21 +118,25 @@ src/
 - **Undo/redo**: Full history system
 
 ### UI Components
+
 - Feature tree (left panel)
 - Mode buttons (object/tool/face/surface/edge/sketch)
 - Object properties panel
 - Wireframe/normals visualization
 
 ### Routes
+
 - `/mesh/` - Main mesh editor
 - `/lib/pack/mesh-main.js` - Main bundle
 - `/lib/pack/mesh-work.js` - Worker bundle
 
 ### Database (IndexedDB)
+
 - `admin` store - Metadata, preferences, cache
 - `space` store - Models, groups, sketches
 
 ### Documentation
+
 - `/Users/stewart/Code/gs-apps/docs/mesh-tool.md`
 
 ---
@@ -131,9 +144,11 @@ src/
 ## 3. VOID:FORM - Parametric CAD
 
 ### Purpose
+
 Onshape-inspired parametric CAD with constraint-based sketching, feature history, and BREP operations.
 
 ### Architecture
+
 ```
 src/
 ├── main/void.js          # Bootstrap entry point (210 lines)
@@ -177,6 +192,7 @@ src/
 ```
 
 ### Key Features
+
 - **Feature tree scaffold**: Sidebar structure is present; full history dependency/update graph is not wired yet
 - **Datum planes**: XY, XZ, YZ reference planes
 - **Constraint sketching**: integrated (`@salusoft89/planegcs` + fallback solver path)
@@ -186,7 +202,9 @@ src/
 - **2D overlay**: SVG overlay for 3D point tracking
 
 ### Status
+
 **Very early development (Phase 1 foundation, early feature workflow in place)**
+
 - 3D viewport with Onshape camera controls
 - Datum planes with interaction
 - Feature tree with default geometry visibility controls
@@ -196,6 +214,7 @@ src/
 - Sketch feature creation scaffold (target plane/face -> sketch feature entry)
 
 **Current implementation notes (important for agents)**
+
 - Direct-call architecture in `void:form` (no broker event bus in current runtime path)
 - `toolbar` wires real actions for docs, camera modes, undo/redo, and sketch creation
 - `toolbar` now includes a `Preferences` dialog (`⚙`) with persisted runtime tuning:
@@ -262,6 +281,7 @@ src/
   - TODO (tracked): during sketch editing, allow `Use (u)` derive from other visible sketch entities
 
 **Phase 2: Sketch System (Current Workstream)**
+
 - planegcs constraint solver integration is active
 - sketch runtime supports point/line/arc/circle/rectangle workflows
 - sketch mirror mode is now Onshape-style:
@@ -295,6 +315,7 @@ src/
   - center rectangle
 
 **Phase 3: Feature History Scaffold (in progress)**
+
 - `extrude` can now be created as a history feature from a selected sketch (tree + document/history plumbing)
 - 3D solid generation/rebuild is active via Manifold replay (extrude + boolean paths)
 - timeline/reorder/suppress semantics are active at the feature-history layer before full BREP ops
@@ -304,6 +325,7 @@ src/
   - geometry mutation/rebuild for chamfer edges is not yet applied (selection/dialog/history plumbing only)
 
 **Solid Pipeline (new scaffold)**
+
 - `void` now has a dedicated solid path (separate from `kiri/mesh` CSG wrappers):
   - `src/void/api/solids.js` (rebuild scheduling + orchestration)
   - `src/void/solid/kernel.js` (direct Manifold JS initialization/extrude entrypoint)
@@ -322,6 +344,7 @@ src/
   - phase-4: worker pool for independent heavy ops (exports/tessellation), keeping deterministic rebuild order
 
 **Sketch MVP Contract (checkpointed, 2026-02-06)**
+
 - Primitive rollout:
   - v1: `point` + `line`
   - `arc` implemented
@@ -366,6 +389,7 @@ src/
   - Not per low-level pointer gesture frame
 
 **Sketch Point Rendering (current)**
+
 - Sketch point and arc-center markers are now shader-based (`THREE.Points` + fragment rings) in WebGL:
   - camera-facing, circular, pixel-sized (zoom invariant)
   - avoids DOM overlay jitter at high entity counts
@@ -379,18 +403,22 @@ src/
   - if pointer remains over tree/panels long enough, viewport updates can appear stalled (sketch hover/render). Keep `space` activity/refresh alive for UI-target mousemove paths.
 
 ### Routes
+
 - `/void/` - Primary URL
 - `/form/` - Alias (same app)
 
 ### Database (IndexedDB)
+
 - `admin` store - Metadata, camera position
 - `documents` store - Document data
 - `versions` store - Revision history (snapshots/deltas)
 
 ### Documentation
+
 - `/Users/stewart/Code/gs-apps/VOID-FORM.md` - Full implementation notes
 
 ### Dependencies (Unique to void:form)
+
 - **@salusoft89/planegcs** ^1.1.7 - 2D constraint solver (active)
 
 ---
@@ -402,7 +430,9 @@ All three apps build on common modules, but usage patterns differ by app:
 ### Core Systems (moto/)
 
 #### 1. Event System (`broker.js` - 156 lines)
+
 Used heavily by `kiri:moto` and `mesh:tool`. `void:form` currently does not use broker in its runtime path.
+
 ```javascript
 import { broker } from '../moto/broker.js';
 
@@ -417,6 +447,7 @@ broker.send.feature_selected({ id: 'plane-1' });
 ```
 
 #### 2. 3D Viewport (`space.js` - 55KB)
+
 Three.js wrapper with camera, scene, and interaction:
 
 ```javascript
@@ -473,13 +504,16 @@ space.tracking.getPlane();                 // Get THREE.Mesh for advanced use
 ```
 
 #### 3. Camera Controls (`orbit.js` - 25KB)
+
 Orbit control class for camera manipulation:
+
 - Spherical coordinates (theta/phi)
 - Pan, zoom, rotate operations
 - Tweening for smooth animations
 - Touch support
 
 #### 4. Web UI Helpers (`webui.js` - 4KB)
+
 ```javascript
 import { $, $C, h } from '../moto/webui.js';
 
@@ -489,7 +523,9 @@ h.div([...])              // Create DOM elements
 ```
 
 #### 5. Worker System (`client.js`, `worker.js`)
+
 Web Worker abstraction with promise-based API:
+
 ```javascript
 import { client } from '../moto/client.js';
 
@@ -498,7 +534,9 @@ worker.send('method', data).then(result => { ... });
 ```
 
 ### Geometry & Math (geo/)
+
 Shared by all apps for 2D/3D operations:
+
 - `base.js` - Core math utilities (22KB)
 - `polygon.js` - 2D polygon operations (48KB)
 - `polygons.js` - Multi-polygon operations (39KB)
@@ -508,7 +546,9 @@ Shared by all apps for 2D/3D operations:
 - `line.js`, `bounds.js`, `csg.js`, etc.
 
 ### File Loading (load/)
+
 Format detection and parsing:
+
 - `file.js` - Auto-detect file type
 - `stl.js` - STL (binary & ASCII)
 - `obj.js` - Wavefront OBJ
@@ -519,7 +559,9 @@ Format detection and parsing:
 - `png.js` - PNG (height map)
 
 ### External Libraries (ext/)
+
 Pre-integrated WASM and libraries:
+
 - `three.js` - Three.js v0.182.0 (2.4MB)
 - `manifold.js` - 3D boolean operations (WASM)
 - `quickjs.js` - JavaScript VM (2.4MB WASM)
@@ -532,7 +574,9 @@ Pre-integrated WASM and libraries:
 - `md5.js` - MD5 hashing
 
 ### Data Storage (data/)
+
 IndexedDB wrapper:
+
 ```javascript
 import { open as dataOpen } from '../data/index.js';
 
@@ -555,9 +599,11 @@ db.admin.get('key').then(value => { ... });
 ## Common Architectural Patterns
 
 ### 1. Three.js Native Objects
+
 All 3D primitives are native Three.js objects:
+
 ```javascript
-import { THREE } from '../ext/three.js';
+import { THREE } from "../ext/three.js";
 
 const { Group, Mesh, LineSegments, BoxGeometry, MeshBasicMaterial } = THREE;
 
@@ -567,7 +613,7 @@ group.add(mesh);
 group.add(outline);
 
 // Add userData for back-references
-group.userData.featureType = 'plane';
+group.userData.featureType = "plane";
 group.userData.plane = this;
 
 // Set renderOrder to control draw order (avoid z-fighting)
@@ -576,22 +622,24 @@ outline.renderOrder = 2;
 
 // Transparent objects MUST have depthWrite: false
 const material = new MeshBasicMaterial({
-    transparent: true,
-    opacity: 0.5,
-    depthWrite: false  // CRITICAL for transparency
+  transparent: true,
+  opacity: 0.5,
+  depthWrite: false, // CRITICAL for transparency
 });
 ```
 
 ### 2. Event-Driven Communication
+
 `kiri:moto` and `mesh:tool` use broker for loose coupling. `void:form` currently uses direct module calls/shared API state.
+
 ```javascript
 // Subscribe to events
-broker.subscribe('model.updated', (data) => {
-    updateUI(data);
+broker.subscribe("model.updated", (data) => {
+  updateUI(data);
 });
 
 // Publish events
-broker.publish('model.updated', { model });
+broker.publish("model.updated", { model });
 
 // Or use typed interface
 broker.send.model_updated({ model });
@@ -606,7 +654,9 @@ datum.updateLabels(overlay);
 ```
 
 ### 2.1. Void Interaction Contract (Current)
+
 `void:form` interaction is currently plane-centric and depends on `userData` back-references:
+
 - Raycast targets are returned from `interact.getInteractiveObjects()`
 - Selection/hover resolve via `intersection.object.userData.plane`
 - Drag-resize logic is implemented for plane corner handles (`handleType = 'plane-resize'`)
@@ -616,39 +666,47 @@ datum.updateLabels(overlay);
 - Plane labels should be bound to plane changes (size/position/rotation/label), not only camera movement
 
 ### 3. Mouse Interaction Pattern
+
 Standard pattern across all apps:
+
 ```javascript
 space.mouse.downSelect((intersection, event, allIntersections) => {
-    if (!event) {
-        // Return objects for raycasting
-        return [mesh1, mesh2, mesh3];
-    }
-    // Handle click
-    if (intersection) {
-        const obj = intersection.object.userData.myObject;
-        // ... do something
-    }
+  if (!event) {
+    // Return objects for raycasting
+    return [mesh1, mesh2, mesh3];
+  }
+  // Handle click
+  if (intersection) {
+    const obj = intersection.object.userData.myObject;
+    // ... do something
+  }
 });
 
-space.mouse.onHover((intersection, event, allIntersections) => {
+space.mouse.onHover(
+  (intersection, event, allIntersections) => {
     if (!event) return getInteractiveObjects();
     // Handle hover
-}, () => {
+  },
+  () => {
     // Handle hover exit
-});
+  }
+);
 
 space.mouse.onDrag((delta) => {
-    // Handle drag (delta = {x, y} in pixels)
+  // Handle drag (delta = {x, y} in pixels)
 });
 ```
 
 ### 4. Worker/Threading Pattern
+
 - **Kiri**: Multi-threaded minion pool for slicing (up to 4 workers)
 - **Mesh**: Single worker for heavy 3D operations
 - **Void**: Single worker for solid rebuild replay (active), constraint solve still on main thread
 
 ### 5. API Surface Pattern
+
 Each app exports main `api` object:
+
 ```javascript
 // Kiri API - ~45 subsystems
 api.widgets, api.function, api.mode, api.work, api.device, ...
@@ -661,35 +719,38 @@ api.document, api.features, api.sketch, api.origin, api.selection, api.datum, ..
 ```
 
 ### 6. Database Pattern
+
 IndexedDB with named stores, per-app schema:
+
 ```javascript
-dataOpen('appname', { stores: ['admin', 'data'], version: 1 })
-api.db.admin.put(key, value)
-api.db.data.get(id)
+dataOpen("appname", { stores: ["admin", "data"], version: 1 });
+api.db.admin.put(key, value);
+api.db.data.get(id);
 ```
 
 ---
 
 ## Key Differences Between Apps
 
-| Aspect | Kiri:Moto | Mesh:Tool | Void:Form |
-|--------|-----------|-----------|-----------|
-| **Purpose** | Slicing for manufacturing | Mesh editing & repair | Parametric CAD design |
-| **Data Model** | Widget-based slicing | Triangle mesh + sketches | Early document/features scaffold + datum planes |
-| **UI Pattern** | Tabs + device/process panels | Tree + mode buttons | Toolbar + feature tree scaffold |
-| **3D System** | space.js + platform | space.js + platform | space.js + datum planes |
-| **Calculation** | Web Workers (minion pool) | Web Worker | Single rebuild worker (active) |
-| **Modes** | CAM/FDM/LASER/SLA/WEDM/WJET | Object/Tool/Face/Surface/Edge/Sketch | Sketch mode (phase 2) |
-| **Mouse** | Configurable bindings | Standard bindings | Onshape-style bindings |
-| **Database** | Profiles, settings, history | Models, groups, sketches | Documents + versions revision history |
-| **Status** | Production mature | Actively developed | Very early prototype / Phase 1 foundation |
-| **API Size** | ~10KB, 45 subsystems | ~1,730 lines, 18 subsystems | Split modules (document/features/origin/sketch) |
+| Aspect          | Kiri:Moto                    | Mesh:Tool                            | Void:Form                                       |
+| --------------- | ---------------------------- | ------------------------------------ | ----------------------------------------------- |
+| **Purpose**     | Slicing for manufacturing    | Mesh editing & repair                | Parametric CAD design                           |
+| **Data Model**  | Widget-based slicing         | Triangle mesh + sketches             | Early document/features scaffold + datum planes |
+| **UI Pattern**  | Tabs + device/process panels | Tree + mode buttons                  | Toolbar + feature tree scaffold                 |
+| **3D System**   | space.js + platform          | space.js + platform                  | space.js + datum planes                         |
+| **Calculation** | Web Workers (minion pool)    | Web Worker                           | Single rebuild worker (active)                  |
+| **Modes**       | CAM/FDM/LASER/SLA/WEDM/WJET  | Object/Tool/Face/Surface/Edge/Sketch | Sketch mode (phase 2)                           |
+| **Mouse**       | Configurable bindings        | Standard bindings                    | Onshape-style bindings                          |
+| **Database**    | Profiles, settings, history  | Models, groups, sketches             | Documents + versions revision history           |
+| **Status**      | Production mature            | Actively developed                   | Very early prototype / Phase 1 foundation       |
+| **API Size**    | ~10KB, 45 subsystems         | ~1,730 lines, 18 subsystems          | Split modules (document/features/origin/sketch) |
 
 ---
 
 ## Common Tasks
 
 ### Adding a New Feature Type (void:form)
+
 1. Create class in `src/void/yourfeature.js` similar to `Plane`
 2. Return `THREE.Group` with children (mesh, outline, handles)
 3. Set `userData.featureType = 'yourtype'` and `userData.yourfeature = this`
@@ -698,6 +759,7 @@ api.db.data.get(id)
 6. Update `api.document/features` and refresh dependent UI directly (no broker path today)
 
 ### Adding a Tool Operation (mesh:tool)
+
 1. Add function to `src/mesh/tool.js`
 2. Register in `api.tool.yourOperation()`
 3. Send to worker if heavy operation (`api.work.send()`)
@@ -705,6 +767,7 @@ api.db.data.get(id)
 5. Add history entry for undo/redo
 
 ### Adding a Slicing Mode (kiri:moto)
+
 1. Create mode directory in `src/kiri/mode/yourmode/`
 2. Implement slice, setup, export functions
 3. Register mode in `api.mode`
@@ -712,36 +775,41 @@ api.db.data.get(id)
 5. Update worker bundles
 
 ### Working with Transparent Objects
+
 To avoid z-fighting with transparent planes/faces:
+
 - Set `renderOrder` (higher = rendered later)
 - Use `depthWrite: false` on transparent materials
 - Consider separate render passes for complex transparency
 - void:form ViewCube uses separate render pass to avoid z-fighting
 
 ### Viewport Rendering (Multiple Passes)
+
 For widgets needing separate rendering (ViewCube pattern):
+
 ```javascript
 space.afterRender((renderer) => {
-    // Save current viewport
-    const currentViewport = new THREE.Vector4();
-    renderer.getViewport(currentViewport);
+  // Save current viewport
+  const currentViewport = new THREE.Vector4();
+  renderer.getViewport(currentViewport);
 
-    // Set custom viewport (e.g., top-right corner)
-    renderer.setViewport(x, y, width, height);
-    renderer.setScissor(x, y, width, height);
-    renderer.setScissorTest(true);
-    renderer.autoClear = false;
+  // Set custom viewport (e.g., top-right corner)
+  renderer.setViewport(x, y, width, height);
+  renderer.setScissor(x, y, width, height);
+  renderer.setScissorTest(true);
+  renderer.autoClear = false;
 
-    // Render your scene
-    renderer.render(myScene, myCamera);
+  // Render your scene
+  renderer.render(myScene, myCamera);
 
-    // Restore
-    renderer.setViewport(currentViewport);
-    renderer.setScissorTest(false);
+  // Restore
+  renderer.setViewport(currentViewport);
+  renderer.setScissorTest(false);
 });
 ```
 
 ViewCube caveat:
+
 - `ViewCube` renders in a separate pass via `space.afterRender()`
 - Preserve and restore renderer viewport/scissor/autoclear state when adding more overlays/widgets
 
@@ -766,11 +834,13 @@ ViewCube caveat:
 ## Important File Paths
 
 ### Entry Points
+
 - `/Users/stewart/Code/gs-apps/src/main/kiri.js` - Kiri:Moto bootstrap
 - `/Users/stewart/Code/gs-apps/src/main/mesh.js` - Mesh:Tool bootstrap
 - `/Users/stewart/Code/gs-apps/src/main/void.js` - Void:Form bootstrap
 
 ### Core APIs
+
 - `/Users/stewart/Code/gs-apps/src/kiri/app/api.js` - Kiri API (~10KB)
 - `/Users/stewart/Code/gs-apps/src/mesh/api.js` - Mesh API (~1,730 lines)
 - `/Users/stewart/Code/gs-apps/src/void/api.js` - Void API composition root
@@ -778,22 +848,26 @@ ViewCube caveat:
 - `/Users/stewart/Code/gs-apps/src/void/interact.js` - Void interaction composition root
 
 ### Shared Infrastructure
+
 - `/Users/stewart/Code/gs-apps/src/moto/space.js` - 3D viewport (55KB)
 - `/Users/stewart/Code/gs-apps/src/moto/broker.js` - Event system (156 lines)
 - `/Users/stewart/Code/gs-apps/src/moto/orbit.js` - Camera controls (25KB)
 - `/Users/stewart/Code/gs-apps/src/moto/webui.js` - DOM helpers (4KB)
 
 ### Geometry & Loading
+
 - `/Users/stewart/Code/gs-apps/src/geo/` - Math & geometry (12 modules)
 - `/Users/stewart/Code/gs-apps/src/load/` - File format loaders (9 formats)
 - `/Users/stewart/Code/gs-apps/src/ext/` - External libraries (Three.js, Manifold, etc.)
 
 ### Documentation
+
 - `/Users/stewart/Code/gs-apps/docs/kiri-moto/` - Kiri:Moto docs (extensive)
 - `/Users/stewart/Code/gs-apps/docs/mesh-tool.md` - Mesh:Tool docs
 - `/Users/stewart/Code/gs-apps/VOID-FORM.md` - Void:Form implementation notes
 
 ### Configuration
+
 - `/Users/stewart/Code/gs-apps/app.js` - Express server (routes at lines 135-166)
 - `/Users/stewart/Code/gs-apps/package.json` - Dependencies
 
@@ -802,12 +876,14 @@ ViewCube caveat:
 ## Routes
 
 ### Development URLs (http://localhost:8080)
+
 - `/kiri/` - Kiri:Moto slicer
 - `/mesh/` - Mesh:Tool editor
 - `/void/` - Void:Form CAD (primary)
 - `/form/` - Void:Form CAD (alias)
 
 ### Static Assets
+
 - `/lib/pack/kiri-main.js` - Kiri main bundle (~28KB)
 - `/lib/pack/kiri-work.js` - Kiri worker bundle
 - `/lib/pack/kiri-eng.js` - Kiri engine bundle
@@ -830,11 +906,13 @@ npm run build        # Build for production
 ## Dependencies
 
 ### Shared (all apps)
+
 - **three** ^0.182.0 - 3D rendering
 - **manifold-3d** ^3.3.2 - BREP operations
 - **jszip** - ZIP file handling
 
 ### Void-specific
+
 - **@salusoft89/planegcs** ^1.1.7 - 2D constraint solver
 
 ---
@@ -850,24 +928,29 @@ npm run build        # Build for production
 ## Next Steps
 
 ### Kiri:Moto
+
 - Mature product, maintenance mode
 - Device profile updates
 - Mode-specific improvements
 
 ### Mesh:Tool
+
 - Active development
 - Face/edge selection enhancements
 - Boolean operation improvements
 - Sketch system refinements
 
 ### Void:Form
+
 **Phase 2: Sketch System** (Next)
+
 1. planegcs constraint solver integration
 2. 2D sketch canvas overlay
 3. Geometric primitives (line, circle, arc)
 4. Constraints (distance, angle, parallel, perpendicular)
 
 **Phase 3: Features**
+
 1. Extrude feature using Manifold
 2. Feature history tree with parametric updates
 3. Cut, revolve, sweep operations
