@@ -669,6 +669,13 @@ function setLineObjectPoints(lineObject, points = []) {
         for (const p of points) {
             flat.push(p.x || 0, p.y || 0, p.z || 0);
         }
+        // Debug mode: disable Line2 geometry reuse to isolate stateful buffer issues.
+        const NextGeometry = lineObject.geometry?.constructor;
+        const next = NextGeometry ? new NextGeometry() : null;
+        if (next?.setPositions) {
+            lineObject.geometry?.dispose?.();
+            lineObject.geometry = next;
+        }
         lineObject.geometry.setPositions(flat);
         lineObject.computeLineDistances?.();
         lineObject.geometry.computeBoundingSphere?.();
@@ -765,6 +772,13 @@ function applyPreviewExternalWorld(rec, mode, editing, colors) {
             verts.push(b.x, b.y, b.z);
         }
         if (segments.material?.isLineMaterial && segments.geometry?.setPositions) {
+            // Debug mode: disable LineSegments2 geometry reuse to isolate stateful buffer issues.
+            const NextGeometry = segments.geometry?.constructor;
+            const next = NextGeometry ? new NextGeometry() : null;
+            if (next?.setPositions) {
+                segments.geometry?.dispose?.();
+                segments.geometry = next;
+            }
             segments.geometry.setPositions(verts);
             segments.computeLineDistances?.();
             segments.geometry.computeBoundingSphere?.();
@@ -822,6 +836,13 @@ function applyPreviewFaceSegments(rec, mode, editing, colors) {
         return;
     }
     if (rec.previewFaceSegments.material?.isLineMaterial && rec.previewFaceSegments.geometry?.setPositions) {
+        // Debug mode: disable LineSegments2 geometry reuse to isolate stateful buffer issues.
+        const NextGeometry = rec.previewFaceSegments.geometry?.constructor;
+        const next = NextGeometry ? new NextGeometry() : null;
+        if (next?.setPositions) {
+            rec.previewFaceSegments.geometry?.dispose?.();
+            rec.previewFaceSegments.geometry = next;
+        }
         rec.previewFaceSegments.geometry.setPositions(verts);
         rec.previewFaceSegments.computeLineDistances?.();
         rec.previewFaceSegments.geometry.computeBoundingSphere?.();
