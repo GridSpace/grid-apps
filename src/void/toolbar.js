@@ -453,13 +453,22 @@ const toolbar = {
 
     getSelectedChamferEdges() {
         const keys = api.solids?.getSelectedEdgeKeys?.() || [];
-        return keys.map(key => {
+        const normalized = [];
+        const seen = new Set();
+        for (const key of keys) {
+            const promoted = api.solids?.getPromotedLoopEdgeKeyForSelection?.(key) || key;
+            const k = String(promoted || '').trim();
+            if (!k || seen.has(k)) continue;
+            seen.add(k);
+            normalized.push(k);
+        }
+        return normalized.map(key => {
             const edge = api.solids?.getEdgeByKey?.(key);
             if (!edge) return null;
             const edgeEntity = api.solids?.resolveCanonicalEdgeEntity?.(key) || null;
             const boundarySegmentId = String(edgeEntity?.id || '');
             if (!boundarySegmentId) return null;
-            return {
+            const out = {
                 key,
                 boundary_segment_id: boundarySegmentId,
                 entity: {
@@ -470,6 +479,17 @@ const toolbar = {
                 edgeIndex: edge.index,
                 meshEdgeKey: edge.meshEdgeKey || null
             };
+            if (Array.isArray(edge?.meshEdgeKeys) && edge.meshEdgeKeys.length) {
+                out.meshEdgeKeys = edge.meshEdgeKeys.slice();
+            }
+            if (Array.isArray(edge?.pathWorld) && edge.pathWorld.length >= 2) {
+                out.path = edge.pathWorld.map(p => ({
+                    x: Number(p?.x || 0),
+                    y: Number(p?.y || 0),
+                    z: Number(p?.z || 0)
+                }));
+            }
+            return out;
         }).filter(Boolean);
     },
 

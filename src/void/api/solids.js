@@ -434,8 +434,28 @@ function edgeKey(a, b) {
         const closed = !!loop?.closed;
         if (!closed) return false;
 
+        let maxTurnDeg = 0;
+        let sharpTurnCount = 0;
+        const count = pts.length;
+        for (let i = 0; i < count; i++) {
+            const p0 = pts[(i - 1 + count) % count];
+            const p1 = pts[i];
+            const p2 = pts[(i + 1) % count];
+            if (!p0 || !p1 || !p2) continue;
+            const e1 = new THREE.Vector3().subVectors(p1, p0);
+            const e2 = new THREE.Vector3().subVectors(p2, p1);
+            if (e1.lengthSq() <= 1e-16 || e2.lengthSq() <= 1e-16) continue;
+            e1.normalize();
+            e2.normalize();
+            const dot = Math.max(-1, Math.min(1, e1.dot(e2)));
+            const turnDeg = Math.acos(dot) * 180 / Math.PI;
+            if (turnDeg > maxTurnDeg) maxTurnDeg = turnDeg;
+            if (turnDeg > 85) sharpTurnCount++;
+        }
+
         // Strong circle-like detection: points at roughly constant radius from centroid.
         // This should promote cylinder cap rings even when user tuning raises segment threshold.
+        // Guard with turn-angle smoothness so sharp-corner polygons (square/hex) remain segment-pickable.
         const center = new THREE.Vector3();
         for (const p of pts) center.add(p);
         center.multiplyScalar(1 / pts.length);
@@ -455,7 +475,7 @@ function edgeKey(a, b) {
             }
             const sigmaR = Math.sqrt(varR / Math.max(1, radii.length));
             const rel = sigmaR / meanR;
-            if (segCount >= 8 && rel <= 0.08) {
+            if (segCount >= 5 && rel <= 0.08 && maxTurnDeg <= 55) {
                 return true;
             }
         }
@@ -464,24 +484,102 @@ function edgeKey(a, b) {
 
         // Promote only "smooth" dense loops. Mixed straight/curved boundaries
         // (with sharp corners) should remain segment-selectable.
-        let maxTurnDeg = 0;
-        let sharpTurnCount = 0;
-        const count = pts.length;
-        for (let i = 0; i < count; i++) {
-            const p0 = pts[(i - 1 + count) % count];
-            const p1 = pts[i];
-            const p2 = pts[(i + 1) % count];
-            if (!p0 || !p1 || !p2) continue;
-            const v1 = new THREE.Vector3().subVectors(p1, p0).normalize();
-            const v2 = new THREE.Vector3().subVectors(p2, p1).normalize();
-            if (!Number.isFinite(v1.lengthSq()) || !Number.isFinite(v2.lengthSq())) continue;
-            const dot = Math.max(-1, Math.min(1, v1.dot(v2)));
-            const turnDeg = Math.acos(dot) * 180 / Math.PI;
-            if (turnDeg > maxTurnDeg) maxTurnDeg = turnDeg;
-            if (turnDeg > 85) sharpTurnCount++;
-        }
         if (sharpTurnCount >= 3) return false;
         return maxTurnDeg <= 80;
+    }
+
+    function buildSmoothChainFromLoop(loop, anchorSegIndex) {
+        const segIndices = Array.isArray(loop?.segmentIndices) ? loop.segmentIndices : [];
+        const pts = Array.isArray(loop?.points) ? loop.points : [];
+        const closed = !!loop?.closed;
+        const n = segIndices.length;
+        if (!n || pts.length < 3) return null;
+        const anchorPos = segIndices.indexOf(Number(anchorSegIndex));
+        if (anchorPos < 0) return null;
+
+        const segLen = new Array(n).fill(0).map((_, i) => {
+            const a = pts[i];
+            const b = pts[(i + 1) % pts.length];
+            return (a && b && a.distanceToSquared) ? Math.sqrt(a.distanceToSquared(b)) : 0;
+        });
+        const dirAt = (i) => {
+            const a = pts[i];
+            const b = pts[(i + 1) % pts.length];
+            if (!a || !b) return null;
+            const d = new THREE.Vector3().subVectors(b, a);
+            const len = d.length();
+            if (len <= 1e-9) return null;
+            return d.multiplyScalar(1 / len);
+        };
+        const angleBetweenSegs = (i, j) => {
+            const di = dirAt(i);
+            const dj = dirAt(j);
+            if (!di || !dj) return 180;
+            const dotv = Math.max(-1, Math.min(1, di.dot(dj)));
+            return Math.acos(dotv) * 180 / Math.PI;
+        };
+
+        const nextIndex = (i, step) => {
+            if (closed) return (i + step + n) % n;
+            const v = i + step;
+            return (v < 0 || v >= n) ? null : v;
+        };
+
+        let start = anchorPos;
+        let end = anchorPos;
+        let typical = Math.max(1e-9, segLen[anchorPos] || 1);
+        let count = 1;
+        const maxExpand = closed ? n - 1 : n;
+
+        const canGrow = (from, cand) => {
+            if (cand === null) return false;
+            const l1 = Math.max(1e-9, segLen[from] || 1e-9);
+            const l2 = Math.max(1e-9, segLen[cand] || 1e-9);
+            const ratio = Math.max(l1, l2, typical) / Math.max(1e-9, Math.min(l1, l2, typical));
+            if (ratio > 2.5) return false;
+            const turn = angleBetweenSegs(from, cand);
+            return turn <= 55;
+        };
+
+        for (let guard = 0; guard < maxExpand; guard++) {
+            const cand = nextIndex(start, -1);
+            if (!canGrow(cand, start)) break;
+            start = cand;
+            typical = (typical * count + Math.max(1e-9, segLen[start] || 1e-9)) / (count + 1);
+            count++;
+        }
+        for (let guard = 0; guard < maxExpand; guard++) {
+            const cand = nextIndex(end, +1);
+            if (!canGrow(end, cand)) break;
+            end = cand;
+            typical = (typical * count + Math.max(1e-9, segLen[end] || 1e-9)) / (count + 1);
+            count++;
+            if (closed && nextIndex(end, +1) === start) break;
+        }
+
+        if (count < 2) return null;
+        if (closed && count >= n - 1) return null;
+
+        const path = [];
+        let i = start;
+        path.push(pts[i]?.clone?.() || null);
+        for (let guard = 0; guard < n + 2; guard++) {
+            const ni = nextIndex(i, +1);
+            if (ni === null) break;
+            path.push(pts[ni]?.clone?.() || null);
+            if (i === end) break;
+            i = ni;
+            if (i === start) break;
+        }
+        const clean = path.filter(Boolean);
+        if (clean.length < 2) return null;
+        return {
+            startPos: start,
+            endPos: end,
+            startSegIndex: Number(segIndices[start]),
+            endSegIndex: Number(segIndices[end]),
+            pathWorld: clean
+        };
     }
 
     function makeFaceMaterials() {
@@ -1149,6 +1247,57 @@ function edgeKey(a, b) {
                     meshEdgeKeys
                 };
             }
+            if (raw.startsWith('faceedgechain:')) {
+                const parts = raw.split(':');
+                if (parts.length < 6) return null;
+                const endSegIndex = Number(parts[parts.length - 1]);
+                const startSegIndex = Number(parts[parts.length - 2]);
+                const loopIndex = Number(parts[parts.length - 3]);
+                const faceId = Number(parts[parts.length - 4]);
+                const solidId = parts.slice(1, -4).join(':');
+                if (!solidId || !Number.isFinite(faceId) || !Number.isFinite(loopIndex)
+                    || !Number.isFinite(startSegIndex) || !Number.isFinite(endSegIndex)) return null;
+                const loops = this.getFaceBoundaryLoops(`${solidId}:${faceId}`) || [];
+                const loop = loops[loopIndex];
+                if (!loop?.points?.length) return null;
+                const segIndices = Array.isArray(loop.segmentIndices) ? loop.segmentIndices : [];
+                const startPos = segIndices.indexOf(startSegIndex);
+                const endPos = segIndices.indexOf(endSegIndex);
+                if (startPos < 0 || endPos < 0) return null;
+                const n = segIndices.length;
+                const pts = loop.points;
+                const pathWorld = [];
+                let i = startPos;
+                pathWorld.push(pts[i]?.clone?.() || null);
+                for (let guard = 0; guard < n + 2; guard++) {
+                    const ni = loop.closed ? ((i + 1) % n) : (i + 1);
+                    if (ni < 0 || ni >= n) break;
+                    pathWorld.push(pts[ni]?.clone?.() || null);
+                    if (i === endPos) break;
+                    i = ni;
+                    if (loop.closed && i === startPos) break;
+                }
+                const clean = pathWorld.filter(Boolean);
+                if (clean.length < 2) return null;
+                const meshEdgeKeys = [];
+                for (let si = 0; si + 1 < clean.length; si++) {
+                    const mk = this.getNearestMeshEdgeKeyForWorldSegment(solidId, clean[si], clean[si + 1]);
+                    if (mk && !meshEdgeKeys.includes(mk)) meshEdgeKeys.push(mk);
+                }
+                return {
+                    key: raw,
+                    solidId,
+                    faceId,
+                    index: startSegIndex,
+                    chain: true,
+                    pathWorld: clean,
+                    aWorld: clean[0]?.clone?.() || null,
+                    bWorld: clean[clean.length - 1]?.clone?.() || null,
+                    midWorld: clean[Math.floor(clean.length / 2)]?.clone?.() || null,
+                    meshEdgeKey: meshEdgeKeys[0] || null,
+                    meshEdgeKeys
+                };
+            }
             if (raw.startsWith('faceedge:')) {
                 const parts = raw.split(':');
                 if (parts.length < 4) return null;
@@ -1250,10 +1399,32 @@ function edgeKey(a, b) {
                 const maxD2 = Math.max(0.01, Number(maxWorldDist || 2.5) ** 2);
                 let best = null;
                 let bestD2 = Infinity;
+                const eps = 1e-10;
                 for (const edge of frozen.list) {
-                    if (!edge?.aWorld || !edge?.bWorld) continue;
-                    const d2 = distancePointToSegmentSquared(worldPoint, edge.aWorld, edge.bWorld);
-                    if (d2 < bestD2) {
+                    let d2 = Infinity;
+                    if (Array.isArray(edge?.pathWorld) && edge.pathWorld.length >= 2) {
+                        for (let i = 0; i < edge.pathWorld.length - 1; i++) {
+                            const a = edge.pathWorld[i];
+                            const b = edge.pathWorld[i + 1];
+                            if (!a || !b) continue;
+                            const cand = distancePointToSegmentSquared(worldPoint, a, b);
+                            if (cand < d2) d2 = cand;
+                        }
+                    } else if (edge?.aWorld && edge?.bWorld) {
+                        d2 = distancePointToSegmentSquared(worldPoint, edge.aWorld, edge.bWorld);
+                    }
+                    if (!Number.isFinite(d2)) continue;
+                    const better = d2 < (bestD2 - eps);
+                    const tiePreferPath = Math.abs(d2 - bestD2) <= eps
+                        && !!edge?.pathWorld
+                        && edge.pathWorld.length >= 3
+                        && !(best?.pathWorld && best.pathWorld.length >= 3);
+                    const nearPreferPath = !better
+                        && !!edge?.pathWorld
+                        && edge.pathWorld.length >= 3
+                        && !(best?.pathWorld && best.pathWorld.length >= 3)
+                        && d2 <= (bestD2 * 1.15 + eps);
+                    if (better || tiePreferPath || nearPreferPath) {
                         bestD2 = d2;
                         best = edge;
                     }
@@ -1264,6 +1435,8 @@ function edgeKey(a, b) {
                         solidId: best.solidId,
                         faceId: best.faceId,
                         index: best.index,
+                        loop: !!best.loop,
+                        pathWorld: Array.isArray(best.pathWorld) ? best.pathWorld : null,
                         aWorld: best.aWorld,
                         bWorld: best.bWorld,
                         midWorld: best.midWorld
@@ -1340,6 +1513,17 @@ function edgeKey(a, b) {
                             loop: true
                         };
                     }
+                }
+                const chain = buildSmoothChainFromLoop(loop, bestIndex);
+                if (chain?.pathWorld?.length >= 2) {
+                    return {
+                        key: `faceedgechain:${solidId}:${faceId}:${loopIndex}:${chain.startSegIndex}:${chain.endSegIndex}`,
+                        solidId,
+                        faceId,
+                        index: bestIndex,
+                        chain: true,
+                        pathWorld: chain.pathWorld
+                    };
                 }
             }
             return {
@@ -1518,6 +1702,29 @@ function edgeKey(a, b) {
             return { key: `${solidId}:${faceId}`, solidId, faceId, view, meta };
         },
 
+        getPromotedLoopEdgeKeyForSelection(edgeKey) {
+            const raw = String(edgeKey || '');
+            if (!raw.startsWith('faceedge:')) return raw || null;
+            const parts = raw.split(':');
+            if (parts.length < 4) return raw;
+            const segIndex = Number(parts[parts.length - 1]);
+            const faceId = Number(parts[parts.length - 2]);
+            const solidId = parts.slice(1, -2).join(':');
+            if (!solidId || !Number.isFinite(faceId) || !Number.isFinite(segIndex)) return raw;
+            const faceKey = `${solidId}:${faceId}`;
+            const loops = this.getFaceBoundaryLoops(faceKey) || [];
+            for (let li = 0; li < loops.length; li++) {
+                const loop = loops[li];
+                const segs = Array.isArray(loop?.segmentIndices) ? loop.segmentIndices : [];
+                if (!segs.includes(segIndex)) continue;
+                if (!shouldPromoteLoopSelection(loop, this._renderPrefs?.edgeLoopPromotionSegments)) {
+                    return raw;
+                }
+                return `faceedgeloop:${solidId}:${faceId}:${li}`;
+            }
+            return raw;
+        },
+
         resolveCanonicalFaceEntity(faceKey) {
             const key = String(faceKey || '');
             if (!key) return null;
@@ -1619,32 +1826,57 @@ function edgeKey(a, b) {
                     const loops = this.getFaceBoundaryLoops(faceKey) || [];
                     for (let li = 0; li < loops.length; li++) {
                         const loop = loops[li];
-                        if (!shouldPromoteLoopSelection(loop, this._renderPrefs?.edgeLoopPromotionSegments)) continue;
                         const points = Array.isArray(loop?.points) ? loop.points : [];
                         if (points.length < 2) continue;
-                        const pathWorld = points.map(p => p.clone ? p.clone() : new THREE.Vector3(p.x, p.y, p.z));
-                        if (loop?.closed && pathWorld.length >= 2) {
-                            const first = pathWorld[0];
-                            const last = pathWorld[pathWorld.length - 1];
-                            if (first.distanceToSquared(last) > 1e-16) pathWorld.push(first.clone());
+                        if (shouldPromoteLoopSelection(loop, this._renderPrefs?.edgeLoopPromotionSegments)) {
+                            const pathWorld = points.map(p => p.clone ? p.clone() : new THREE.Vector3(p.x, p.y, p.z));
+                            if (loop?.closed && pathWorld.length >= 2) {
+                                const first = pathWorld[0];
+                                const last = pathWorld[pathWorld.length - 1];
+                                if (first.distanceToSquared(last) > 1e-16) pathWorld.push(first.clone());
+                            }
+                            if (pathWorld.length >= 2) {
+                                const key = `faceedgeloop:${solidId}:${faceId}:${li}`;
+                                const edge = {
+                                    key,
+                                    solidId,
+                                    faceId,
+                                    index: Number(loop?.segmentIndices?.[0] ?? null),
+                                    loop: true,
+                                    pathWorld,
+                                    aWorld: pathWorld[0].clone(),
+                                    bWorld: pathWorld[1].clone(),
+                                    midWorld: pathWorld[0].clone().add(pathWorld[1]).multiplyScalar(0.5),
+                                    meshEdgeKey: null
+                                };
+                                byKey.set(key, edge);
+                                const geomBoundary = this._geomBoundaryIdByLoopKey.get(key);
+                                if (geomBoundary) geomBoundaryToEdgeKey.set(geomBoundary, key);
+                            }
+                        } else {
+                            const segIndices = Array.isArray(loop?.segmentIndices) ? loop.segmentIndices : [];
+                            const chainKeys = new Set();
+                            for (const segIndex of segIndices) {
+                                const chain = buildSmoothChainFromLoop(loop, Number(segIndex));
+                                if (!chain?.pathWorld?.length || chain.pathWorld.length < 2) continue;
+                                const key = `faceedgechain:${solidId}:${faceId}:${li}:${chain.startSegIndex}:${chain.endSegIndex}`;
+                                if (chainKeys.has(key)) continue;
+                                chainKeys.add(key);
+                                const edge = {
+                                    key,
+                                    solidId,
+                                    faceId,
+                                    index: Number(segIndex),
+                                    chain: true,
+                                    pathWorld: chain.pathWorld,
+                                    aWorld: chain.pathWorld[0].clone(),
+                                    bWorld: chain.pathWorld[chain.pathWorld.length - 1].clone(),
+                                    midWorld: chain.pathWorld[Math.floor(chain.pathWorld.length / 2)].clone(),
+                                    meshEdgeKey: null
+                                };
+                                byKey.set(key, edge);
+                            }
                         }
-                        if (pathWorld.length < 2) continue;
-                        const key = `faceedgeloop:${solidId}:${faceId}:${li}`;
-                        const edge = {
-                            key,
-                            solidId,
-                            faceId,
-                            index: Number(loop?.segmentIndices?.[0] ?? null),
-                            loop: true,
-                            pathWorld,
-                            aWorld: pathWorld[0].clone(),
-                            bWorld: pathWorld[1].clone(),
-                            midWorld: pathWorld[0].clone().add(pathWorld[1]).multiplyScalar(0.5),
-                            meshEdgeKey: null
-                        };
-                        byKey.set(key, edge);
-                        const geomBoundary = this._geomBoundaryIdByLoopKey.get(key);
-                        if (geomBoundary) geomBoundaryToEdgeKey.set(geomBoundary, key);
                     }
                 }
             }
