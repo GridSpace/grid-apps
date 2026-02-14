@@ -1578,46 +1578,10 @@ function edgeKey(a, b) {
         resolveChamferRefToEdgeKey(ref = {}) {
             const frozen = this._frozenChamferEdges;
             if (!frozen?.list?.length) return null;
-            const path = Array.isArray(ref?.path) && ref.path.length >= 2
-                ? ref.path
-                : (ref?.a && ref?.b ? [ref.a, ref.b] : null);
-            if (path && path.length >= 2) {
-                const ra = new THREE.Vector3(
-                    Number(path[0]?.x || 0),
-                    Number(path[0]?.y || 0),
-                    Number(path[0]?.z || 0)
-                );
-                const rb = new THREE.Vector3(
-                    Number(path[path.length - 1]?.x || 0),
-                    Number(path[path.length - 1]?.y || 0),
-                    Number(path[path.length - 1]?.z || 0)
-                );
-                let best = null;
-                let bestScore = Infinity;
-                for (const edge of frozen.list) {
-                    const ep = Array.isArray(edge?.pathWorld) && edge.pathWorld.length >= 2
-                        ? edge.pathWorld
-                        : (edge?.aWorld && edge?.bWorld ? [edge.aWorld, edge.bWorld] : null);
-                    if (!ep || ep.length < 2) continue;
-                    const ea = ep[0];
-                    const eb = ep[ep.length - 1];
-                    const direct = ra.distanceToSquared(ea) + rb.distanceToSquared(eb);
-                    const reverse = ra.distanceToSquared(eb) + rb.distanceToSquared(ea);
-                    const score = Math.min(direct, reverse);
-                    if (score < bestScore) {
-                        bestScore = score;
-                        best = edge.key;
-                    }
-                }
-                if (bestScore <= 1e-3) {
-                    return best;
-                }
-            }
-
-            const explicit = String(ref?.key || '').trim();
-            if (explicit && this.getEdgeByKey(explicit)) return explicit;
             const mapped = this.getEdgeKeyForBoundaryRef(ref?.boundary_segment_id || ref?.entity?.id || '');
             if (mapped && this.getEdgeByKey(mapped)) return mapped;
+            const explicit = String(ref?.key || '').trim();
+            if (explicit && this.getEdgeByKey(explicit)) return explicit;
             return null;
         },
 
@@ -2211,6 +2175,7 @@ function edgeKey(a, b) {
             const rw = Math.max(1, Number(renderer?.domElement?.clientWidth || renderer?.domElement?.width || window.innerWidth || 1));
             const rh = Math.max(1, Number(renderer?.domElement?.clientHeight || renderer?.domElement?.height || window.innerHeight || 1));
             const frozenActive = !!this._frozenChamferEdges;
+            this._root?.updateMatrixWorld?.(true);
             if (this._frozenEdgeOverlays) {
                 while (this._frozenEdgeOverlays.children.length) {
                     const child = this._frozenEdgeOverlays.children[0];
@@ -2230,6 +2195,7 @@ function edgeKey(a, b) {
                 if (frozenActive) {
                     continue;
                 }
+                view.group?.updateMatrixWorld?.(true);
                 const wanted = [];
                 for (const key of this._selectedEdgeKeys) {
                     const edge = this.getEdgeByKey(key);
@@ -2278,6 +2244,7 @@ function edgeKey(a, b) {
                 this._root.add(this._frozenEdgeOverlays);
             }
             if (!this._frozenEdgeOverlays || !this._root) return;
+            this._frozenEdgeOverlays.updateMatrixWorld?.(true);
             const wanted = [];
             for (const key of this._selectedEdgeKeys) {
                 if (this.getEdgeByKey(key)) wanted.push({ key, selected: true });

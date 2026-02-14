@@ -192,33 +192,38 @@ function handleHover(intersection, event, allIntersections) {
 
     if (!sketchEditing || retargetMode) {
         if (editingChamfer) {
+            if (primaryHit?.type === 'solid-edge') {
+                const edgeKey = String(primaryHit.hit?.key || '');
+                const edge = edgeKey ? (api.solids?.getEdgeByKey?.(edgeKey) || null) : null;
+                if (edge?.key) {
+                    this.hoveredSolidEdgeKey = edge.key;
+                    api.solids?.setHoveredEdge?.(edge.key);
+                    if (this.hoveredSolidFaceKey) {
+                        this.hoveredSolidFaceKey = null;
+                        api.solids?.setHoveredFace?.(null);
+                    }
+                    this.hoverIntersection = primaryHit.hit?.intersection || intersection || null;
+                    this.setHoveredPoint(null);
+                    if (this.hoveredPlane && !this.hoveredPlane.isSelected()) {
+                        this.hoveredPlane.setHovered(false);
+                        this.hoveredPlane = null;
+                    }
+                    window.dispatchEvent(new CustomEvent('void-state-change'));
+                    return;
+                }
+            }
             let faceKey = null;
             let worldPoint = null;
             if (primaryHit?.type === 'solid-face') {
                 faceKey = String(primaryHit.hit?.key || '');
                 worldPoint = primaryHit.hit?.intersection?.point || null;
-            } else if (primaryHit?.type === 'solid-edge') {
-                const edge = primaryHit.hit || null;
-                worldPoint = edge?.intersection?.point || null;
-                const solidId = String(edge?.solidId || '');
-                const faceId = Number(edge?.faceId);
-                if (solidId && Number.isFinite(faceId)) {
-                    faceKey = `${solidId}:${faceId}`;
-                } else {
-                    const raw = String(edge?.key || '');
-                    if (raw.startsWith('faceedge:') || raw.startsWith('faceedgeloop:')) {
-                        const parts = raw.split(':');
-                        const fid = Number(parts[parts.length - 2]);
-                        const sid = parts.slice(1, -2).join(':');
-                        if (sid && Number.isFinite(fid)) faceKey = `${sid}:${fid}`;
-                    }
-                }
             }
             if (faceKey && worldPoint) {
                 const snap = api.solids?.getFaceEdgeHit?.(faceKey, worldPoint, 3.0) || null;
-                if (snap?.key) {
-                    this.hoveredSolidEdgeKey = snap.key;
-                    api.solids?.setHoveredEdge?.(snap.key);
+                const edge = snap?.key ? (api.solids?.getEdgeByKey?.(snap.key) || null) : null;
+                if (edge?.key) {
+                    this.hoveredSolidEdgeKey = edge.key;
+                    api.solids?.setHoveredEdge?.(edge.key);
                     if (this.hoveredSolidFaceKey) {
                         this.hoveredSolidFaceKey = null;
                         api.solids?.setHoveredFace?.(null);
@@ -850,30 +855,28 @@ function selectSolidEdge(hit, event) {
         api.solids?.clearFaceSelection?.();
     }
     if (editingChamfer) {
-        const worldPoint = hit?.intersection?.point || this.hoverIntersection?.point || null;
-        let faceKey = String(this.hoveredSolidFaceKey || '');
-        if (!faceKey) {
-            const raw = String(hit?.key || '');
-            if (raw.startsWith('faceedge:') || raw.startsWith('faceedgeloop:')) {
-                const parts = raw.split(':');
-                const fid = Number(parts[parts.length - 2]);
-                const sid = parts.slice(1, -2).join(':');
-                if (sid && Number.isFinite(fid)) faceKey = `${sid}:${fid}`;
+        let edge = api.solids?.getEdgeByKey?.(key) || null;
+        if (!edge) {
+            const worldPoint = hit?.intersection?.point || this.hoverIntersection?.point || null;
+            let faceKey = String(this.hoveredSolidFaceKey || '');
+            if (!faceKey) {
+                const raw = String(hit?.key || '');
+                if (raw.startsWith('faceedge:') || raw.startsWith('faceedgeloop:')) {
+                    const parts = raw.split(':');
+                    const fid = Number(parts[parts.length - 2]);
+                    const sid = parts.slice(1, -2).join(':');
+                    if (sid && Number.isFinite(fid)) faceKey = `${sid}:${fid}`;
+                }
             }
+            const snap = (worldPoint && faceKey)
+                ? (api.solids?.getFaceEdgeHit?.(faceKey, worldPoint, 3.0) || null)
+                : null;
+            edge = snap?.key ? (api.solids?.getEdgeByKey?.(snap.key) || null) : null;
         }
-        const snap = (worldPoint && faceKey)
-            ? (api.solids?.getFaceEdgeHit?.(faceKey, worldPoint, 3.0) || null)
-            : null;
-        const edge = snap?.key ? (api.solids?.getEdgeByKey?.(snap.key) || null) : null;
         if (!edge) return;
         const edgeEntity = api.solids?.resolveCanonicalEdgeEntity?.(edge.key || key) || null;
         const refId = String(edgeEntity?.id || '');
         if (!refId) return;
-        const path = Array.isArray(edge.pathWorld) && edge.pathWorld.length >= 2
-            ? edge.pathWorld.map(p => ({ x: Number(p.x || 0), y: Number(p.y || 0), z: Number(p.z || 0) }))
-            : null;
-        const a = edge.aWorld ? { x: Number(edge.aWorld.x || 0), y: Number(edge.aWorld.y || 0), z: Number(edge.aWorld.z || 0) } : null;
-        const b = edge.bWorld ? { x: Number(edge.bWorld.x || 0), y: Number(edge.bWorld.y || 0), z: Number(edge.bWorld.z || 0) } : null;
         const ref = {
             key: edge.key,
             boundary_segment_id: refId,
@@ -883,11 +886,7 @@ function selectSolidEdge(hit, event) {
             },
             solidId: edge.solidId,
             edgeIndex: edge.index,
-            meshEdgeKey: edge.meshEdgeKey || null,
-            meshEdgeKeys: Array.isArray(edge.meshEdgeKeys) ? edge.meshEdgeKeys.slice() : null,
-            a,
-            b,
-            path
+            meshEdgeKey: edge.meshEdgeKey || null
         };
         const existing = Array.isArray(currentFeature?.input?.edges) ? currentFeature.input.edges.slice() : [];
         const refResolved = api.solids?.resolveChamferRefToEdgeKey?.(ref) || null;
