@@ -1111,6 +1111,8 @@ function edgeKey(a, b) {
                         return frozen.byKey?.get?.(mapped) || null;
                     }
                 }
+                // In frozen chamfer mode, never fall through to live topology lookup.
+                return null;
             }
             if (raw.startsWith('faceedgeloop:')) {
                 const parts = raw.split(':');
@@ -1573,7 +1575,53 @@ function edgeKey(a, b) {
             return null;
         },
 
-        beginChamferEdgeSnapshot() {
+        resolveChamferRefToEdgeKey(ref = {}) {
+            const frozen = this._frozenChamferEdges;
+            if (!frozen?.list?.length) return null;
+            const path = Array.isArray(ref?.path) && ref.path.length >= 2
+                ? ref.path
+                : (ref?.a && ref?.b ? [ref.a, ref.b] : null);
+            if (path && path.length >= 2) {
+                const ra = new THREE.Vector3(
+                    Number(path[0]?.x || 0),
+                    Number(path[0]?.y || 0),
+                    Number(path[0]?.z || 0)
+                );
+                const rb = new THREE.Vector3(
+                    Number(path[path.length - 1]?.x || 0),
+                    Number(path[path.length - 1]?.y || 0),
+                    Number(path[path.length - 1]?.z || 0)
+                );
+                let best = null;
+                let bestScore = Infinity;
+                for (const edge of frozen.list) {
+                    const ep = Array.isArray(edge?.pathWorld) && edge.pathWorld.length >= 2
+                        ? edge.pathWorld
+                        : (edge?.aWorld && edge?.bWorld ? [edge.aWorld, edge.bWorld] : null);
+                    if (!ep || ep.length < 2) continue;
+                    const ea = ep[0];
+                    const eb = ep[ep.length - 1];
+                    const direct = ra.distanceToSquared(ea) + rb.distanceToSquared(eb);
+                    const reverse = ra.distanceToSquared(eb) + rb.distanceToSquared(ea);
+                    const score = Math.min(direct, reverse);
+                    if (score < bestScore) {
+                        bestScore = score;
+                        best = edge.key;
+                    }
+                }
+                if (bestScore <= 1e-3) {
+                    return best;
+                }
+            }
+
+            const explicit = String(ref?.key || '').trim();
+            if (explicit && this.getEdgeByKey(explicit)) return explicit;
+            const mapped = this.getEdgeKeyForBoundaryRef(ref?.boundary_segment_id || ref?.entity?.id || '');
+            if (mapped && this.getEdgeByKey(mapped)) return mapped;
+            return null;
+        },
+
+        captureChamferEdgeSnapshotFromCurrentViews() {
             const byKey = new Map();
             const list = [];
             const geomSegToEdgeKey = new Map();
@@ -1642,6 +1690,40 @@ function edgeKey(a, b) {
                 this._hoveredEdgeKey = null;
             }
             this.syncEdgeOverlays();
+        },
+
+        async beginChamferEdgeSnapshot(featureId = null) {
+            const api = getApi();
+            const doc = api.document.current;
+            const features = api.features.list() || [];
+            if (!doc || !Array.isArray(features)) {
+                this.captureChamferEdgeSnapshotFromCurrentViews();
+                return;
+            }
+
+            const featureIndex = featureId
+                ? features.findIndex(feature => feature?.id === featureId)
+                : -1;
+            const canRollback = featureIndex >= 0;
+            const originalTimeline = doc.timeline?.index ?? null;
+            let rolledBack = false;
+
+            try {
+                if (canRollback) {
+                    doc.timeline = doc.timeline || { index: null };
+                    doc.timeline.index = featureIndex > 0 ? (featureIndex - 1) : -1;
+                    rolledBack = true;
+                    await this.rebuild('chamfer.snapshot.pre', { persist: false });
+                }
+                this.captureChamferEdgeSnapshotFromCurrentViews();
+            } finally {
+                if (rolledBack) {
+                    doc.timeline = doc.timeline || { index: null };
+                    doc.timeline.index = originalTimeline;
+                    await this.rebuild('chamfer.snapshot.restore', { persist: false });
+                    this.syncEdgeOverlays();
+                }
+            }
         },
 
         endChamferEdgeSnapshot() {
@@ -2144,6 +2226,9 @@ function edgeKey(a, b) {
                     child.geometry?.dispose?.();
                     child.material?.dispose?.();
                     view.edgeOverlays.remove(child);
+                }
+                if (frozenActive) {
+                    continue;
                 }
                 const wanted = [];
                 for (const key of this._selectedEdgeKeys) {

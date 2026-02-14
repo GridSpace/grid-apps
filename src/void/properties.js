@@ -235,7 +235,7 @@ const properties = {
         });
     },
 
-    showFeature(feature, opts = {}) {
+    async showFeature(feature, opts = {}) {
         this.init();
         if (!feature || !this.panel || !this.body) return;
         this.currentFeatureId = feature.id;
@@ -252,7 +252,7 @@ const properties = {
             api.interact?.clearSketchSelection?.();
         }
         if (feature.type === 'chamfer') {
-            api.solids?.beginChamferEdgeSnapshot?.();
+            await api.solids?.beginChamferEdgeSnapshot?.(feature.id);
         } else {
             api.solids?.endChamferEdgeSnapshot?.();
         }
@@ -269,7 +269,9 @@ const properties = {
         this.renderFeature(feature);
         this.syncExtrudeProfileSelection(feature);
         api.sketchRuntime?.sync?.();
-        api.solids?.scheduleRebuild?.('feature.edit.enter');
+        if (feature.type !== 'chamfer') {
+            api.solids?.scheduleRebuild?.('feature.edit.enter');
+        }
         window.dispatchEvent(new CustomEvent('void-state-change'));
     },
 
@@ -955,14 +957,11 @@ const properties = {
         }
         const keys = (Array.isArray(feature?.input?.edges) ? feature.input.edges : [])
             .map(edge => {
-                const mapped = resolveChamferEdgeRefKey(edge);
-                if (mapped) {
-                    return String(mapped).startsWith('segment:')
-                        ? String(mapped).substring('segment:'.length)
-                        : String(mapped);
-                }
-                const explicit = String(edge?.key || '').trim();
-                return explicit || null;
+                const resolved = api.solids?.resolveChamferRefToEdgeKey?.(edge) || null;
+                if (!resolved) return null;
+                return String(resolved).startsWith('segment:')
+                    ? String(resolved).substring('segment:'.length)
+                    : String(resolved);
             })
             .filter(Boolean);
         api.interact.selectedSolidEdgeKeys = new Set(keys);

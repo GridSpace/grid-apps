@@ -439,6 +439,58 @@ function getBestPlaneFromIntersections(allIntersections) {
     return bestPlane;
 }
 
+function distancePointToSegment2D(px, py, ax, ay, bx, by) {
+    const abx = bx - ax;
+    const aby = by - ay;
+    const apx = px - ax;
+    const apy = py - ay;
+    const abLenSq = (abx * abx) + (aby * aby);
+    if (abLenSq <= 1e-12) return Math.hypot(px - ax, py - ay);
+    let t = ((apx * abx) + (apy * aby)) / abLenSq;
+    t = Math.max(0, Math.min(1, t));
+    const qx = ax + (abx * t);
+    const qy = ay + (aby * t);
+    return Math.hypot(px - qx, py - qy);
+}
+
+function getSelectedChamferEdgeHitFromScreen(event, maxPx = 10) {
+    if (!event) return null;
+    const keys = Array.from(this.selectedSolidEdgeKeys || []);
+    if (!keys.length) return null;
+    const { camera, renderer } = space.internals();
+    const el = renderer?.domElement;
+    if (!camera || !el?.getBoundingClientRect) return null;
+    const rect = el.getBoundingClientRect();
+    const mx = Number(event.clientX || 0) - rect.left;
+    const my = Number(event.clientY || 0) - rect.top;
+    const w = Math.max(1, rect.width || el.clientWidth || el.width || 1);
+    const h = Math.max(1, rect.height || el.clientHeight || el.height || 1);
+    const toScreen = (v) => {
+        const p = v.clone().project(camera);
+        return { x: ((p.x + 1) * 0.5) * w, y: ((1 - p.y) * 0.5) * h };
+    };
+    let bestKey = null;
+    let bestDist = Infinity;
+    for (const key of keys) {
+        const edge = api.solids?.getEdgeByKey?.(key) || null;
+        const path = Array.isArray(edge?.pathWorld) && edge.pathWorld.length >= 2
+            ? edge.pathWorld
+            : (edge?.aWorld && edge?.bWorld) ? [edge.aWorld, edge.bWorld] : null;
+        if (!path || path.length < 2) continue;
+        for (let i = 0; i + 1 < path.length; i++) {
+            const a = toScreen(path[i]);
+            const b = toScreen(path[i + 1]);
+            const d = distancePointToSegment2D(mx, my, a.x, a.y, b.x, b.y);
+            if (d < bestDist) {
+                bestDist = d;
+                bestKey = key;
+            }
+        }
+    }
+    if (!bestKey || bestDist > Math.max(2, Number(maxPx || 10))) return null;
+    return { key: bestKey };
+}
+
 function handleMouseUp(intersection, event, allIntersections) {
     if (this.draggedHandle) {
         this.draggedHandle = null;
@@ -467,6 +519,13 @@ function handleMouseUp(intersection, event, allIntersections) {
         if (primaryHit?.type === 'solid-face') {
             this.selectSolidFace(primaryHit.hit, event);
             return;
+        }
+        if (editingChamfer) {
+            const selectedHit = this.getSelectedChamferEdgeHitFromScreen?.(event, 10) || null;
+            if (selectedHit?.key) {
+                this.selectSolidEdge({ key: selectedHit.key, intersection: intersection || null }, event);
+                return;
+            }
         }
         if (isEditingExtrudeProfiles()) {
             // While editing extrude profiles, ignore non-profile clicks so solids/planes
@@ -807,7 +866,7 @@ function selectSolidEdge(hit, event) {
             : null;
         const edge = snap?.key ? (api.solids?.getEdgeByKey?.(snap.key) || null) : null;
         if (!edge) return;
-        const edgeEntity = api.solids?.resolveCanonicalEdgeEntity?.(key) || null;
+        const edgeEntity = api.solids?.resolveCanonicalEdgeEntity?.(edge.key || key) || null;
         const refId = String(edgeEntity?.id || '');
         if (!refId) return;
         const path = Array.isArray(edge.pathWorld) && edge.pathWorld.length >= 2
@@ -831,8 +890,13 @@ function selectSolidEdge(hit, event) {
             path
         };
         const existing = Array.isArray(currentFeature?.input?.edges) ? currentFeature.input.edges.slice() : [];
+        const refResolved = api.solids?.resolveChamferRefToEdgeKey?.(ref) || null;
         const refIds = buildChamferEdgeIdentitySet(ref);
         const has = existing.some(item => {
+            const itemResolved = api.solids?.resolveChamferRefToEdgeKey?.(item) || null;
+            if (refResolved && itemResolved && refResolved === itemResolved) {
+                return true;
+            }
             const ids = buildChamferEdgeIdentitySet(item);
             for (const id of ids) {
                 if (refIds.has(id)) return true;
@@ -841,6 +905,10 @@ function selectSolidEdge(hit, event) {
         });
         const edgeRefs = has
             ? existing.filter(item => {
+                const itemResolved = api.solids?.resolveChamferRefToEdgeKey?.(item) || null;
+                if (refResolved && itemResolved && refResolved === itemResolved) {
+                    return false;
+                }
                 const ids = buildChamferEdgeIdentitySet(item);
                 for (const id of ids) {
                     if (refIds.has(id)) return false;
@@ -850,10 +918,11 @@ function selectSolidEdge(hit, event) {
             : [...existing, ref];
         const selectedKeys = edgeRefs
             .map(item => {
-                const mappedByRef = api.solids?.getEdgeKeyForBoundaryRef?.(item?.boundary_segment_id || item?.entity?.id || '');
-                if (mappedByRef) return mappedByRef;
-                const explicitKey = String(item?.key || '').trim();
-                return explicitKey || null;
+                const resolved = api.solids?.resolveChamferRefToEdgeKey?.(item) || null;
+                if (!resolved) return null;
+                return String(resolved).startsWith('segment:')
+                    ? String(resolved).substring('segment:'.length)
+                    : String(resolved);
             })
             .filter(Boolean);
         this.selectedSolidEdgeKeys = new Set(selectedKeys);
@@ -1216,6 +1285,7 @@ export {
     handleHover,
     getPlaneFromIntersection,
     getBestPlaneFromIntersections,
+    getSelectedChamferEdgeHitFromScreen,
     handleMouseUp,
     getSketchProfileHitFromIntersections,
     getPrimarySurfaceHitFromIntersections,
