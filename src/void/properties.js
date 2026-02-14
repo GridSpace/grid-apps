@@ -26,6 +26,21 @@ function resolveChamferEdgeRefKey(edge = {}) {
     return api.solids?.getEdgeKeyForBoundaryRef?.(ref) || null;
 }
 
+function resolveChamferEdgeIdentity(edge = {}) {
+    const edgeKey = String(edge?.key || '').trim();
+    if (edgeKey) return `key:${edgeKey}`;
+    const mapped = String(resolveChamferEdgeRefKey(edge) || '').trim();
+    if (mapped) return `mapped:${mapped}`;
+    const ref = String(edge?.boundary_segment_id || edge?.entity?.id || '').trim();
+    if (ref) return `ref:${ref}`;
+    const solidId = String(edge?.solidId || '').trim();
+    const edgeIndex = Number(edge?.edgeIndex);
+    if (solidId && Number.isFinite(edgeIndex)) {
+        return `idx:${solidId}:${edgeIndex}`;
+    }
+    return null;
+}
+
 const properties = {
     panel: null,
     header: null,
@@ -236,6 +251,11 @@ const properties = {
         if (feature.type !== 'sketch') {
             api.interact?.clearSketchSelection?.();
         }
+        if (feature.type === 'chamfer') {
+            api.solids?.beginChamferEdgeSnapshot?.();
+        } else {
+            api.solids?.endChamferEdgeSnapshot?.();
+        }
         if (this._savedPos) {
             if (this._savedPos.anchor) {
                 this.applyPlacement(this._savedPos);
@@ -283,6 +303,7 @@ const properties = {
             }
         }
         this.panel.classList.add('hidden');
+        api.solids?.endChamferEdgeSnapshot?.();
         api.interact?.clearSketchSelection?.();
         api.sketchRuntime?.setEditing(null);
         if (editedFeatureId) {
@@ -768,14 +789,20 @@ const properties = {
                 remove.textContent = '×';
                 remove.title = 'Remove edge';
                 remove.onclick = () => {
+                    const removeId = resolveChamferEdgeIdentity(edge);
                     const updated = api.features.update(feature.id, item => {
                         item.input = item.input || {};
                         const current = Array.isArray(item.input.edges) ? item.input.edges : [];
-                        const removeKey = String(resolveChamferEdgeRefKey(edge) || '');
-                        item.input.edges = current.filter(e => String(resolveChamferEdgeRefKey(e) || '') !== removeKey);
+                        item.input.edges = current.filter(e => {
+                            const id = resolveChamferEdgeIdentity(e);
+                            if (removeId && id) return id !== removeId;
+                            if (removeId && !id) return true;
+                            if (!removeId && id) return true;
+                            return e !== edge;
+                        });
                     }, {
                         opType: 'feature.update',
-                        payload: { field: 'edges.remove', key: resolveChamferEdgeRefKey(edge) || null }
+                        payload: { field: 'edges.remove', key: removeId || resolveChamferEdgeRefKey(edge) || null }
                     });
                     if (updated) this.onChanged();
                 };

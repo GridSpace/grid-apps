@@ -402,6 +402,49 @@ function scaleMeshAroundCentroid(mesh, scale = 1.001) {
     };
 }
 
+function cloneMesh(mesh) {
+    if (!mesh?.positions?.length || !mesh?.indices?.length) return null;
+    return {
+        positions: mesh.positions instanceof Float32Array ? new Float32Array(mesh.positions) : new Float32Array(mesh.positions || []),
+        indices: mesh.indices instanceof Uint32Array ? new Uint32Array(mesh.indices) : new Uint32Array(mesh.indices || [])
+    };
+}
+
+function makePassThroughSolid(feature, targetSolid, solidId, bodySeqRef, makeBodyId, reason = 'no-op') {
+    const nextId = makeBodyId(feature.id, bodySeqRef.value++);
+    const sketchIds = Array.isArray(targetSolid?.source?.sketch_ids)
+        ? targetSolid.source.sketch_ids.slice()
+        : [];
+    return {
+        id: nextId,
+        name: `${feature.name || 'Chamfer'}-${bodySeqRef.value}`,
+        visible: feature.visible !== false,
+        source: {
+            feature_id: feature.id,
+            feature_type: feature.type,
+            parent: solidId,
+            pass_through: true,
+            reason,
+            sketch_ids: sketchIds
+        },
+        provenance: {
+            source: {
+                feature_id: feature.id,
+                feature_type: feature.type,
+                parent: solidId,
+                pass_through: true,
+                reason
+            },
+            parents: [solidId]
+        },
+        mesh: {
+            tri_count: targetSolid?.mesh?.tri_count || 0,
+            vert_count: targetSolid?.mesh?.vert_count || 0
+        },
+        status: 'manifold_chamfer_passthrough'
+    };
+}
+
 function parseBoundarySegmentRef(boundarySegmentId) {
     const raw = String(boundarySegmentId || '');
     if (!raw) return null;
@@ -493,6 +536,17 @@ async function applyChamferFeature(solids, meshCache, feature, makeBodyId, bodyS
         }
         if (!tools.length) {
             console.warn('void.chamfer.no_cutters', { featureId: feature?.id, solidId, refs: solidRefs.length });
+            const targetIndex = solids.findIndex(s => s?.id === solidId);
+            if (targetIndex >= 0) {
+                const nextSolid = makePassThroughSolid(feature, targetSolid, solidId, bodySeqRef, makeBodyId, 'no_cutters');
+                const copied = cloneMesh(targetMesh);
+                if (copied?.positions?.length && copied?.indices?.length) {
+                    solids[targetIndex] = nextSolid;
+                    meshCache.delete(solidId);
+                    meshCache.set(nextSolid.id, copied);
+                    changed = true;
+                }
+            }
             continue;
         }
         if (showCutters) {
@@ -584,6 +638,17 @@ async function applyChamferFeature(solids, meshCache, feature, makeBodyId, bodyS
         }
         if (!result?.mesh?.positions?.length || !result?.mesh?.indices?.length) {
             console.warn('void.chamfer.boolean_failed', { featureId: feature?.id, solidId, cutters: tools.length });
+            const targetIndex = solids.findIndex(s => s?.id === solidId);
+            if (targetIndex >= 0) {
+                const nextSolid = makePassThroughSolid(feature, targetSolid, solidId, bodySeqRef, makeBodyId, 'boolean_failed');
+                const copied = cloneMesh(targetMesh);
+                if (copied?.positions?.length && copied?.indices?.length) {
+                    solids[targetIndex] = nextSolid;
+                    meshCache.delete(solidId);
+                    meshCache.set(nextSolid.id, copied);
+                    changed = true;
+                }
+            }
             continue;
         }
 

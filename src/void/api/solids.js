@@ -550,6 +550,8 @@ function edgeKey(a, b) {
         _geomBoundaryIdByLoopKey: new Map(),
         _edgeKeyByGeomSegmentId: new Map(),
         _loopKeyByGeomBoundaryId: new Map(),
+        _frozenChamferEdges: null,
+        _frozenEdgeOverlays: null,
 
         async init() {
             await ensureKernel();
@@ -621,6 +623,9 @@ function edgeKey(a, b) {
             if (this._root) return;
             this._root = new THREE.Group();
             this._root.name = 'void-solids-runtime';
+            this._frozenEdgeOverlays = new THREE.Group();
+            this._frozenEdgeOverlays.name = 'void-solids-frozen-edge-overlays';
+            this._root.add(this._frozenEdgeOverlays);
             world?.add?.(this._root);
         },
 
@@ -1086,6 +1091,27 @@ function edgeKey(a, b) {
 
         getEdgeByKey(key) {
             const raw = String(key || '');
+            const frozen = this._frozenChamferEdges;
+            if (frozen) {
+                const exact = frozen.byKey?.get?.(raw) || null;
+                if (exact) return exact;
+                if (raw.startsWith('segment:')) {
+                    const mapped = frozen.geomSegToEdgeKey?.get?.(raw) || null;
+                    if (mapped) {
+                        return frozen.byKey?.get?.(mapped) || null;
+                    }
+                    if (raw.startsWith('segment:faceedge:') || raw.startsWith('segment:faceedgeloop:')) {
+                        const ek = raw.substring('segment:'.length);
+                        return frozen.byKey?.get?.(ek) || null;
+                    }
+                }
+                if (raw.startsWith('boundary:')) {
+                    const mapped = frozen.geomBoundaryToEdgeKey?.get?.(raw) || null;
+                    if (mapped) {
+                        return frozen.byKey?.get?.(mapped) || null;
+                    }
+                }
+            }
             if (raw.startsWith('faceedgeloop:')) {
                 const parts = raw.split(':');
                 if (parts.length < 4) return null;
@@ -1217,6 +1243,32 @@ function edgeKey(a, b) {
 
         getFaceEdgeHit(faceKey, worldPoint, maxWorldDist = 2.5) {
             if (!faceKey || !worldPoint) return null;
+            const frozen = this._frozenChamferEdges;
+            if (frozen?.list?.length) {
+                const maxD2 = Math.max(0.01, Number(maxWorldDist || 2.5) ** 2);
+                let best = null;
+                let bestD2 = Infinity;
+                for (const edge of frozen.list) {
+                    if (!edge?.aWorld || !edge?.bWorld) continue;
+                    const d2 = distancePointToSegmentSquared(worldPoint, edge.aWorld, edge.bWorld);
+                    if (d2 < bestD2) {
+                        bestD2 = d2;
+                        best = edge;
+                    }
+                }
+                if (best && bestD2 <= maxD2) {
+                    return {
+                        key: best.key,
+                        solidId: best.solidId,
+                        faceId: best.faceId,
+                        index: best.index,
+                        aWorld: best.aWorld,
+                        bWorld: best.bWorld,
+                        midWorld: best.midWorld
+                    };
+                }
+                return null;
+            }
             const splitAt = String(faceKey).lastIndexOf(':');
             if (splitAt <= 0) return null;
             const solidId = String(faceKey).substring(0, splitAt);
@@ -1490,6 +1542,22 @@ function edgeKey(a, b) {
         getEdgeKeyForBoundaryRef(refId) {
             const raw = String(refId || '');
             if (!raw) return null;
+            const frozen = this._frozenChamferEdges;
+            if (frozen) {
+                if (raw.startsWith('faceedge:') || raw.startsWith('faceedgeloop:')) {
+                    return frozen.byKey?.has?.(raw) ? raw : null;
+                }
+                if (raw.startsWith('segment:faceedge:') || raw.startsWith('segment:faceedgeloop:')) {
+                    const key = raw.substring('segment:'.length);
+                    return frozen.byKey?.has?.(key) ? key : null;
+                }
+                if (raw.startsWith('segment:')) {
+                    return frozen.geomSegToEdgeKey?.get?.(raw) || null;
+                }
+                if (raw.startsWith('boundary:')) {
+                    return frozen.geomBoundaryToEdgeKey?.get?.(raw) || null;
+                }
+            }
             if (raw.startsWith('faceedge:') || raw.startsWith('faceedgeloop:')) {
                 return raw;
             }
@@ -1503,6 +1571,86 @@ function edgeKey(a, b) {
                 return this._loopKeyByGeomBoundaryId.get(raw) || null;
             }
             return null;
+        },
+
+        beginChamferEdgeSnapshot() {
+            const byKey = new Map();
+            const list = [];
+            const geomSegToEdgeKey = new Map();
+            const geomBoundaryToEdgeKey = new Map();
+            for (const [solidId, view] of this._meshViews.entries()) {
+                const faceGroups = view?.faceGroups;
+                if (!faceGroups || typeof faceGroups.keys !== 'function') continue;
+                for (const faceId of faceGroups.keys()) {
+                    if (!Number.isFinite(faceId)) continue;
+                    const faceKey = `${solidId}:${faceId}`;
+                    const segs = this.getFaceBoundarySegments(faceKey) || [];
+                    for (let i = 0; i < segs.length; i++) {
+                        const seg = segs[i];
+                        if (!seg?.a || !seg?.b) continue;
+                        const key = `faceedge:${solidId}:${faceId}:${i}`;
+                        const edge = {
+                            key,
+                            solidId,
+                            faceId,
+                            index: i,
+                            aWorld: seg.a.clone ? seg.a.clone() : new THREE.Vector3(seg.a.x, seg.a.y, seg.a.z),
+                            bWorld: seg.b.clone ? seg.b.clone() : new THREE.Vector3(seg.b.x, seg.b.y, seg.b.z),
+                            midWorld: seg.mid?.clone ? seg.mid.clone() : (seg.a.clone ? seg.a.clone().add(seg.b).multiplyScalar(0.5) : new THREE.Vector3()),
+                            meshEdgeKey: this.getNearestMeshEdgeKeyForWorldSegment(solidId, seg.a, seg.b) || null
+                        };
+                        byKey.set(key, edge);
+                        list.push(edge);
+                        const geomSeg = this._geomSegmentIdByEdgeKey.get(key);
+                        if (geomSeg) geomSegToEdgeKey.set(geomSeg, key);
+                    }
+                    const loops = this.getFaceBoundaryLoops(faceKey) || [];
+                    for (let li = 0; li < loops.length; li++) {
+                        const loop = loops[li];
+                        if (!shouldPromoteLoopSelection(loop, this._renderPrefs?.edgeLoopPromotionSegments)) continue;
+                        const points = Array.isArray(loop?.points) ? loop.points : [];
+                        if (points.length < 2) continue;
+                        const pathWorld = points.map(p => p.clone ? p.clone() : new THREE.Vector3(p.x, p.y, p.z));
+                        if (loop?.closed && pathWorld.length >= 2) {
+                            const first = pathWorld[0];
+                            const last = pathWorld[pathWorld.length - 1];
+                            if (first.distanceToSquared(last) > 1e-16) pathWorld.push(first.clone());
+                        }
+                        if (pathWorld.length < 2) continue;
+                        const key = `faceedgeloop:${solidId}:${faceId}:${li}`;
+                        const edge = {
+                            key,
+                            solidId,
+                            faceId,
+                            index: Number(loop?.segmentIndices?.[0] ?? null),
+                            loop: true,
+                            pathWorld,
+                            aWorld: pathWorld[0].clone(),
+                            bWorld: pathWorld[1].clone(),
+                            midWorld: pathWorld[0].clone().add(pathWorld[1]).multiplyScalar(0.5),
+                            meshEdgeKey: null
+                        };
+                        byKey.set(key, edge);
+                        const geomBoundary = this._geomBoundaryIdByLoopKey.get(key);
+                        if (geomBoundary) geomBoundaryToEdgeKey.set(geomBoundary, key);
+                    }
+                }
+            }
+            this._frozenChamferEdges = { byKey, list, geomSegToEdgeKey, geomBoundaryToEdgeKey };
+            this._selectedEdgeKeys = new Set(Array.from(this._selectedEdgeKeys).filter(key => this.getEdgeByKey(key)));
+            if (this._hoveredEdgeKey && !this.getEdgeByKey(this._hoveredEdgeKey)) {
+                this._hoveredEdgeKey = null;
+            }
+            this.syncEdgeOverlays();
+        },
+
+        endChamferEdgeSnapshot() {
+            this._frozenChamferEdges = null;
+            this._selectedEdgeKeys = new Set(Array.from(this._selectedEdgeKeys).filter(key => this.getEdgeByKey(key)));
+            if (this._hoveredEdgeKey && !this.getEdgeByKey(this._hoveredEdgeKey)) {
+                this._hoveredEdgeKey = null;
+            }
+            this.syncEdgeOverlays();
         },
 
         getFaceBoundarySegments(key) {
@@ -1980,6 +2128,15 @@ function edgeKey(a, b) {
             const { renderer } = space.internals();
             const rw = Math.max(1, Number(renderer?.domElement?.clientWidth || renderer?.domElement?.width || window.innerWidth || 1));
             const rh = Math.max(1, Number(renderer?.domElement?.clientHeight || renderer?.domElement?.height || window.innerHeight || 1));
+            const frozenActive = !!this._frozenChamferEdges;
+            if (this._frozenEdgeOverlays) {
+                while (this._frozenEdgeOverlays.children.length) {
+                    const child = this._frozenEdgeOverlays.children[0];
+                    child.geometry?.dispose?.();
+                    child.material?.dispose?.();
+                    this._frozenEdgeOverlays.remove(child);
+                }
+            }
             for (const [solidId, view] of this._meshViews.entries()) {
                 if (!view?.edgeOverlays) continue;
                 while (view.edgeOverlays.children.length) {
@@ -1991,15 +2148,11 @@ function edgeKey(a, b) {
                 const wanted = [];
                 for (const key of this._selectedEdgeKeys) {
                     const edge = this.getEdgeByKey(key);
-                    if (edge?.solidId === solidId) {
-                        wanted.push({ key, selected: true });
-                    }
+                    if (edge?.solidId === solidId) wanted.push({ key, selected: true });
                 }
                 if (this._hoveredEdgeKey && !this._selectedEdgeKeys.has(this._hoveredEdgeKey)) {
                     const edge = this.getEdgeByKey(this._hoveredEdgeKey);
-                    if (edge?.solidId === solidId) {
-                        wanted.push({ key: this._hoveredEdgeKey, selected: false });
-                    }
+                    if (edge?.solidId === solidId) wanted.push({ key: this._hoveredEdgeKey, selected: false });
                 }
                 for (const item of wanted) {
                     const edge = this.getEdgeByKey(item.key);
@@ -2032,6 +2185,52 @@ function edgeKey(a, b) {
                     line.renderOrder = 80;
                     view.edgeOverlays.add(line);
                 }
+            }
+            if (!frozenActive) return;
+            if (!this._frozenEdgeOverlays && this._root) {
+                this._frozenEdgeOverlays = new THREE.Group();
+                this._frozenEdgeOverlays.name = 'void-solids-frozen-edge-overlays';
+                this._root.add(this._frozenEdgeOverlays);
+            }
+            if (!this._frozenEdgeOverlays || !this._root) return;
+            const wanted = [];
+            for (const key of this._selectedEdgeKeys) {
+                if (this.getEdgeByKey(key)) wanted.push({ key, selected: true });
+            }
+            if (this._hoveredEdgeKey && !this._selectedEdgeKeys.has(this._hoveredEdgeKey)) {
+                if (this.getEdgeByKey(this._hoveredEdgeKey)) wanted.push({ key: this._hoveredEdgeKey, selected: false });
+            }
+            for (const item of wanted) {
+                const edge = this.getEdgeByKey(item.key);
+                const pathWorld = Array.isArray(edge?.pathWorld) && edge.pathWorld.length >= 2
+                    ? edge.pathWorld
+                    : (edge?.aWorld && edge?.bWorld)
+                        ? [edge.aWorld, edge.bWorld]
+                        : null;
+                if (!pathWorld || pathWorld.length < 2) continue;
+                const geo = new LineGeometry();
+                const positions = [];
+                for (const p of pathWorld) {
+                    const local = this._root.worldToLocal(p.clone ? p.clone() : new THREE.Vector3(Number(p.x || 0), Number(p.y || 0), Number(p.z || 0)));
+                    positions.push(Number(local.x || 0), Number(local.y || 0), Number(local.z || 0));
+                }
+                geo.setPositions(positions);
+                const mat = new LineMaterial({
+                    color: item.selected ? 0xff9933 : 0xffb366,
+                    linewidth: item.selected
+                        ? Number(this._renderPrefs?.edgeSelectedLineWidth || 3.25)
+                        : Number(this._renderPrefs?.edgeHoverLineWidth || 2.5),
+                    transparent: true,
+                    opacity: item.selected ? 0.95 : 0.85,
+                    depthTest: false,
+                    depthWrite: false,
+                    dashed: false
+                });
+                mat.resolution.set(rw, rh);
+                const line = new Line2(geo, mat);
+                line.frustumCulled = false;
+                line.renderOrder = 80;
+                this._frozenEdgeOverlays.add(line);
             }
         },
 

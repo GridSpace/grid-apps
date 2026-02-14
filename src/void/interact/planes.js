@@ -149,9 +149,62 @@ function handleHover(intersection, event, allIntersections) {
     const sketchEditing = !!(this.isSketchEditing && this.isSketchEditing());
     const retargetMode = !!(this.isSketchRetargetMode && this.isSketchRetargetMode());
     const editingExtrudeProfiles = !sketchEditing && isEditingExtrudeProfiles();
+    const currentFeatureId = properties.currentFeatureId || null;
+    const currentFeature = currentFeatureId ? api.features.findById(currentFeatureId) : null;
+    const editingChamfer = !sketchEditing && currentFeature?.type === 'chamfer' && currentFeature?.id === currentFeatureId;
     const primaryHit = this.getPrimarySurfaceHitFromIntersections(allIntersections || (intersection ? [intersection] : []));
 
     if (!sketchEditing || retargetMode) {
+        if (editingChamfer) {
+            let faceKey = null;
+            let worldPoint = null;
+            if (primaryHit?.type === 'solid-face') {
+                faceKey = String(primaryHit.hit?.key || '');
+                worldPoint = primaryHit.hit?.intersection?.point || null;
+            } else if (primaryHit?.type === 'solid-edge') {
+                const edge = primaryHit.hit || null;
+                worldPoint = edge?.intersection?.point || null;
+                const solidId = String(edge?.solidId || '');
+                const faceId = Number(edge?.faceId);
+                if (solidId && Number.isFinite(faceId)) {
+                    faceKey = `${solidId}:${faceId}`;
+                } else {
+                    const raw = String(edge?.key || '');
+                    if (raw.startsWith('faceedge:') || raw.startsWith('faceedgeloop:')) {
+                        const parts = raw.split(':');
+                        const fid = Number(parts[parts.length - 2]);
+                        const sid = parts.slice(1, -2).join(':');
+                        if (sid && Number.isFinite(fid)) faceKey = `${sid}:${fid}`;
+                    }
+                }
+            }
+            if (faceKey && worldPoint) {
+                const snap = api.solids?.getFaceEdgeHit?.(faceKey, worldPoint, 3.0) || null;
+                if (snap?.key) {
+                    this.hoveredSolidEdgeKey = snap.key;
+                    api.solids?.setHoveredEdge?.(snap.key);
+                    if (this.hoveredSolidFaceKey) {
+                        this.hoveredSolidFaceKey = null;
+                        api.solids?.setHoveredFace?.(null);
+                    }
+                    this.hoverIntersection = snap.intersection || intersection || null;
+                    this.setHoveredPoint(null);
+                    if (this.hoveredPlane && !this.hoveredPlane.isSelected()) {
+                        this.hoveredPlane.setHovered(false);
+                        this.hoveredPlane = null;
+                    }
+                    window.dispatchEvent(new CustomEvent('void-state-change'));
+                    return;
+                }
+            }
+            if (this.hoveredSolidEdgeKey) {
+                this.hoveredSolidEdgeKey = null;
+                api.solids?.setHoveredEdge?.(null);
+                window.dispatchEvent(new CustomEvent('void-state-change'));
+            }
+            // Strict chamfer edit behavior: never fall through to live topology hover paths.
+            return;
+        }
         if (primaryHit?.type === 'profile') {
             const profileHit = primaryHit.hit;
             if (this.hoveredSolidFaceKey) {
@@ -449,6 +502,9 @@ function getPrimarySurfaceHitFromIntersections(intersections) {
 function selectSketchProfile(hit, event) {
     const currentFeatureId = properties.currentFeatureId || null;
     const currentFeature = currentFeatureId ? api.features.findById(currentFeatureId) : null;
+    if (currentFeature?.type === 'chamfer' && currentFeature?.id === currentFeatureId) {
+        return;
+    }
     if (currentFeature?.type === 'extrude') {
         const rawLoops = hit?.object?.userData?.sketchProfileLoops
             || (hit?.object?.userData?.sketchProfileLoop ? [hit.object.userData.sketchProfileLoop] : null);
@@ -689,7 +745,21 @@ function selectSolidEdge(hit, event) {
         api.solids?.clearFaceSelection?.();
     }
     if (editingChamfer) {
-        const edge = api.solids?.getEdgeByKey?.(key);
+        const worldPoint = hit?.intersection?.point || this.hoverIntersection?.point || null;
+        let faceKey = String(this.hoveredSolidFaceKey || '');
+        if (!faceKey) {
+            const raw = String(hit?.key || '');
+            if (raw.startsWith('faceedge:') || raw.startsWith('faceedgeloop:')) {
+                const parts = raw.split(':');
+                const fid = Number(parts[parts.length - 2]);
+                const sid = parts.slice(1, -2).join(':');
+                if (sid && Number.isFinite(fid)) faceKey = `${sid}:${fid}`;
+            }
+        }
+        const snap = (worldPoint && faceKey)
+            ? (api.solids?.getFaceEdgeHit?.(faceKey, worldPoint, 3.0) || null)
+            : null;
+        const edge = snap?.key ? (api.solids?.getEdgeByKey?.(snap.key) || null) : null;
         if (!edge) return;
         const edgeEntity = api.solids?.resolveCanonicalEdgeEntity?.(key) || null;
         const refId = String(edgeEntity?.id || '');
