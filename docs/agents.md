@@ -218,7 +218,8 @@ src/
   - current known issue: circle-in-box (`min` to two orthogonal lines) can feel jerky while drag-resizing radius
   - current implementation favors deterministic branching for line targets; revisit with solver-side branch lock per drag gesture if needed
 - Known regression history: commit `5093eec4` introduced an overly permissive derived-edge proximity gate (`segLen * 0.35`) in `resolveDerivedEdgeCandidate`; this causes incorrect face/edge picks in sketch derive hover. Keep tight gate (`2.5`) unless replaced with a screen-space metric.
-- Geometry graph refactor plan is tracked in `docs/void-geomgraph-plan.md` (surfaces + boundaries as canonical entities; solids as derived artifacts).
+- Geometry graph refactor plan is tracked in `docs/void/plan-geomgraph.md` (surfaces + boundaries as canonical entities; solids as derived artifacts).
+- Derived sketch entity rearchitecture plan is tracked in `docs/void/plan-derived.md` (immutable, rebuild-driven references to upstream geometry).
 - Terminology (use consistently in code/docs/issues):
   - `segment`: one boundary edge between two 3D points
   - `chain`: ordered open polyline of connected segments
