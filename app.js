@@ -26,6 +26,7 @@ const mods = {};
 const load = [];
 const api = {};
 
+let lastTouchTime = {};
 let forceUseCache = false;
 let serviceWorker = true;
 let crossOrigin = false;
@@ -213,9 +214,19 @@ function init(mod) {
         }
     }
 
-    // create alt artifacts with module extensions
+    // synthesize new main when applicable
+    createArtifacts();
+}
+
+// create alt artifacts with module extensions
+function createArtifacts() {
     if (dryrun || !isElectron) {
-        logger.log('creating artifacts', Object.keys(append));
+        if (debug) {
+            setTimeout(createArtifacts, 1000);
+        }
+        if (Object.keys(lastTouchTime).length === 0) {
+            logger.log('creating artifacts', Object.keys(append));
+        }
         for (let [ key, val ] of Object.entries(append)) {
             // append mains
             let src = `${dir}/src/main/${key}.js`;
@@ -223,6 +234,14 @@ function init(mod) {
                 logger.log('missing', src);
                 continue;
             }
+            let ltt = fs.statSync(src).mtimeMs;
+            if (lastTouchTime[src] === ltt) {
+                continue;
+            } else if (debug) {
+                logger.log('changed', src);
+            }
+            lastTouchTime[src] = ltt;
+            // console.log({ src, ltt });
             fs.mkdirSync(`${dir}/alt/main`, { recursive: true });
             let body = fs.readFileSync(src);
             fs.writeFileSync(`${dir}/alt/main/${key}.js`, body + val);
@@ -239,7 +258,7 @@ function init(mod) {
     } else {
         logger.log('skipping artifacts');
     }
-};
+}
 
 // either add module assets to path or require(init.js)
 function loadModule(mod, dir) {

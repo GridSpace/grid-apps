@@ -1808,6 +1808,8 @@ const api = {
 
     sketch,
 
+    space: motoSpace,
+
     tool,
 
     isDebug: self.debug === true

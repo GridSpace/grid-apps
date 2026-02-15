@@ -22,11 +22,52 @@ import { createDocumentManager } from '../mesh/document.js';
 const version = '1.5.7';
 const call = broker.send;
 const dbindex = [ "admin", "documents", "versions" ];
+const DOC_META_KEY = '__doc';
 
 const { Quaternion } = THREE;
 
 function log() {
     return api.log.emit(...arguments);
+}
+
+function get_doc_meta(meta = metaCache) {
+    if (!meta || typeof meta !== 'object') return {};
+    return meta[DOC_META_KEY] || {};
+}
+
+function capture_camera_state() {
+    return {
+        place: space.view.save(),
+        focus: space.view.getFocus()
+    };
+}
+
+function apply_camera_state(camera) {
+    if (!camera) return;
+    if (camera.place) {
+        space.view.load(camera.place);
+    }
+    if (camera.focus) {
+        space.view.setFocus(camera.focus);
+    }
+}
+
+function save_camera_to_document() {
+    const dmeta = get_doc_meta(metaCache);
+    metaCache[DOC_META_KEY] = {
+        ...dmeta,
+        camera: capture_camera_state()
+    };
+    store_meta();
+}
+
+let cameraSaveTimer = null;
+function schedule_camera_save(delay = 120) {
+    clearTimeout(cameraSaveTimer);
+    cameraSaveTimer = setTimeout(() => {
+        cameraSaveTimer = null;
+        save_camera_to_document();
+    }, delay);
 }
 
 // set below. called once the DOM readyState = complete
@@ -80,11 +121,8 @@ function init() {
             colorX: 0xff7777, colorY: 0x7777ff },
     });
     platform.onMove(() => {
-        // save last location and focus
-        db.admin.put('camera', {
-            place: space.view.save(),
-            focus: space.view.getFocus()
-        });
+        // save camera per-document
+        save_camera_to_document();
     }, 100);
     space.view.setZoom(zoomrev, zoomspd);
 
@@ -190,15 +228,10 @@ async function restore_space() {
     const db_admin = api.db.admin;
     const db_space = api.db.space;
     const docman = api.document;
-    await db_admin.get("camera")
-        .then(saved => {
-            if (saved) {
-                space.view.load(saved.place);
-                space.view.setFocus(saved.focus);
-            }
-        });
     const currentDoc = await docman.restoreOrCreate();
     const mcache = docman.getMeta() || {};
+    const oldCamera = await db_admin.get("camera");
+    const docCamera = get_doc_meta(mcache).camera || oldCamera || null;
     const cached = await db_space.iterate({ map: true }) || {};
     docman.pause();
     try {
@@ -206,6 +239,7 @@ async function restore_space() {
     } finally {
         docman.resume();
     }
+    apply_camera_state(docCamera);
     Promise.resolve().finally(() => {
         // hide loading curtain
         $d('curtain','none');
@@ -230,7 +264,12 @@ async function document_new(opt = {}) {
     docman.pause();
     try {
         clear_workspace();
-        metaCache = {};
+        space.view.home();
+        metaCache = {
+            [DOC_META_KEY]: {
+                camera: capture_camera_state()
+            }
+        };
         await docman.create(opt.name || 'Untitled');
         docman.setMeta(metaCache);
     } finally {
@@ -255,6 +294,7 @@ async function document_open(opt = {}) {
     } finally {
         docman.resume();
     }
+    apply_camera_state(get_doc_meta(mcache).camera);
     api.file.set_doc_name(docman.current?.name || 'Untitled');
 }
 
@@ -326,6 +366,10 @@ function space_init(data) {
         'dragleave', evt => {
             platform.set({ opacity: 0, color: platcolor });
         },
+        // camera interactions (orbit/pan/dolly) are not guaranteed to trigger platform.onMove
+        'wheel', () => schedule_camera_save(),
+        'mouseup', () => schedule_camera_save(),
+        'touchend', () => schedule_camera_save(),
         'keypress', evt => {
             if (api.modal.showing) {
                 return;
@@ -369,7 +413,9 @@ function space_init(data) {
                         (api.mode.is([ api.modes.sketch ]) ? api.sketch.arrange.group() : api.tool.regroup()) :
                         api.grid();
                 case 'KeyH':
-                    return shiftKey ? selection.hide() : space.view.home();
+                    if (shiftKey) return selection.hide();
+                    schedule_camera_save(180);
+                    return space.view.home();
                 case 'KeyI':
                     return api.file.import();
                 case 'KeyL':
@@ -386,7 +432,9 @@ function space_init(data) {
                     if (!api.mode.is([ api.modes.object ])) return;
                     return shiftKey ? selection.visible({toggle:true}) : meshSplit.start();
                 case 'KeyT':
-                    return shiftKey ? api.tool.triangulate() : space.view.top();
+                    if (shiftKey) return api.tool.triangulate();
+                    schedule_camera_save(180);
+                    return space.view.top();
                 case 'KeyU':
                     return shiftKey && api.tool.union();
                 case 'KeyV':
@@ -436,7 +484,9 @@ function space_init(data) {
             }
             if (isFit && !(metaKey || ctrlKey)) {
                 estop(evt);
-                return shiftKey ? focus_visible() : fit_visible();
+                const rv = shiftKey ? focus_visible() : fit_visible();
+                schedule_camera_save(220);
+                return rv;
             }
             if (isSpace) {
                 if (selection.clear()) {
@@ -472,7 +522,9 @@ function space_init(data) {
                     if (metaKey || ctrlKey) {
                         return shiftKey ? api.history.redo() : api.history.undo();
                     } else {
-                        return space.view.reset();
+                        const rv = space.view.reset();
+                        schedule_camera_save(220);
+                        return rv;
                     }
                 case 'Escape':
                     if (selection.clear()) {

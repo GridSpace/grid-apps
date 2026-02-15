@@ -1560,12 +1560,24 @@ let Space = {
         front:  (then) => { runPreset(0,     PI2, then) },
         right:  (then) => { runPreset(PI2,   PI2, then) },
         left:   (then) => { runPreset(-PI2,  PI2, then) },
-        reset:  ()     => { viewControl.reset(); requestRefresh() },
-        load:   (cam)  => { viewControl.setPosition(cam); requestRefresh() },
-        save:   ()     => { return viewControl.getPosition(true) },
-        panTo:  (x,y,z,l,u,t,upVec) => { tweenCamPan(x,y,z,l,u,t,upVec) },
-        setZoom: (r,v) => { viewControl.setZoom(r,v) },
-        fit:    (then, opts = {}) => {
+        reset:  ()     => {
+            viewControl.reset();
+            requestRefresh()
+        },
+        load: (cam)  => {
+            viewControl.setPosition(cam);
+            requestRefresh();
+        },
+        save: () => {
+            return viewControl.getPosition(true);
+        },
+        panTo: (x,y,z,l,u,t,upVec) => {
+            tweenCamPan(x,y,z,l,u,t,upVec);
+        },
+        setZoom: (r,v) => {
+            viewControl.setZoom(r,v);
+        },
+        fit: (then, opts = {}) => {
             // Calculate bounding box of all objects in the workspace
             const box = new THREE.Box3();
             let hasObjects = false;
