@@ -109,10 +109,11 @@ function setupLeftPanelResize(db) {
         event.stopPropagation();
     };
 
-    window.addEventListener('resize', () => {
-        const curr = left.getBoundingClientRect().width;
-        applyWidth(curr);
-    });
+    const onResize = () => {
+        applyWidth(left.getBoundingClientRect().width);
+    }
+
+    window.addEventListener('resize', onResize);
 }
 
 // Main initialization function
@@ -319,6 +320,9 @@ async function init() {
             curtain.style.display = 'none';
         }, 300);
     }
+
+    // update canvas based on left panel size
+    space.event.onResize();
 
     console.log({ void_form_ready: true });
 }

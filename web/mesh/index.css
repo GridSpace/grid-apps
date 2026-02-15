@@ -270,7 +270,7 @@ button:hover {
 
 #top-doc-name {
     cursor: pointer;
-    min-width: 140px;
+    /* min-width: 140px; */
     max-width: 320px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -278,7 +278,7 @@ button:hover {
     justify-content: flex-end;
 }
 
-#top-doc-name:hover {
+#top-doc-name:hover, #top-settings:hover {
     background-color: var(--menu-blue);
 }
 
