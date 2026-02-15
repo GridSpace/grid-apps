@@ -243,14 +243,10 @@ api.welcome = function(version = "unknown") {
 api.settings = function() {
     const { prefs } = api;
     const { surface, normals, space, sketch, wireframe } = prefs.map;
-    const { dark } = space;
+    const dark = true;
 
     const set1 = div([
-        label('dark mode'),
-        input({ type: "checkbox",
-            onchange: ev => call.set_darkmode(ev.target.checked),
-            [ dark ? 'checked' : 'unchecked' ] : 1
-        }),
+        label({ class: "header", _: 'auto'}),
         label('auto floor'),
         input({ type: "checkbox",
             onchange: ev => prefs.save( space.floor = !space.floor ),

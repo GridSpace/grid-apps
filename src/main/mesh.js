@@ -218,7 +218,7 @@ async function restore_workspace_from_state(cached = {}, mcache = {}) {
             let sklist = api.sketch.list().filter(s => selist.contains(s.id));
             api.selection.set([...smodel, ...sgroup, ...sklist], [...tmodel, ...tgroup]);
             api.mode[mode]();
-            set_darkmode(map.space.dark);
+            set_darkmode();
         });
     });
 }
@@ -865,28 +865,19 @@ function object_destroy(id) {
 function set_darkmode(dark) {
     let { prefs, model } = api;
     let { sky, platform } = space;
-    prefs.map.space.dark = dark;
-    if (dark) {
-        materials.wireframe.color.set(0xaaaaaa);
-        materials.wireline.color.set(0xaaaaaa);
-        $('app').classList.add('dark');
-    } else {
-        materials.wireframe.color.set(0,0,0);
-        materials.wireline.color.set(0,0,0);
-        $('app').classList.remove('dark');
-    }
+    dark = true;
+    prefs.map.space.dark = true;
+    materials.wireframe.color.set(0xaaaaaa);
+    materials.wireline.color.set(0xaaaaaa);
     sky.set({
-        color: dark ? 0 : 0xffffff,
-        ambient: { intensity: dark ? 0.55 : 1.1 }
+        color: 0,
+        ambient: { intensity: 0.55 }
     });
     platform.set({
-        light: dark ? 0.08 : 0.08,
-        grid: dark ? {
+        light: 0.08,
+        grid: {
             colorMajor: 0x666666,
             colorMinor: 0x333333,
-        } : {
-            colorMajor: 0xcccccc,
-            colorMinor: 0xeeeeee,
         },
     });
     api.updateFog();
@@ -912,11 +903,8 @@ function set_normals_length(length) {
 function set_normals_color(color) {
     let { prefs, model } = api;
     let { map } = prefs;
-    if (map.space.dark) {
-        map.normals.color_dark = color || 0;
-    } else {
-        map.normals.color_lite = color || 0;
-    }
+    map.normals.color_dark = color || 0;
+    map.normals.color_lite = color || 0;
     prefs.save();
     // Update existing normals
     for (let m of model.list()) {
