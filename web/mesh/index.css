@@ -268,6 +268,20 @@ button:hover {
     gap: 8px;
 }
 
+#top-doc-name {
+    cursor: pointer;
+    min-width: 140px;
+    max-width: 320px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    justify-content: flex-end;
+}
+
+#top-doc-name:hover {
+    background-color: var(--menu-blue);
+}
+
 /** specific modal dialogs */
 
 .export {
@@ -311,6 +325,52 @@ button:hover {
 .additem button, .additem hr, .additem code {
     grid-column: span 2;
     text-align: center;
+}
+
+.doc-open-list {
+    display: flex;
+    flex-direction: column;
+    min-width: 420px;
+    max-height: 60vh;
+    overflow: auto;
+    gap: 6px;
+}
+
+.doc-open-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--menu-border, #bbb);
+    border-radius: 6px;
+    padding: 6px 8px;
+}
+
+.doc-open-row:hover {
+    background-color: var(--menu-blue);
+}
+
+.doc-open-name {
+    flex: 1;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.doc-open-empty {
+    padding: 8px;
+    text-align: center;
+    opacity: 0.7;
+}
+
+.doc-open-new {
+    width: 100%;
+}
+
+.doc-open-del {
+    min-width: 28px;
+    padding: 2px 8px;
+    font-weight: 700;
 }
 
 .image-import {

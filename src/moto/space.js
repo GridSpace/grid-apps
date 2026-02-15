@@ -1570,16 +1570,27 @@ let Space = {
             const box = new THREE.Box3();
             let hasObjects = false;
             const visibleOnly = opts.visibleOnly !== undefined ? !!opts.visibleOnly : fitVisibleOnly;
+            const targetObjects = Array.isArray(opts.objects) ? opts.objects.filter(Boolean) : null;
 
-            // Recursively expand box for all visible objects with geometry
-            WORLD.traverse(obj => {
-                if (!obj.geometry) return;
-                if (visibleOnly && !isEffectivelyVisible(obj)) return;
-                if (obj.visible) {
+            if (targetObjects && targetObjects.length) {
+                // Fit only the supplied objects (selection-driven fit in app code)
+                for (const obj of targetObjects) {
+                    if (!obj) continue;
+                    if (visibleOnly && !isEffectivelyVisible(obj)) continue;
                     box.expandByObject(obj);
                     hasObjects = true;
                 }
-            });
+            } else {
+                // Recursively expand box for all visible objects with geometry
+                WORLD.traverse(obj => {
+                    if (!obj.geometry) return;
+                    if (visibleOnly && !isEffectivelyVisible(obj)) return;
+                    if (obj.visible) {
+                        box.expandByObject(obj);
+                        hasObjects = true;
+                    }
+                });
+            }
 
             // If no objects, fall back to platform bounds
             if (!hasObjects) {

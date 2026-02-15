@@ -972,6 +972,93 @@ let add = {
 };
 
 let file = {
+    set_doc_name(name = 'Untitled') {
+        const label = String(name || 'Untitled').trim() || 'Untitled';
+        document.title = `${label} | Mesh:Tool`;
+        const el = $('top-doc-name');
+        if (el) {
+            el.textContent = label;
+            el.title = `click to rename (${label})`;
+        }
+    },
+
+    async new() {
+        await api.document?.flush?.();
+        await call.document_new({ name: 'Untitled' });
+        api.file.set_doc_name('Untitled');
+    },
+
+    async open() {
+        const docs = await (api.document?.list?.() || Promise.resolve([]));
+        const rows = docs.map(doc => h.div({ class: "doc-open-row", onclick: async function() {
+            api.modal.hide();
+            await call.document_open({ id: doc.id });
+            api.file.set_doc_name(doc.name || 'Untitled');
+        } }, [
+            h.div({ class: "doc-open-name", _: `${doc.name || 'Untitled'}` }),
+            h.button({ _: "rename", onclick(evt) {
+                evt?.stopPropagation?.();
+                api.modal.hide();
+                setTimeout(() => api.file.rename(doc), 0);
+            } }),
+            h.button({ class: "doc-open-del", _: "×", title: "delete", onclick: async (evt) => {
+                evt?.stopPropagation?.();
+                await api.file.delete(doc);
+            } })
+        ]));
+        api.modal.dialog({
+            title: "open document",
+            body: [ h.div({ class: "doc-open-list" }, [
+                ...rows,
+                rows.length ? undefined : h.div({ class: "doc-open-empty", _: "no documents" }),
+                h.hr(),
+                h.button({ class: "doc-open-new", _: "new", onclick() {
+                    api.modal.hide();
+                    api.file.new();
+                } })
+            ].filter(v => v)) ]
+        });
+    },
+
+    async rename(doc = api.document?.current) {
+        const current = doc || api.document?.current;
+        if (!current?.id) return;
+        if (api.modal?.showing) {
+            api.modal.hide();
+            await Promise.resolve();
+        }
+
+        let onclick = onkeydown = (ev) => {
+            if (!tempedit || (ev.code && ev.code !== 'Enter')) {
+                return;
+            }
+            api.document.rename(current.id, tempedit.value).then(rec => {
+                if (rec?.id && api.document?.current?.id === rec.id) {
+                    api.file.set_doc_name(rec.name || 'Untitled');
+                }
+            }).finally(() => api.modal.hide());
+        };
+
+        let { tempedit } = api.modal.show(`rename document`, h.div({ class: "rename"}, [
+            h.input({ id: "tempedit", value: current.name || 'Untitled', onkeydown }),
+            h.button({ _: 'ok', onclick })
+        ]));
+        tempedit.setSelectionRange(0,1000);
+        tempedit.focus();
+    },
+
+    async delete(doc = api.document?.current) {
+        const current = doc || api.document?.current;
+        if (!current?.id) return;
+        const result = await api.document?.delete?.(current.id);
+        if (result?.switched && result?.current?.id) {
+            await call.document_open({ id: result.current.id, autosave: false });
+            api.file.set_doc_name(result.current.name || 'Untitled');
+        }
+        api.modal.hide();
+        api.file.open();
+    },
+
     import() {
         // binding created in mesh.build
         $('import').click();
@@ -1572,10 +1659,30 @@ const api = {
 
     history: {
         undo() {
-            history.undo();
+            if (api.document?.undo) {
+                api.document.undo().then(changed => {
+                    if (changed) {
+                        call.document_open({ id: api.document.current?.id, autosave: false });
+                    } else {
+                        history.undo();
+                    }
+                });
+            } else {
+                history.undo();
+            }
         },
         redo() {
-            history.redo();
+            if (api.document?.redo) {
+                api.document.redo().then(changed => {
+                    if (changed) {
+                        call.document_open({ id: api.document.current?.id, autosave: false });
+                    } else {
+                        history.redo();
+                    }
+                });
+            } else {
+                history.redo();
+            }
         }
     },
 

@@ -675,7 +675,7 @@ const toolbar = {
             this.docNameEl.textContent = name;
             this.docNameEl.title = name;
         }
-        document.title = `${name} - Void:Form`;
+        document.title = `${name} | Void:Form`;
     },
 
     buildOpenDialog() {

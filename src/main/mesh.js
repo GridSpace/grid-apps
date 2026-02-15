@@ -17,10 +17,11 @@ import { edges as meshEdges } from '../mesh/edges.js';
 import { open as dataOpen } from '../data/index.js';
 import { load as fileLoad } from '../load/file.js';
 import { THREE } from '../ext/three.js';
+import { createDocumentManager } from '../mesh/document.js';
 
 const version = '1.5.7';
 const call = broker.send;
-const dbindex = [ "admin", "space" ];
+const dbindex = [ "admin", "documents", "versions" ];
 
 const { Quaternion } = THREE;
 
@@ -31,7 +32,7 @@ function log() {
 // set below. called once the DOM readyState = complete
 // this is the main() entrypoint called after all dependents load
 function init() {
-    let stores = dataOpen('mesh', { stores: dbindex, version: 4 }).init(),
+    let stores = dataOpen('mesh', { stores: dbindex, version: 5 }).init(),
         dark = false,
         ortho = false,
         zoomrev = true,
@@ -39,8 +40,17 @@ function init() {
         platform = space.platform,
         db = api.db = {
             admin: stores.promise('admin'),
-            space: stores.promise('space')
+            documents: stores.promise('documents'),
+            versions: stores.promise('versions')
         };
+
+    const docman = api.document = createDocumentManager({
+        admin: db.admin,
+        documents: db.documents,
+        versions: db.versions,
+        maxRevisions: 200
+    });
+    db.space = docman.spaceStore;
 
     // initialize the API (to avoid circular dependencies)
     api.init();
@@ -78,17 +88,17 @@ function init() {
     }, 100);
     space.view.setZoom(zoomrev, zoomspd);
 
+    // trigger ui building
+    call.ui_build();
+
+    // trigger space event binding
+    call.space_init({ space: space, platform });
+
     // reload stored space when worker is ready
     motoClient.on('ready', restore_space);
 
     // start worker
     motoClient.start('../lib/mesh/work.js?' + version);
-
-    // trigger space event binding
-    call.space_init({ space: space, platform });
-
-    // trigger ui building
-    call.ui_build();
 
     // hide url params
     let wlp = window.location.pathname;
@@ -102,32 +112,27 @@ function init() {
     self.electron = navigator.userAgent.includes('Electron');
 }
 
-// restore space layout and view from previous session
-async function restore_space() {
-    const db_admin = api.db.admin;
+function clear_workspace() {
+    api.selection.clear();
+    for (let sk of api.sketch.list().slice()) {
+        sk.remove();
+    }
+    for (let grp of api.group.list().slice()) {
+        grp.remove();
+    }
+}
+
+async function restore_workspace_from_state(cached = {}, mcache = {}) {
     const db_space = api.db.space;
-    // let mcache = {};
-    await db_admin.get("camera")
-        .then(saved => {
-            if (saved) {
-                space.view.load(saved.place);
-                space.view.setFocus(saved.focus);
-            }
-        });
-    const mcache = await db_admin.get("meta") || {};
     let count = 0;
-    await db_space.iterate({ map: true }).then(cached => {
+    await Promise.resolve(cached).then(cached => {
         const keys = [];
         const claimed = [];
         for (let [id, data] of Object.entries(cached)) {
-            // console.log({ id, data });
             keys.push(id);
             if (count++ === 0) {
                 log(`restoring workspace`);
             }
-            // restore object based on type
-            // group arrays load models they contain
-            // sketches are loaded by type since they're not grouped
             if (Array.isArray(data)) {
                 claimed.push(id);
                 let models = data
@@ -135,11 +140,11 @@ async function restore_space() {
                         claimed.push(id);
                         return { id, md: cached[id] }
                     })
-                    .filter(r => r.md) // filter cache misses
-                    .map(r => new meshModel(r.md, r.id).applyMeta(mcache[r.id]))
+                    .filter(r => r.md)
+                    .map(r => new meshModel(r.md, r.id).applyMeta(mcache[r.id]));
                 if (models.length) {
                     log(`restored ${models.length} model(s)`);
-                    api.group.new(models, id).applyMeta(mcache[id])
+                    api.group.new(models, id).applyMeta(mcache[id]);
                 } else {
                     log(`removed empty group ${id}`);
                     db_space.remove(id);
@@ -155,22 +160,17 @@ async function restore_space() {
         if (keys.length) {
             log(`removing ${keys.length} unclaimed meshes`);
         }
-        // clear out meshes left in the space db along with their meta-data
         for (let id of keys) {
             db_space.remove(id);
             delete mcache[id];
         }
-        // restore global cache only after objects are restored
-        // otherwise their setup will corrupt the cache for other restores
         metaCache = mcache;
-        store_meta();
+        api.document.setMeta(metaCache);
     }).then(() => {
-        // restore preferences after models are restored
         return api.prefs.load().then(() => {
             let { map } = api.prefs;
             let { space, mode } = map;
             api.grid(space.grid);
-            // restore selected state
             let selist = space.select || [];
             let smodel = api.model.list().filter(m => selist.contains(m.id));
             let sgroup = api.group.list().filter(m => selist.contains(m.id));
@@ -179,12 +179,34 @@ async function restore_space() {
             let tgroup = api.group.list().filter(m => tolist.contains(m.id));
             let sklist = api.sketch.list().filter(s => selist.contains(s.id));
             api.selection.set([...smodel, ...sgroup, ...sklist], [...tmodel, ...tgroup]);
-            // restore edit mode
             api.mode[mode]();
-            // restore dark mode
             set_darkmode(map.space.dark);
         });
-    }).finally(() => {
+    });
+}
+
+// restore space layout and view from previous session
+async function restore_space() {
+    const db_admin = api.db.admin;
+    const db_space = api.db.space;
+    const docman = api.document;
+    await db_admin.get("camera")
+        .then(saved => {
+            if (saved) {
+                space.view.load(saved.place);
+                space.view.setFocus(saved.focus);
+            }
+        });
+    const currentDoc = await docman.restoreOrCreate();
+    const mcache = docman.getMeta() || {};
+    const cached = await db_space.iterate({ map: true }) || {};
+    docman.pause();
+    try {
+        await restore_workspace_from_state(cached, mcache);
+    } finally {
+        docman.resume();
+    }
+    Promise.resolve().finally(() => {
         // hide loading curtain
         $d('curtain','none');
         // restore handles visibility
@@ -196,8 +218,44 @@ async function restore_space() {
         if (api.prefs.map.info.welcome !== false) {
             api.welcome(version);
         }
+        api.file.set_doc_name(currentDoc?.name || 'Untitled');
         broker.publish("app_ready");
     });
+}
+
+async function document_new(opt = {}) {
+    const docman = api.document;
+    await docman.flush();
+    await docman.commit('document.autosave', 'document.autosave');
+    docman.pause();
+    try {
+        clear_workspace();
+        metaCache = {};
+        await docman.create(opt.name || 'Untitled');
+        docman.setMeta(metaCache);
+    } finally {
+        docman.resume();
+    }
+    await docman.commit('document.new', 'document.new');
+    api.file.set_doc_name(docman.current?.name || 'Untitled');
+}
+
+async function document_open(opt = {}) {
+    const docman = api.document;
+    const id = String(opt?.id || '');
+    if (!id) return;
+    await docman.flush();
+    await docman.open(id, { autosave: opt.autosave !== false });
+    const cached = docman.getSpace() || {};
+    const mcache = docman.getMeta() || {};
+    docman.pause();
+    try {
+        clear_workspace();
+        await restore_workspace_from_state(cached, mcache);
+    } finally {
+        docman.resume();
+    }
+    api.file.set_doc_name(docman.current?.name || 'Untitled');
 }
 
 // add space event bindings
@@ -205,6 +263,52 @@ function space_init(data) {
     let platcolor = 0x00ff00;
     let { space, platform } = data;
     let { selection } = api;
+
+    function selection_or_visible_entities() {
+        const selected = api.selection.list(true);
+        if (selected?.length) return selected;
+        return [
+            ...api.group.list().filter(g => g.visible()),
+            ...api.sketch.list().filter(s => s.visible())
+        ];
+    }
+
+    function fit_visible() {
+        const entities = selection_or_visible_entities();
+        const objects = entities.map(e => e?.object).filter(o => o);
+        return space.view.fit(undefined, {
+            padding: 0.6,
+            visibleOnly: true,
+            objects: objects.length ? objects : undefined
+        });
+    }
+
+    function focus_visible() {
+        const entities = selection_or_visible_entities();
+        if (entities.length) {
+            return api.focus(entities);
+        }
+        return api.focus([
+            ...api.group.list(),
+            ...api.sketch.list()
+        ]);
+    }
+
+    function norm_code(evt) {
+        if (evt?.code) return evt.code;
+        const key = evt?.key;
+        if (!key) return '';
+        if (key === ' ') return 'Space';
+        if (key === 'Spacebar') return 'Space';
+        if (key === 'Escape') return 'Escape';
+        if (key.length === 1) {
+            const up = key.toUpperCase();
+            if (up >= 'A' && up <= 'Z') return `Key${up}`;
+            if (up >= '0' && up <= '9') return `Digit${up}`;
+        }
+        return key;
+    }
+
     // add file drop handler
     space.event.addHandlers(self, [
         'drop', (evt) => {
@@ -229,7 +333,8 @@ function space_init(data) {
             if (evt.key === '?') {
                 return api.welcome(version);
             }
-            let { shiftKey, metaKey, ctrlKey, code, target } = evt;
+            let { shiftKey, metaKey, ctrlKey, target } = evt;
+            let code = norm_code(evt);
             if (target.nodeName === 'TEXTAREA') {
                 api.script.changed();
                 return;
@@ -259,8 +364,6 @@ function space_init(data) {
                         return api.sketch.extrude();
                     }
                     return;
-                case 'KeyF':
-                    return shiftKey ? selection.focus() : selection.floor().focus();
                 case 'KeyG':
                     return shiftKey ?
                         (api.mode.is([ api.modes.sketch ]) ? api.sketch.arrange.group() : api.tool.regroup()) :
@@ -295,7 +398,11 @@ function space_init(data) {
             }
         },
         'keydown', evt => {
-            let { shiftKey, metaKey, ctrlKey, code, target } = evt;
+            let { shiftKey, metaKey, ctrlKey, target } = evt;
+            let code = norm_code(evt);
+            const key = evt?.key;
+            const isSpace = code === 'Space' || code === 'Spacebar' || key === ' ' || key === 'Spacebar';
+            const isFit = code === 'KeyF' || key === 'f' || key === 'F';
             if (target.nodeName === 'TEXTAREA') {
                 if (code === 'Tab') {
                     estop(evt);
@@ -325,6 +432,18 @@ function space_init(data) {
                 if (code === 'Escape') {
                     api.modal.cancel();
                 }
+                return;
+            }
+            if (isFit && !(metaKey || ctrlKey)) {
+                estop(evt);
+                return shiftKey ? focus_visible() : fit_visible();
+            }
+            if (isSpace) {
+                if (selection.clear()) {
+                    meshEdges.clear();
+                    meshSplit.end();
+                }
+                estop(evt);
                 return;
             }
             let rot, floor = api.prefs.map.space.floor !== false;
@@ -664,7 +783,7 @@ function key_once_cancel(code) {
 }
 
 function store_meta() {
-    api.db.admin.put("meta", metaCache);
+    api.document?.setMeta?.(metaCache);
 }
 
 function update_meta(id, data) {
@@ -809,7 +928,9 @@ broker.listeners({
     set_surface_radius,
     set_wireframe_opacity,
     set_wireframe_fog,
-    set_snap_value
+    set_snap_value,
+    document_new,
+    document_open
 });
 
 init();
@@ -837,5 +958,7 @@ export {
     set_surface_radius,
     set_wireframe_opacity,
     set_wireframe_fog,
-    set_snap_value
+    set_snap_value,
+    document_new,
+    document_open
 };

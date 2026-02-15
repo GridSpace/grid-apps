@@ -19,7 +19,10 @@ let deg = Math.PI / 180;
 let und = undefined;
 
 broker.listeners({
-    ui_build
+    ui_build,
+    app_ready() {
+        api.file?.set_doc_name?.(api.document?.current?.name || 'Untitled');
+    }
 });
 
 let spin_timer;
@@ -398,6 +401,9 @@ function ui_build() {
                     id: "import", type: "file", class: ["hide"], multiple: true, accept:".stl,.obj",
                     onchange(evt) { broker.send.load_files(evt.target.files) }
                 }),
+                menu_item('New', file.new, 'N'),
+                menu_item('Open', file.open, 'O'),
+                hr(),
                 menu_item('Import', file.import, 'I'),
                 menu_item('Export', file.export, 'X'),
                 hr(),
@@ -550,11 +556,13 @@ function ui_build() {
 
     // add help buttons
     bind($('top-right'), [
+        div({ id: "top-doc-name", onclick: () => api.file.rename(), _: 'Untitled' }),
         div({ id: "top-settings", onclick: api.settings }, [
             div({ class: "fas fa-gear" }),
             div('Settings')
         ]),
     ]);
+    api.file?.set_doc_name?.(api.document?.current?.name || 'Untitled');
 
     // modal dialog and page blocker
     bind($('modal_page'), [
