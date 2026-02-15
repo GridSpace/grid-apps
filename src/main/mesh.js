@@ -317,7 +317,7 @@ function space_init(data) {
         const entities = selection_or_visible_entities();
         const objects = entities.map(e => e?.object).filter(o => o);
         return space.view.fit(undefined, {
-            padding: 0.6,
+            padding: 1,
             visibleOnly: true,
             objects: objects.length ? objects : undefined
         });
@@ -399,7 +399,11 @@ function space_init(data) {
                 case 'KeyB':
                     return selection.boundsBox({toggle:true});
                 case 'KeyC':
-                    return selection.centerXY().focus();
+                    if (shiftKey) {
+                        return selection.floor();
+                    } else {
+                        return selection.centerXY().focus();
+                    }
                 case 'KeyD':
                     return shiftKey && api.tool.duplicate();
                 case 'KeyE':
@@ -449,8 +453,6 @@ function space_init(data) {
             let { shiftKey, metaKey, ctrlKey, target } = evt;
             let code = norm_code(evt);
             const key = evt?.key;
-            const isSpace = code === 'Space' || code === 'Spacebar' || key === ' ' || key === 'Spacebar';
-            const isFit = code === 'KeyF' || key === 'f' || key === 'F';
             if (target.nodeName === 'TEXTAREA') {
                 if (code === 'Tab') {
                     estop(evt);
@@ -475,19 +477,25 @@ function space_init(data) {
                 delete keyOnce[code];
                 return once(evt);
             }
-            let rv = (Math.PI / 12);
             if (api.modal.showing) {
                 if (code === 'Escape') {
                     api.modal.cancel();
                 }
                 return;
             }
+            const isFit = code === 'KeyF' ||
+                key === 'f' ||
+                key === 'F';
             if (isFit && !(metaKey || ctrlKey)) {
                 estop(evt);
                 const rv = shiftKey ? focus_visible() : fit_visible();
                 schedule_camera_save(220);
                 return rv;
             }
+            const isSpace = code === 'Space' ||
+                code === 'Spacebar' ||
+                key === ' ' ||
+                key === 'Spacebar';
             if (isSpace) {
                 if (selection.clear()) {
                     meshEdges.clear();
@@ -496,7 +504,9 @@ function space_init(data) {
                 estop(evt);
                 return;
             }
-            let rot, floor = api.prefs.map.space.floor !== false;
+            let rv = (Math.PI / 12);
+            let rot;
+            let floor = api.prefs.map.space.floor !== false;
             switch (code) {
                 case 'KeyA':
                     estop(evt);
@@ -522,9 +532,9 @@ function space_init(data) {
                     if (metaKey || ctrlKey) {
                         return shiftKey ? api.history.redo() : api.history.undo();
                     } else {
-                        const rv = space.view.reset();
+                        space.view.reset();
                         schedule_camera_save(220);
-                        return rv;
+                        return;
                     }
                 case 'Escape':
                     if (selection.clear()) {

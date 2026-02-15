@@ -243,7 +243,8 @@ class Orbit extends EventDispatcher {
             if (set.panX !== undefined) target.x = set.panX;
             if (set.panY !== undefined) target.y = set.panY;
             if (set.panZ !== undefined) target.z = set.panZ;
-            scale = 1;
+            if (set.scale !== undefined) scale = set.scale;
+            else scale = 1;
             this.update();
         };
 
@@ -259,6 +260,7 @@ class Orbit extends EventDispatcher {
                     posX: p.x,
                     posY: p.y,
                     posZ: p.z,
+                    // scale: scaled ? scaleSave : undefined
                 };
             return pos;
         };
