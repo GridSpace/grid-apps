@@ -88,7 +88,6 @@ html, body {
 .toolbar-title {
     font-weight: 600;
     font-size: 16px;
-    margin-right: 12px;
     color: var(--accent);
 }
 

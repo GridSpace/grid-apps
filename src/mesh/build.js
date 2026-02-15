@@ -395,6 +395,7 @@ function ui_build() {
     // top left drop menus
     bind($('top-left'), [
         div({ _: 'Mesh:Tool', class: "title" }),
+        div({ class: "menu-separator" }),
         div({ class: "menu" }, [
             div('File'),
             div({ class: "menu-items" }, [
@@ -541,7 +542,13 @@ function ui_build() {
                 menu_item('Even Odd', sketch.boolean.evenodd),
             ])
         ]),
+        div({ class: "menu-separator" }),
+        div({ id: "top-settings", onclick: api.settings, class: "menu" }, [
+            // div({ class: "fas fa-gear" }),
+            div('Settings')
+        ]),
         div({ class: "menu" }, [
+            // div({ class: "fas fa-question" }),
             div('Help'),
             div({ class: "menu-items" }, [
                 menu_item('About', () => { api.welcome(version) }),
@@ -558,10 +565,6 @@ function ui_build() {
     // add help buttons
     bind($('top-right'), [
         div({ id: "top-doc-name", onclick: () => api.file.rename(), _: 'Untitled' }),
-        div({ id: "top-settings", onclick: api.settings }, [
-            div({ class: "fas fa-gear" }),
-            div('Settings')
-        ]),
     ]);
     api.file?.set_doc_name?.(api.document?.current?.name || 'Untitled');
 

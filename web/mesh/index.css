@@ -173,17 +173,24 @@ button:hover {
     cursor: default;
     align-self: stretch;
     align-items: center;
-    margin: 4px 4px 4px 0;
+    margin: 4px 0 4px 0;
     padding: 4px 12px 4px 12px;
     border-radius: 0;
     user-select: none;
-    border-right: 1px solid rgba(0,0,0,0.25);
     font-weight: bold;
     color: var(--accent);
 }
 
-.dark .title {
-    border-right: 1px solid rgba(255,255,255,0.25);
+.menu-separator {
+    align-self: stretch;
+    align-items: center;
+    width: 1px;
+    background: rgba(0,0,0,0.25);
+    margin: 5px;
+}
+
+.dark .menu-separator {
+    background: rgba(255,255,255,0.2);
 }
 
 .menu, #top-right > div {
@@ -288,7 +295,6 @@ button:hover {
 
 #top-doc-name {
     cursor: pointer;
-    /* min-width: 140px; */
     max-width: 320px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -296,7 +302,7 @@ button:hover {
     justify-content: flex-end;
 }
 
-#top-doc-name:hover, #top-settings:hover {
+#top-doc-name:hover {
     background-color: var(--menu-blue);
 }
 
