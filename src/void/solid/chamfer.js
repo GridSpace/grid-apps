@@ -693,7 +693,7 @@ async function applyChamferFeature(solids, meshCache, feature, makeBodyId, bodyS
         solids.splice(targetIndex, 1, nextSolid);
         meshCache.delete(solidId);
         meshCache.set(nextId, result.mesh);
-        console.log('void.chamfer.applied', {
+        if (false) console.log('void.chamfer.applied', {
             featureId: feature?.id,
             solidId,
             cutters: tools.length,

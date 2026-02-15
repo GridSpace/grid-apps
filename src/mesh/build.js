@@ -394,6 +394,7 @@ function ui_build() {
 
     // top left drop menus
     bind($('top-left'), [
+        div({ _: 'Mesh:Tool', class: "title" }),
         div({ class: "menu" }, [
             div('File'),
             div({ class: "menu-items" }, [

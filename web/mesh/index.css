@@ -1,7 +1,8 @@
 :root {
+    --accent: #5a9fd4;
     --menu-blue: #0079ff;
-    --menu-back: rgba(255,255,255,0.55);
-    --dark-menu-back: rgba(80,80,80,0.75);
+    --menu-back: rgba(255,255,255,0.65);
+    --dark-menu-back: rgba(40,40,40,0.75);
     --border: #888;
     --dark-border: #888;
     --selected: rgba(0,255,0,0.5);
@@ -166,6 +167,23 @@ button:hover {
     margin-left: 5px;
     flex-direction: row;
     padding: 0 !important;
+}
+
+.title {
+    cursor: default;
+    align-self: stretch;
+    align-items: center;
+    margin: 4px 4px 4px 0;
+    padding: 4px 12px 4px 12px;
+    border-radius: 0;
+    user-select: none;
+    border-right: 1px solid rgba(0,0,0,0.25);
+    font-weight: bold;
+    color: var(--accent);
+}
+
+.dark .title {
+    border-right: 1px solid rgba(255,255,255,0.25);
 }
 
 .menu, #top-right > div {

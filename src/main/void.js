@@ -292,7 +292,7 @@ async function init() {
 
     // TEST: Add example overlay elements
     // These demonstrate the 2D overlay tracking 3D points
-    if (true) { // Set to false to disable test overlays
+    if (false) { // Set to false to disable test overlays
         const { THREE } = window;
 
         // Show overlay
