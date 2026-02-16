@@ -1713,7 +1713,7 @@ let Space = {
             const newPanX = center.x;
             const newPanY = center.y;
             const newPanZ = center.z;
-            const currentScaleSave = viewControl.getPosition(true).scale || 1;
+            const currentScaleSave = viewControl.getPosition({ scaled: true }).scale || 1;
             const currentDistToCenter = camera.position.distanceTo(center);
 
             const fitPos = {

@@ -248,7 +248,7 @@ class Orbit extends EventDispatcher {
             this.update();
         };
 
-        this.getPosition = function(scaled) {
+        this.getPosition = function({ scaled } = { scaled: false }) {
             let t = this.target,
                 p = this.object.position,
                 pos = {
@@ -260,7 +260,7 @@ class Orbit extends EventDispatcher {
                     posX: p.x,
                     posY: p.y,
                     posZ: p.z,
-                    // scale: scaled ? scaleSave : undefined
+                    scale: scaled ? scaleSave : undefined
                 };
             return pos;
         };
