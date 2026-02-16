@@ -799,7 +799,7 @@ export class Trace {
                     ok++;
                 }
             }
-            return ok === clips.length;
+            return ok > 0;
         }
 
     }
