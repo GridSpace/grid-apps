@@ -30,6 +30,23 @@ function log() {
     return api.log.emit(...arguments);
 }
 
+function boot_status(message = 'loading...') {
+    const curtain = $('curtain');
+    if (!curtain) return;
+    curtain.textContent = String(message || 'loading...');
+}
+
+function boot_start(message = 'loading...') {
+    $('app')?.classList?.add('booting');
+    boot_status(message);
+    $d('curtain', 'flex');
+}
+
+function boot_done() {
+    $('app')?.classList?.remove('booting');
+    $d('curtain', 'none');
+}
+
 function get_doc_meta(meta = metaCache) {
     if (!meta || typeof meta !== 'object') return {};
     return meta[DOC_META_KEY] || {};
@@ -95,6 +112,7 @@ function init() {
 
     // initialize the API (to avoid circular dependencies)
     api.init();
+    boot_start('initializing mesh:tool');
 
     // mark init time and use count
     db.admin.put("init", Date.now());
@@ -228,10 +246,12 @@ async function restore_space() {
     const db_admin = api.db.admin;
     const db_space = api.db.space;
     const docman = api.document;
+    boot_status('loading document');
     const currentDoc = await docman.restoreOrCreate();
     const mcache = docman.getMeta() || {};
     const oldCamera = await db_admin.get("camera");
     const docCamera = get_doc_meta(mcache).camera || oldCamera || null;
+    boot_status('restoring workspace');
     const cached = await db_space.iterate({ map: true }) || {};
     docman.pause();
     try {
@@ -239,10 +259,14 @@ async function restore_space() {
     } finally {
         docman.resume();
     }
+    boot_status('restoring view');
     apply_camera_state(docCamera);
+    space.update();
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    boot_status('finalizing');
     Promise.resolve().finally(() => {
         // hide loading curtain
-        $d('curtain','none');
+        boot_done();
         // restore handles visibility
         handles.setEnabled(api.prefs.map.space.bounds ?? false);
         // restore script if was showing
