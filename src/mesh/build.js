@@ -391,7 +391,7 @@ function ui_build() {
     // top left drop menus
     bind($('top-left'), [
         div({ _: 'Mesh:Tool', class: "title" }),
-        div({ class: "menu-separator" }),
+        div({ class: "menubar-separator" }),
         div({ class: "menu" }, [
             div('File'),
             div({ class: "menu-items" }, [
@@ -538,7 +538,7 @@ function ui_build() {
                 menu_item('Even Odd', sketch.boolean.evenodd),
             ])
         ]),
-        div({ class: "menu-separator" }),
+        div({ class: "menubar-separator" }),
         div({ id: "top-settings", onclick: api.settings, class: "menu" }, [
             // div({ class: "fas fa-gear" }),
             div('Settings')
@@ -608,32 +608,55 @@ function ui_build() {
         return div({ onclick: fn, class: "tool" }, [ bicon(icon), div([ label(help) ]) ]);
     }
 
+    function toolbar_separator() {
+        return div({ class: "toolbar-separator" });
+    }
+
     // bind sketch chiclets
     bind(sketchtools, div([
         tool_item('bi-plus', 'New Sketch', add.sketch),
+        toolbar_separator(),
         tool_item('bi-circle', 'Add Circle', api.add.circle),
+        toolbar_separator(),
         tool_item('bi-square', 'Add Rectangle', api.add.rectangle),
+        toolbar_separator(),
         tool_item('bi-symmetry-vertical', 'Flip Horizontal', api.sketch.arrange.fliph),
+        toolbar_separator(),
         tool_item('bi-symmetry-horizontal', 'Flip Vertical', api.sketch.arrange.flipv),
+        toolbar_separator(),
         tool_item('bi-arrow-clockwise', 'Rotate', api.sketch.arrange.rotate),
+        toolbar_separator(),
         tool_item('bi-union', 'Union', sketch.boolean.union),
+        toolbar_separator(),
         tool_item('bi-intersect', 'Intersect', sketch.boolean.intersect),
+        toolbar_separator(),
         tool_item('bi-exclude', 'Difference', sketch.boolean.difference),
+        toolbar_separator(),
         tool_item('bi-pip', 'Nest', sketch.boolean.nest),
+        toolbar_separator(),
         tool_item('bi-layers', 'Flatten', sketch.boolean.flatten),
+        toolbar_separator(),
         tool_item('bi-cookie', 'Even Odd', sketch.boolean.evenodd),
+        toolbar_separator(),
         tool_item('bi-arrow-bar-up', 'Extrude', () => sketch.extrude()),
     ]));
 
     // bind object chiclets
     bind(objecttools, div([
         tool_item('bi-pencil', 'New Sketch', add.sketch),
+        toolbar_separator(),
         tool_item('bi-box', 'New Cube', add.cube),
+        toolbar_separator(),
         tool_item('bi-database', 'New Cylinder', add.cylinder),
+        toolbar_separator(),
         tool_item('bi-gear', 'New Gear', add.gear),
+        toolbar_separator(),
         tool_item('bi-union', 'Union', tool.union),
+        toolbar_separator(),
         tool_item('bi-subtract', 'Subtract', tool.subtract),
+        toolbar_separator(),
         tool_item('bi-intersect', 'Intersect', tool.intersect),
+        toolbar_separator(),
         tool_item('bi-exclude', 'Difference', tool.difference),
     ]));
 

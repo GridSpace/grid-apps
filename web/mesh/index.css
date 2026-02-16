@@ -1,10 +1,10 @@
 :root {
     --accent: #5a9fd4;
     --menu-blue: #0079ff;
-    --menu-back: rgba(40,40,40,0.75);
+    --menu-back: rgba(60,60,60,0.75);
     --border: #888;
-    --selected: rgba(0,255,0,0.5);
-    --selected-hover: rgba(0,255,0,0.8);
+    --selected: rgba(90,159,212,0.5);
+    --selected-hover: rgba(90,159,212,1);
 }
 
 @font-face {
@@ -182,12 +182,20 @@ button:hover {
     color: var(--accent);
 }
 
-.menu-separator {
+.menubar-separator {
     align-self: stretch;
     align-items: center;
-    width: 1px;
     background: rgba(255,255,255,0.2);
     margin: 5px;
+    width: 1px;
+}
+
+.toolbar-separator {
+    align-self: stretch;
+    align-items: center;
+    background: rgba(255,255,255,0.2);
+    margin: 2px;
+    height: 1px;
 }
 
 .menu, #top-right > div {
@@ -195,8 +203,10 @@ button:hover {
     align-self: stretch;
     align-items: center;
     padding: 8px 12px 8px 12px;
+    border: 1px solid transparent;
     border-radius: 6px;
     user-select: none;
+    margin: 2px;
 }
 
 .menu hr {
@@ -204,7 +214,8 @@ button:hover {
 }
 
 .menu:hover, .menu-items > div:hover, .tools i:hover {
-    background-color: var(--menu-blue);
+    border: 1px solid var(--accent);
+    background-color: black;
 }
 
 .menu:hover .menu-items {
@@ -217,15 +228,27 @@ button:hover {
     flex-direction: column;
     border: 1px solid #999;
     border-radius: 6px;
-    background: #666;
+    background: #333;
     padding: 4px;
-    top: 100%;
+    top: calc(100% + 3px);
     left: 0;
     gap: 6px;
 }
 
+/* invisible bridge between menu label and pop menu */
+.menu-items::before {
+    content: "";
+    position: absolute;
+    top: -20px;
+    left: -10px;
+    right: -10px;
+    height: calc(100% + 20px);
+    background: transparent;
+}
+
 .menu-items > div {
     gap: 15px;
+    border: 1px solid transparent;
     border-radius: 6px;
     padding: 4px 8px 4px 8px;
 }
@@ -243,11 +266,11 @@ button:hover {
     position: absolute;
     text-transform: capitalize;
     padding: 2px 4px 2px 4px;
-    background-color: rgba(0,200,0,0.65);
+    background-color: rgba(90,159,212,0.65);
     border: 1px solid rgba(255,255,255,0.25);
     border-radius: 3px;
     transform: translateX(-50%);
-    top: calc(100% + 2px);
+    top: calc(100% + 5px);
     left: 50%;
 }
 
@@ -621,17 +644,21 @@ button:hover {
 .tools {
     align-items: flex-start;
     background-color: var(--menu-back);
+    padding-top: 2px;
 }
 
 .tools > div {
     color: #fff;
     display: grid;
     grid-template-columns: 1fr;
+    margin: 2px;
 }
 
 .tools i {
     padding: 9px;
-    border-bottom: 1px solid var(--border);
+    border: 1px solid transparent;
+    border-radius: 6px;
+    /* border-bottom: 1px solid var(--border); */
 }
 
 .tool > div {
