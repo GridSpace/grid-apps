@@ -10,6 +10,10 @@ const BUTTON = { LEFT: 0, MIDDLE: 1, RIGHT: 2 };
 const ACTION = { ROTATE: 0, DOLLY: 1, PAN: 2 };
 const EPS = 1e-6;
 const VOID_ROTATE_SPEED = 36.0;
+const VOID_ENABLE_ORBIT_STYLE_ROTATE_DAMP = true;
+const VOID_ROTATE_DAMP_MIN_SCALE = 0.2;
+const VOID_ROTATE_DAMP_PIXEL_THRESHOLD = 6;
+const VOID_ROTATE_DAMP_CURVE_EXP = 2.2;
 const VOID_PAN_SPEED_PERSPECTIVE = 1.0;
 const VOID_PAN_SPEED_ORTHO = 2.4;
 const VOID_ZOOM_SPEED_PERSPECTIVE_MULT = 1.35;
@@ -23,7 +27,8 @@ class Trackball {
         this.control = new TrackballControls(object, this.domElement);
         this.control.staticMoving = true;
         this.control.dynamicDampingFactor = 0;
-        this.control.rotateSpeed = VOID_ROTATE_SPEED;
+        this._baseRotateSpeed = VOID_ROTATE_SPEED;
+        this.control.rotateSpeed = this._baseRotateSpeed;
         this.control.zoomSpeed = 2.0;
         this.control.panSpeed = VOID_PAN_SPEED_PERSPECTIVE;
 
@@ -129,11 +134,40 @@ class Trackball {
         this._onPointerDown = (event) => {
             const b = event?.button;
             if (b === BUTTON.LEFT || b === BUTTON.MIDDLE || b === BUTTON.RIGHT) {
+                const isOrbitDrag = b === this.mouseButtons?.ORBIT;
+                this._rotateDampActive = VOID_ENABLE_ORBIT_STYLE_ROTATE_DAMP && isOrbitDrag;
+                if (this._rotateDampActive) {
+                    this._lastRotateX = event.pageX;
+                    this._lastRotateY = event.pageY;
+                } else {
+                    this.control.rotateSpeed = this._baseRotateSpeed;
+                }
                 this._startTick();
             }
         };
-        this._onPointerUp = () => this._stopTick();
-        this._onPointerCancel = () => this._stopTick();
+        this._onPointerMove = (event) => {
+            if (!this._rotateDampActive || !this.control.enabled) return;
+            const dx = (event.pageX || 0) - (this._lastRotateX || 0);
+            const dy = (event.pageY || 0) - (this._lastRotateY || 0);
+            this._lastRotateX = event.pageX;
+            this._lastRotateY = event.pageY;
+
+            const delta = Math.hypot(dx, dy);
+            const ratio = Math.min(1, delta / VOID_ROTATE_DAMP_PIXEL_THRESHOLD);
+            const curved = Math.pow(ratio, VOID_ROTATE_DAMP_CURVE_EXP);
+            const scale = VOID_ROTATE_DAMP_MIN_SCALE + ((1 - VOID_ROTATE_DAMP_MIN_SCALE) * curved);
+            this.control.rotateSpeed = this._baseRotateSpeed * scale;
+        };
+        this._onPointerUp = () => {
+            this._rotateDampActive = false;
+            this.control.rotateSpeed = this._baseRotateSpeed;
+            this._stopTick();
+        };
+        this._onPointerCancel = () => {
+            this._rotateDampActive = false;
+            this.control.rotateSpeed = this._baseRotateSpeed;
+            this._stopTick();
+        };
         this._onWheel = () => {
             if (!this.control.enabled) return;
             // Run after Trackball's wheel handler mutates zoom deltas.
@@ -148,6 +182,7 @@ class Trackball {
             this.domElement.addEventListener('wheel', this._onWheel, false);
         }
         if (this.domElement?.ownerDocument?.addEventListener) {
+            this.domElement.ownerDocument.addEventListener('pointermove', this._onPointerMove, true);
             this.domElement.ownerDocument.addEventListener('pointerup', this._onPointerUp, true);
             this.domElement.ownerDocument.addEventListener('pointercancel', this._onPointerCancel, true);
         }
@@ -367,6 +402,7 @@ class Trackball {
             this.domElement.removeEventListener('wheel', this._onWheel, false);
         }
         if (this.domElement?.ownerDocument?.removeEventListener) {
+            this.domElement.ownerDocument.removeEventListener('pointermove', this._onPointerMove, true);
             this.domElement.ownerDocument.removeEventListener('pointerup', this._onPointerUp, true);
             this.domElement.ownerDocument.removeEventListener('pointercancel', this._onPointerCancel, true);
         }
