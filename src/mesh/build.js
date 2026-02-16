@@ -399,8 +399,8 @@ function ui_build() {
                     id: "import", type: "file", class: ["hide"], multiple: true, accept:".stl,.obj",
                     onchange(evt) { broker.send.load_files(evt.target.files) }
                 }),
-                menu_item('New', file.new, 'N'),
-                menu_item('Open', file.open, 'O'),
+                menu_item('New', file.new),
+                menu_item('Open', file.open),
                 hr(),
                 menu_item('Import', file.import, 'I'),
                 menu_item('Export', file.export, 'X'),
