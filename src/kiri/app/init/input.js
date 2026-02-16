@@ -171,6 +171,7 @@ export function init_input() {
     event.on('resize', onResize);
 
     // configure moto.space
+    space.view.setFitPadding({ perspective: 0.8 });
     space.sky.showGrid(false);
     space.sky.setColor(controller.dark ? 0 : 0xffffff);
     space.setAntiAlias(controller.antiAlias);
