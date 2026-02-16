@@ -859,6 +859,11 @@ details[open] summary::after {
     z-index: 1000;
 }
 
+.dark #curtain {
+    color: white;
+    background-color: black;
+}
+
 #tracker {
     top: 0;
     left: 0;

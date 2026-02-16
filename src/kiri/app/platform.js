@@ -172,14 +172,14 @@ function update_size(updateDark = true) {
            space.platform.setGrid(gridMajor, gridMinor, scheme.grid.major, scheme.grid.minor);
            space.platform.opacity(0.05);
            space.sky.set({ color: 0, ambient: { intensity: 0.6 } });
-           document.body.classList.add('dark');
+           document.documentElement.classList.add('dark');
        } else {
            space.platform.set({ light: 0.08 });
            space.platform.setFont({rulerColor:'#333333'});
            space.platform.setGrid(gridMajor, gridMinor, scheme.grid.major, scheme.grid.minor);
            space.platform.opacity(0.2);
            space.sky.set({ color: 0xffffff, ambient: { intensity: 1.1 } });
-           document.body.classList.remove('dark');
+           document.documentElement.classList.remove('dark');
        }
        space.platform.setSize();
     }
