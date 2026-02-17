@@ -1435,7 +1435,7 @@ const mode = {
             $(`mode-${key}`).classList.remove('selected');
         }
         $(`mode-${mode}`).classList.add('selected');
-        $('mode-label').innerText = mode;
+        $('top-mode-label').innerText = mode;
         api.mode.check();
         meshEdges?.end();
         if (mode === 'sketch') {

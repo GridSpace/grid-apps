@@ -198,7 +198,7 @@ button:hover {
     height: 1px;
 }
 
-.menu, #top-right > div {
+.menu, #top-doc-name, #top-mode-label {
     cursor: default;
     align-self: stretch;
     align-items: center;
@@ -215,7 +215,7 @@ button:hover {
 
 .menu:hover, .menu-items > div:hover, .tools i:hover {
     border: 1px solid var(--accent);
-    background-color: black;
+    background-color: rgba(0,0,0,0.5);
 }
 
 .menu:hover .menu-items {
@@ -261,30 +261,6 @@ button:hover {
     display: flex;
 }
 
-#mode-label {
-    display: none;
-    position: absolute;
-    text-transform: capitalize;
-    padding: 2px 4px 2px 4px;
-    background-color: rgba(90,159,212,0.65);
-    border: 1px solid rgba(255,255,255,0.25);
-    border-radius: 3px;
-    transform: translateX(-50%);
-    top: calc(100% + 5px);
-    left: 50%;
-}
-
-#mode-label:before {
-    content: '';
-    position: absolute;
-    top: -10px; /* Adjust to position the caret above the menu */
-    left: 50%;
-    transform: translateX(-50%);
-    border-width: 5px;
-    border-style: solid;
-    border-color: transparent transparent #ddd transparent;
-}
-
 #top-mid {
     flex-grow: 1;
 }
@@ -299,6 +275,13 @@ button:hover {
     gap: 8px;
 }
 
+#top-mode-label {
+    color: var(--accent);
+    white-space: nowrap;
+    justify-content: flex-end;
+    text-transform: capitalize;
+}
+
 #top-doc-name {
     cursor: pointer;
     max-width: 320px;
@@ -309,7 +292,8 @@ button:hover {
 }
 
 #top-doc-name:hover {
-    background-color: var(--menu-blue);
+    border-color: var(--menu-blue);
+    background-color: rgba(0,0,0,0.5);
 }
 
 /** specific modal dialogs */
@@ -438,12 +422,18 @@ button:hover {
 }
 
 #modal_frame {
-    border-radius: 4px !important;
-    background-color: #fff !important;
+    background-color: rgba(30,30,30,0.9);
+    border: 1px solid rgba(200,200,200,0.6);
+    border-radius: 4px;
+    color: white;
     flex-direction: column;
-    padding: 0 !important; /* override common below */
-    /* z-index: 51; */
     gap: 2px;
+    margin: 0 0 2px 0;
+    padding: 3px;
+}
+
+#modal_frame a {
+    color: var(--accent);
 }
 
 #modal_frame > div {
@@ -452,10 +442,10 @@ button:hover {
 }
 
 #modal_title {
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
-    border-bottom: 1px solid gray;
-    background-color: rgba(0,0,0,0.2);
+    color: white;
+    border-radius: 2px;
+    border-bottom: 1px solid rgba(0,0,0,0.2);
+    background-color: rgba(0,0,0,0.7);
     font-family: 'Russo One', monospace;
     font-size: smaller;
     justify-content: center;
@@ -464,7 +454,7 @@ button:hover {
 
 #modal_title_close {
     position: absolute;
-    color: #555;
+    color: #999;
     right: 3px;
     top: 2px;
 }
@@ -484,13 +474,12 @@ button:hover {
 }
 
 .welcome a {
-    color: #038;
     border-radius: 3px;
-    padding: 0 10px 0 10px;
+    padding: 2px 10px 2px 10px;
 }
 
 .welcome a:hover {
-    background-color: #ddd;
+    background-color: #111;
 }
 
 .welcome .choice {
@@ -502,18 +491,18 @@ button:hover {
 .settings {
     gap: 5px;
     display: grid;
-    background-color: #fff;
+    /* background-color: #fff; */
     grid: min-content 1fr / min-content 1fr;
     grid-template-columns: 1fr 1fr 1fr;
 }
 
 .settings > div {
     display: grid;
-    background-color: #f5f5f5;
+    background-color: rgba(0,0,0,0.1);
     grid: min-content 1fr / min-content 1fr;
     white-space: nowrap;
     align-items: center;
-    border: 1px solid #ddd;
+    border: 1px solid rgba(100,100,100,0.7);
     border-radius: 3px;
     padding: 3px;
 }
@@ -523,7 +512,7 @@ button:hover {
     text-align: center;
     margin-bottom: 5px;
     border-radius: 3px;
-    background-color: #ccc;
+    background-color: rgba(100,100,100,0.8);
     padding: 0;
 }
 
@@ -567,8 +556,8 @@ button:hover {
 
 /** common look & feel */
 
-#modal_frame, #actions > div, #grouplist > div {
-    border: 1px solid #999;
+#actions > div, #grouplist > div {
+    border: 1px solid #555;
     border-radius: 3px;
     margin: 0 0 2px 0;
     padding: 3px;
