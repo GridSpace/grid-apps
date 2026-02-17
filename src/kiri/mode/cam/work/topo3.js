@@ -51,18 +51,20 @@ export class Topo {
             stepsY = Math.ceil(boundsY / resolution),
             widtopo = widget.topo,
             topoCache = widtopo
-                && widtopo.resolution === resolution
+                && widtopo.tolerance === tolerance
                 && widtopo.diameter === toolDiameter
                 ? widtopo : undefined,
             topo = widget.topo = topoCache || {
+                axis,
                 data: new Float32Array(new SharedArrayBuffer(stepsX * stepsY * 4)),
-                stepsX: stepsX,
-                stepsY: stepsY,
-                bounds: bounds,
+                stepsX,
+                stepsY,
+                bounds,
                 diameter: toolDiameter,
-                resolution: resolution,
+                resolution,
+                tolerance,
                 profile: toolOffset,
-                widget: widget,
+                widget,
                 raster: true,
                 slices: null
             },
@@ -120,14 +122,15 @@ export class Topo {
             }
             let toolData = { positions: toolPos, bounds: toolBounds };
 
-            const vertices = widget.getGeoVertices({ unroll: true, translate: true });
-            const wbounds = widget.getBoundingBox();
+            let vertices = widget.getGeoVertices({ unroll: true, translate: true });
+            let wbounds = widget.getBoundingBox();
             if (!inside) {
                 wbounds.expandByVector({ x: toolDiameter/2 + resolution, y: toolDiameter/2 + resolution, z: 0 });
             }
 
             // swap XY vertices (unswap later after polylines generated)
             if (contourY) {
+                vertices = vertices.slice();
                 for (let i=0; i<vertices.length; i+= 3) {
                     let tmp = vertices[i+1];
                     vertices[i+1] = vertices[i+0];
@@ -796,7 +799,7 @@ export class Trace {
                     ok++;
                 }
             }
-            return ok === clips.length;
+            return ok > 0;
         }
 
     }

@@ -408,6 +408,8 @@ function ui_build() {
                 menu_item('Slicer', api.kirimoto),
                 menu_item('Script', api.script.toggle),
                 hr(),
+                menu_item('Preferences', api.settings, 'Q'),
+                hr(),
                 menu_item('Close', () => window.close() || api.kirimoto()),
             ])
         ]),
@@ -471,7 +473,6 @@ function ui_build() {
                 menu_item('Face', mode.face, '5', 'mode-face'),
                 menu_item('Edge', mode.edge, '6', 'mode-edge'),
             ]),
-            div({ id: "mode-label" })
         ]),
         div({ class: "menu sketch-on" }, [
             div('Items'),
@@ -538,11 +539,6 @@ function ui_build() {
                 menu_item('Even Odd', sketch.boolean.evenodd),
             ])
         ]),
-        div({ class: "menubar-separator" }),
-        div({ id: "top-settings", onclick: api.settings, class: "menu" }, [
-            // div({ class: "fas fa-gear" }),
-            div('Settings')
-        ]),
         div({ class: "menu" }, [
             // div({ class: "fas fa-question" }),
             div('Help'),
@@ -556,6 +552,8 @@ function ui_build() {
                 menu_item('Versions', api.version),
             ])
         ]),
+        div({ class: "menubar-separator" }),
+        div({ id: "top-mode-label" }),
     ]);
 
     // add help buttons
