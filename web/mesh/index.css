@@ -132,6 +132,10 @@ input {
     margin-bottom: -14px !important;
 }
 
+#modal button {
+    border-radius: 3px;
+}
+
 button {
     padding: 2px 3px 2px 3px;
     border: 1px solid rgba(150,150,150,0.5);
@@ -460,7 +464,7 @@ button:hover {
 }
 
 #modal_title_close:hover {
-    color: black;
+    color: #eee;
 }
 
 /** welcome dialog **/
