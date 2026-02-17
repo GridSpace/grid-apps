@@ -387,7 +387,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
     /**
      * when moving between contour endpoints, check if we can
      * instead route around the bounding area of the contour
-     * whih we call the coastline.
+     * which we call the coastline.
      */
     function coastlineMove(point) {
         let from = toWidgetCoords(printPoint);
@@ -395,6 +395,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         if (!coastline || from.distTo2D(to) < 0.01) {
             return false;
         }
+        let minz = Math.min(from.z, to.z);
         let start = { dist: 1, poly: 0, pt: from };
         let end = { dist: 1, poly: 1, pt: to };
         for (let poly of coastline) {
@@ -445,7 +446,9 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
             }
         }
         for (let i=sp, d=0; d < dist; i += dir, d++) {
-            layerPush(toWorkCoords(points[i % pl]), 1, 0, tool);
+            let cp = points[i % pl].clone();
+            cp.z = Math.max(minz, cp.z);
+            layerPush(toWorkCoords(cp), 1, 0, tool);
         }
         return true;
     }
