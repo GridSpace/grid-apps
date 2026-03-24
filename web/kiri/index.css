@@ -2155,6 +2155,7 @@ details[open] summary::after {
 }
 #layer-animate .speed-controls {
     flex-direction: column;
+    justify-content: space-between;
 }
 #layer-animate .speed-controls button {
     width: auto;
