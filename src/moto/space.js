@@ -1682,6 +1682,7 @@ let Space = {
         let animates = 0;
         let rateStart = Date.now();
         let lastRenderTime = 0;
+        let renderStart;
         let renders = [];
 
         const targetFrameRate = 1000 / 60;
@@ -1709,7 +1710,7 @@ let Space = {
             }
 
             if (docVisible && !freeze && Date.now() - lastAction < 1500) {
-                const renderStart = Date.now();
+                renderStart = Date.now();
                 renderer.render(SCENE, camera);
                 // track frame render times
                 renders.push(Date.now() - renderStart);
