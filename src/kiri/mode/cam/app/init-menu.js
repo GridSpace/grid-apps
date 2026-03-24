@@ -99,6 +99,10 @@ export function menu() {
             anim.step     = newButton(null,"anim.step",{icon:'<i class="fas fa-step-forward"></i>',title:"single step"}),
             anim.speed    = newButton(null,"anim.fast",{icon:'<i class="fas fa-forward"></i>',title:"toggle speed"}),
             anim.labspd   = newValue(3, {class:"center padleft"}),
+            newRow([
+                anim.speedup = newButton(null,'anim.speedup',{icon:'<i class="fa-solid fa-arrow-up"></i>',title:"increase speed"}),
+                anim.speeddn = newButton(null,'anim.speeddn',{icon:'<i class="fa-solid fa-arrow-down"></i>',title:"decrease speed"})
+            ], {class: 'speed-controls padleft'}),
             anim.labx     = newLabel("X", {class:"padleft"}),
             anim.valx     = newValue(7, {class:"center"}),
             anim.laby     = newLabel("Y", {class:"padleft"}),

@@ -53,7 +53,9 @@ export function animate(api, delay) {
             speed: anim.speed,
             trans: anim.trans,
             model: anim.model,
-            shade: anim.shade
+            shade: anim.shade,
+            speedup: anim.speedup,
+            speeddn: anim.speeddn,
         });
         Object.assign(label, {
             progress: anim.progress,
@@ -76,6 +78,8 @@ export function animate(api, delay) {
         button.trans.onclick = toggleTrans;
         button.model.onclick = toggleModel;
         button.shade.onclick = toggleStock;
+        button.speedup.onclick = increaseSpeed;
+        button.speeddn.onclick = decreaseSpeed;
         button.play.style.display = '';
         button.pause.style.display = 'none';
 
@@ -175,6 +179,14 @@ function toggleStock(ev,bool,set) {
     return api.event.emit('cam.stock.toggle', bool ?? undefined);
 }
 
+function increaseSpeed() {
+    updateSpeed(1);
+}
+
+function decreaseSpeed() {
+    updateSpeed(-1);
+}
+
 function toggleTrans(ev,bool) {
     bool = api.local.toggle('cam.anim.trans', bool);
     material.transparent = bool;
@@ -228,8 +240,8 @@ function handleGridUpdate(data) {
 function updateSpeed(inc = 0) {
     if (inc === Infinity) {
         speedIndex = speedMax;
-    } else if (inc > 0) {
-        speedIndex = (speedIndex + inc) % speedValues.length;
+    } else if (inc !== 0) {
+        speedIndex = Math.min(Math.max(speedIndex + inc, 0), speedValues.length - 1);
     }
     api.local.set('cam.anim.speed', speedIndex);
     speed = speedValues[speedIndex];
