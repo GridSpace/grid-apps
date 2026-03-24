@@ -1681,12 +1681,22 @@ let Space = {
 
         let animates = 0;
         let rateStart = Date.now();
-        let renderStart;
+        let lastRenderTime = 0;
         let renders = [];
 
+        const targetFrameRate = 1000 / 60;
+
         function animate() {
-            animates++;
+            requestAnimationFrame(animate);
+
             const now = Date.now();
+
+            const elapsed = now - lastRenderTime;
+            if (elapsed < targetFrameRate) return;
+            
+            lastRenderTime = now - (elapsed % targetFrameRate);
+            animates++;
+
             if (now - rateStart > 1000) {
                 // compute stats roughly every second
                 const delta = now - rateStart;
@@ -1697,9 +1707,9 @@ let Space = {
                 renderTime = Math.max(0, ...renders);
                 renders.length = 0;
             }
-            requestAnimationFrame(animate);
+
             if (docVisible && !freeze && Date.now() - lastAction < 1500) {
-                renderStart = Date.now();
+                const renderStart = Date.now();
                 renderer.render(SCENE, camera);
                 // track frame render times
                 renders.push(Date.now() - renderStart);
