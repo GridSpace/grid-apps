@@ -1327,9 +1327,6 @@ function onTouchStart(event) {
     touchIdentifier = touch.identifier;
     touchStartTime = Date.now();
 
-    // DON'T stopPropagation - let orbit/trackball also see this
-    // We'll process our logic alongside it
-
     const syntheticEvent = {
         clientX: touch.clientX,
         clientY: touch.clientY,
@@ -1339,7 +1336,15 @@ function onTouchStart(event) {
         stopPropagation: () => {}
     };
 
+    // Call onMouseDown to check for drag setup
     onMouseDown(syntheticEvent);
+
+    // If drag was initiated (mouseDragPoint set), block orbit/trackball
+    // Otherwise let orbit/trackball handle rotation
+    if (mouseDragPoint) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
 }
 
 function onTouchMove(event) {
@@ -1366,6 +1371,7 @@ function onTouchMove(event) {
 
     // If we're dragging an object, block orbit/trackball and handle the move
     if (mouseDragPoint) {
+        event.preventDefault();
         event.stopPropagation();
 
         const syntheticEvent = {
