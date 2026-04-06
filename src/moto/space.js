@@ -1301,52 +1301,73 @@ function isVoidUiEventTarget(target) {
 
 function onTouchStart(event) {
     updateLastAction();
-    // Only handle single-touch for selection/drag; multi-touch goes to control
-    if (event.touches.length === 1) {
+    // Only intercept single-touch on canvas when there's a selection
+    // Otherwise let orbit/trackball handle for camera rotation
+    if (event.touches.length === 1 && event.target === renderer?.domElement) {
         const touch = event.touches[0];
         const syntheticEvent = {
             clientX: touch.clientX,
             clientY: touch.clientY,
             target: event.target,
-            button: 0, // Simulate left mouse button
+            button: 0,
             preventDefault: () => event.preventDefault(),
             stopPropagation: () => event.stopPropagation()
         };
+
+        // Try to initiate selection/drag
         onMouseDown(syntheticEvent);
+
+        // If we successfully started a drag, prevent orbit/trackball from handling
+        if (mouseDragPoint) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        // Otherwise let orbit/trackball handle it for camera rotation
     }
 }
 
 function onTouchMove(event) {
     updateLastAction();
-    // Only handle single-touch for selection/drag; multi-touch goes to control
-    if (event.touches.length === 1) {
+    // Only handle touch move if we're actively dragging
+    if (event.touches.length === 1 && mouseDragPoint) {
         const touch = event.touches[0];
         const syntheticEvent = {
             clientX: touch.clientX,
             clientY: touch.clientY,
             target: event.target,
-            buttons: 1, // Left button pressed
+            buttons: 1,
             preventDefault: () => event.preventDefault(),
             stopPropagation: () => event.stopPropagation()
         };
+
         onMouseMove(syntheticEvent);
+        event.preventDefault();
+        event.stopPropagation();
     }
 }
 
 function onTouchEnd(event) {
     updateLastAction();
-    // Use changedTouches for touchend (touches is empty at this point)
+    // Handle touchend for selection/drag completion
     if (event.changedTouches.length === 1) {
         const touch = event.changedTouches[0];
         const syntheticEvent = {
             clientX: touch.clientX,
             clientY: touch.clientY,
             target: event.target,
-            button: 0, // Simulate left mouse button
+            button: 0,
             preventDefault: () => event.preventDefault(),
             stopPropagation: () => event.stopPropagation()
         };
+
+        // Call mouse up handler for selection or drag end
         onMouseUp(syntheticEvent);
+
+        // If we were dragging, prevent orbit/trackball from handling
+        if (mouseDragPoint || mouseDragStart) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
     }
 }
 
