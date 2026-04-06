@@ -1316,14 +1316,30 @@ function onTouchStart(event) {
         return;
     }
 
+    // If no selection handlers exist, don't interfere with orbit/trackball
+    if (!mouseDownSelect && !mouseUpSelect && !platformClick) {
+        return;
+    }
+
     const touch = event.touches[0];
     touchStartPos = { x: touch.clientX, y: touch.clientY };
     touchMoved = false;
     touchIdentifier = touch.identifier;
     touchStartTime = Date.now();
 
-    // Don't call onMouseDown or preventDefault - let orbit/trackball handle touchstart
-    // We'll intercept later if needed for selection or drag
+    // DON'T stopPropagation - let orbit/trackball also see this
+    // We'll process our logic alongside it
+
+    const syntheticEvent = {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+        target: event.target,
+        button: 0,
+        preventDefault: () => {},
+        stopPropagation: () => {}
+    };
+
+    onMouseDown(syntheticEvent);
 }
 
 function onTouchMove(event) {
@@ -1348,9 +1364,8 @@ function onTouchMove(event) {
         touchMoved = true;
     }
 
-    // If we're dragging an object (mouseDragPoint is set), take over from orbit/trackball
+    // If we're dragging an object, block orbit/trackball and handle the move
     if (mouseDragPoint) {
-        event.preventDefault();
         event.stopPropagation();
 
         const syntheticEvent = {
@@ -1364,7 +1379,7 @@ function onTouchMove(event) {
 
         onMouseMove(syntheticEvent);
     }
-    // Otherwise let orbit/trackball handle camera rotation
+    // Otherwise DON'T stopPropagation - let orbit/trackball handle rotation
 }
 
 function onTouchEnd(event) {
@@ -1389,55 +1404,26 @@ function onTouchEnd(event) {
     const distance = Math.sqrt(dx * dx + dy * dy);
     const duration = Date.now() - touchStartTime;
 
-    // A tap is: < 10px movement AND < 300ms duration
-    const isTap = distance < 10 && duration < 300;
+    // A tap is: < 10px movement AND < 500ms duration
+    const isTap = distance < 10 && duration < 500;
 
-    // If we were dragging an object, complete the drag
-    if (mouseDragPoint || mouseDragStart) {
-        event.preventDefault();
+    // Use exact start coordinates for taps to ensure selection works
+    const syntheticEvent = {
+        clientX: isTap ? touchStartPos.x : touch.clientX,
+        clientY: isTap ? touchStartPos.y : touch.clientY,
+        target: event.target,
+        button: 0,
+        preventDefault: () => {},
+        stopPropagation: () => {}
+    };
+
+    // For taps, block orbit/trackball to prevent interference with selection
+    // For drags, also block if we were dragging an object
+    if (isTap || mouseDragPoint || mouseDragStart) {
         event.stopPropagation();
-
-        const syntheticEvent = {
-            clientX: touch.clientX,
-            clientY: touch.clientY,
-            target: event.target,
-            button: 0,
-            preventDefault: () => {},
-            stopPropagation: () => {}
-        };
-
-        onMouseUp(syntheticEvent);
     }
-    // For taps with selection handlers, process after a tiny delay
-    // This lets orbit/trackball complete its event cycle first
-    else if (isTap && (mouseUpSelect || platformClick)) {
-        event.preventDefault();
-        event.stopPropagation();
 
-        const tapX = touchStartPos.x;
-        const tapY = touchStartPos.y;
-        const tapTarget = event.target;
-
-        // Wait 10ms for orbit/trackball to finish, then handle selection
-        setTimeout(() => {
-            // Synthesize mouse down and up at tap location
-            const syntheticEvent = {
-                clientX: tapX,
-                clientY: tapY,
-                target: tapTarget,
-                button: 0,
-                preventDefault: () => {},
-                stopPropagation: () => {}
-            };
-
-            onMouseDown(syntheticEvent);
-            onMouseUp(syntheticEvent);
-        }, 10);
-    }
-    // For rotation end, let orbit/trackball handle cleanup
-    else {
-        // Don't interfere with orbit/trackball
-    }
+    onMouseUp(syntheticEvent);
 
     touchStartPos = null;
     touchMoved = false;
