@@ -1302,6 +1302,7 @@ function isVoidUiEventTarget(target) {
 let touchStartPos = null;
 let touchMoved = false;
 let touchIdentifier = null;
+let touchWasTap = false;
 
 function onTouchStart(event) {
     updateLastAction();
@@ -1389,32 +1390,29 @@ function onTouchEnd(event) {
         return;
     }
 
+    // For taps, use the original touch start position to ensure exact coordinate match
+    // This makes the selection logic in onMouseUp work (it checks for zero movement)
+    const useStartPos = !touchMoved && touchStartPos;
     const syntheticEvent = {
-        clientX: touch.clientX,
-        clientY: touch.clientY,
+        clientX: useStartPos ? touchStartPos.x : touch.clientX,
+        clientY: useStartPos ? touchStartPos.y : touch.clientY,
         target: event.target,
         button: 0,
         preventDefault: () => {},
         stopPropagation: () => {}
     };
 
-    // If this was a tap (minimal movement) and we have selection handlers, handle it
-    // This enables tap-to-select
-    if (!touchMoved && (mouseUpSelect || platformClick)) {
+    // If we were dragging an object, take control and complete the drag
+    if (mouseDragPoint || mouseDragStart) {
         event.preventDefault();
         event.stopPropagation();
         onMouseUp(syntheticEvent);
     }
-    // If we were dragging, complete the drag
-    else if (mouseDragPoint || mouseDragStart) {
-        event.preventDefault();
-        event.stopPropagation();
-        onMouseUp(syntheticEvent);
-    }
-    // Otherwise let orbit/trackball handle it (end of rotation)
+    // For taps or rotation end, always call onMouseUp but let orbit/trackball also process
+    // This allows both selection logic AND orbit/trackball state cleanup to run
     else {
-        // Still call onMouseUp but let orbit/trackball also process
         onMouseUp(syntheticEvent);
+        // DON'T preventDefault - let orbit/trackball see touchend so it can reset its state
     }
 
     touchStartPos = null;
