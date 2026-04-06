@@ -1339,12 +1339,12 @@ function onTouchStart(event) {
     // Call onMouseDown to check for drag setup
     onMouseDown(syntheticEvent);
 
-    // If drag was initiated (mouseDragPoint set), block orbit/trackball
-    // Otherwise let orbit/trackball handle rotation
+    // Only block orbit/trackball if we're starting an object drag
     if (mouseDragPoint) {
         event.preventDefault();
         event.stopPropagation();
     }
+    // Otherwise let orbit/trackball see it (for rotation or tap handling)
 }
 
 function onTouchMove(event) {
@@ -1423,9 +1423,21 @@ function onTouchEnd(event) {
         stopPropagation: () => {}
     };
 
-    // For taps, block orbit/trackball to prevent interference with selection
-    // For drags, also block if we were dragging an object
-    if (isTap || mouseDragPoint || mouseDragStart) {
+    // For taps, block orbit/trackball and reset its state
+    if (isTap) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        // Reset orbit/trackball state since we interrupted its event cycle
+        if (viewControl?.resetInputState) {
+            viewControl.resetInputState();
+        } else if (viewControl?.state !== undefined) {
+            viewControl.state = -1; // STATE.NONE for Orbit
+        }
+    }
+    // For drags, block if we were dragging an object
+    else if (mouseDragPoint || mouseDragStart) {
+        event.preventDefault();
         event.stopPropagation();
     }
 
