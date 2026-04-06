@@ -1390,12 +1390,17 @@ function onTouchEnd(event) {
         return;
     }
 
+    // Increase threshold - anything under 10px is considered a tap
+    const dx = touch.clientX - touchStartPos.x;
+    const dy = touch.clientY - touchStartPos.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const isTap = distance < 10;
+
     // For taps, use the original touch start position to ensure exact coordinate match
     // This makes the selection logic in onMouseUp work (it checks for zero movement)
-    const useStartPos = !touchMoved && touchStartPos;
     const syntheticEvent = {
-        clientX: useStartPos ? touchStartPos.x : touch.clientX,
-        clientY: useStartPos ? touchStartPos.y : touch.clientY,
+        clientX: isTap ? touchStartPos.x : touch.clientX,
+        clientY: isTap ? touchStartPos.y : touch.clientY,
         target: event.target,
         button: 0,
         preventDefault: () => {},
@@ -1408,8 +1413,13 @@ function onTouchEnd(event) {
         event.stopPropagation();
         onMouseUp(syntheticEvent);
     }
-    // For taps or rotation end, always call onMouseUp but let orbit/trackball also process
-    // This allows both selection logic AND orbit/trackball state cleanup to run
+    // For taps, handle selection and prevent orbit/trackball from interfering
+    else if (isTap && (mouseUpSelect || platformClick)) {
+        event.preventDefault();
+        event.stopPropagation();
+        onMouseUp(syntheticEvent);
+    }
+    // For rotation end (moved but not dragging), let orbit/trackball handle cleanup
     else {
         onMouseUp(syntheticEvent);
         // DON'T preventDefault - let orbit/trackball see touchend so it can reset its state
