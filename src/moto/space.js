@@ -1296,6 +1296,61 @@ function isVoidUiEventTarget(target) {
 }
 
 /** ******************************************************************
+ * Touch Event Handlers (for touchpad/touch screen)
+ ******************************************************************* */
+
+function onTouchStart(event) {
+    updateLastAction();
+    // Only handle single-touch for selection/drag; multi-touch goes to control
+    if (event.touches.length === 1) {
+        const touch = event.touches[0];
+        const syntheticEvent = {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+            target: event.target,
+            button: 0, // Simulate left mouse button
+            preventDefault: () => event.preventDefault(),
+            stopPropagation: () => event.stopPropagation()
+        };
+        onMouseDown(syntheticEvent);
+    }
+}
+
+function onTouchMove(event) {
+    updateLastAction();
+    // Only handle single-touch for selection/drag; multi-touch goes to control
+    if (event.touches.length === 1) {
+        const touch = event.touches[0];
+        const syntheticEvent = {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+            target: event.target,
+            buttons: 1, // Left button pressed
+            preventDefault: () => event.preventDefault(),
+            stopPropagation: () => event.stopPropagation()
+        };
+        onMouseMove(syntheticEvent);
+    }
+}
+
+function onTouchEnd(event) {
+    updateLastAction();
+    // Use changedTouches for touchend (touches is empty at this point)
+    if (event.changedTouches.length === 1) {
+        const touch = event.changedTouches[0];
+        const syntheticEvent = {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+            target: event.target,
+            button: 0, // Simulate left mouse button
+            preventDefault: () => event.preventDefault(),
+            stopPropagation: () => event.stopPropagation()
+        };
+        onMouseUp(syntheticEvent);
+    }
+}
+
+/** ******************************************************************
  * Space Object
  ******************************************************************* */
 
@@ -2128,9 +2183,9 @@ let Space = {
             'mousedown', onMouseDown,
             'mouseup', onMouseUp,
             'keypress', keyHandler,
-            'touchstart', updateLastAction,
-            'touchmove', updateLastAction,
-            'touchend', updateLastAction
+            'touchstart', onTouchStart,
+            'touchmove', onTouchMove,
+            'touchend', onTouchEnd
         ]);
 
         let animates = 0;
