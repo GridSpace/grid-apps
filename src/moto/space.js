@@ -1299,76 +1299,92 @@ function isVoidUiEventTarget(target) {
  * Touch Event Handlers (for touchpad/touch screen)
  ******************************************************************* */
 
+let touchHandling = false;
+
 function onTouchStart(event) {
     updateLastAction();
-    // Only intercept single-touch on canvas when there's a selection
-    // Otherwise let orbit/trackball handle for camera rotation
-    if (event.touches.length === 1 && event.target === renderer?.domElement) {
-        const touch = event.touches[0];
+
+    // Only handle single-touch on the renderer canvas
+    if (event.touches.length !== 1 || event.target !== renderer?.domElement) {
+        touchHandling = false;
+        return; // Let orbit/trackball handle multi-touch or other targets
+    }
+
+    const touch = event.touches[0];
+
+    // Check if there's anything to select/interact with
+    const hasSelectHandler = mouseDownSelect || mouseUpSelect || platformClick;
+
+    if (hasSelectHandler) {
+        // Prevent orbit/trackball from handling this touch
+        event.preventDefault();
+        event.stopPropagation();
+        touchHandling = true;
+
         const syntheticEvent = {
             clientX: touch.clientX,
             clientY: touch.clientY,
             target: event.target,
             button: 0,
-            preventDefault: () => event.preventDefault(),
-            stopPropagation: () => event.stopPropagation()
+            preventDefault: () => {},
+            stopPropagation: () => {}
         };
 
-        // Try to initiate selection/drag
         onMouseDown(syntheticEvent);
-
-        // If we successfully started a drag, prevent orbit/trackball from handling
-        if (mouseDragPoint) {
-            event.preventDefault();
-            event.stopPropagation();
-        }
-        // Otherwise let orbit/trackball handle it for camera rotation
+    } else {
+        touchHandling = false;
+        // Let orbit/trackball handle it
     }
 }
 
 function onTouchMove(event) {
     updateLastAction();
-    // Only handle touch move if we're actively dragging
-    if (event.touches.length === 1 && mouseDragPoint) {
-        const touch = event.touches[0];
-        const syntheticEvent = {
-            clientX: touch.clientX,
-            clientY: touch.clientY,
-            target: event.target,
-            buttons: 1,
-            preventDefault: () => event.preventDefault(),
-            stopPropagation: () => event.stopPropagation()
-        };
 
-        onMouseMove(syntheticEvent);
-        event.preventDefault();
-        event.stopPropagation();
+    // Only handle if we took control in touchstart, or if actively dragging
+    if (touchHandling || mouseDragPoint) {
+        if (event.touches.length === 1) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const touch = event.touches[0];
+            const syntheticEvent = {
+                clientX: touch.clientX,
+                clientY: touch.clientY,
+                target: event.target,
+                buttons: mouseDragPoint ? 1 : 0,
+                preventDefault: () => {},
+                stopPropagation: () => {}
+            };
+
+            onMouseMove(syntheticEvent);
+        }
     }
 }
 
 function onTouchEnd(event) {
     updateLastAction();
-    // Handle touchend for selection/drag completion
-    if (event.changedTouches.length === 1) {
-        const touch = event.changedTouches[0];
-        const syntheticEvent = {
-            clientX: touch.clientX,
-            clientY: touch.clientY,
-            target: event.target,
-            button: 0,
-            preventDefault: () => event.preventDefault(),
-            stopPropagation: () => event.stopPropagation()
-        };
 
-        // Call mouse up handler for selection or drag end
-        onMouseUp(syntheticEvent);
+    // Handle touchend if we took control
+    if (touchHandling || mouseDragPoint || mouseDragStart) {
+        event.preventDefault();
+        event.stopPropagation();
 
-        // If we were dragging, prevent orbit/trackball from handling
-        if (mouseDragPoint || mouseDragStart) {
-            event.preventDefault();
-            event.stopPropagation();
+        if (event.changedTouches.length === 1) {
+            const touch = event.changedTouches[0];
+            const syntheticEvent = {
+                clientX: touch.clientX,
+                clientY: touch.clientY,
+                target: event.target,
+                button: 0,
+                preventDefault: () => {},
+                stopPropagation: () => {}
+            };
+
+            onMouseUp(syntheticEvent);
         }
     }
+
+    touchHandling = false;
 }
 
 /** ******************************************************************
@@ -2203,11 +2219,15 @@ let Space = {
             'mousemove', onMouseMove,
             'mousedown', onMouseDown,
             'mouseup', onMouseUp,
-            'keypress', keyHandler,
-            'touchstart', onTouchStart,
-            'touchmove', onTouchMove,
-            'touchend', onTouchEnd
+            'keypress', keyHandler
         ]);
+
+        // Register touch handlers in capture phase to check for selection before orbit/trackball
+        if (container) {
+            container.addEventListener('touchstart', onTouchStart, { capture: true, passive: false });
+            container.addEventListener('touchmove', onTouchMove, { capture: true, passive: false });
+            container.addEventListener('touchend', onTouchEnd, { capture: true, passive: false });
+        }
 
         let animates = 0;
         let rateStart = Date.now();
