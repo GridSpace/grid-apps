@@ -57,7 +57,7 @@ async function generateDevices(dir = '') {
         }
     }
     let dstr = JSON.stringify(devs);
-    fs.mkdir(path.join(dir, "src", "pack"), { recursive: true });
+    await fs.mkdir(path.join(dir, "src", "pack"), { recursive: true });
     await fs.writeFile(path.join(dir, "src", "pack", "kiri-devs.js"), `export const devices = ${dstr};`);
     if (true) {
         // create alt artifacts
@@ -77,6 +77,7 @@ const rec = {
     define: { 'process.env.NODE_ENV': `"${mode}"` },
     external: [
         'module',
+        'node:module',
         './constants',
         './voronoi_structures',
         './voronoi_ctypes',
