@@ -1,6 +1,12 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-/** updated to use esbuild bundle output instead of eval-based gapp loader */
+/**
+ * updated to use esbuild bundle output instead of eval-based gapp loader.
+ * runs single-threaded with an in-process Worker message bridge.
+ *
+ * supported: FDM, LASER, SLA modes (single-threaded slicing)
+ * limited:   CAM mode (requires worker pool for parallel ops - not yet wired)
+ */
 
 import fs from 'fs';
 import path from 'path';
@@ -137,11 +143,24 @@ globalThis.fetch = function(url) {
     }
 };
 
-// suppress async errors from optional wasm modules (manifold-3d)
+// intercept fs.readFileSync to redirect wasm lookups to src/wasm/
+let _readFileSync = fs.readFileSync;
+fs.readFileSync = function(filepath, ...args) {
+    if (typeof filepath === 'string' && filepath.endsWith('.wasm') && !fs.existsSync(filepath)) {
+        let wasmName = path.basename(filepath);
+        let wasmPath = path.join(root, 'src/wasm', wasmName);
+        if (_readFileSync.call(fs, wasmPath, ...args)) {
+            filepath = wasmPath;
+        }
+    }
+    return _readFileSync.call(fs, filepath, ...args);
+};
+
+// suppress async errors from optional wasm modules
 process.on('unhandledRejection', () => {});
 process.on('uncaughtException', (err) => {
     if (err && err.message && err.message.includes('Aborted')) return;
-    process.stderr.write(err.stack || err.message || String(err));
+    process.stderr.write((err.stack || err.message || String(err)) + '\n');
     process.exit(1);
 });
 process.abort = noop;
@@ -236,6 +255,7 @@ async function run() {
             }
         })
         .then(() => { if (device.mode) engine.setMode(device.mode) })
+        .then(() => engine.setController({ threaded: false }))
         .then(() => engine.setDevice(device))
         .then(() => engine.setProcess(procset))
         .then(() => { if (device.mode === 'CAM') engine.setTools(tools) })
