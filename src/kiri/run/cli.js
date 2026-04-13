@@ -235,10 +235,10 @@ async function run() {
                 engine.rotate(x,y,z);
             }
         })
+        .then(() => { if (device.mode) engine.setMode(device.mode) })
         .then(() => engine.setDevice(device))
         .then(() => engine.setProcess(procset))
         .then(() => { if (device.mode === 'CAM') engine.setTools(tools) })
-        .then(() => { if (device.mode) engine.setMode(device.mode) })
         .then(eng => engine.slice())
         .then(eng => engine.prepare())
         .then(eng => engine.export())
