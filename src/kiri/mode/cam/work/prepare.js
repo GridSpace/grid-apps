@@ -88,7 +88,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         { camArcEnabled, camArcResolution, camArcTolerance } = process,
         { camDepthFirst, camEaseAngle, camEaseDown } = process,
         { camFastFeed, camFastFeedZ, camZTop } = process,
-        { camStockX, camStockY, camStockZ, camStockIndexed, camStockOffset } = process,
+        { camStockX, camStockY, camStockZ, camStockIndexed, camStockOffset, camStockRound } = process,
         { camForceZMax, camFullEngage, camInnerFirst, camOriginCenter } = process,
         { camOriginOffX, camOriginOffY, camOriginOffZ, camZClearance } = process,
         bounds = widget.getBoundingBox(),
@@ -101,6 +101,8 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
             y: camStockY,
             z: camStockZ
         },
+        // round bar: diameter = height (Z), force circular Y=Z cross-section
+        _round_norm = (camStockRound && camStockIndexed) ? (stock.y = stock.z) : 0,
         stockZ = stock.z * (camStockIndexed ? 0.5 : 1),
         stockZClear = stockZ + camZClearance,
         widgetTrackTop = widget.track.top,

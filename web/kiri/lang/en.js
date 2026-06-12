@@ -877,6 +877,8 @@ self.lang['en-us'] = {
     cs_ishg_l:      ["show platform grid in indexed mode"],
     cs_indx_s:      "indexed",
     cs_indx_l:      ["stock is mounted to a rotatary indexer"],
+    cs_rond_s:      "round",
+    cs_rond_l:      ["stock is a round bar (diameter = height)","clears round cross-section, reduces rotary air cutting"],
     cs_offe_s:      "enable",
     cs_offe_l:      "enable milling stock",
 

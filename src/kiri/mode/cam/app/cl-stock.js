@@ -103,7 +103,17 @@ export function updateStock() {
     if (x && y && z) {
         UI.func.animate.classList.remove('disabled');
         {
-            let geo = new THREE.BoxGeometry(1, 1, 1);
+            // round bar on a rotary: show a cylinder (axis along X) instead of a
+            // box. rotate the GEOMETRY (not the mesh) so the shared scale/position
+            // below still maps x->length, y/z->diameter with y==z normalized.
+            let round = process.camStockRound && env.isIndexed;
+            let geo;
+            if (round) {
+                geo = new THREE.CylinderGeometry(0.5, 0.5, 1, 64);
+                geo.rotateZ(Math.PI / 2);
+            } else {
+                geo = new THREE.BoxGeometry(1, 1, 1);
+            }
             let mat = new THREE.MeshBasicMaterial({
                 color: 0x777777,
                 opacity: 0.05,
@@ -112,25 +122,33 @@ export function updateStock() {
             });
             env.camStock = new THREE.Mesh(geo, mat);
             env.camStock.renderOrder = 2;
-            let lo = 0.5;
-            let lidat = [
-                lo, lo, lo, lo, lo, -lo,
-                lo, lo, lo, lo, -lo, lo,
-                lo, lo, lo, -lo, lo, lo,
-                -lo, -lo, -lo, -lo, -lo, lo,
-                -lo, -lo, -lo, -lo, lo, -lo,
-                -lo, -lo, -lo, lo, -lo, -lo,
-                lo, lo, -lo, -lo, lo, -lo,
-                lo, lo, -lo, lo, -lo, -lo,
-                lo, -lo, -lo, lo, -lo, lo,
-                lo, -lo, lo, -lo, -lo, lo,
-                -lo, -lo, lo, -lo, lo, lo,
-                -lo, lo, lo, -lo, lo, -lo
-            ];
-            let ligeo = new THREE.BufferGeometry();
-            ligeo.setAttribute('position', new THREE.BufferAttribute(lidat.toFloat32(), 3));
-            let limat = new THREE.LineBasicMaterial({ color: 0xaaaaaa });
-            let lines = new THREE.LineSegments(ligeo, limat);
+            let lines;
+            if (round) {
+                // 30deg threshold keeps just the two end circles, not every facet seam
+                let ligeo = new THREE.EdgesGeometry(geo, 30);
+                let limat = new THREE.LineBasicMaterial({ color: 0xaaaaaa });
+                lines = new THREE.LineSegments(ligeo, limat);
+            } else {
+                let lo = 0.5;
+                let lidat = [
+                    lo, lo, lo, lo, lo, -lo,
+                    lo, lo, lo, lo, -lo, lo,
+                    lo, lo, lo, -lo, lo, lo,
+                    -lo, -lo, -lo, -lo, -lo, lo,
+                    -lo, -lo, -lo, -lo, lo, -lo,
+                    -lo, -lo, -lo, lo, -lo, -lo,
+                    lo, lo, -lo, -lo, lo, -lo,
+                    lo, lo, -lo, lo, -lo, -lo,
+                    lo, -lo, -lo, lo, -lo, lo,
+                    lo, -lo, lo, -lo, -lo, lo,
+                    -lo, -lo, lo, -lo, lo, lo,
+                    -lo, lo, lo, -lo, lo, -lo
+                ];
+                let ligeo = new THREE.BufferGeometry();
+                ligeo.setAttribute('position', new THREE.BufferAttribute(lidat.toFloat32(), 3));
+                let limat = new THREE.LineBasicMaterial({ color: 0xaaaaaa });
+                lines = new THREE.LineSegments(ligeo, limat);
+            }
             env.camStock.lines = lines;
             env.camStock.add(lines);
             SPACE.world.add(env.camStock);

@@ -244,7 +244,7 @@ function update_top_z() {
 function platformUpdateStock() {
     const settings = current();
     const { bounds, process, mode } = settings;
-    const { camStockX, camStockY, camStockZ, camStockOffset, camStockIndexed } = process;
+    const { camStockX, camStockY, camStockZ, camStockOffset, camStockIndexed, camStockRound } = process;
     if (mode === 'CAM') {
         let stock = settings.stock = {
             x: camStockX,
@@ -256,6 +256,10 @@ function platformUpdateStock() {
             stock.x += bounds.max.x - bounds.min.x;
             stock.y += bounds.max.y - bounds.min.y;
             stock.z += bounds.max.z - bounds.min.z;
+        }
+        // round bar: diameter = height (Z), so force a circular Y=Z cross-section
+        if (camStockRound && camStockIndexed) {
+            stock.y = stock.z;
         }
         stock.center = {
             x: (bounds.max.x + bounds.min.x) / 2,

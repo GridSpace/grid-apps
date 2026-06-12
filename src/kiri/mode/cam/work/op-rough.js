@@ -27,6 +27,18 @@ class OpRough extends CamOp {
             shadowBase = [ newPolygon().centerRectangle(stock.center, stock.x, stock.y) ];
         }
 
+        // round bar on a rotary: flag the cylindrical cross-section so the clear
+        // loop clips each Z level to the chord 2*sqrt(r^2-(z-cz)^2) instead of
+        // air-cutting the full bounding-box width. axis = X (length), circle in
+        // YZ, invariant across index angles. The vertical center/radius (cz/r)
+        // are derived in op-area from the workarea stock extent so they share the
+        // exact Z-frame of the clear loop; here we only supply the X geometry.
+        let round = (state.settings.process.camStockRound && state.isIndexed) ? {
+            cx: stock.center.x,
+            cy: stock.center.y,
+            len: stock.x
+        } : undefined;
+
         let areas = POLY.flatten(POLY.expand(shadowBase, tool.fluteDiameter() / 2 - 0.001));
         let ops_list = this.ops_list = [ ];
 
@@ -49,6 +61,7 @@ class OpRough extends CamOp {
             ov_botz: op.ov_botz,
             ov_topz: op.ov_topz,
             rotated: true,
+            round,
             areas: { [widget.id]: areas.map(p => p.toArray()) },
             surfaces: {}
         }));
@@ -74,6 +87,7 @@ class OpRough extends CamOp {
                 ov_botz: op.ov_botz,
                 ov_topz: op.ov_topz,
                 rotated: true,
+                round,
                 areas: { [widget.id]: areas.map(p => p.toArray()) },
                 surfaces: {},
                 flats: Object.keys(slicer.zFlat).map(v => parseFloat(v)).sort((a,b) => b-a),

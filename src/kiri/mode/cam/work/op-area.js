@@ -168,6 +168,20 @@ class OpArea extends CamOp {
                 let zs = flats ?
                     flats.filter(z => z <= zTop && z >= zBottom).map(v => v + zMov) :
                     down ? base_util.lerp(zTop, zBottom, down) : [ bounds.min.z ];
+                // round bar: derive the cylinder center/radius from the stock
+                // extent the loop iterates (same Z-frame as `z`), then drop
+                // z-levels where the circular cross-section is narrower than the
+                // tool so the clear descent isn't aborted by an empty top sliver
+                let roundR, roundCz;
+                if (op.round) {
+                    roundR = (workarea.top_stock - workarea.bottom_stock) / 2;
+                    roundCz = (workarea.top_stock + workarea.bottom_stock) / 2;
+                    zs = zs.filter(z => {
+                        let d = z - roundCz;
+                        return 2 * Math.sqrt(Math.max(0, roundR * roundR - d * d)) >= toolDiam;
+                    });
+                }
+
                 let zroc = 0;
                 let zinc = 1 / zs.length;
                 let lzo;
@@ -191,11 +205,21 @@ class OpArea extends CamOp {
                     let outs = [];
                     let clip = [];
                     let firstOff = -(toolDiam / 2 + (op.leave_xy ?? 0));
+                    // round bar: clip the working area to the cylinder chord at
+                    // this height so only actual bar material is cleared
+                    let region = [ area ];
+                    if (op.round) {
+                        let { cx, cy, len } = op.round;
+                        let d = z - roundCz;
+                        let half = Math.sqrt(Math.max(0, roundR * roundR - d * d));
+                        let chord = newPolygon().centerRectangle({ x: cx, y: cy, z }, len, 2 * half);
+                        region = POLY.trimTo([ area ], [ chord ]) || [];
+                    }
                     // remove shadow from area
                     if (op.ignore) {
-                        clip = [ area ];
+                        clip = region;
                     } else {
-                        POLY.subtract([ area ], shadow, clip, undefined, undefined, 0);
+                        POLY.subtract(region, shadow, clip, undefined, undefined, 0);
                     }
                     //generate offsets to use
                     let offsets = [ firstOff ];

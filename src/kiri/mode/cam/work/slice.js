@@ -84,7 +84,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
 
     // allow recomputing later if widget or settings changes
     const var_compute = () => {
-        let { camStockX, camStockY, camStockZ, camStockOffset } = proc;
+        let { camStockX, camStockY, camStockZ, camStockOffset, camStockRound } = proc;
         ({ camZTop, camZBottom } = proc);
         bounds = widget.getBoundingBox();
         let pos = widget.track.pos;
@@ -99,7 +99,12 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
             z: camStockZ,
             center: newPoint(pos.x, pos.y, pos.z)
         };
-        if (!camStockOffset && axisIndex && isIndexed) {
+        // round bar: diameter = height (Z), circular Y=Z cross-section that is
+        // invariant under rotation about X, so the YZ-swap below is skipped
+        if (camStockRound && isIndexed) {
+            stock.y = stock.z;
+        }
+        if (!camStockOffset && axisIndex && isIndexed && !camStockRound) {
             if (axisIndex === 0 || axisIndex === 180) {
                 // do nothing
             } else if (axisIndex === 90 || axisIndex === 270) {

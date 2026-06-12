@@ -58,13 +58,14 @@ export function init(worker) {
 
         stockSlices = [];
         const { x, y, z } = stock;
+        const round = process.camStockRound && isIndexed;
         const sliceCount = parseInt(settings.controller.animesh || 2000) / 100;
         const sliceWidth = stock.x / sliceCount;
 
         if (controller.manifold)
         for (let i = 0; i < sliceCount; i++) {
             let xmin = -(x / 2) + (i * sliceWidth) + sliceWidth / 2;
-            let slice = new Stock(sliceWidth, y, z).translate(xmin, 0, 0);
+            let slice = new Stock(sliceWidth, y, z, round).translate(xmin, 0, 0);
             stockSlices.push(slice);
             slice.updateMesh([]);
             slice.send(send);
@@ -314,7 +315,7 @@ function toolUpdate(toolid, send) {
 }
 
 class Stock {
-    constructor(x, y, z) {
+    constructor(x, y, z, round) {
         this.id = nextMeshID++;
         this.vbuf = undefined;
         this.ibuf = undefined;
@@ -322,7 +323,12 @@ class Stock {
         this.sends = 0;
         this.newbuf = true;
         this.subtracts = 0;
-        this.mesh = CSG.Instance().Manifold.cube([x, y, z], true);
+        const M = CSG.Instance().Manifold;
+        // round bar: circular YZ cross-section (diameter = z) extruded along X.
+        // manifold cylinder axis is Z, so rotate 90deg about Y to lie along X.
+        this.mesh = round
+            ? M.cylinder(x, z / 2, z / 2, 64, true).rotate([0, 90, 0])
+            : M.cube([x, y, z], true);
     }
 
     send(send) {

@@ -139,6 +139,7 @@ export function menu() {
     camStockOffset:      newBoolean(LANG.cs_offs_s, onBooleanClick, {title:LANG.cs_offs_l}),
     camStockIndexed:     newBoolean(LANG.cs_indx_s, onBooleanClick, {title:LANG.cs_indx_l}),
     camStockIndexGrid:   newBoolean(LANG.cs_ishg_s, onBooleanClick, {title:LANG.cs_ishg_l, show:() => ui.camStockIndexed.checked}),
+    camStockRound:       newBoolean(LANG.cs_rond_s, onBooleanClick, {title:LANG.cs_rond_l, show:() => ui.camStockIndexed.checked}),
     // separator:           newBlank({ class:"set-sep", driven }),
     // camStockManual: newRow([
     //     (ui.stockPlace = newButton('position', onButtonClick, { })),

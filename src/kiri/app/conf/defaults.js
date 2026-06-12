@@ -598,6 +598,7 @@ export const conf = {
                 camStockIndexed: false,
                 camStockIndexGrid: true,
                 camStockOffset: true,
+                camStockRound: false,
                 camStockX: 5,
                 camStockY: 5,
                 camStockZ: 5,
