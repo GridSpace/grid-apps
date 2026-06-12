@@ -30,12 +30,13 @@ class OpRough extends CamOp {
         // round bar on a rotary: flag the cylindrical cross-section so the clear
         // loop clips each Z level to the chord 2*sqrt(r^2-(z-cz)^2) instead of
         // air-cutting the full bounding-box width. axis = X (length), circle in
-        // YZ, invariant across index angles. The vertical center/radius (cz/r)
-        // are derived in op-area from the workarea stock extent so they share the
-        // exact Z-frame of the clear loop; here we only supply the X geometry.
+        // YZ, invariant across index angles. radius = half the stock height
+        // (diameter), centered on the stock center (the rotary axis).
         let round = (state.settings.process.camStockRound && state.isIndexed) ? {
+            r: stock.z / 2,
             cx: stock.center.x,
             cy: stock.center.y,
+            cz: stock.center.z,
             len: stock.x
         } : undefined;
 

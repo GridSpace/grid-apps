@@ -178,7 +178,7 @@ self.lang['en-us'] = {
     dv_4tax_s:      "4th axis",
     dv_4tax_l:      ["rotary axis letter used in gcode output","A (default) or B"],
     dv_4tal_s:      "rotary along",
-    dv_4tal_l:      ["machine linear axis the rotary is mounted along","X (default) or Y, swaps X/Y output when Y"],
+    dv_4tal_l:      ["machine linear axis the rotary is mounted along","X (default) or Y. when Y, the editor shows X/Y","swapped and gcode output swaps X/Y to match"],
 
     dv_dwll_s:      "dwell",
     dv_dwll_l:      "gcode dwell script",

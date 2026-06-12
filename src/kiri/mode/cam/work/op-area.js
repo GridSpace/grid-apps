@@ -174,8 +174,10 @@ class OpArea extends CamOp {
                 // tool so the clear descent isn't aborted by an empty top sliver
                 let roundR, roundCz;
                 if (op.round) {
-                    roundR = (workarea.top_stock - workarea.bottom_stock) / 2;
-                    roundCz = (workarea.top_stock + workarea.bottom_stock) / 2;
+                    // cylinder radius and center (rotary axis) come straight from
+                    // the stock; cz is in the same Z-frame as the clear loop's `z`
+                    roundR = op.round.r;
+                    roundCz = op.round.cz;
                     zs = zs.filter(z => {
                         let d = z - roundCz;
                         return 2 * Math.sqrt(Math.max(0, roundR * roundR - d * d)) >= toolDiam;
