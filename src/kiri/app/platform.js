@@ -60,6 +60,34 @@ function get_mode() {
  *
  * @param {boolean} [update_bounds=true] - Whether to recalculate bounds first
  */
+// default editor axis line colors (see moto/space.js grid.colorX/colorY)
+const AXIS_COLOR_X = 0xff6666; // red
+const AXIS_COLOR_Y = 0x6666ff; // blue
+// track last applied axis-swap state to avoid rebuilding the grid every call
+let lastAxisSwap;
+
+// CAM with a Y-aligned rotary swaps the X/Y axis LETTERS in gcode output
+// (indexedAxisAlign, see export.js). To keep the editor consistent, present the
+// X/Y axes swapped on screen too (display only): swap the axis line colors,
+// ruler labels, and the device width/depth field labels. Nothing in the
+// slicing pipeline changes — the part still lies along internal X.
+function applyAxisSwap(swap) {
+    if (swap === lastAxisSwap) {
+        return;
+    }
+    lastAxisSwap = swap;
+    space.platform.setGridColor({
+        colorX: swap ? AXIS_COLOR_Y : AXIS_COLOR_X,
+        colorY: swap ? AXIS_COLOR_X : AXIS_COLOR_Y
+    });
+    const setLabel = (el, text) => {
+        const label = el && el.parentElement && el.parentElement.querySelector('label');
+        if (label) label.textContent = text;
+    };
+    setLabel(api.ui.bedWidth, swap ? 'Y (width)' : 'X (width)');
+    setLabel(api.ui.bedDepth, swap ? 'X (depth)' : 'Y (depth)');
+}
+
 function update_origin(update_bounds = true) {
     if (update_bounds) {
         platform.update_bounds();
@@ -129,7 +157,11 @@ function update_origin(update_bounds = true) {
         origin.x -= process.ctOriginOffX;
         origin.y += process.ctOriginOffY;
     }
-    space.platform.setRulers(ruler, ruler, 1 / api.view.unit_scale(), 'X', isBelt ? 'Z' : 'Y');
+    const axisSwap = MODE === CAM && device.useIndexed && device.indexedAxisAlign === 'Y';
+    applyAxisSwap(axisSwap);
+    space.platform.setRulers(ruler, ruler, 1 / api.view.unit_scale(),
+        axisSwap ? 'Y' : 'X',
+        isBelt ? 'Z' : (axisSwap ? 'X' : 'Y'));
 
     let { x, y, z } = origin;
     let oz = process.camStockIndexed ? z / 2 : z;

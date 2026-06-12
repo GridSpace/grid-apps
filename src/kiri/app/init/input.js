@@ -102,6 +102,11 @@ export function onBooleanClick(el) {
         api.view.set_arrange();
     }
     api.conf.update();
+    // toggling the 4th axis can change whether the editor shows X/Y swapped
+    // (Y-aligned rotary), so refresh the platform axes/labels
+    if (el === ui.useIndexed) {
+        api.platform.update_origin();
+    }
     DOC.activeElement.blur();
     api.event.emit("boolean.click");
     api.devices.update_laser_state();
@@ -268,7 +273,7 @@ export function init_input() {
         useLaser:         newBoolean(LANG.dv_lazr_s, onBooleanClick, {title:LANG.dv_lazr_l, modes:CAM}),
         useIndexed:       newBoolean(LANG.dv_4tha_s, onBooleanClick, {title:LANG.dv_4tha_l, modes:CAM}),
         indexedAxis:      newSelect(LANG.dv_4tax_s, {title:LANG.dv_4tax_l, modes:CAM, show:() => ui.useIndexed.checked}, "indexedaxis"),
-        indexedAxisAlign: newSelect(LANG.dv_4tal_s, {title:LANG.dv_4tal_l, modes:CAM, show:() => ui.useIndexed.checked}, "indexedalign"),
+        indexedAxisAlign: newSelect(LANG.dv_4tal_s, {title:LANG.dv_4tal_l, modes:CAM, show:() => ui.useIndexed.checked, post:() => api.platform.update_origin()}, "indexedalign"),
         gcodeFExt:        newInput(LANG.dv_fext_s, {title:LANG.dv_fext_l, modes:CAM_LZR, size:7, text:true}),
         gcodeEd:          newGroup(LANG.dv_gr_gco, $('dg'), {group:"dgcp", inline, modes:GCODE}),
         gcodeMacros:      newRow([

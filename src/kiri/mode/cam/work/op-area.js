@@ -174,8 +174,13 @@ class OpArea extends CamOp {
                 // tool so the clear descent isn't aborted by an empty top sliver
                 let roundR, roundCz;
                 if (op.round) {
-                    roundR = (workarea.top_stock - workarea.bottom_stock) / 2;
-                    roundCz = (workarea.top_stock + workarea.bottom_stock) / 2;
+                    // cylinder radius = half the stock height (diameter); its
+                    // center sits one radius below the stock top, expressed in
+                    // the same Z-frame as the clear loop's `z` values. NOTE:
+                    // workarea.bottom_stock is the gap below the part, NOT the
+                    // cylinder bottom, so it must not be used to find the center.
+                    roundR = op.round.r;
+                    roundCz = workarea.top_stock - roundR;
                     zs = zs.filter(z => {
                         let d = z - roundCz;
                         return 2 * Math.sqrt(Math.max(0, roundR * roundR - d * d)) >= toolDiam;
