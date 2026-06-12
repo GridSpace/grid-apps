@@ -73,6 +73,10 @@ const LISTS = {
         { name: "lines" },
         // { name: "surface" }
     ],
+    indexedaxis: [
+        { name: "A" },
+        { name: "B" }
+    ],
     trace: [
         { name: "follow" },
         { name: "clear" }

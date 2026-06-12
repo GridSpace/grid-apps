@@ -175,6 +175,8 @@ self.lang['en-us'] = {
     dv_lazr_l:      ["enable laser operations"],
     dv_4tha_s:      "enable 4th axis",
     dv_4tha_l:      ["enable 4th axis operations","aka indexed mode"],
+    dv_4tax_s:      "4th axis",
+    dv_4tax_l:      ["rotary axis letter used in gcode output","A (default) or B"],
 
     dv_dwll_s:      "dwell",
     dv_dwll_l:      "gcode dwell script",

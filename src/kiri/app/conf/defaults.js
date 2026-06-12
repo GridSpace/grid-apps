@@ -412,6 +412,7 @@ export const conf = {
                 maxHeight: 300,
                 useLaser: false,
                 useIndexed: false,
+                indexedAxis: "A",
                 originCenter: false,
                 spindleMax: 0,
                 gcodePre: [],

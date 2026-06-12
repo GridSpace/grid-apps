@@ -33,7 +33,7 @@ export function cam_export(print, online) {
         cmdToolChange = device.gcodeChange || ["M6 T{tool}"],
         cmdSpindle = device.gcodeSpindle || ["M3 S{speed}"],
         cmdDwell = device.gcodeDwell || ["G4 P{time}"],
-        axis = { X: 'X', Y: 'Y', Z: 'Z', A: 'A', F: 'F', R: 'R', I: 'I', J: 'J' },
+        axis = { X: 'X', Y: 'Y', Z: 'Z', A: device.indexedAxis === 'B' ? 'B' : 'A', F: 'F', R: 'R', I: 'I', J: 'J' },
         dev = settings.device,
         spro = settings.process,
         maxZd = spro.camFastFeedZ,
