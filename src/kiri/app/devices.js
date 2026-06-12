@@ -196,6 +196,7 @@ function setDeviceCode(code, devicename) {
             ui.useLaser,
             ui.useIndexed,
             ui.indexedAxis,
+            ui.indexedAxisAlign,
             ui.resolutionX,
             ui.resolutionY,
             ui.deviceOrigin,

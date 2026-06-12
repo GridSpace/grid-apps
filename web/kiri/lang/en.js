@@ -177,6 +177,8 @@ self.lang['en-us'] = {
     dv_4tha_l:      ["enable 4th axis operations","aka indexed mode"],
     dv_4tax_s:      "4th axis",
     dv_4tax_l:      ["rotary axis letter used in gcode output","A (default) or B"],
+    dv_4tal_s:      "rotary along",
+    dv_4tal_l:      ["machine linear axis the rotary is mounted along","X (default) or Y, swaps X/Y output when Y"],
 
     dv_dwll_s:      "dwell",
     dv_dwll_l:      "gcode dwell script",

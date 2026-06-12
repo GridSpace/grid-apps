@@ -77,6 +77,10 @@ const LISTS = {
         { name: "A" },
         { name: "B" }
     ],
+    indexedalign: [
+        { name: "X" },
+        { name: "Y" }
+    ],
     trace: [
         { name: "follow" },
         { name: "clear" }

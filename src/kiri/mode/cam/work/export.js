@@ -79,6 +79,18 @@ export function cam_export(print, online) {
             time: 0
         };
 
+    // when the rotary is mounted along the machine Y axis (instead of the
+    // default X), swap the X/Y (and arc I/J) output letters for indexed jobs.
+    // kiri computes indexed toolpaths assuming an X-aligned rotary; relabeling
+    // the linear axes at emit time maps them onto a Y-aligned rotary. only
+    // applied in indexed mode so plain 3-axis output is never swapped.
+    if (device.useIndexed && device.indexedAxisAlign === 'Y') {
+        axis.X = 'Y';
+        axis.Y = 'X';
+        axis.I = 'J';
+        axis.J = 'I';
+    }
+
     // console.log({ offset, origin, stock });
 
     function section(section) {
