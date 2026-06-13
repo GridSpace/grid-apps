@@ -273,7 +273,7 @@ export function init_input() {
         useLaser:         newBoolean(LANG.dv_lazr_s, onBooleanClick, {title:LANG.dv_lazr_l, modes:CAM}),
         useIndexed:       newBoolean(LANG.dv_4tha_s, onBooleanClick, {title:LANG.dv_4tha_l, modes:CAM}),
         indexedAxis:      newSelect(LANG.dv_4tax_s, {title:LANG.dv_4tax_l, modes:CAM, show:() => ui.useIndexed.checked}, "indexedaxis"),
-        indexedAxisAlign: newSelect(LANG.dv_4tal_s, {title:LANG.dv_4tal_l, modes:CAM, show:() => ui.useIndexed.checked, post:() => api.platform.update_origin()}, "indexedalign"),
+        indexedAxisAlign: newSelect(LANG.dv_4tal_s, {title:LANG.dv_4tal_l, modes:CAM, show:() => ui.useIndexed.checked, action: settingsOps.update_device}, "indexedalign"),
         gcodeFExt:        newInput(LANG.dv_fext_s, {title:LANG.dv_fext_l, modes:CAM_LZR, size:7, text:true}),
         gcodeEd:          newGroup(LANG.dv_gr_gco, $('dg'), {group:"dgcp", inline, modes:GCODE}),
         gcodeMacros:      newRow([
