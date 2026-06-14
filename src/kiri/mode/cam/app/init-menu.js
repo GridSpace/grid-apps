@@ -135,6 +135,7 @@ export function menu() {
     camStockX:           newInput(LANG.cs_wdth_s, {title:LANG.cs_wdth_l, convert:toFloat, bound:bound(0,9999), units}),
     camStockY:           newInput(LANG.cs_dpth_s, {title:LANG.cs_dpth_l, convert:toFloat, bound:bound(0,9999), units}),
     camStockZ:           newInput(LANG.cs_hght_s, {title:LANG.cs_hght_l, convert:toFloat, bound:bound(0,9999), units}),
+    camStockCylinder:    newBoolean(LANG.cs_cyli_s, onBooleanClick, {title:LANG.cs_cyli_l, show:() => ui.camStockIndexed.checked}),
     separator:           newBlank({ class:"set-sep", driven }),
     camStockOffset:      newBoolean(LANG.cs_offs_s, onBooleanClick, {title:LANG.cs_offs_l}),
     camStockIndexed:     newBoolean(LANG.cs_indx_s, onBooleanClick, {title:LANG.cs_indx_l}),
