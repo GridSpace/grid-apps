@@ -873,6 +873,8 @@ self.lang['en-us'] = {
     cs_ishg_l:      ["show platform grid in indexed mode"],
     cs_indx_s:      "indexed",
     cs_indx_l:      ["stock is mounted to a rotatary indexer"],
+    cs_cyli_s:      "cylindrical",
+    cs_cyli_l:      ["diameter = height","reduces air cutting when","using cylindrical stock"],
     cs_offe_s:      "enable",
     cs_offe_l:      "enable milling stock",
 

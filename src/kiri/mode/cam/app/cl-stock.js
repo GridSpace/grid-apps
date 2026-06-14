@@ -102,35 +102,47 @@ export function updateStock() {
     }
     if (x && y && z) {
         UI.func.animate.classList.remove('disabled');
+        // cylindrical stock is only valid in indexed (rotary) mode
+        const cylindrical = process.camStockIndexed && process.camStockCylinder;
         {
-            let geo = new THREE.BoxGeometry(1, 1, 1);
             let mat = new THREE.MeshBasicMaterial({
                 color: 0x777777,
                 opacity: 0.05,
                 transparent: true,
                 side: THREE.DoubleSide
             });
+            let geo, lines;
+            if (cylindrical) {
+                // cylinder runs along the rotary (X) axis, diameter = height (z)
+                geo = new THREE.CylinderGeometry(0.5, 0.5, 1, 60);
+                geo.rotateZ(Math.PI / 2);
+                let ligeo = new THREE.EdgesGeometry(geo, 30);
+                let limat = new THREE.LineBasicMaterial({ color: 0xaaaaaa });
+                lines = new THREE.LineSegments(ligeo, limat);
+            } else {
+                geo = new THREE.BoxGeometry(1, 1, 1);
+                let lo = 0.5;
+                let lidat = [
+                    lo, lo, lo, lo, lo, -lo,
+                    lo, lo, lo, lo, -lo, lo,
+                    lo, lo, lo, -lo, lo, lo,
+                    -lo, -lo, -lo, -lo, -lo, lo,
+                    -lo, -lo, -lo, -lo, lo, -lo,
+                    -lo, -lo, -lo, lo, -lo, -lo,
+                    lo, lo, -lo, -lo, lo, -lo,
+                    lo, lo, -lo, lo, -lo, -lo,
+                    lo, -lo, -lo, lo, -lo, lo,
+                    lo, -lo, lo, -lo, -lo, lo,
+                    -lo, -lo, lo, -lo, lo, lo,
+                    -lo, lo, lo, -lo, lo, -lo
+                ];
+                let ligeo = new THREE.BufferGeometry();
+                ligeo.setAttribute('position', new THREE.BufferAttribute(lidat.toFloat32(), 3));
+                let limat = new THREE.LineBasicMaterial({ color: 0xaaaaaa });
+                lines = new THREE.LineSegments(ligeo, limat);
+            }
             env.camStock = new THREE.Mesh(geo, mat);
             env.camStock.renderOrder = 2;
-            let lo = 0.5;
-            let lidat = [
-                lo, lo, lo, lo, lo, -lo,
-                lo, lo, lo, lo, -lo, lo,
-                lo, lo, lo, -lo, lo, lo,
-                -lo, -lo, -lo, -lo, -lo, lo,
-                -lo, -lo, -lo, -lo, lo, -lo,
-                -lo, -lo, -lo, lo, -lo, -lo,
-                lo, lo, -lo, -lo, lo, -lo,
-                lo, lo, -lo, lo, -lo, -lo,
-                lo, -lo, -lo, lo, -lo, lo,
-                lo, -lo, lo, -lo, -lo, lo,
-                -lo, -lo, lo, -lo, lo, lo,
-                -lo, lo, lo, -lo, lo, -lo
-            ];
-            let ligeo = new THREE.BufferGeometry();
-            ligeo.setAttribute('position', new THREE.BufferAttribute(lidat.toFloat32(), 3));
-            let limat = new THREE.LineBasicMaterial({ color: 0xaaaaaa });
-            let lines = new THREE.LineSegments(ligeo, limat);
             env.camStock.lines = lines;
             env.camStock.add(lines);
             SPACE.world.add(env.camStock);
@@ -138,7 +150,7 @@ export function updateStock() {
         // fight z fighting in threejs
         const { scale, position, lines } = env.camStock;
         scale.x = x + 0.005;
-        scale.y = y + 0.005;
+        scale.y = (cylindrical ? z : y) + 0.005;
         scale.z = z + 0.005;
         position.x = center.x;
         position.y = center.y;
