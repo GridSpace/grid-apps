@@ -99,6 +99,13 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
             z: camStockZ,
             center: newPoint(pos.x, pos.y, pos.z)
         };
+        // cylindrical stock is symmetric about the X (rotary) axis, so its
+        // radius (= half the stock height) is rotation-invariant. capture it
+        // here, before any YZ rotation is applied to the stock dimensions.
+        if (isIndexed && proc.camStockCylinder) {
+            stock.cylindrical = true;
+            stock.radius = stock.z / 2;
+        }
         if (!camStockOffset && axisIndex && isIndexed) {
             if (axisIndex === 0 || axisIndex === 180) {
                 // do nothing
