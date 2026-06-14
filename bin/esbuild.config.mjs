@@ -77,6 +77,7 @@ const rec = {
     define: { 'process.env.NODE_ENV': `"${mode}"` },
     external: [
         'module',
+        'node:module',
         './constants',
         './voronoi_structures',
         './voronoi_ctypes',
