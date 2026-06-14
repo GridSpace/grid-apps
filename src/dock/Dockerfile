@@ -6,7 +6,7 @@ COPY apps /grid/apps
 COPY src /grid/src
 COPY web /grid/web
 COPY bin /grid/bin
-RUN apt-get -y update; apt-get -y install curl
+RUN apt-get -y update; apt-get -y install curl git
 EXPOSE 8080
 RUN npm i
 RUN npm install -g @gridspace/app-server
