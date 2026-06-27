@@ -180,6 +180,50 @@ function exportLaserDialog(data, names) {
     $('print-dxf').onclick = download_dxf;
     $('print-obj').onclick = download_obj;
     $('print-lg').onclick = download_gcode;
+
+    const showRemote = settings.controller.exportOcto;
+    $('laser-remote-head').style.display = showRemote ? '' : 'none';
+    $('laser-remote-send').style.display = showRemote ? '' : 'none';
+
+    if (showRemote) {
+        const hostEl = $('laser-octo-host');
+        const apikEl = $('laser-octo-apik');
+        const typeEl = $('laser-octo-type');
+        hostEl.value = localGet('octo-host') || '';
+        apikEl.value = localGet('octo-apik') || '';
+        typeEl.value = localGet('octo-type') || 'octoprint';
+
+        $('laser-send-remote').onclick = function() {
+            const host = hostEl.value.trim();
+            const apik = apikEl.value.trim();
+            const type = typeEl.value;
+            if (!host) { api.show.alert('host is required'); return; }
+            localSet('octo-host', host);
+            localSet('octo-apik', apik);
+            localSet('octo-type', type);
+
+            const gcode = driver.exportGCode(settings, data);
+            const fname = $('print-filename-laser').value + '.gcode';
+            const form = new FormData();
+            form.append('file', new Blob([gcode], { type: 'text/plain' }), fname);
+
+            const endpoint = type === 'moonraker' ? '/server/files/upload' : '/api/files/local';
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', host + endpoint);
+            if (apik) xhr.setRequestHeader('X-Api-Key', apik);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        api.show.alert('sent to ' + host);
+                        api.modal.hide();
+                    } else {
+                        api.show.alert('send failed: ' + xhr.status + ' ' + xhr.responseText);
+                    }
+                }
+            };
+            xhr.send(form);
+        };
+    }
 }
 
 /**

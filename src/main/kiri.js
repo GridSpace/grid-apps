@@ -30,7 +30,7 @@ function safeExec(fn, name) {
 
 async function checkReady() {
     if (document.readyState === 'complete') {
-        let bootctrl = navigator.serviceWorker.controller;
+        let bootctrl = navigator.serviceWorker?.controller;
         console.log(`kiri | boot ctrl | ` + (bootctrl ? true : false));
         kiri.api = api;
         self.$ = api.web.$;
