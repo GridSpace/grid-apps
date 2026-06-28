@@ -676,7 +676,9 @@ export const conf = {
                 outputInvertX: false,
                 outputInvertY: false,
                 ctOutInches: false,
-                ctOutShaper: false
+                ctOutShaper: false,
+                ctFillEnable: false,
+                ctFillSpacing: 1
             }
         },
         drag: {

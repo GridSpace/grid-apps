@@ -4,6 +4,11 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 
 # Release 4.4.0
 
+## Laser
+
+- add OctoPrint/Moonraker remote send from laser export dialog
+- add concentric fill for closed shapes: enable **fill** in the output section, set **spacing** in mm to control ring density
+
 ## General
 
 - add version numbering utility script
