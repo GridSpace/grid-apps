@@ -366,12 +366,23 @@ async function laser_prepare(widgets, settings, update) {
             }
             let lastEmit;
             let slices = ctOutStack ? widget.slices.reverse() : widget.slices;
+            let wpos = widget.track.pos;
+            let hasWPos = wpos && (wpos.x || wpos.y);
             for (let slice of slices) {
+                // apply arrange-view translation to slice polys so gcode reflects user positioning
+                if (hasWPos) {
+                    for (let poly of (slice.offset || [])) {
+                        poly.move({ x: wpos.x, y: wpos.y });
+                    }
+                }
                 lastEmit = sliceEmitObjects(print, slice, layers, {simple: isKnife, lastEmit});
                 update((slices++ / totalSlices) * 0.5, "prepare");
             }
         }
     }
+
+    // detect manual positioning: any widget moved from origin skips auto-layout
+    let hasManualPositions = widgets.some(w => w.track.pos.x || w.track.pos.y);
 
     // for tile layout packing
     let dw = device.bedWidth / 2,
@@ -398,8 +409,8 @@ async function laser_prepare(widgets, settings, update) {
         return packer.rescale(1.1, 1.1);
     });
 
-    // reposition tiles into their packed locations (unless 3d stack)
-    if (!(ctOutStack || ctSliceSingle))
+    // reposition tiles into their packed locations (unless 3d stack or manual positions)
+    if (!(ctOutStack || ctSliceSingle || hasManualPositions))
     for (let tile of tiles) {
         let { fit, bounds } = tile;
         for (let { poly } of tile) {
