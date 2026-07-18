@@ -21,6 +21,11 @@ function onBooleanClick(el) {
     api.event.emit('click.boolean', el);
 }
 
+// cylindrical stock is only valid in indexed (rotary) mode
+function isCylindrical() {
+    return ui.camStockIndexed.checked && ui.camStockCylinder.checked;
+}
+
 function onButtonClick(el) {
     api.event.emit('click.button', el);
 }
@@ -133,12 +138,12 @@ export function menu() {
     ], {class:"ext-buttons f-row"}),
     _____:               newGroup(LANG.cs_menu, $('cam-stock'), { modes:CAM, driven, separator, hideable, group:"cam-stock" }),
     camStockX:           newInput(LANG.cs_wdth_s, {title:LANG.cs_wdth_l, convert:toFloat, bound:bound(0,9999), units}),
-    camStockY:           newInput(LANG.cs_dpth_s, {title:LANG.cs_dpth_l, convert:toFloat, bound:bound(0,9999), units}),
-    camStockZ:           newInput(LANG.cs_hght_s, {title:LANG.cs_hght_l, convert:toFloat, bound:bound(0,9999), units}),
-    camStockCylinder:    newBoolean(LANG.cs_cyli_s, onBooleanClick, {title:LANG.cs_cyli_l, show:() => ui.camStockIndexed.checked}),
+    camStockY:           newInput(LANG.cs_dpth_s, {title:LANG.cs_dpth_l, convert:toFloat, bound:bound(0,9999), units, show:() => !isCylindrical()}),
+    camStockZ:           newInput(LANG.cs_hght_s, {title:LANG.cs_hght_l, convert:toFloat, bound:bound(0,9999), units, dynLabel:() => isCylindrical() ? LANG.cs_diam_s : LANG.cs_hght_s}),
     separator:           newBlank({ class:"set-sep", driven }),
     camStockOffset:      newBoolean(LANG.cs_offs_s, onBooleanClick, {title:LANG.cs_offs_l}),
     camStockIndexed:     newBoolean(LANG.cs_indx_s, onBooleanClick, {title:LANG.cs_indx_l}),
+    camStockCylinder:    newBoolean(LANG.cs_cyli_s, onBooleanClick, {title:LANG.cs_cyli_l, show:() => ui.camStockIndexed.checked}),
     camStockIndexGrid:   newBoolean(LANG.cs_ishg_s, onBooleanClick, {title:LANG.cs_ishg_l, show:() => ui.camStockIndexed.checked}),
     // separator:           newBlank({ class:"set-sep", driven }),
     // camStockManual: newRow([

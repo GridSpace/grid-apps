@@ -867,6 +867,8 @@ self.lang['en-us'] = {
     cs_dpth_l:      ["depth (y) in workspace units","0 defaults to part size"],
     cs_hght_s:      "height",
     cs_hght_l:      ["height (z) in workspace units","0 defaults to part size"],
+    cs_diam_s:      "diameter",
+    cs_diam_l:      ["diameter (z) in workspace units","0 defaults to part size"],
     cs_offs_s:      "offset",
     cs_offs_l:      ["use width, depth, height","as offsets from max","part size on platform"],
     cs_ishg_s:      "show grid",
