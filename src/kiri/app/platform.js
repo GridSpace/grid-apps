@@ -244,7 +244,7 @@ function update_top_z() {
 function platformUpdateStock() {
     const settings = current();
     const { bounds, process, mode } = settings;
-    const { camStockX, camStockY, camStockZ, camStockOffset, camStockIndexed } = process;
+    const { camStockX, camStockY, camStockZ, camStockOffset, camStockIndexed, camStockCylinder } = process;
     if (mode === 'CAM') {
         let stock = settings.stock = {
             x: camStockX,
@@ -252,10 +252,23 @@ function platformUpdateStock() {
             z: camStockZ
         };
         // drop back to offset mode if any stock dimension is 0
-        if (camStockOffset || (stock.x * stock.y * stock.z === 0)) {
+        const offset = camStockOffset || (stock.x * stock.y * stock.z === 0);
+        const partY = bounds.max.y - bounds.min.y;
+        const partZ = bounds.max.z - bounds.min.z;
+        if (offset) {
             stock.x += bounds.max.x - bounds.min.x;
-            stock.y += bounds.max.y - bounds.min.y;
-            stock.z += bounds.max.z - bounds.min.z;
+            stock.y += partY;
+            stock.z += partZ;
+        }
+        // cylindrical stock is a circle in the Y-Z plane centered on the X
+        // (rotary) axis. depth (Y) is not an independent dimension for round
+        // stock, so in offset mode the diameter spans the part's cross-section
+        // diagonal (from actual geometry) plus the camStockZ diameter offset.
+        if (camStockIndexed && camStockCylinder) {
+            if (offset) {
+                stock.z = Math.hypot(partY, partZ) + camStockZ;
+            }
+            stock.y = stock.z;
         }
         stock.center = {
             x: (bounds.max.x + bounds.min.x) / 2,
