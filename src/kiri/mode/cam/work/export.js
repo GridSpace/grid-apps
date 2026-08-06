@@ -76,7 +76,8 @@ export function cam_export(print, online) {
             bottom: (offset ? 0 : -dev.bedDepth / 2),
             time_sec: 0,
             time_ms: 0,
-            time: 0
+            time: 0,
+            stock_z: stock.z
         };
 
     // console.log({ offset, origin, stock });
