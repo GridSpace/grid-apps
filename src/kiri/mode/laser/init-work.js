@@ -85,6 +85,7 @@ function sliceEmitObjects(print, slice, groups, opt = { }) {
         // cut inside before outside
         polyOut(inner, group, "in", outer.length > 1);
         polyOut(outer, group, "out", outer.length > 1);
+        fillOut(outer, group);
         groups.push(group);
     } else {
         for (let top of slice.offset) {
@@ -92,11 +93,52 @@ function sliceEmitObjects(print, slice, groups, opt = { }) {
             group.thick = slice.thick;
             polyOut([ top ], group, "in");
             polyOut(top.inner || [], group, "out");
+            fillOut([ top ], group);
             groups.push(group);
         }
     }
 
     return emit;
+
+    function fillOut(outers, group) {
+        let { ctFillEnable, ctFillSpacing } = process;
+        if (!ctFillEnable || !(ctFillSpacing > 0)) return;
+        const z = outers[0]?.getZ() || 0;
+        const minDim = ctFillSpacing * 0.25;
+        // for shapes that have inner children (e.g. a circle represented as a thin ring
+        // from slicing a cylindrical shell), fill from the inner boundary inward so the
+        // fill covers the enclosed interior rather than the ring wall itself;
+        // for solid shapes with no inner children, fill from the outer boundary
+        // process each outer polygon separately so we can use its own inner holes
+        // as the fill boundary stop condition
+        for (const outer of outers) {
+            // sum of all inner hole areas; fill stops before entering any hole
+            const holeArea = outer.inner ? outer.inner.reduce((s, h) => s + h.area(), 0) : 0;
+            // strip inner children so Clipper treats the outer as a solid;
+            // passing inner children causes Clipper to expand the holes on each offset
+            // iteration, collapsing the ring prematurely
+            let current = [outer.inner ? newPolygon().addPoints(outer.points).setZ(z) : outer];
+            while (current && current.length) {
+                current = POLY.offset(current, -ctFillSpacing, { z, minArea: 0 });
+                if (!current || !current.length) break;
+                // strip inner children from intermediate results for the same reason
+                current = current.map(p => p.inner ? newPolygon().addPoints(p.points).setZ(z) : p);
+                // if the original shape had holes, stop when the fill ring shrinks
+                // into hole territory (area ≤ combined hole area)
+                if (holeArea > 0) {
+                    current = current.filter(p => p.area() > holeArea);
+                }
+                current = current.filter(p => {
+                    const b = p.bounds;
+                    return (b.maxx - b.minx) > minDim && (b.maxy - b.miny) > minDim;
+                });
+                if (!current.length) break;
+                for (let poly of current) {
+                    print.PPP(poly, group, { extrude: 1, rate: 1 });
+                }
+            }
+        }
+    }
 };
 
 /**
