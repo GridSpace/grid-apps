@@ -11,7 +11,7 @@ Ops—not to be confused with [opps](https://knowyourmeme.com/memes/opp-opps)—
 applied to a model to remove material. The Operations tab also contains meta-operations
 that represent parts of the manufacturing process but do not necessarily generate toolpaths.
 
-Each operation has parameters which can be hovered over to reveal their description.  
+Each operation has parameters which can be hovered over to reveal their description.
 ![](/img/CAM/paramDetails.png)
 
 When an operation's settings are changed, they update the defaults for that operation
@@ -30,6 +30,7 @@ These operations include:
     - [Drill](#drill)
     - [Trace](#trace)
     - [Pocket](#pocket)
+    - [Area](#area)
 - [Gcode](#gcode)
 - Laser Operations
 - Indexed Operations
@@ -58,6 +59,13 @@ The Level op creates a flat-surface clearing toolpath across a selected area. It
 - Creating uniform faces on complex objects
 - Clearing large areas with consistent depth quickly
 
+#### Key Options
+
+- **Pattern**: The toolpath pattern used to surface the area:
+  - **linear**: Parallel zig-zag raster paths.
+  - **concentric**: Progressive concentric loops offsetting inwards from the perimeter.
+  - **spiral**: Continuously spiralized concentric offset paths.
+
 ### Rough
 
 <ImageCarousel base="/img/CAM/example/rough/" images="rough" />
@@ -70,36 +78,55 @@ The Rough op removes large volumes of material quickly using a stepped-down tool
 - Preparing a part for finish machining
 - Preserving tool life by reducing cutting load in later passes
 
+#### Key Options
+
+- **Pattern**: The clearing pattern type:
+  - **concentric**: Progressive concentric loops offsetting inwards from the boundary.
+  - **spiral**: Continuously spiralized concentric offset paths.
+
 ### Contour
 
 <ImageCarousel base="/img/CAM/example/contour/" images="contour" />
 
-The Contour op generates detailed toolpaths for complex organic surface geometries.  
-It can trace along the X or Y axis and has configurable precision. It is useful for:
+The Contour op generates detailed finishing toolpaths for complex organic surface geometries.
+It can trace along the X or Y axes, or in **Radial** mode, with configurable precision. It is useful for:
 
-- Carving 3D shapes with organic or curved profiles
+- Carving 3D shapes with organic, curved, or spherical profiles
 - Finishing complex wall geometries
 - Cleaning up a part after [roughing](#rough)
+
+#### Axis Modes
+
+- **X / Y Axis**: Generates linear parallel scanning toolpaths along the selected horizontal axis.
+- **Radial**: Generates toolpaths radiating from or circling around the center of the part. This has two shape submodes:
+  - **Spiral**: Emits a continuous spiral toolpath expanding outwards from the center of the part.
+  - **Concentric**: Generates concentric circular loops from the innermost boundary to the perimeter.
+
+#### Key Options
+
+- **Curves Only**: Restricts linear cleanup to sloped/curved surfaces, automatically skipping flat horizontal sections.
+- **Curve Join Dist**: A multiplier of the tool diameter (defaults to 0.5) defining the maximum length of flat regions between curved profiles that should be bridged and kept continuous to prevent unnecessary tool retractions.
+- **Omit Through**: Bypasses machining slots, holes, and other features that go completely through the part.
 
 ### Register
 
 <ImageCarousel base="/img/CAM/example/register/" images="register" />
 
-The Register operation drills holes in the sides of a part,  
-helping keep the part in the same place when it is flipped onto its opposite face.  
+The Register operation drills holes in the sides of a part,
+helping keep the part in the same place when it is flipped onto its opposite face.
 The operation has options to drill on different sides and can even generate a puzzle-piece-like pattern for registration.
 
 ## Specific Operations
 
-Specific operations require selection of individual part features to apply operations to.  
+Specific operations require selection of individual part features to apply operations to.
 These may overlap with Global operations but are generally more configurable.
 
 ### Drill
 
 <ImageCarousel base="/img/CAM/example/drill/" images="drill" />
 
-The Drill op creates pecking toolpaths for a drill tool to follow.  
-It can also drill holes of other diameters and even mark holes instead of drilling.  
+The Drill op creates pecking toolpaths for a drill tool to follow.
+It can also drill holes of other diameters and even mark holes instead of drilling.
 It is useful for:
 
 - Generating a toolpath for a drill tool
@@ -110,10 +137,10 @@ It is useful for:
 
 <ImageCarousel base="/img/CAM/example/trace/" images="trace" />
 
-The Trace operation is likely the most configurable, allowing for generation of toolpaths following loops or lines.  
-It can trace on, inside, or outside a line and can take multiple passes to step down to the desired position.  
-When the type parameter is set to "clear," it can even act like a [Pocket](#pocket),  
-clearing the area above the shape created by the selected lines or loop.  
+The Trace operation is likely the most configurable, allowing for generation of toolpaths following loops or lines.
+It can trace on, inside, or outside a line and can take multiple passes to step down to the desired position.
+When the type parameter is set to "clear," it can even act like a [Pocket](#pocket),
+clearing the area above the shape created by the selected lines or loop.
 While the Trace op can do a lot, some specific use cases include:
 
 - Engraving lettering or other text
@@ -125,21 +152,53 @@ While the Trace op can do a lot, some specific use cases include:
 
 <ImageCarousel base="/img/CAM/example/pocket/" images="pocket" />
 
-The Pocket operation takes a selection of polygon faces and generates a pocket toolpath that cuts down to them.  
-The operation has options to expand and smooth the pocket selection, and the contour option even allows  
+The Pocket operation takes a selection of polygon faces and generates a pocket toolpath that cuts down to them.
+The operation has options to expand and smooth the pocket selection, and the contour option even allows
 for an approximation of a v-bit carve. Some use cases specific to the Pocket op include:
 
 - Creating one pocket in a part with multiple
 - Attempting a v-carve
 - Clearing a specific area of a part
 
+#### Key Options
+
+- **Contour / Surfacing Pattern**: When **contour** is enabled, chooses the surfacing pattern type:
+  - **linear**: Parallel zig-zag toolpaths.
+  - **concentric**: Progressive concentric loops offsetting inwards.
+  - **spiral**: Continuously spiralized concentric offset paths from the center outwards, with the innermost loop fully traced in its entirety to ensure no center stock is left uncut.
+- **Outline Only**: Restricts pocket contouring to only trace the outer perimeter and hole outlines.
+- **Omit Through**: When **Outline Only** is checked, this bypasses machining boundaries for holes and features that go completely through the part.
+
+### Area
+
+<ImageCarousel base="/img/CAM/example/area/" images="area" />
+
+The Area operation allows you to select specific boundary loops or surfaces on a part to clear, trace, or surface. It provides precise control over localized features. It is useful for:
+
+- Clearing flat pockets or horizontal areas.
+- Tracing specific boundary contours.
+- Surfacing localized regions of a part.
+
+#### Key Options
+
+- **Mode**: Chooses the operation style:
+  - **clear**: Clears the material inside the selected boundaries.
+  - **trace**: Traces the selected boundary lines directly.
+  - **surface**: Surfaces the area using a designated pattern.
+- **Pattern**: Defines the toolpath pattern:
+  - **linear**: Parallel scanlines/zig-zag paths (available in **surface** mode only).
+  - **concentric**: Progressive concentric loops offsetting inwards from the boundary.
+  - **spiral**: Continuously spiralized concentric offset paths.
+- **Outline Only**: When in **clear** or **surface** mode, restricts paths to trace the outer perimeter and hole outlines.
+- **Omit Through**: When **Outline Only** is checked, this prunes toolpath points inside through-holes to skip them cleanly.
+
 ### Gcode
 
 <ImageCarousel base="/img/CAM/example/gcode/" images="gcode" />
 
-The Gcode operation does not generate a toolpath but instead adds a line or lines of G-code to the output  
-of the file. The Gcode operation is different from [Gcode Macros](/kiri-moto/gcode-macros),  
-as it is not tied to any event  
+The Gcode operation does not generate a toolpath but instead adds a line or lines of G-code to the output
+of the file. The Gcode operation is different from [Gcode Macros](/kiri-moto/gcode-macros),
+as it is not tied to any event
 but is output in the order it is included in the operations array.
 
 ## Laser Operations

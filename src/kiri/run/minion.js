@@ -261,6 +261,8 @@ const funcs = self.minion = {
     trace_init(data) {
         data.cross.clipTo = codec.decode(data.cross.clipTo);
         data.cross.clipTab = codec.decode(data.cross.clipTab);
+        data.cross.clipStock = codec.decode(data.cross.clipStock);
+        data.trace = codec.decode(data.trace);
         const probe = new Probe(data.probe);
         const trace = new Trace(probe, data.trace);
         cache.trace = {
@@ -283,6 +285,14 @@ const funcs = self.minion = {
     trace_x(data, seq) {
         const { trace } = cache.trace;
         trace.crossX_sync(data.params, slice => {
+            slice = codec.encode(slice);
+            reply({ seq, slice });
+        });
+    },
+
+    trace_radial(data, seq) {
+        const { trace } = cache.trace;
+        trace.crossRadial_sync(data.params, slice => {
             slice = codec.encode(slice);
             reply({ seq, slice });
         });

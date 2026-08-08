@@ -19,6 +19,10 @@ class OpRough extends CamOp {
         let cutOutside = !op.inside;
         let shadowBase = shadow.base;
 
+        if (op.omitthru && state.shadow && state.shadow.holes && state.shadow.holes.length) {
+            shadowBase = omitMatching(shadowBase, state.shadow.holes);
+        }
+
         if (op.down <= 0) {
             throw `invalid step down "${op.down}"`;
         }
@@ -44,6 +48,7 @@ class OpRough extends CamOp {
             smooth: 0,
             outline: true,
             omitthru: op.omitthru,
+            sr_type: op.sr_type || 'concentric',
             leave_xy: op.leave,
             leave_z: op.leavez,
             ov_botz: op.ov_botz,
@@ -69,6 +74,7 @@ class OpRough extends CamOp {
                 smooth: 0,
                 outline: true,
                 omitthru: op.omitthru,
+                sr_type: op.sr_type || 'concentric',
                 leave_xy: op.leave,
                 leave_z: op.leavez,
                 ov_botz: op.ov_botz,
@@ -130,6 +136,29 @@ class OpRough extends CamOp {
             setChangeOp();
         }
     }
+}
+
+function omitMatching(target, matches) {
+    target = target.clone(true);
+    for (let poly of target.filter(p => p.inner)) {
+        poly.inner = poly.inner.filter(inner => {
+            let innerCenter = inner.bounds.center();
+            for (let ho of matches) {
+                if (inner.isEquivalent(ho, false, 0.2)) {
+                    return false;
+                }
+                let hoArea = Math.abs(ho.area());
+                let innerArea = Math.abs(inner.area());
+                if (hoArea > 0.001 && Math.abs(hoArea - innerArea) / hoArea < 0.2) {
+                    if (innerCenter.isInPolygon(ho)) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        });
+    }
+    return target;
 }
 
 export { OpRough };

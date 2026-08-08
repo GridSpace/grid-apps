@@ -190,7 +190,8 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
     function setContouring(bool, step, coast) {
         coastline = coast;
         contouring = bool;
-        toolDiamMove = step ?? tool.getStepSize(currentOp.step) * 2;
+        let baseStep = step ?? tool.getStepSize(currentOp.step) * 2;
+        toolDiamMove = Math.max(baseStep, tool.fluteDiameter());
         if (bool) setTravelBoundary();
     }
 
@@ -555,7 +556,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
                 layerPush(printPoint.clone().move({ z: 0.1 }), 0, 0, tool);
                 layerPush(point.clone().move({ z: 0.1 }), 0, 0, tool);
             }
-        } else
+        }
         // when rapid pluge could cut thru stock:
         //  * rapid to just above stock
         //  * continue plunge as cut
@@ -676,7 +677,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
      * @param {boolean} cutdir true=CW false=CCW
      * @param {boolean} depthFirst prioritize cut depth in pockets by nesting
      */
-    function pocket({ slices, cutdir, depthFirst, outline, progress }) {
+    function pocket({ slices, cutdir, depthFirst, outline, progress, spiral }) {
         let total = 0;
         let depthData = [];
 
@@ -708,6 +709,10 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
             } else {
                 // if not depth first, output the polys in slice order
                 setTravelBoundary(slice.tool_shadow.clone(true));
+                if (spiral && total > 0) {
+                    layerPush(printPoint.clone().setZ(zSafe), 0, 0, tool);
+                    newLayer();
+                }
                 poly2polyEmit(polys, printPoint, polyEmit, { swapdir: false });
                 newLayer();
             }
@@ -724,42 +729,46 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
                 descend(depthData.slice(i), undefined, outline);
             }
         }
-    }
 
-    function descend(stack, inside, outline) {
-        if (stack.length === 0) return;
-        let tops = stack[0];
-        let flat = (outline ? POLY.flatten(tops) : tops).filter(poly => !poly.marked);
-        if (flat.length === 0) return;
-        if (inside) {
-            flat = flat.filter(p => p.isInside(inside));
-        }
+        function descend(stack, inside, outline) {
+            if (stack.length === 0) return;
+            let tops = stack[0];
+            let flat = (outline ? POLY.flatten(tops) : tops).filter(poly => !poly.marked);
+            if (flat.length === 0) return;
+            if (inside) {
+                flat = flat.filter(p => p.isInside(inside));
+            }
 
-        for (;;) {
-            let wpp = getWidgetPrintPoint();
-            let poly = flat.filter(poly => !poly.marked)
-                .map(p => p.findClosestPointTo(wpp))
-                .sort((a,b) => a.distance - b.distance)
-                .map(rec => rec.poly)[0];
+            for (;;) {
+                let wpp = getWidgetPrintPoint();
+                let poly = flat.filter(poly => !poly.marked)
+                    .map(p => p.findClosestPointTo(wpp))
+                    .sort((a,b) => a.distance - b.distance)
+                    .map(rec => rec.poly)[0];
 
-            if (poly) {
-                let output = [];
-                setTravelBoundary(tops.tool_shadow);
-                emit_flat([ poly ], output);
-                let engage = true;
-                for (let poly of output) {
-                    polyEmit(poly, CLOSEST_TO_PP, engage);
-                    engage = false;
-                }
-                if (outline) {
-                    output.forEach(poly => {
+                if (poly) {
+                    let output = [];
+                    setTravelBoundary(tops.tool_shadow);
+                    emit_flat([ poly ], output);
+                    let engage = true;
+                    if (spiral && inside) {
+                        layerPush(printPoint.clone().setZ(zSafe), 0, 0, tool);
+                        newLayer();
+                    }
+                    for (let poly of output) {
+                        polyEmit(poly, CLOSEST_TO_PP, engage);
+                        engage = false;
+                    }
+                    if (outline) {
+                        output.forEach(poly => {
+                            descend(stack.slice(1), poly, outline);
+                        });
+                    } else {
                         descend(stack.slice(1), poly, outline);
-                    });
+                    }
                 } else {
-                    descend(stack.slice(1), poly, outline);
+                    return;
                 }
-            } else {
-                return;
             }
         }
     }
@@ -817,7 +826,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
             }
         }
 
-        if (!contouring && poly.isClosed()) {
+        if (poly.isClosed()) {
             points.push(points[0].clone());
         }
 

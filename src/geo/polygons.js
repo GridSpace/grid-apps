@@ -74,7 +74,8 @@ const POLYS = {
     union,
     unionFaces,
     xor,
-    verify
+    verify,
+    spiralize
 };
 
 export { POLYS };
@@ -1304,6 +1305,197 @@ export function reconnect(polys, sameZ = true) {
         }
     }
     return polys;
+}
+
+export function spiralize(loops, climb) {
+    if (!loops || loops.length === 0) return [];
+
+    // Filter out empty loops first to avoid undefined point access during resampling
+    loops = loops.filter(l => l && l.points && l.points.length > 0);
+    if (loops.length === 0) return [];
+
+    // Ensure winding is set if climb is specified
+    if (climb !== undefined && climb !== null) {
+        setWinding(loops.filter(p => p.isClosed()), climb);
+    }
+
+    let n = loops.length;
+    let parents = new Array(n).fill(-1);
+    let isLeaf = new Array(n).fill(true);
+    let depths = new Array(n).fill(0);
+    let containedBy = Array.from({ length: n }, () => []);
+
+    for (let i = 0; i < n; i++) {
+        let pi = loops[i].points[0];
+        if (!pi) continue;
+        for (let j = 0; j < n; j++) {
+            if (i !== j) {
+                if (pi.isInPolygon(loops[j])) {
+                    containedBy[i].push(j);
+                }
+            }
+        }
+    }
+
+    for (let i = 0; i < n; i++) {
+        let containers = containedBy[i];
+        if (containers.length > 0) {
+            let bestParent = containers[0];
+            for (let c of containers) {
+                if (containedBy[c].length > containedBy[bestParent].length) {
+                    bestParent = c;
+                }
+            }
+            parents[i] = bestParent;
+            isLeaf[bestParent] = false;
+            depths[i] = containers.length;
+        }
+    }
+
+    let childCount = new Array(n).fill(0);
+    for (let i = 0; i < n; i++) {
+        if (parents[i] !== -1) {
+            childCount[parents[i]]++;
+        }
+    }
+
+    let assigned = new Array(n).fill(false);
+    let chains = [];
+
+    let leafIndices = [];
+    for (let i = 0; i < n; i++) {
+        if (isLeaf[i]) {
+            leafIndices.push(i);
+        }
+    }
+    leafIndices.sort((a, b) => depths[b] - depths[a]);
+
+    for (let leafIdx of leafIndices) {
+        let chain = [];
+        let curr = leafIdx;
+        while (curr !== -1 && !assigned[curr]) {
+            chain.push(loops[curr]);
+            assigned[curr] = true;
+            let next = parents[curr];
+            if (next !== -1 && (childCount[next] > 1 || assigned[next])) {
+                break;
+            }
+            curr = next;
+        }
+        if (chain.length > 0) {
+            chains.push(chain);
+        }
+    }
+
+    for (let i = 0; i < n; i++) {
+        if (!assigned[i]) {
+            chains.push([loops[i]]);
+        }
+    }
+
+    let spiralPolys = [];
+
+    for (let chain of chains) {
+        if (chain.length === 1) {
+            let single = chain[0].clone();
+            single.push(single.first());
+            spiralPolys.push(single);
+            continue;
+        }
+
+        // Determine N for resampling
+        let N = Math.max(...chain.map(l => l.points.length), 100);
+
+        // Resample all loops in the chain
+        let resampledLoops = chain.map(loop => {
+            let points = loop.points;
+            if (points.length === 0) return [];
+
+            let cumulative = [0];
+            let totalDist = 0;
+            for (let i = 0; i < points.length; i++) {
+                let p1 = points[i];
+                let p2 = points[(i + 1) % points.length];
+                totalDist += p1.distTo2D(p2);
+                cumulative.push(totalDist);
+            }
+
+            if (totalDist === 0) {
+                return Array.from({ length: N }, () => points[0].clone());
+            }
+
+            let resampled = [];
+            for (let i = 0; i < N; i++) {
+                let targetDist = (i / N) * totalDist;
+                let idx = 0;
+                while (idx < points.length && cumulative[idx + 1] < targetDist) {
+                    idx++;
+                }
+                let p1 = points[idx];
+                let p2 = points[(idx + 1) % points.length];
+                let segLen = cumulative[idx + 1] - cumulative[idx];
+                let t = segLen > 0 ? (targetDist - cumulative[idx]) / segLen : 0;
+
+                let dx = p2.x - p1.x;
+                let dy = p2.y - p1.y;
+                resampled.push(newPoint(p1.x + dx * t, p1.y + dy * t, p1.z));
+            }
+            return resampled;
+        });
+
+        // Align start points
+        for (let i = 1; i < resampledLoops.length; i++) {
+            let prevStart = resampledLoops[i - 1][0];
+            let currPoints = resampledLoops[i];
+            let minDist = Infinity;
+            let bestIdx = 0;
+            for (let j = 0; j < currPoints.length; j++) {
+                let dist = prevStart.distTo2D(currPoints[j]);
+                if (dist < minDist) {
+                    minDist = dist;
+                    bestIdx = j;
+                }
+            }
+            if (bestIdx > 0) {
+                resampledLoops[i] = currPoints.slice(bestIdx).concat(currPoints.slice(0, bestIdx));
+            }
+        }
+
+        // Interpolate spiral
+        let spiralPoints = [];
+
+        // Trace the first (innermost) loop in its entirety to clean the inner wall
+        let L_first = resampledLoops[0];
+        for (let j = 0; j < N; j++) {
+            spiralPoints.push(L_first[j].clone());
+        }
+        spiralPoints.push(L_first[0].clone());
+
+        for (let i = 0; i < resampledLoops.length - 1; i++) {
+            let L_curr = resampledLoops[i];
+            let L_next = resampledLoops[i + 1];
+            for (let j = 0; j < N; j++) {
+                let t = j / N;
+                let x = L_curr[j].x * (1 - t) + L_next[j].x * t;
+                let y = L_curr[j].y * (1 - t) + L_next[j].y * t;
+                spiralPoints.push(newPoint(x, y, L_curr[j].z));
+            }
+        }
+
+        // Append the final loop to clean the outer wall
+        let L_last = resampledLoops[resampledLoops.length - 1];
+        for (let j = 0; j < N; j++) {
+            spiralPoints.push(L_last[j].clone());
+        }
+        spiralPoints.push(L_last[0].clone());
+
+        let spiralPoly = newPolygon(spiralPoints);
+        spiralPoly.setOpen();
+        spiralPoly.resampleN = N;
+        spiralPolys.push(spiralPoly);
+    }
+
+    return spiralPolys;
 }
 
 export const polygons = POLYS;

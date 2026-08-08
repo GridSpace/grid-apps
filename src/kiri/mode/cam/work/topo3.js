@@ -25,6 +25,7 @@ export class Topo {
             axis = contour.axis.toLowerCase(),
             contourX = axis === "x",
             contourY = axis === "y",
+            contourR = axis === "radial",
             bounds = widget.getBoundingBox().clone(),
             tolerance = contour.tolerance,
             flatness = contour.flatness || (tolerance / 100),
@@ -46,6 +47,8 @@ export class Topo {
             leave = contour.leave || 0,
             maxangle = contour.angle,
             curvesOnly = contour.curves,
+            curvesDistFraction = (contour.curvesDist !== undefined) ? contour.curvesDist : 0.5,
+            curvesDist = curvesDistFraction * toolDiameter,
             bridge = contour.bridging || 0,
             stepsX = Math.ceil(boundsX / resolution),
             stepsY = Math.ceil(boundsY / resolution),
@@ -74,15 +77,22 @@ export class Topo {
             tabsOn = tabs,
             tabHeight = Math.max(process.camTabsHeight + zBottom, tabsMax),
             clipTab = tabsOn ? [] : null,
-            clipTo = inside ? shadow.base : POLY.expand(shadow.base, toolDiameter / 2 + resolution * 3),
+            shadowBase = (contour.omitthru && shadow.holes) ? omitMatching(shadow.base, shadow.holes) : shadow.base,
+            clipTo = inside ? shadowBase : POLY.expand(shadowBase, toolDiameter / 2 + (contourR ? toolStep : 0) + resolution * 3),
             partOff = inside ? 0 : toolDiameter / 2 + resolution,
             gridDelta = Math.floor(partOff / resolution),
             debug_clips = true;
 
+        let clipStock = undefined;
         if (contour.clipto) {
             let { stock } = settings;
             let { center, x, y } = stock;
-            clipTo.push(newPolygon().centerRectangle(center, x, y));
+            let stockPoly = newPolygon().centerRectangle(center, x, y);
+            if (webGPU && !contour.nogpu && !contourR) {
+                clipTo.push(stockPoly);
+            } else {
+                clipStock = [ stockPoly ];
+            }
         }
 
         if (tolerance === 0 && !topoCache) {
@@ -107,6 +117,7 @@ export class Topo {
             const output = debug.output();
             if (clipTab) output.setLayer("clip.tab", { line: 0xff0000 }).addPolys(clipTab);
             if (clipTo) output.setLayer("clip.to", { line: 0x00dd00 }).addPolys(clipTo);
+            if (clipStock) output.setLayer("clip.stock", { line: 0xdd00dd }).addPolys(clipStock);
             newslices.push(debug);
         }
 
@@ -146,7 +157,7 @@ export class Topo {
 
             let trace = contour.trace;
             let gpu = await self.get_raster_gpu({
-                mode: trace ? "tracing" : "planar",
+                mode: contourR ? "tracing" : (trace ? "tracing" : "planar"),
                 resolution
             });
             let xStep = density;
@@ -162,13 +173,349 @@ export class Topo {
                 boundsOverride: wbounds
             });
             let { gridWidth, positions } = terrain;
-            // generate all scanline points passing tool over terrain
-            let output = await gpu.generateToolpaths({
-                xStep,
-                yStep,
-                zFloor: zBottom - 1,
-                onProgress(pct) { console.log({ pct }); onupdate(pct/100, 100) }
+
+            // Map GPU row-major positions to CPU column-major data
+            const rx = stepsX / boundsX;
+            const ry = stepsY / boundsY;
+            const grx = 1 / resolution;
+            const gridHeight = Math.ceil((wbounds.max.y - wbounds.min.y) / resolution) + 1;
+            for (let ix = 0; ix < stepsX; ix++) {
+                for (let iy = 0; iy < stepsY; iy++) {
+                    const px = minX + ix / rx;
+                    const py = minY + iy / ry;
+                    const gix = Math.round((px - wbounds.min.x) * grx);
+                    const giy = Math.round((py - wbounds.min.y) * grx);
+                    if (gix >= 0 && gix < gridWidth && giy >= 0 && giy < gridHeight) {
+                        const val = positions[giy * gridWidth + gix];
+                        data[ix * stepsY + iy] = (val === undefined || val <= -1e9) ? zMin : val;
+                    } else {
+                        data[ix * stepsY + iy] = zMin;
+                    }
+                }
+            }
+
+            // Run through-hole capping on CPU data if omitthru is enabled
+            if (contour.omitthru && shadow.holes && shadow.holes.length) {
+                const rx_cap = stepsX / boundsX;
+                for (let hole of shadow.holes) {
+                    const expHole = POLY.expand([hole], resolution * 1.5)[0];
+                    if (!expHole) continue;
+                    const hbounds = expHole.bounds;
+                    const min_ix = Math.max(0, Math.floor(rx_cap * (hbounds.minx - minX)));
+                    const max_ix = Math.min(stepsX - 1, Math.ceil(rx_cap * (hbounds.maxx - minX)));
+                    const min_iy = Math.max(0, Math.floor(rx_cap * (hbounds.miny - minY)));
+                    const max_iy = Math.min(stepsY - 1, Math.ceil(rx_cap * (hbounds.maxy - minY)));
+
+                    for (let ix = min_ix; ix <= max_ix; ix++) {
+                        for (let iy = min_iy; iy <= max_iy; iy++) {
+                            const idx = ix * stepsY + iy;
+                            if (data[idx] < zMin + 0.1) {
+                                const px = minX + ix / rx_cap;
+                                const py = minY + iy / rx_cap;
+                                const pt = newPoint(px, py);
+                                if (pt.isInPolygon(expHole)) {
+                                    let edgePt = null;
+                                    edgePt = hole.findClosestPointOnPerimeter(pt);
+                                    let outsidePt = edgePt;
+                                    const d = pt.distTo2D(edgePt);
+                                    if (d > 0.00001) {
+                                        const dx = (edgePt.x - pt.x) / d;
+                                        const dy = (edgePt.y - pt.y) / d;
+                                        outsidePt = newPoint(edgePt.x + dx * (resolution * 0.5), edgePt.y + dy * (resolution * 0.5));
+                                    }
+                                    let edge_ix = Math.max(0, Math.min(stepsX - 1, Math.round(rx_cap * (outsidePt.x - minX))));
+                                    let edge_iy = Math.max(0, Math.min(stepsY - 1, Math.round(rx_cap * (outsidePt.y - minY))));
+
+                                    if (edge_ix === ix && edge_iy === iy) {
+                                        const step_x = Math.sign(outsidePt.x - pt.x) || 0;
+                                        const step_y = Math.sign(outsidePt.y - pt.y) || 0;
+                                        let nx = Math.max(0, Math.min(stepsX - 1, ix + step_x));
+                                        let ny = Math.max(0, Math.min(stepsY - 1, iy + step_y));
+                                        if (nx !== ix || ny !== iy) {
+                                            edge_ix = nx;
+                                            edge_iy = ny;
+                                        }
+                                    }
+                                    data[idx] = data[edge_ix * stepsY + edge_iy];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Initialize probe on Topo instance for CPU-side trace verification/fallbacks
+            const probe = this.probe = new Probe({
+                profile: toolOffset,
+                data,
+                stepsX,
+                stepsY,
+                boundsX,
+                boundsY,
+                minX,
+                minY,
+                zMin
             });
+
+            this.toolAtZ = probe.toolAtZ;
+            this.toolAtXY = probe.toolAtXY;
+            this.zAtXY = probe.zAtXY;
+
+            // Generate 2D radial paths on the CPU if in Radial mode
+            let radial2DPaths = [];
+            let radialStep = resolution * density;
+            if (contourR) {
+                const centerX = (minX + maxX) / 2;
+                const centerY = (minY + maxY) / 2;
+                const partOff = inside ? 0 : toolDiameter / 2 + resolution;
+                const dx = maxX - centerX + partOff;
+                const dy = maxY - centerY + partOff;
+                const maxR = Math.sqrt(dx * dx + dy * dy);
+                const shape = (contour.shape || 'Concentric').toLowerCase();
+                const isConcentricLike = shape === 'concentric' || shape === 'spiral' || shape === 'concentric spiral' || shape === 'contour spiral';
+                const isSpiralLike = shape === 'spiral' || shape === 'concentric spiral' || shape === 'contour spiral';
+
+                if (isConcentricLike) {
+                    if (clipTo && clipTo.length) {
+                        let outs = [];
+                        POLY.offset(clipTo, -toolStep, { count: 999, outs: outs, flat: true, z: 0, minArea: 0.01 });
+
+                        let loops = [];
+                        for (let i = outs.length - 1; i >= 0; i--) {
+                            loops.push(outs[i].clone(true));
+                        }
+                        for (let poly of clipTo) {
+                            loops.push(poly.clone(true));
+                        }
+                        loops = POLY.flatten(loops, [], true);
+
+                        if (isSpiralLike) {
+                            loops = POLY.spiralize(loops);
+                        }
+
+                        for (let poly of loops) {
+                            const points = poly.points;
+                            const numPoints = points.length;
+                            if (numPoints < 2) continue;
+
+                            let subPoints = [];
+                            const limit = poly.open ? numPoints - 1 : numPoints;
+                            for (let i = 0; i < limit; i++) {
+                                const p1 = points[i];
+                                const p2 = points[(i + 1) % numPoints];
+                                const len = p1.distTo2D(p2);
+
+                                if (len > radialStep) {
+                                    const divisions = Math.ceil(len / radialStep);
+                                    for (let j = 0; j < divisions; j++) {
+                                        const pct = j / divisions;
+                                        subPoints.push(p1.x + (p2.x - p1.x) * pct, p1.y + (p2.y - p1.y) * pct);
+                                    }
+                                } else {
+                                    subPoints.push(p1.x, p1.y);
+                                }
+                            }
+                            if (poly.open && numPoints > 0) {
+                                let lastP = points[numPoints - 1];
+                                subPoints.push(lastP.x, lastP.y);
+                            }
+                            radial2DPaths.push(new Float32Array(subPoints));
+                        }
+                    }
+                }
+            }
+
+            let output;
+            if (contourR) {
+                if (radial2DPaths.length === 0) {
+                    gpu.terminate();
+                    ondone([], this);
+                    return this;
+                }
+                output = await gpu.generateToolpaths({
+                    paths: radial2DPaths,
+                    step: radialStep,
+                    zFloor: zBottom - 1,
+                    onProgress(pct) { onupdate(pct/100, 100) }
+                });
+            } else {
+                output = await gpu.generateToolpaths({
+                    xStep,
+                    yStep,
+                    zFloor: zBottom - 1,
+                    onProgress(pct) { console.log({ pct }); onupdate(pct/100, 100) }
+                });
+            }
+
+            if (contourR) {
+                // Post-process the 3D paths on CPU
+                gpu.terminate();
+                let slices = [];
+                let checkr = newPoint(0, 0);
+
+                this.trace = new Trace(this.probe, {
+                     curvesOnly,
+                     curvesDist,
+                     maxangle,
+                     flatness,
+                     bridge,
+                     contourX,
+                     contourR,
+                     leave,
+                     resolution,
+                     holes: (contour.omitthru && shadow.holes && shadow.holes.length) ? shadow.holes : null
+                 });
+
+                this.trace.init({
+                    box: wbounds.clone(),
+                    leave,
+                    clipTo,
+                    clipStock,
+                    clipTab,
+                    clipTabZ: clipTab ? clipTab.map(t => t.z) : undefined,
+                    tabHeight,
+                    resolution,
+                    concurrent: false,
+                    density
+                });
+
+                this.trace.newslice();
+
+                const shape = (contour.shape || 'Concentric').toLowerCase();
+                let loopIdx = 0;
+
+                for (let pathXYZ of output.paths) {
+                    let points = [];
+                    for (let i = 0; i < pathXYZ.length; i += 3) {
+                        points.push({ x: pathXYZ[i], y: pathXYZ[i+1], z: pathXYZ[i+2] });
+                    }
+
+                    if (shape === 'concentric') {
+                        let evaluated = [];
+                        let hasOut = false;
+                        for (let pt of points) {
+                            checkr.x = pt.x;
+                            checkr.y = pt.y;
+
+                            const inStock = !clipStock || this.trace.inClip(clipStock, undefined, checkr);
+                            const inShadow = !clipTo || this.trace.inClip(clipTo, undefined, checkr);
+                            const inClipPos = inStock && inShadow;
+
+                            if (!inClipPos) {
+                                hasOut = true;
+                                evaluated.push({ x: pt.x, y: pt.y, z: 0, inClip: false });
+                            } else {
+                                let tv = Math.max(pt.z, this.probe.zAtXY(pt.x, pt.y));
+                                if (clipTab && clipTab.length && tv < tabHeight && this.trace.inClip(clipTab, tv, checkr)) {
+                                    tv = this.trace.tabZ;
+                                }
+                                evaluated.push({ x: pt.x, y: pt.y, z: tv, inClip: true });
+                            }
+                        }
+
+                        if (hasOut) {
+                            let firstOutIdx = evaluated.findIndex(p => !p.inClip);
+                            let rotated = [...evaluated.slice(firstOutIdx), ...evaluated.slice(0, firstOutIdx)];
+
+                            let tracing = false;
+                            for (let pt of rotated) {
+                                if (pt.inClip) {
+                                    if (!tracing) {
+                                        this.trace.newtrace();
+                                        tracing = true;
+                                        this.trace.setLoopIndex(loopIdx);
+                                    }
+                                    this.trace.push_point(pt.x, pt.y, pt.z + leave);
+                                } else {
+                                    if (tracing) {
+                                        this.trace.end_poly();
+                                        tracing = false;
+                                    }
+                                }
+                            }
+                            if (tracing) {
+                                this.trace.end_poly();
+                            }
+                        } else {
+                            this.trace.newtrace();
+                            this.trace.setClosed();
+                            this.trace.setLoopIndex(loopIdx);
+
+                            const lastPt = evaluated[evaluated.length - 1];
+                            if (lastPt) {
+                                this.trace.setLastPoint(newPoint(lastPt.x, lastPt.y, lastPt.z + leave));
+                            }
+                            for (let pt of evaluated) {
+                                this.trace.push_point(pt.x, pt.y, pt.z + leave);
+                            }
+                            this.trace.end_poly();
+                        }
+                    } else {
+                        let tracing = false;
+                        this.trace.newtrace();
+
+                        for (let pt of points) {
+                            checkr.x = pt.x;
+                            checkr.y = pt.y;
+
+                            const inStock = !clipStock || this.trace.inClip(clipStock, undefined, checkr);
+                            const inShadow = !clipTo || this.trace.inClip(clipTo, undefined, checkr);
+                            const inClipPos = inStock && inShadow;
+
+                            if (!inClipPos) {
+                                if (tracing) {
+                                    this.trace.end_poly();
+                                    tracing = false;
+                                }
+                            } else {
+                                if (!tracing) {
+                                    this.trace.newtrace();
+                                    tracing = true;
+                                }
+                                let tv = Math.max(pt.z, this.probe.zAtXY(pt.x, pt.y));
+                                if (clipTab && clipTab.length && tv < tabHeight && this.trace.inClip(clipTab, tv, checkr)) {
+                                    tv = this.trace.tabZ;
+                                }
+                                this.trace.push_point(pt.x, pt.y, tv + leave);
+                            }
+                        }
+                        if (tracing) {
+                            this.trace.end_poly();
+                        }
+                    }
+                    loopIdx++;
+                }
+
+                let segments = this.trace.slice;
+                if (segments.length > 0) {
+                    if (shape === 'concentric') {
+                        let grouped = [];
+                        for (let seg of segments) {
+                            let lidx = seg.loopIndex ?? 0;
+                            if (!grouped[lidx]) {
+                                grouped[lidx] = [];
+                            }
+                            grouped[lidx].push(seg);
+                        }
+                        let sliceIdx = 0;
+                        for (let g of grouped) {
+                            if (g && g.length > 0) {
+                                let slice = newSlice(sliceIdx++);
+                                slice.camLines = g;
+                                slices.push(slice);
+                            }
+                        }
+                    } else {
+                        let slice = newSlice(0);
+                        slice.camLines = segments;
+                        slices.push(slice);
+                    }
+                }
+
+                ondone(slices, this);
+                return this;
+            }
+
             gpu.mode = 'tracing';
             // create coastline path around part for tip-to-tip travels
             // convert shadow/clip poly lines to raster float32 array groups
@@ -329,7 +676,7 @@ export class Topo {
                     onupdate(i, numScanlines);
                 }
             }
-            ondone(slices);
+            ondone(slices, this);
             return this;
         }
 
@@ -353,10 +700,15 @@ export class Topo {
 
         const trace = this.trace = new Trace(probe, {
             curvesOnly,
+            curvesDist,
             maxangle,
             flatness,
             bridge,
-            contourX
+            contourX,
+            contourR,
+            resolution,
+            leave,
+            holes: (contour.omitthru && shadow.holes && shadow.holes.length) ? shadow.holes : null
         });
 
         if (topo.raster) {
@@ -381,6 +733,80 @@ export class Topo {
             topo.raster = false;
         }
 
+        // THROUGH-HOLE CAPPING LOGIC (OMIT THROUGH option):
+        // If the user wants to omit milling through-holes, we find all grid cells that fall inside
+        // any through-hole polygon. Since a through-hole has a depth of 'zMin' (air/empty space), we
+        // "cap" the grid cell by copying the height of the nearest solid wall/boundary. This fools
+        // the z-height probe into believing the hole is filled at solid part height, preventing
+        // the tool from plunging down or generating toolpaths inside the hole.
+        if (contour.omitthru && shadow.holes && shadow.holes.length) {
+            let cappedCount = 0;
+            const rx = stepsX / boundsX; // Coordinate scaling factor
+            for (let hole of shadow.holes) {
+                // Expand the boundary check slightly (by 1.5 * resolution) to capture boundary cells
+                // that may be slightly on the edge of the polygon due to grid discretization.
+                const expHole = POLY.expand([hole], resolution * 1.5)[0];
+                if (!expHole) continue;
+                const hbounds = expHole.bounds;
+                // Crop search range to the hole's bounding box to keep loop iterations fast
+                const min_ix = Math.max(0, Math.floor(rx * (hbounds.minx - minX)));
+                const max_ix = Math.min(stepsX - 1, Math.ceil(rx * (hbounds.maxx - minX)));
+                const min_iy = Math.max(0, Math.floor(rx * (hbounds.miny - minY)));
+                const max_iy = Math.min(stepsY - 1, Math.ceil(rx * (hbounds.maxy - minY)));
+
+                for (let ix = min_ix; ix <= max_ix; ix++) {
+                    for (let iy = min_iy; iy <= max_iy; iy++) {
+                        const idx = ix * stepsY + iy;
+                        // Only cap empty cells (having a height near zMin) to avoid overwriting solid geometry
+                        if (data[idx] < zMin + 0.1) {
+                            const px = minX + ix / rx;
+                            const py = minY + iy / rx;
+                            const pt = newPoint(px, py);
+                            if (pt.isInPolygon(expHole)) {
+                                // Find the closest boundary point on the original unexpanded hole perimeter
+                                let edgePt = null;
+                                if (axis === 'x') {
+                                    edgePt = hole.snapToIntersectionX(pt);
+                                } else if (axis === 'y') {
+                                    edgePt = hole.snapToIntersectionY(pt);
+                                }
+                                if (!edgePt) {
+                                    edgePt = hole.findClosestPointOnPerimeter(pt);
+                                }
+                                let outsidePt = edgePt;
+                                const d = pt.distTo2D(edgePt);
+                                if (d > 0.00001) {
+                                    // Project the coordinate slightly outward (by half a grid step) into the solid part
+                                    // to ensure we sample a clean height from the solid part instead of a transitional edge.
+                                    const dx = (edgePt.x - pt.x) / d;
+                                    const dy = (edgePt.y - pt.y) / d;
+                                    outsidePt = newPoint(edgePt.x + dx * (resolution * 0.5), edgePt.y + dy * (resolution * 0.5));
+                                }
+                                let edge_ix = Math.max(0, Math.min(stepsX - 1, Math.round(rx * (outsidePt.x - minX))));
+                                let edge_iy = Math.max(0, Math.min(stepsY - 1, Math.round(rx * (outsidePt.y - minY))));
+
+                                // Fallback: if the outward projection still maps to the same grid cell ix/iy,
+                                // step one grid cell away in the direction of the boundary to guarantee we fetch solid height.
+                                if (edge_ix === ix && edge_iy === iy) {
+                                    const step_x = Math.sign(outsidePt.x - pt.x) || 0;
+                                    const step_y = Math.sign(outsidePt.y - pt.y) || 0;
+                                    let nx = Math.max(0, Math.min(stepsX - 1, ix + step_x));
+                                    let ny = Math.max(0, Math.min(stepsY - 1, iy + step_y));
+                                    if (nx !== ix || ny !== iy) {
+                                        edge_ix = nx;
+                                        edge_iy = ny;
+                                    }
+                                }
+                                // Copy the height from the solid part edge cell onto the hole cell
+                                data[idx] = data[edge_ix * stepsY + edge_iy];
+                                cappedCount++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         await this.contour({
             box: topo.box,
             minX,
@@ -397,18 +823,21 @@ export class Topo {
             toolStep,
             contourX,
             contourY,
+            contourR,
             density,
             clipTo,
+            clipStock,
             clipTab,
             clipTabZ: clipTab ? clipTab.map(t => t.z) : undefined,
             tabHeight,
             newslices,
-            leave
+            leave,
+            shape: contour.shape
         }, (i, l, p) => {
             onupdate(l / 2 + i / 2, l, p);
         });
 
-        ondone(newslices);
+        ondone(newslices, this);
 
         return this;
     }
@@ -529,8 +958,8 @@ export class Topo {
         const concurrent = self.kiri_worker.minions.running;
 
         const { minX, maxX, minY, maxY, boundsX, boundsY, stepsX, stepsY } = params;
-        const { gridDelta, resolution, density, partOff, toolStep, contourX, contourY } = params;
-        const { clipTo, clipTab, clipTabZ, tabHeight, newslices, leave } = params;
+        const { gridDelta, resolution, density, partOff, toolStep, contourX, contourY, contourR } = params;
+        const { clipTo, clipStock, clipTab, clipTabZ, tabHeight, newslices, leave, shape } = params;
 
         let stepsTaken = 0,
             stepsTotal = 0;
@@ -541,6 +970,17 @@ export class Topo {
 
         if (contourY) {
             stepsTotal += ((maxX - minX + partOff * 2) / toolStep) | 0;
+        }
+
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+        const dx = maxX - centerX + partOff;
+        const dy = maxY - centerY + partOff;
+        const maxR = Math.sqrt(dx * dx + dy * dy);
+        const totalTurns = maxR / toolStep;
+
+        if (contourR) {
+            stepsTotal += Math.ceil(totalTurns);
         }
 
         if (stepsTotal === 0) {
@@ -555,11 +995,12 @@ export class Topo {
             box,
             leave,
             clipTo,
+            clipStock,
             clipTab,
             clipTabZ,
             tabHeight,
             resolution,
-            concurrent,
+            concurrent: contourR ? false : concurrent,
             density
         });
 
@@ -567,13 +1008,16 @@ export class Topo {
         let pcount = 0;
         let slicesY = [];
         let slicesX = [];
+        let slicesR = [];
         let promise = new Promise(resolve => {
             resolver = () => {
                 // sort output slices (required for async)
                 slicesY.sort((a, b) => a.z - b.z);
                 slicesX.sort((a, b) => a.z - b.z);
+                slicesR.sort((a, b) => a.z - b.z);
                 newslices.appendAll(slicesY);
                 newslices.appendAll(slicesX);
+                newslices.appendAll(slicesR);
                 resolve();
             }
         });
@@ -632,6 +1076,82 @@ export class Topo {
             }
         }
 
+        if (contourR) {
+            onupdate(0, stepsTotal, "contour radial");
+            inc();
+            trace.crossRadial({
+                centerX,
+                centerY,
+                maxR,
+                toolStep,
+                shape: (shape || 'Concentric').toLowerCase()
+            }, segments => {
+                if (segments.length > 0) {
+                    const lshape = (shape || 'Concentric').toLowerCase();
+                    if (lshape === 'concentric') {
+                        // Export each loop as a separate slice
+                        let grouped = [];
+                        for (let seg of segments) {
+                            let lidx = seg.loopIndex ?? 0;
+                            if (!grouped[lidx]) {
+                                grouped[lidx] = [];
+                            }
+                            grouped[lidx].push(seg);
+                        }
+                        let sliceIdx = 0;
+                        for (let g of grouped) {
+                            if (g && g.length > 0) {
+                                let slice = newSlice(sliceIdx++);
+                                slice.camLines = g;
+                                slicesR.push(slice);
+                            }
+                        }
+                    } else if (lshape === 'spiral' || lshape === 'concentric spiral' || lshape === 'contour spiral') {
+                        // Contour/Concentric Spiral mode: split into separate slices (revolutions)
+                        let sliceIdx = 0;
+                        for (let segIdx = 0; segIdx < segments.length; segIdx++) {
+                            let seg = segments[segIdx];
+                            let rN = seg.resampleN || 100;
+                            let points = seg.points;
+                            let ptsCount = points.length;
+                            for (let i = 0; i < ptsCount; i += rN) {
+                                let start = Math.max(0, i - 1);
+                                let end = Math.min(ptsCount, i + rN);
+                                if (end - start < 2) continue;
+
+                                let slice = newSlice(sliceIdx++);
+                                let chunkPoly = newPolygon(points.slice(start, end));
+                                chunkPoly.setOpen();
+                                chunkPoly.spiralId = segIdx;
+                                slice.camLines = [ chunkPoly ];
+                                slicesR.push(slice);
+                            }
+                        }
+                    } else {
+                        // Fallback to Concentric slice building if shape is unrecognized
+                        let grouped = [];
+                        for (let seg of segments) {
+                            let lidx = seg.loopIndex ?? 0;
+                            if (!grouped[lidx]) {
+                                grouped[lidx] = [];
+                            }
+                            grouped[lidx].push(seg);
+                        }
+                        let sliceIdx = 0;
+                        for (let g of grouped) {
+                            if (g && g.length > 0) {
+                                let slice = newSlice(sliceIdx++);
+                                slice.camLines = g;
+                                slicesR.push(slice);
+                            }
+                        }
+                    }
+                }
+                onupdate(stepsTotal, stepsTotal, "contour radial");
+                dec();
+            });
+        }
+
         if (!concurrent) resolver();
 
         await promise;
@@ -650,7 +1170,7 @@ export class Probe {
     constructor(params) {
 
         const { data, profile } = params;
-        const { stepsX, stepsY, boundsX, zMin, minX, minY } = params;
+        const { stepsX, stepsY, boundsX, boundsY, zMin, minX, minY } = params;
 
         this.params = params;
 
@@ -684,7 +1204,7 @@ export class Probe {
 
         // export z probe function
         const rx = stepsX / boundsX;
-        const ry = stepsX / boundsX;
+        const ry = stepsY / boundsY;
         const toolAtXY = this.toolAtXY = function (px, py) {
             px = Math.round(rx * (px - minX));
             py = Math.round(ry * (py - minY));
@@ -704,26 +1224,85 @@ export class Trace {
 
     constructor(probe, params) {
 
-        const { curvesOnly, maxangle, flatness, bridge, contourX, leave } = params;
+        const { curvesOnly, curvesDist, maxangle, flatness, bridge, contourX, contourR, leave, resolution } = params;
 
         this.params = params;
         this.probe = probe;
+
+        // Structured cloning to parallel workers strips getters/prototypes from Polygon objects.
+        // We guarantee that all through-hole boundary polygons have their bounds defined with a
+        // containsXY(x, y) check so that subsequent slope-masking tests on the worker don't crash.
+        if (params.holes) {
+            for (let hole of params.holes) {
+                if (!hole.bounds) {
+                    let minx = Infinity, maxx = -Infinity, miny = Infinity, maxy = -Infinity;
+                    for (let p of hole.points) {
+                        if (p.x < minx) minx = p.x;
+                        if (p.x > maxx) maxx = p.x;
+                        if (p.y < miny) miny = p.y;
+                        if (p.y > maxy) maxy = p.y;
+                    }
+                    const hb = {
+                        minx, maxx, miny, maxy,
+                        containsXY(x, y) {
+                            return x >= this.minx && x <= this.maxx && y >= this.miny && y <= this.maxy;
+                        }
+                    };
+                    Object.defineProperty(hole, 'bounds', {
+                        value: hb,
+                        writable: true,
+                        configurable: true
+                    });
+                }
+            }
+        }
 
         let trace,
             slice,
             latent,
             lastPP,
-            lastSlope;
+            lastSlope,
+            flatBuffer = [],
+            flatDist = 0,
+            splitDone = false;
 
         const newslice = this.newslice = () => {
             this.slice = slice = [];
         }
 
+        // Expose helper methods on the Trace class instance to cleanly forward parameters
+        // to the active polygon being generated, or to set initial/previous tracing state.
+        const setClosed = this.setClosed = function () {
+            if (trace) trace.open = false;
+        };
+
+        const setLoopIndex = this.setLoopIndex = function (idx) {
+            if (trace) trace.loopIndex = idx;
+        };
+
+        const setResampleN = this.setResampleN = function (n) {
+            if (trace) trace.resampleN = n;
+        };
+
+        const setLastPoint = this.setLastPoint = function (point) {
+            lastPP = point;
+        };
+
         const newtrace = this.newtrace = function () {
-            trace = newPolygon().setOpen();
+            trace = object.trace = newPolygon().setOpen();
         }
 
         const end_poly = this.end_poly = function (point) {
+            if (flatBuffer.length > 0) {
+                if (!splitDone) {
+                    for (let p of flatBuffer) {
+                        trace.push(p);
+                    }
+                }
+                flatBuffer = [];
+                flatDist = 0;
+                splitDone = false;
+            }
             if (latent) {
                 trace.push(latent);
             }
@@ -732,7 +1311,11 @@ export class Trace {
                 if (trace.length > 1) {
                     slice.push(trace);
                 }
+                const oldIdx = trace.loopIndex;
+                const oldN = trace.resampleN;
                 newtrace();
+                trace.loopIndex = oldIdx;
+                trace.resampleN = oldN;
             }
             lastPP = undefined;
             latent = undefined;
@@ -758,28 +1341,154 @@ export class Trace {
             const lastP = lastPP;
 
             if (lastP) {
+                // If "Curves Only" is active, check if the point is inside a through-hole.
+                // If inside a hole, we split the toolpath immediately at the boundary and skip the point.
+                let inHole = false;
+                if (curvesOnly && params.holes) {
+                    for (let hole of params.holes) {
+                        const hb = hole.bounds;
+                        if (newP.x >= hb.minx && newP.x <= hb.maxx && newP.y >= hb.miny && newP.y <= hb.maxy) {
+                            if (newP.isInPolygon(hole)) {
+                                inHole = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (inHole) {
+                    if (!splitDone) {
+                        trace.setOpen();
+                        flatBuffer = [];
+                        end_poly();
+                        splitDone = true;
+                    }
+                    flatBuffer = [];
+                    flatDist = 0;
+                    lastPP = newP;
+                    return;
+                }
+
                 const dl = (x - lastP.x) || (y - lastP.y);
                 const dz = z - lastP.z;
-                const slope = Math.atan2(dz, dl);
-                if (curvesOnly && Math.abs(dz) < flatness) {
-                    end_poly(newP);
-                } else if (lastSlope !== undefined && Math.abs(lastSlope - slope) < flatness) {
-                    latent = newP;
-                } else {
-                    if (latent) {
-                        trace.push(latent);
-                        latent = undefined;
+
+                let isFlat = false;
+                if (curvesOnly) {
+                    if (contourR) {
+                        // RADIAL LOCAL SURFACE SLOPE DETECTION (Curves Only mode):
+                        // Radial/Concentric toolpaths move along a curved path. We cannot check flatness
+                        // purely by comparing adjacent toolpath points (Math.abs(dz)) because height changes
+                        // along concentric arcs on sloped/spherical profiles can be tiny.
+                        // Instead, we probe the terrain height in orthogonal directions (+/- delta) around (x, y).
+                        const delta = Math.max(resolution * 2, 0.05);
+                        const z0 = probe.zAtXY(x, y);
+
+                        // Mask through-holes: if a probed coordinates falls inside a through-hole, we return
+                        // the height of the center point (z0). This prevents cliff-edges around through-holes
+                        // from registering as "sloped" and generating stray finishing toolpaths near hole boundaries.
+                        const getSlopeZ = (px, py) => {
+                            if (params.holes) {
+                                for (let hole of params.holes) {
+                                    const hb = hole.bounds;
+                                    if (px >= hb.minx && px <= hb.maxx && py >= hb.miny && py <= hb.maxy) {
+                                        if (newPoint(px, py).isInPolygon(hole)) {
+                                            return z0;
+                                        }
+                                    }
+                                }
+                            }
+                            return probe.zAtXY(px, py);
+                        };
+                        const zX1 = getSlopeZ(x + delta, y);
+                        const zX2 = getSlopeZ(x - delta, y);
+                        const zY1 = getSlopeZ(x, y + delta);
+                        const zY2 = getSlopeZ(x, y - delta);
+
+                        // Scale slopeFlatness with delta to maintain a consistent angle threshold (~3 degrees)
+                        const slopeFlatness = Math.max(delta * 0.05, 0.002);
+                        const isSurfaceSloped =
+                            Math.abs(zX1 - z0) >= slopeFlatness ||
+                            Math.abs(zX2 - z0) >= slopeFlatness ||
+                            Math.abs(zY1 - z0) >= slopeFlatness ||
+                            Math.abs(zY2 - z0) >= slopeFlatness;
+
+                        // The point is flat if the toolpath height change is minimal AND the surrounding surface has no slope
+                        isFlat = Math.abs(dz) < slopeFlatness && !isSurfaceSloped;
+                    } else {
+                        isFlat = Math.abs(dz) < flatness;
                     }
+                }
+
+                if (isFlat) {
+                    if (flatBuffer.length === 0) {
+                        flatBuffer.push(newP);
+                        flatDist = lastP.distTo2D(newP);
+                        splitDone = false;
+                    } else {
+                        flatDist += flatBuffer[flatBuffer.length - 1].distTo2D(newP);
+                        flatBuffer.push(newP);
+                    }
+
+                    if (flatDist > curvesDist) {
+                        if (!splitDone) {
+                            trace.setOpen();
+                            // Empty flatBuffer before calling end_poly to ensure we discard the flat segment
+                            // we are splitting at, rather than flushing the flat points into the ended segment.
+                            flatBuffer = [];
+                            end_poly();
+                            splitDone = true;
+                        }
+                        flatBuffer = [newP];
+                    }
+                    lastPP = newP;
+                    return;
+                }
+
+                // If we were in a flat region, flush it now before handling the sloped/steep point
+                if (flatBuffer.length > 0) {
+                    if (splitDone) {
+                        trace.push(flatBuffer[flatBuffer.length - 1]);
+                    } else {
+                        for (let p of flatBuffer) {
+                            trace.push(p);
+                        }
+                    }
+                    flatBuffer = [];
+                    flatDist = 0;
+                    splitDone = false;
+                }
+
+                if (contourR) {
                     if (curvesOnly) {
-                        const dv = contourX ? Math.abs(lastP.x - x) : Math.abs(lastP.y - y);
+                        const dv = lastP.distTo2D(newP);
                         const angle = Math.atan2(Math.abs(dz), dv) * RAD2DEG;
                         if (angle > maxangle) {
+                            trace.setOpen();
                             end_poly();
                         }
                     }
                     trace.push(newP);
+                } else {
+                    const slope = Math.atan2(dz, dl);
+                    if (lastSlope !== undefined && Math.abs(lastSlope - slope) < flatness) {
+                        latent = newP;
+                    } else {
+                        if (latent) {
+                            trace.push(latent);
+                            latent = undefined;
+                        }
+                        if (curvesOnly) {
+                            const dv = contourX ? Math.abs(lastP.x - x) : Math.abs(lastP.y - y);
+                            const angle = Math.atan2(Math.abs(dz), dv) * RAD2DEG;
+                            if (angle > maxangle) {
+                                trace.setOpen();
+                                end_poly();
+                            }
+                        }
+                        trace.push(newP);
+                    }
+                    lastSlope = slope;
                 }
-                lastSlope = slope;
             } else {
                 trace.push(newP);
             }
@@ -866,7 +1575,7 @@ export class Trace {
 
     crossY_sync(params, then) {
         const { push_point, end_poly, newtrace, newslice, inClip } = this.object;
-        const { clipTab, tabHeight, clipTo, box, resolution, density, leave } = this.cross;
+        const { clipTab, tabHeight, clipTo, clipStock, box, resolution, density, leave } = this.cross;
         const { toolAtZ } = this.probe;
 
         let { from, to, x, gridx, gridy } = params;
@@ -889,9 +1598,10 @@ export class Trace {
             if (clipTab && clipTab.length && tv < tabHeight && inClip(clipTab, tv, checkr)) {
                 tv = this.tabZ;
             }
-            // if the value is on the floor and inside the clip
-            // poly (usually shadow), end the segment
-            if (clipTo && !inClip(clipTo, undefined, checkr)) {
+            // clip to stock AND shadow (intersection)
+            const inStock = !clipStock || inClip(clipStock, undefined, checkr);
+            const inShadow = !clipTo || inClip(clipTo, undefined, checkr);
+            if (!inStock || !inShadow) {
                 end_poly();
                 gridy += density;
                 continue;
@@ -905,7 +1615,7 @@ export class Trace {
 
     crossX_sync(params, then) {
         const { push_point, end_poly, newtrace, newslice, inClip } = this.object;
-        const { clipTab, tabHeight, clipTo, box, resolution, density, leave } = this.cross;
+        const { clipTab, tabHeight, clipTo, clipStock, box, resolution, density, leave } = this.cross;
         const { toolAtZ } = this.probe;
         let { from, to, y, gridx, gridy } = params;
 
@@ -927,9 +1637,10 @@ export class Trace {
             if (clipTab && clipTab.length && tv < tabHeight && inClip(clipTab, tv, checkr)) {
                 tv = this.tabZ;
             }
-            // if the value is on the floor and inside the clip
-            // poly (usually shadow), end the segment
-            if (clipTo && !inClip(clipTo, undefined, checkr)) {
+            // clip to stock AND shadow (intersection)
+            const inStock = !clipStock || inClip(clipStock, undefined, checkr);
+            const inShadow = !clipTo || inClip(clipTo, undefined, checkr);
+            if (!inStock || !inShadow) {
                 end_poly();
                 gridx += density;
                 continue;
@@ -938,6 +1649,317 @@ export class Trace {
             gridx += density;
         }
         end_poly();
+        then(this.slice);
+    }
+
+    crossRadial(params, then) {
+        const { minions } = self.kiri_worker || {};
+        const { clipTo, toolStep, resolution, density } = this.cross;
+        const shape = (params.shape || 'Concentric').toLowerCase();
+
+        if (minions && minions.running > 1 && this.cross.concurrent) {
+            if (shape === 'concentric') {
+                if (clipTo && clipTo.length) {
+                    let outs = [];
+                    POLY.offset(clipTo, -toolStep, { count: 999, outs: outs, flat: true, z: 0, minArea: 0.01 });
+
+                    let loops = [];
+                    for (let i = outs.length - 1; i >= 0; i--) {
+                        loops.push(outs[i].clone(true));
+                    }
+                    for (let poly of clipTo) {
+                        loops.push(poly.clone(true));
+                    }
+                    loops = POLY.flatten(loops, [], true);
+
+                    let promises = [];
+                    let loopIdx = 0;
+                    for (let poly of loops) {
+                        const lidx = loopIdx;
+                        promises.push(new Promise(resolve => {
+                            minions.queue({
+                                cmd: "trace_radial",
+                                params: {
+                                    ...params,
+                                    loop: poly.toObject(),
+                                    loopIdx: lidx
+                                }
+                            }, data => {
+                                resolve(codec.decode(data.slice));
+                            });
+                        }));
+                        loopIdx++;
+                    }
+                    Promise.all(promises).then(slices => {
+                        let merged = [];
+                        for (let slice of slices) {
+                            if (slice) {
+                                merged.push(...slice);
+                            }
+                        }
+                        then(merged);
+                    });
+                } else {
+                    then([]);
+                }
+            } else if (shape === 'spiral' || shape === 'concentric spiral' || shape === 'contour spiral') {
+                this.crossRadial_sync(params, then);
+            }
+        } else {
+            this.crossRadial_sync(params, then);
+        }
+    }
+
+    crossRadial_sync(params, then) {
+        const { push_point, end_poly, newtrace, newslice, inClip } = this.object;
+        const { clipTab, tabHeight, clipTo, clipStock, box, resolution, density, leave } = this.cross;
+        const { toolAtXY } = this.probe;
+
+        let { centerX, centerY, maxR, toolStep, shape } = params;
+
+        // Step resolution along the curve/polygon
+        const step = resolution * density;
+        const checkr = newPoint(0, 0);
+
+        newslice();
+
+        const lshape = (shape || 'Concentric').toLowerCase();
+        const isConcentricLike = lshape === 'concentric' || lshape === 'spiral' || lshape === 'concentric spiral' || lshape === 'contour spiral';
+        const isSpiralLike = lshape === 'spiral' || lshape === 'concentric spiral' || lshape === 'contour spiral';
+
+        if (isConcentricLike) {
+            // CONCENTRIC SHAPE GENERATION:
+            // Generates closed concentric loop paths from the innermost region to the outer perimeter.
+            if (params.loop) {
+                let poly = newPolygon().fromObject(params.loop);
+                let loopIdx = params.loopIdx;
+                const self_trace = this;
+
+                const points = poly.points;
+                const numPoints = points.length;
+                if (numPoints >= 2) {
+                    // 1. Subdivide loop segments:
+                    let subPoints = [];
+                    for (let i = 0; i < numPoints; i++) {
+                        const p1 = points[i];
+                        const p2 = points[(i + 1) % numPoints];
+                        const len = p1.distTo2D(p2);
+
+                        if (len > step) {
+                            const divisions = Math.ceil(len / step);
+                            for (let j = 0; j < divisions; j++) {
+                                const pct = j / divisions;
+                                const x = p1.x + (p2.x - p1.x) * pct;
+                                const y = p1.y + (p2.y - p1.y) * pct;
+                                subPoints.push({ x, y });
+                            }
+                        } else {
+                            subPoints.push({ x: p1.x, y: p1.y });
+                        }
+                    }
+
+                    // 2. Evaluate clipping and probe Z height for each point:
+                    let evaluated = [];
+                    let hasOut = false;
+
+                    for (let pt of subPoints) {
+                        checkr.x = pt.x;
+                        checkr.y = pt.y;
+
+                        const inStock = !clipStock || inClip(clipStock, undefined, checkr);
+                        const inShadow = !clipTo || inClip(clipTo, undefined, checkr);
+                        const inClipPos = inStock && inShadow;
+
+                        if (!inClipPos) {
+                            hasOut = true;
+                            evaluated.push({ x: pt.x, y: pt.y, z: 0, inClip: false });
+                        } else {
+                            let tv = toolAtXY(pt.x, pt.y);
+                            if (clipTab && clipTab.length && tv < tabHeight && inClip(clipTab, tv, checkr)) {
+                                tv = this.tabZ;
+                            }
+                            evaluated.push({ x: pt.x, y: pt.y, z: tv, inClip: true });
+                        }
+                    }
+
+                    // 3. Emit points using state machine:
+                    if (hasOut) {
+                        let firstOutIdx = evaluated.findIndex(p => !p.inClip);
+                        let rotated = [...evaluated.slice(firstOutIdx), ...evaluated.slice(0, firstOutIdx)];
+
+                        let tracing = false;
+                        for (let pt of rotated) {
+                            if (pt.inClip) {
+                                if (!tracing) {
+                                    newtrace();
+                                    tracing = true;
+                                    self_trace.setLoopIndex(loopIdx);
+                                }
+                                push_point(pt.x, pt.y, pt.z + leave);
+                            } else {
+                                if (tracing) {
+                                    end_poly();
+                                    tracing = false;
+                                }
+                            }
+                        }
+                        if (tracing) {
+                            end_poly();
+                        }
+                    } else {
+                        newtrace();
+                        self_trace.setClosed();
+                        self_trace.setLoopIndex(loopIdx);
+
+                        const lastPt = evaluated[evaluated.length - 1];
+                        if (lastPt) {
+                            self_trace.setLastPoint(newPoint(lastPt.x, lastPt.y, lastPt.z + leave));
+                        }
+                        for (let pt of evaluated) {
+                            push_point(pt.x, pt.y, pt.z + leave);
+                        }
+                        end_poly();
+                    }
+                }
+            } else if (clipTo && clipTo.length) {
+                let outs = [];
+                // Use POLY.offset to generate concentric toolpath offsets (step-over) from the boundary.
+                // -toolStep is used to offset inwards. We offset on the 2D plane (z: 0) and then probe Z height.
+                POLY.offset(clipTo, -toolStep, { count: 999, outs: outs, flat: true, z: 0, minArea: 0.01 });
+
+                // We want to cut from the inside out to minimize tool deflection and vibration.
+                // POLY.offset generates paths from outside-in: [first offset, second offset, ..., innermost]
+                // We reverse the array to cut from [innermost, ..., second offset, first offset].
+                let loops = [];
+                for (let i = outs.length - 1; i >= 0; i--) {
+                    loops.push(outs[i].clone(true));
+                }
+                // Append the original boundary (clipTo) at the end so we perform a final perimeter pass.
+                for (let poly of clipTo) {
+                    loops.push(poly.clone(true));
+                }
+                loops = POLY.flatten(loops, [], true);
+
+                if (isSpiralLike) {
+                    loops = POLY.spiralize(loops);
+                }
+
+                const self_trace = this;
+
+                let loopIdx = 0;
+                for (let poly of loops) {
+                    if (isSpiralLike) {
+                        self_trace.setResampleN(poly.resampleN);
+                    }
+                    const points = poly.points;
+                    const numPoints = points.length;
+                    if (numPoints < 2) continue;
+
+                    // 1. Subdivide loop segments:
+                    // Subdivides long segments into smaller points spaced by 'step'. This guarantees
+                    // we have enough point density to accurately sample the 3D surface heights.
+                    let subPoints = [];
+                    const limit = poly.open ? numPoints - 1 : numPoints;
+                    for (let i = 0; i < limit; i++) {
+                        const p1 = points[i];
+                        const p2 = points[(i + 1) % numPoints];
+                        const len = p1.distTo2D(p2);
+
+                        if (len > step) {
+                            const divisions = Math.ceil(len / step);
+                            for (let j = 0; j < divisions; j++) {
+                                const pct = j / divisions;
+                                const x = p1.x + (p2.x - p1.x) * pct;
+                                const y = p1.y + (p2.y - p1.y) * pct;
+                                subPoints.push({ x, y });
+                            }
+                        } else {
+                            subPoints.push({ x: p1.x, y: p1.y });
+                        }
+                    }
+                    if (poly.open && numPoints > 0) {
+                        let lastP = points[numPoints - 1];
+                        subPoints.push({ x: lastP.x, y: lastP.y });
+                    }
+
+                    // 2. Evaluate clipping and probe Z height for each point:
+                    // Checks if each point is inside the stock and shadow bounds, then probes the topography.
+                    let evaluated = [];
+                    let hasOut = false;
+
+                    for (let pt of subPoints) {
+                        checkr.x = pt.x;
+                        checkr.y = pt.y;
+
+                        const inStock = !clipStock || inClip(clipStock, undefined, checkr);
+                        const inShadow = !clipTo || inClip(clipTo, undefined, checkr);
+                        const inClipPos = inStock && inShadow;
+
+                        if (!inClipPos) {
+                            hasOut = true;
+                            evaluated.push({ x: pt.x, y: pt.y, z: 0, inClip: false });
+                        } else {
+                            let tv = toolAtXY(pt.x, pt.y);
+                            if (clipTab && clipTab.length && tv < tabHeight && inClip(clipTab, tv, checkr)) {
+                                tv = this.tabZ;
+                            }
+                            evaluated.push({ x: pt.x, y: pt.y, z: tv, inClip: true });
+                        }
+                    }
+
+                    // 3. Emit points using state machine:
+                    if (hasOut || poly.open) {
+                        // PARTIAL CLIPPING: If the loop intersects the boundaries (i.e. goes out of stock),
+                        // we must split it into open segments. We find the first out-of-clip point and rotate the array
+                        // so it starts outside. For open paths, we do not rotate.
+                        let rotated = evaluated;
+                        if (hasOut && !poly.open) {
+                            let firstOutIdx = evaluated.findIndex(p => !p.inClip);
+                            rotated = [...evaluated.slice(firstOutIdx), ...evaluated.slice(0, firstOutIdx)];
+                        }
+
+                        let tracing = false;
+                        for (let pt of rotated) {
+                            if (pt.inClip) {
+                                if (!tracing) {
+                                    newtrace();
+                                    tracing = true;
+                                    self_trace.setLoopIndex(loopIdx);
+                                }
+                                push_point(pt.x, pt.y, pt.z + leave);
+                            } else {
+                                if (tracing) {
+                                    end_poly();
+                                    tracing = false;
+                                }
+                            }
+                        }
+                        if (tracing) {
+                            end_poly();
+                        }
+                    } else {
+                        // NO CLIPPING: If the loop is fully within stock and boundaries, emit as a single closed loop.
+                        newtrace();
+                        self_trace.setClosed();
+                        self_trace.setLoopIndex(loopIdx);
+
+                        // Seed the starting lastPP with the final point of the loop.
+                        // This maintains circular continuity, so the first point is checked for flatness
+                        // against the last point of the loop, preventing CW vs. CCW starting point asymmetry.
+                        const lastPt = evaluated[evaluated.length - 1];
+                        if (lastPt) {
+                            self_trace.setLastPoint(newPoint(lastPt.x, lastPt.y, lastPt.z + leave));
+                        }
+                        for (let pt of evaluated) {
+                            push_point(pt.x, pt.y, pt.z + leave);
+                        }
+                        end_poly();
+                    }
+                    loopIdx++;
+                }
+            }
+        }
+
         then(this.slice);
     }
 }
@@ -1032,6 +2054,31 @@ export function raster_slice(inputs) {
 
     return points;
 };
+
+function omitMatching(target, matches) {
+    target = target.clone(true);
+    for (let poly of target.filter(p => p.inner)) {
+        poly.inner = poly.inner.filter(inner => {
+            let innerCenter = inner.bounds.center();
+            for (let ho of matches) {
+                if (inner.isEquivalent(ho, false, 0.2)) {
+                    return false;
+                }
+                // Fallback check: if the center of the sliced hole is inside the matching hole,
+                // and their areas are within a 20% tolerance threshold.
+                let hoArea = Math.abs(ho.area());
+                let innerArea = Math.abs(inner.area());
+                if (hoArea > 0.001 && Math.abs(hoArea - innerArea) / hoArea < 0.2) {
+                    if (innerCenter.isInPolygon(ho)) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        });
+    }
+    return target;
+}
 
 export async function generate(opt) {
     return new Topo().generate(opt);

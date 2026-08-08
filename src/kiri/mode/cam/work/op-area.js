@@ -27,8 +27,9 @@ class OpArea extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { direction, down, expand, flats, flatOff, follow } = op;
+        let { direction, down, expand, flats, flatOff, follow, omitthru } = op;
         let { mode, outline, over, rename, smooth, tool } = op;
+        let sr_type = (mode === 'clear' ? op.sr_type_clear : op.sr_type_surf) || op.sr_type || 'concentric';
         let { addSlices, axisIndex, color, cutTabs, settings } = state;
         let { shadowAt, setToolDiam, tabs, widget, workarea } = state;
 
@@ -210,6 +211,9 @@ class OpArea extends CamOp {
                     POLY.offset(clip, offsets, {
                         count: op.walls ? 1 : (op.steps ?? 999), outs, flat: true, z: z - zMov, ...offopt
                     });
+                    if (sr_type === 'spiral' || sr_type === 'concentric spiral') {
+                        outs = POLY.spiralize(outs);
+                    }
                     // if we see no offsets, re-check the mesh bottom Z then exit
                     if (outs.length === 0) {
                         if (bounds && lzo > bounds.min.z) {
@@ -348,7 +352,7 @@ class OpArea extends CamOp {
                 }
             } else
             if (mode === 'surface') {
-                let { sr_type, sr_angle, sr_alter, tolerance } = op;
+                let { sr_angle, sr_alter, tolerance } = op;
 
                 let resolution = tolerance || 0.05;
                 let raster = await self.get_raster_gpu({ mode: "tracing", resolution });
@@ -357,8 +361,9 @@ class OpArea extends CamOp {
 
                 // prepare paths
                 if (sr_type === 'linear') {
+                    let angle = (sr_angle || 0) * DEG2RAD;
                     // scan the area bounding box with rays at defined angle
-                    let scan = scanBoxAtAngle(bounds, sr_angle * DEG2RAD, toolOver);
+                    let scan = scanBoxAtAngle(bounds, angle, toolOver);
                     let lines = scan.map(line => {
                         let { a, b } = line;
                         return [ newPoint(a.x, a.y, 0).toClipper(), newPoint(b.x, b.y, 0).toClipper() ]
@@ -378,20 +383,29 @@ class OpArea extends CamOp {
                         paths.forEach(path => path.reverse());
                     }
                     // optional alternating paths
-                    if (paths.length && sr_alter) {
+                    if (paths.length && sr_alter !== false) {
                         paths = tip2tipJoin(paths, paths[0].first(), toolOver * 10);
                     }
                 } else
-                if (sr_type === 'offset') {
+                // check 'offset' for backward compatibility with older save files (renamed to 'concentric')
+                if (sr_type === 'concentric' || sr_type === 'offset') {
                     // progressive inset from perimeter
                     POLY.offset([ area ], [ -toolDiam / 2, -toolOver ], {
                         count: 999, outs: paths, flat: true, z: 0, minArea: 0
                     });
                     paths.forEach(poly => poly.isClosed() && poly.push(poly.first()));
                     POLY.setWinding(paths.filter(p => p.isClosed()), direction === 'climb');
+                } else
+                if (sr_type === 'spiral' || sr_type === 'concentric spiral') {
+                    let loops = [];
+                    POLY.offset([ area ], [ -toolDiam / 2, -toolOver ], {
+                        count: 999, outs: loops, flat: true, z: 0, minArea: 0
+                    });
+                    paths.push(...POLY.spiralize(loops, direction === 'climb'));
                 }
 
                 // convert resulting poly lines to raster float32 array groups
+                let resampleNs = paths.map(poly => poly.resampleN);
                 paths = paths.map(poly => poly.points.map(p => [ p.x, p.y ]).flat().toFloat32());
 
                 // prepare tool mesh points
@@ -429,15 +443,48 @@ class OpArea extends CamOp {
 
                 // convert terrain raster output back to open polylines
                 // todo: add leave_z support
+                let pathIdx = 0;
                 for (let path of output.paths) {
-                    path = newPolygon().fromArray([1, ...path]);
-                    if (op.refine) path.refine(op.refine);
-                    surface.push(path);
-                    let slice = newLayer();
-                    slice.camLines = [ path ];
-                    slice.output()
-                        .setLayer(rename ?? "linear", { line: color }, false)
-                        .addPolys([ path ]);
+                    let rN = resampleNs[pathIdx++];
+                    let splitPaths = [];
+                    if (rN) {
+                        let ptsCount = path.length / 3;
+                        for (let i = 0; i < ptsCount; i += rN) {
+                            let start = Math.max(0, i - 1);
+                            let end = Math.min(ptsCount, i + rN);
+                            if (end - start < 2) continue;
+                            splitPaths.push(path.subarray(start * 3, end * 3));
+                        }
+                    } else {
+                        splitPaths.push(path);
+                    }
+
+                    // Push the original continuous path to the surface array so that
+                    // G-code generates a single continuous toolpath without travel lifts/moves.
+                    let origPathPoly = newPolygon().fromArray([1, ...path]);
+                    if (op.refine) origPathPoly.refine(op.refine);
+                    if (omitthru) {
+                        origPathPoly = prunePointsInHoles(origPathPoly, thruHoles);
+                    }
+                    if (origPathPoly.points.length > 1) {
+                        surface.push(origPathPoly);
+                    }
+
+                    // Add split segments to separate layers for step-by-step preview visualization
+                    for (let sp of splitPaths) {
+                        let polyPath = newPolygon().fromArray([1, ...sp]);
+                        if (op.refine) polyPath.refine(op.refine);
+                        if (omitthru) {
+                            polyPath = prunePointsInHoles(polyPath, thruHoles);
+                        }
+                        if (polyPath.points.length > 1) {
+                            let slice = newLayer();
+                            slice.camLines = [ polyPath ];
+                            slice.output()
+                                .setLayer(rename ?? "linear", { line: color }, false)
+                                .addPolys([ polyPath ]);
+                        }
+                    }
                 }
 
                 // output this surface
@@ -477,6 +524,9 @@ class OpArea extends CamOp {
             return;
         }
 
+        let sr_type = (op.mode === 'clear' ? op.sr_type_clear : op.sr_type_surf) || op.sr_type || 'concentric';
+        let spiral = sr_type === 'spiral' || sr_type === 'concentric spiral';
+
         // process areas as pockets
         while (areas?.length) {
             let min = {
@@ -511,7 +561,8 @@ class OpArea extends CamOp {
                     easeDown: op.down && process.easeDown ? op.down : 0,
                     outline: op.drape || op.mode === 'trace',
                     progress: (n,m) => progress(n/m, "area"),
-                    slices: min.area.filter(slice => slice.camLines)
+                    slices: min.area.filter(slice => slice.camLines),
+                    spiral
                 });
             } else {
                 break;
@@ -539,9 +590,19 @@ function omitMatching(target, matches) {
     target = target.clone(true);
     for (let poly of target.filter(p => p.inner)) {
         poly.inner = poly.inner.filter(inner => {
+            let innerCenter = inner.bounds.center();
             for (let ho of matches) {
-                if (inner.isEquivalent(ho)) {
+                if (inner.isEquivalent(ho, false, 0.2)) {
                     return false;
+                }
+                // Fallback check: if the center of the sliced hole is inside the matching hole,
+                // and their areas are within a 20% tolerance threshold.
+                let hoArea = Math.abs(ho.area());
+                let innerArea = Math.abs(inner.area());
+                if (hoArea > 0.001 && Math.abs(hoArea - innerArea) / hoArea < 0.2) {
+                    if (innerCenter.isInPolygon(ho)) {
+                        return false;
+                    }
                 }
             }
             return true;
@@ -612,6 +673,38 @@ function scanBoxAtAngle(box2, angle, step) {
     }
 
     return rays;
+}
+
+function prunePointsInHoles(poly, holes) {
+    if (!holes || !holes.length) return poly;
+    let holeBoxes = [];
+    for (let hole of holes) {
+        let bounds = hole.bounds;
+        holeBoxes.push({
+            min_x: bounds.minx,
+            max_x: bounds.maxx,
+            min_y: bounds.miny,
+            max_y: bounds.maxy,
+            hole
+        });
+    }
+    let newPoints = [];
+    for (let pt of poly.points) {
+        let inHole = false;
+        for (let hb of holeBoxes) {
+            if (pt.x >= hb.min_x && pt.x <= hb.max_x && pt.y >= hb.min_y && pt.y <= hb.max_y) {
+                if (pt.isInPolygon(hb.hole)) {
+                    inHole = true;
+                    break;
+                }
+            }
+        }
+        if (!inHole) {
+            newPoints.push(pt);
+        }
+    }
+    poly.points = newPoints;
+    return poly;
 }
 
 export { OpArea };

@@ -1415,6 +1415,152 @@ export class Polygon {
     }
 
     /**
+     * find the closest intersection on the boundary along the horizontal line Y = pt.y
+     *
+     * @param {Point} target
+     * @return {Point} closestPoint
+     */
+    snapToIntersectionX(target) {
+        let points = this.points;
+        let len = points.length;
+        if (len === 0) return null;
+        if (len === 1) return points[0];
+        let targetY = target.y;
+        let targetX = target.x;
+        let minD = Infinity;
+        let closest = null;
+        for (let i = 0; i < len; i++) {
+            let p1 = points[i];
+            let p2 = points[this.open ? i + 1 : (i + 1) % len];
+            if (!p2) continue;
+
+            // Check if segment p1-p2 spans targetY
+            let miny = Math.min(p1.y, p2.y);
+            let maxy = Math.max(p1.y, p2.y);
+            if (targetY >= miny && targetY <= maxy) {
+                let x;
+                if (p1.y === p2.y) {
+                    // Segment is horizontal and on targetY
+                    x = Math.max(Math.min(p1.x, p2.x), Math.min(Math.max(p1.x, p2.x), targetX));
+                } else {
+                    x = p1.x + (targetY - p1.y) * (p2.x - p1.x) / (p2.y - p1.y);
+                }
+                let d = Math.abs(targetX - x);
+                if (d < minD) {
+                    minD = d;
+                    closest = newPoint(x, targetY, target.z);
+                }
+            }
+        }
+        return closest;
+    }
+
+    /**
+     * find the closest intersection on the boundary along the vertical line X = pt.x
+     *
+     * @param {Point} target
+     * @return {Point} closestPoint
+     */
+    snapToIntersectionY(target) {
+        let points = this.points;
+        let len = points.length;
+        if (len === 0) return null;
+        if (len === 1) return points[0];
+        let targetY = target.y;
+        let targetX = target.x;
+        let minD = Infinity;
+        let closest = null;
+        for (let i = 0; i < len; i++) {
+            let p1 = points[i];
+            let p2 = points[this.open ? i + 1 : (i + 1) % len];
+            if (!p2) continue;
+
+            // Check if segment p1-p2 spans targetX
+            let minx = Math.min(p1.x, p2.x);
+            let maxx = Math.max(p1.x, p2.x);
+            if (targetX >= minx && targetX <= maxx) {
+                let y;
+                if (p1.x === p2.x) {
+                    // Segment is vertical and on targetX
+                    y = Math.max(Math.min(p1.y, p2.y), Math.min(Math.max(p1.y, p2.y), targetY));
+                } else {
+                    y = p1.y + (targetX - p1.x) * (p2.y - p1.y) / (p2.x - p1.x);
+                }
+                let d = Math.abs(targetY - y);
+                if (d < minD) {
+                    minD = d;
+                    closest = newPoint(targetX, y, target.z);
+                }
+            }
+        }
+        return closest;
+    }
+
+    snapToIntersectionAngle(target, angle) {
+        let dx_line = Math.cos(angle);
+        let dy_line = Math.sin(angle);
+        let points = this.points;
+        let len = points.length;
+        if (len === 0) return null;
+        if (len === 1) return points[0];
+        
+        let closestPt = null;
+        let minDist = Infinity;
+        
+        for (let i = 0; i < len; i++) {
+            let A = points[i];
+            let B = points[this.open ? i + 1 : (i + 1) % len];
+            if (!B) continue;
+            
+            let dx_seg = B.x - A.x;
+            let dy_seg = B.y - A.y;
+            
+            let det = dy_line * dx_seg - dx_line * dy_seg;
+            if (Math.abs(det) < 1e-9) continue; // parallel
+            
+            let s = (dx_line * (A.y - target.y) - dy_line * (A.x - target.x)) / det;
+            if (s >= 0 && s <= 1) {
+                let ix = A.x + s * dx_seg;
+                let iy = A.y + s * dy_seg;
+                let ipt = newPoint(ix, iy, target.z);
+                let dist = target.distTo2D(ipt);
+                if (dist < minDist) {
+                    minDist = dist;
+                    closestPt = ipt;
+                }
+            }
+        }
+        return closestPt;
+    }
+
+    /**
+     * find the closest point on the polygon perimeter/boundary to target
+     *
+     * @param {Point} target
+     * @return {Point} closestPoint
+     */
+    findClosestPointOnPerimeter(target) {
+        let points = this.points;
+        let len = points.length;
+        if (len === 0) return null;
+        if (len === 1) return points[0];
+        let minD = Infinity;
+        let closest = null;
+        for (let i = 0; i < len; i++) {
+            let p1 = points[i];
+            let p2 = points[this.open ? i + 1 : (i + 1) % len];
+            if (!p2) continue;
+            let cp = closestPointOnSegment(target, p1, p2);
+            let d = target.distTo2D(cp);
+            if (d < minD) {
+                minD = d;
+                closest = cp;
+            }
+        }
+        return closest;
+    }
+
+    /**
      * @param {Polygon[]} out
      * @param {[]} deep recurse and track recursion
      * @param {boolean} crush remove inner array after flatten
@@ -1753,4 +1899,16 @@ export function fromClipperPath(path, z) {
 
 export function newPolygon(points) {
     return new Polygon(points);
+}
+
+function closestPointOnSegment(p, a, b) {
+    let abx = b.x - a.x;
+    let aby = b.y - a.y;
+    let apx = p.x - a.x;
+    let apy = p.y - a.y;
+    let ab2 = abx * abx + aby * aby;
+    if (ab2 === 0) return a;
+    let t = (apx * abx + apy * aby) / ab2;
+    t = Math.max(0, Math.min(1, t));
+    return newPoint(a.x + t * abx, a.y + t * aby);
 }

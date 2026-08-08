@@ -94,7 +94,12 @@ const LISTS = {
     ],
     xyaxis: [
         { name: "X" },
-        { name: "Y" }
+        { name: "Y" },
+        { name: "Radial" }
+    ],
+    crshape: [
+        { name: "Concentric" },
+        { name: "Spiral" }
     ],
     regaxis: [
         { name: "X" },
@@ -120,7 +125,12 @@ const LISTS = {
     ],
     surftyp: [
         { name: "linear" },
-        { name: "offset" },
+        { name: "concentric" },
+        { name: "spiral" }
+    ],
+    roughtyp: [
+        { name: "concentric" },
+        { name: "spiral" }
     ],
     direction: [
         { name: "climb" },

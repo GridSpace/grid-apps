@@ -77,11 +77,15 @@ const imageDescripts = {
  * @returns {ReactElement} - A carousel of the given images.
  */
 export function ImageCarousel({ base, images, sml }) {
+  const list = imageDescripts[images];
+  if (!list || list.length === 0) {
+    return null;
+  }
   return (
     <div className={sml ? "carouselWrapper" : ""}>
       <Carousel showThumbs={false}>
-        {imageDescripts[images].map(([image, caption], index) => (
-          <div>
+        {list.map(([image, caption], index) => (
+          <div key={index}>
             <img src={base + image} alt="" />
             <p className="caption">{caption}</p>
           </div>

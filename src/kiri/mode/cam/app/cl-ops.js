@@ -256,7 +256,7 @@ export function createPopOps() {
     }
 
     function isSurfaceLinear() {
-        return env.poppedRec.mode === 'surface' && env.poppedRec.sr_type === 'linear';
+        return env.poppedRec.mode === 'surface' && env.poppedRec.sr_type_surf === 'linear';
     }
 
     function canDogBones() {
@@ -295,7 +295,8 @@ export function createPopOps() {
         rate: 'camLevelSpeed',
         down: 'camLevelDown',
         inset: 'camLevelInset',
-        stock: 'camLevelStock'
+        stock: 'camLevelStock',
+        sr_type: 'camLevelType'
     }).inputs = {
         tool: UC.newSelect(LANG.cc_tool, {}, "tools"),
         sep: UC.newBlank({ class: "pop-sep" }),
@@ -305,6 +306,7 @@ export function createPopOps() {
         rate: UC.newInput(LANG.cc_feed_s, { title: LANG.cc_feed_l, convert: toInt, units }),
         down: UC.newInput(LANG.cc_loff_s, { title: LANG.cc_loff_l, convert: toFloat, units }),
         inset: UC.newInput(LANG.cc_lxyo_s, { title: LANG.cc_lxyo_l, convert: toFloat, units, show: () => !env.popOp.level.rec.stock }),
+        sr_type: UC.newSelect("pattern", { title: "pattern" }, "surftyp"),
         sep: UC.newBlank({ class: "pop-sep" }),
         stock: UC.newBoolean(LANG.cc_lsto_s, undefined, { title: LANG.cc_lsto_l }),
     };
@@ -323,11 +325,13 @@ export function createPopOps() {
         flats: 'camRoughFlat',
         inside: 'camRoughIn',
         omitthru: 'camRoughOmitThru',
+        sr_type: 'camRoughType',
         ov_topz: 0,
         ov_botz: 0,
     }).inputs = {
         tool: UC.newSelect(LANG.cc_tool, {}, "tools"),
         direction: UC.newSelect(LANG.ou_dire_s, { title: LANG.ou_dire_l }, "direction"),
+        sr_type: UC.newSelect("pattern", { title: "pattern" }, "roughtyp"),
         sep: UC.newBlank({ class: "pop-sep" }),
         step: UC.newInput(LANG.cc_sovr_s, { title: LANG.cc_sovr_l, convert: toFloat, bound: UC.bound(0.01, 1.0) }),
         down: UC.newInput(LANG.cc_sdwn_s, { title: LANG.cc_sdwn_l, convert: toFloat, units }),
@@ -411,13 +415,17 @@ export function createPopOps() {
         bridging: 'camContourBridge',
         bottom: 'camContourBottom',
         curves: 'camContourCurves',
+        curvesDist: 'camContourCurveDist',
         inside: 'camContourIn',
         clipto: 'camStockClipTo',
+        omitthru: 'camContourOmitThru',
         filter: 'camContourFilter',
-        axis: 'X'
+        axis: 'X',
+        shape: 'camContourShape'
     }).inputs = {
         tool: UC.newSelect(LANG.cc_tool, {}, "tools"),
-        axis: UC.newSelect(LANG.cd_axis, {}, "xyaxis"),
+        axis: UC.newSelect(LANG.cd_axis, { trigger: true }, "xyaxis"),
+        shape: UC.newSelect(LANG.cf_shpe_s, { title: LANG.cf_shpe_l, show: () => env.poppedRec.axis === 'Radial' }, "crshape"),
         sep: UC.newBlank({ class: "pop-sep" }),
         spindle: UC.newInput(LANG.cc_spnd_s, { title: LANG.cc_spnd_l, convert: toInt, show: hasSpindle }),
         rate: UC.newInput(LANG.cc_feed_s, { title: LANG.cc_feed_l, convert: toInt, units }),
@@ -432,9 +440,11 @@ export function createPopOps() {
         // bridging:  UC.newInput(LANG.ou_brdg_s, {title:LANG.ou_brdg_l, convert:toFloat, bound:UC.bound(0,1000.0), units:true, round:4, show:(op) => op.inputs.curves.checked}),
         sep: UC.newBlank({ class: "pop-sep" }),
         curves: UC.newBoolean(LANG.cf_curv_s, undefined, { title: LANG.cf_curv_l }),
+        curvesDist: UC.newInput(LANG.cf_cdst_s, { title: LANG.cf_cdst_l, convert: toFloat, bound: UC.bound(0, 100), show: (op) => op.inputs.curves.checked }),
         inside: UC.newBoolean(LANG.cf_olin_s, undefined, { title: LANG.cf_olin_l }),
         bottom: UC.newBoolean(LANG.cf_botm_s, undefined, { title: LANG.cf_botm_l, show: (op, conf) => conf ? conf.process.camZBottom : 0 }),
         clipto: UC.newBoolean(LANG.cf_clip_s, undefined, { title:LANG.cf_clip_l, show: () => !isWebGPU() }),
+        omitthru: UC.newBoolean(LANG.co_omit_s, undefined, { title: LANG.co_omit_l }),
         filter: UC.newRow([UC.newButton(LANG.filter, contourFilter)], { class: "ext-buttons f-row" })
     };
 
@@ -540,7 +550,9 @@ export function createPopOps() {
         refine: 'camPocketRefine',
         follow: 'camPocketFollow',
         contour: 'camPocketContour',
+        sr_type: 'camPocketType',
         outline: 'camPocketOutline',
+        omitthru: 'camPocketOmitThru',
         ov_topz: 0,
         ov_botz: 0,
         ov_conv: '~camConventional',
@@ -559,7 +571,9 @@ export function createPopOps() {
         follow: UC.newInput(LANG.cp_foll_s, { title: LANG.cp_foll_l, convert: toFloat }),
         sep: UC.newBlank({ class: "pop-sep" }),
         contour: UC.newBoolean(LANG.cp_cont_s, undefined, { title: LANG.cp_cont_s }),
+        sr_type: UC.newSelect("pattern", { title: "pattern", show: () => env.poppedRec.contour }, "surftyp"),
         outline: UC.newBoolean(LANG.cp_outl_s, undefined, { title: LANG.cp_outl_l }),
+        omitthru: UC.newBoolean(LANG.co_omit_s, undefined, { title: LANG.co_omit_l, show: () => env.poppedRec.outline }),
         exp: UC.newExpand("feeds & speeds", { }),
         spindle: UC.newInput(LANG.cc_spnd_s, { title: LANG.cc_spnd_l, convert: toInt, show: hasSpindle }),
         rate: UC.newInput(LANG.cc_feed_s, { title: LANG.cc_feed_l, convert: toInt, units }),
@@ -759,7 +773,8 @@ export function createPopOps() {
         mode: 'camAreaMode',
         direction: 'camMillDirection',
         tr_type: 'camAreaTrace',
-        sr_type: 'camAreaSurface',
+        sr_type_clear: 'camAreaSurface',
+        sr_type_surf: 'camAreaSurface',
         sr_angle: 'camAreaAngle',
         sr_alter: 'camAreaZigZag',
         over: 'camAreaOver',
@@ -772,6 +787,7 @@ export function createPopOps() {
         follow: 'camAreaFollow',
         refine: 'camAreaRefine',
         outline: 'camAreaOutline',
+        omitthru: 'camAreaOmitThru',
         shadow: 'camAreaShadow',
         tolerance: 'camTolerance',
         dogbones: 'camAreaDogbones',
@@ -782,7 +798,8 @@ export function createPopOps() {
     }).inputs = {
         mode: UC.newSelect(LANG.mo_menu, { post: opRender }, "opmode"),
         tr_type: UC.newSelect(LANG.cc_offs_s, { title: LANG.cc_offs_l, show: isTrace }, "traceoff"),
-        sr_type: UC.newSelect("pattern", { title: "pattern", show: isSurface }, "surftyp"),
+        sr_type_clear: UC.newSelect("pattern", { title: "pattern", show: isClear }, "roughtyp"),
+        sr_type_surf: UC.newSelect("pattern", { title: "pattern", show: isSurface }, "surftyp"),
         sep: UC.newBlank({ class: "pop-sep" }),
         exp: UC.newExpand("area selection", { open }),
         menu: UC.newRow([
@@ -791,6 +808,7 @@ export function createPopOps() {
         ], { class: "ext-buttons f-row", show: () => !isShadow() }),
         shadow: UC.newBoolean(LANG.cp_shad_s, undefined, { title: LANG.cp_shad_l }),
         outline: UC.newBoolean(LANG.cp_outl_s, undefined, { title: LANG.cp_outl_l }),
+        omitthru: UC.newBoolean(LANG.co_omit_s, undefined, { title: LANG.co_omit_l, show: () => env.poppedRec.outline }),
         exp_end: UC.endExpand(),
         sep: UC.newBlank({ class: "pop-sep" }),
         exp: UC.newExpand("area modifiers", { }),

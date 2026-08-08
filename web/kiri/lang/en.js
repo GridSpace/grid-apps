@@ -592,6 +592,8 @@ self.lang['en-us'] = {
     cf_botm_l:      ["obey z bottom limit"],
     cf_curv_s:      "curves only",
     cf_curv_l:      ["limit linear cleanup","to curved surfaces"],
+    cf_cdst_s:      "curve join dist",
+    cf_cdst_l:      ["don't elide flat regions between curves","if they are shorter than this multiple of tool diameter"],
     cf_olin_s:      "inside only",
     cf_olin_l:      ["limit cutting to","inside part boundaries"],
     cf_linx_s:      "enable y pass",
@@ -600,6 +602,8 @@ self.lang['en-us'] = {
     cf_liny_l:      "linear x-axis finishing",
     cf_clip_s:      "clip to stock",
     cf_clip_l:      ["contour op only","clip cutting paths","to defined stock"],
+    cf_shpe_s:      "shape",
+    cf_shpe_l:      "contour shape mode",
 
     // CNC TRACE
     cu_menu:        "trace",
