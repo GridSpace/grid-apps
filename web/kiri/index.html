@@ -435,6 +435,25 @@
                 <button id="print-obj" class="grow">obj</button>
                 <button id="print-lg" class="grow">gcode</button>
             </div>
+            <div id="laser-remote-head" class="header"><label>send to host</label></div>
+            <div id="laser-remote-send" class="f-col box">
+                <div>
+                    <label>host</label>
+                    <input id="laser-octo-host" size="20" placeholder="http://host:port" />
+                </div>
+                <div>
+                    <label>api key</label>
+                    <input id="laser-octo-apik" size="20" />
+                </div>
+                <div>
+                    <label>type</label>
+                    <select id="laser-octo-type">
+                        <option selected>octoprint</option>
+                        <option>moonraker</option>
+                    </select>
+                </div>
+                <button id="laser-send-remote" class="grow">send</button>
+            </div>
         </div>
         <!-- dynamic dialogs -->
         <div id="mod-any" class="mdialog f-col"></div>

@@ -1,0 +1,9 @@
+{
+  "name": "kiri-cncjs-bridge",
+  "version": "1.0.0",
+  "description": "OctoPrint-format shim that forwards Kiri:Moto laser gcode to CNCjs",
+  "main": "bridge.js",
+  "scripts": {
+    "start": "node bridge.js"
+  }
+}

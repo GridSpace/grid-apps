@@ -72,6 +72,9 @@ export function menu() {
     ctOutClean:          newBoolean('clean', onBooleanClick, { title:'clean', modes:LASER, show:() => ui.ctOutStack.checked }),
     ctOutFilter:         newInput('filter', { title:'filter', modes:LASER, convert:toFloat, show:() => ui.ctOutStack.checked }),
     ctOutSmooth:         newInput('smooth', { title:'smooth', modes:LASER, convert:toFloat, show:() => ui.ctOutStack.checked }),
+    separator:           newBlank({ class:"set-sep", driven, modes:LASER }),
+    ctFillEnable:        newBoolean('fill', onBooleanClick, { title:'fill closed shapes with concentric inset paths', modes:LASER }),
+    ctFillSpacing:       newInput('spacing', { title:'concentric fill spacing in mm', convert:toFloat, modes:LASER, show:() => ui.ctFillEnable.checked }),
 
     };
 

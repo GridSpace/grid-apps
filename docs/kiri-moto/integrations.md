@@ -26,6 +26,27 @@ Kiri:Moto is the slicing engine behind [SimplyPrint's](https://simplyprint.io/) 
 
 [CAMLab](http://camlab.sienci.com/camlab) is a fork of an earlier version of Kiri:Moto.
 
+## CNCjs
+
+[CNCjs](https://cncjs.io/) is a web-based controller for GRBL and other CNC firmware. Kiri:Moto's laser mode can send gcode directly to CNCjs using the `tools/cncjs-bridge` shim included in this repository.
+
+The bridge is a zero-dependency Node.js server that accepts Kiri's OctoPrint-format uploads and forwards them to CNCjs's `/api/gcode` endpoint.
+
+### Setup
+
+```
+cd tools/cncjs-bridge
+node bridge.js
+```
+
+The bridge listens on port **5310** by default. In Kiri:Moto's laser export dialog, enable the **exportOcto** controller setting, then set the host to `http://localhost:5310` with no API key.
+
+In the laser device settings, configure the laser on/off commands for GRBL:
+- **Laser On**: `M3 S{power}`
+- **Laser Off**: `M5`
+
+Enable GRBL laser mode on your controller once with `$32=1` via the CNCjs console.
+
 ## Thingiverse
 
 Like Onshape, Kiri:Moto is integrated as a native [Thing-app](https://www.thingiverse.com/apps/kirimoto) into Thingiverse. As a user of Thingiverse, you can elect to have Kiri:Moto show up as a "way to open" a Thing file. This provides the convenience of directly accessing, slicing, and printing parts on Thingiverse without first having to download them and then re-import them into a slicer.
