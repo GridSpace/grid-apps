@@ -30,7 +30,7 @@ class OpArea extends CamOp {
         let { direction, down, expand, flats, flatOff, follow } = op;
         let { mode, outline, over, rename, smooth, tool } = op;
         let { addSlices, axisIndex, color, cutTabs, settings } = state;
-        let { shadowAt, setToolDiam, tabs, widget, workarea } = state;
+        let { shadowAt, setToolDiam, stock, tabs, widget, workarea } = state;
 
         let areaTool = new Tool(settings, tool);
         let smoothVal = (smooth ?? 0) / 10;
@@ -137,6 +137,23 @@ class OpArea extends CamOp {
         // filter out invalid polys
         polys = polys.filter(p => p && p.length > 2);
 
+        // for cylindrical (round) indexed stock, clearing must be limited to
+        // the circular cross-section present at each Z, otherwise the tool
+        // air-cuts the corners of the (non-existent) rectangular bounding box
+        let cylinder;
+        if (stock?.cylindrical && mode === 'clear') {
+            let radius = stock.radius;
+            cylinder = {
+                r2: radius * radius,
+                // top of the round stock sits one radius above the rotary axis
+                cz: workarea.top_stock - radius,
+                cx: stock.center.x,
+                cy: stock.center.y,
+                // pad in X so the full length along the rotary axis is preserved
+                hx: stock.x / 2 + toolDiam
+            };
+        }
+
         // process each area separately
         let proc = 0;
         let pinc = 1 / polys.length;
@@ -176,6 +193,23 @@ class OpArea extends CamOp {
 
                 outer: for (;;)
                 for (let z of zs) {
+                    // round-stock cross-section (chord) at this cutting height
+                    let band;
+                    if (cylinder) {
+                        let dz = z - cylinder.cz;
+                        let h2 = cylinder.r2 - dz * dz;
+                        // above or below the round stock: no material to clear
+                        if (h2 <= 0) {
+                            if (z === zs.peek()) break outer;
+                            continue;
+                        }
+                        let h = Math.sqrt(h2);
+                        band = newPolygon()
+                            .add(cylinder.cx - cylinder.hx, cylinder.cy - h, z)
+                            .add(cylinder.cx + cylinder.hx, cylinder.cy - h, z)
+                            .add(cylinder.cx + cylinder.hx, cylinder.cy + h, z)
+                            .add(cylinder.cx - cylinder.hx, cylinder.cy + h, z);
+                    }
                     let slice = newLayer(z);
                     let layers = slice.output();
                     let shadow = await shadowAt(z + 0.01);
@@ -197,6 +231,10 @@ class OpArea extends CamOp {
                     } else {
                         POLY.subtract([ area ], shadow, clip, undefined, undefined, 0);
                     }
+                    // restrict clearing to the round stock cross-section
+                    if (band) {
+                        clip = POLY.trimTo(clip, [ band ]) ?? [];
+                    }
                     //generate offsets to use
                     let offsets = [ firstOff ];
                     //if we need a finish cut, add it
@@ -212,6 +250,13 @@ class OpArea extends CamOp {
                     });
                     // if we see no offsets, re-check the mesh bottom Z then exit
                     if (outs.length === 0) {
+                        // round stock: thin upper slices can yield no cut even
+                        // though wider slices below still have material. keep
+                        // descending instead of terminating the clear early.
+                        if (cylinder) {
+                            if (z === zs.peek()) break outer;
+                            continue;
+                        }
                         if (bounds && lzo > bounds.min.z) {
                             // try a bottom layer matching bottom of selection
                             zs = [ bounds.min.z ];

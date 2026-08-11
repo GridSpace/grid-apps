@@ -518,6 +518,11 @@ function addModeControls(el, opt = {}) {
         let hmod = el.hasMode(mode);
         if (opt.trace) console.log({ setMode: mode, xprt, show, disp, hmod, modes:el.modes });
         if (opt.manual) return;
+        // re-evaluate a dynamic label (re-runs alongside show predicates)
+        if (opt.dynLabel && el.__label) {
+            let text = safecall(opt.dynLabel);
+            if (text !== false) el.__label.textContent = text;
+        }
         el.setVisible(!hidn && hmod && show && xprt && disp);
     }
     el.hasMode = function(mode) {
@@ -739,7 +744,10 @@ function newInput(label, opt = {}) {
         action = opt.action || bindTo || inputAction,
         ip = height > 1 ? DOC.createElement('textarea') : DOC.createElement('input');
 
-    row.appendChild(newLabel(label));
+    let labelEl = newLabel(label);
+    row.appendChild(labelEl);
+    // expose the label node so a dynamic label (opt.dynLabel) can update it
+    if (opt.dynLabel) row.__label = labelEl;
     if (opt.selector) {
         let sel = DOC.createElement('button');
         sel.classList.add('z-select');

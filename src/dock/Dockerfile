@@ -13,5 +13,7 @@ RUN npm run webpack-ext
 RUN mkdir -p src/pack
 RUN npm run pack-prod
 RUN npm install -g @gridspace/app-server
+RUN npm run pack-prod
 RUN rm -rf /grid/bin
 CMD gs-app-server
+

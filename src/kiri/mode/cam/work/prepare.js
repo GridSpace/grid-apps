@@ -88,19 +88,30 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         { camArcEnabled, camArcResolution, camArcTolerance } = process,
         { camDepthFirst, camEaseAngle, camEaseDown } = process,
         { camFastFeed, camFastFeedZ, camZTop } = process,
-        { camStockX, camStockY, camStockZ, camStockIndexed, camStockOffset } = process,
+        { camStockX, camStockY, camStockZ, camStockIndexed, camStockOffset, camStockCylinder } = process,
         { camForceZMax, camFullEngage, camInnerFirst, camOriginCenter } = process,
         { camOriginOffX, camOriginOffY, camOriginOffZ, camZClearance } = process,
         bounds = widget.getBoundingBox(),
-        stock = camStockOffset ? {
-            x: bounds.dim.x + camStockX,
-            y: bounds.dim.y + camStockY,
-            z: bounds.dim.z + camStockZ,
-        } : {
-            x: camStockX,
-            y: camStockY,
-            z: camStockZ
-        },
+        stock = (() => {
+            let s = camStockOffset ? {
+                x: bounds.dim.x + camStockX,
+                y: bounds.dim.y + camStockY,
+                z: bounds.dim.z + camStockZ,
+            } : {
+                x: camStockX,
+                y: camStockY,
+                z: camStockZ
+            };
+            // cylindrical stock is a circle in the Y-Z plane centered on the
+            // rotary axis. depth (Y) is not an independent dimension for round
+            // stock, so the diameter spans the part cross-section diagonal
+            // (from geometry) plus the camStockZ diameter offset.
+            if (camStockIndexed && camStockCylinder) {
+                if (camStockOffset) s.z = Math.hypot(bounds.dim.y, bounds.dim.z) + camStockZ;
+                s.y = s.z;
+            }
+            return s;
+        })(),
         stockZ = stock.z * (camStockIndexed ? 0.5 : 1),
         stockZClear = stockZ + camZClearance,
         widgetTrackTop = widget.track.top,

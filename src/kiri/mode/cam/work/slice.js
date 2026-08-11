@@ -99,7 +99,25 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
             z: camStockZ,
             center: newPoint(pos.x, pos.y, pos.z)
         };
-        if (!camStockOffset && axisIndex && isIndexed) {
+        // cylindrical stock is symmetric about the X (rotary) axis, so its
+        // radius is rotation-invariant. capture it here, before any YZ rotation
+        // is applied to the stock dimensions. in offset mode the diameter must
+        // span the part's cross-section diagonal so the part can't poke through
+        // the round stock.
+        if (isIndexed && proc.camStockCylinder) {
+            stock.cylindrical = true;
+            if (camStockOffset) {
+                // depth (Y) is not an independent dimension for round stock, so
+                // the diameter spans the part cross-section diagonal (from
+                // geometry) plus the camStockZ diameter offset.
+                stock.z = Math.hypot(bounds.dim.y, bounds.dim.z) + camStockZ;
+            }
+            stock.y = stock.z;
+            stock.radius = stock.z / 2;
+        }
+        // a cylinder's cross-section doesn't change with rotation, so only box
+        // stock needs its YZ dimensions rotated to the current index angle.
+        if (!camStockOffset && axisIndex && isIndexed && !stock.cylindrical) {
             if (axisIndex === 0 || axisIndex === 180) {
                 // do nothing
             } else if (axisIndex === 90 || axisIndex === 270) {
