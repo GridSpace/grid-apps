@@ -99,9 +99,15 @@ function device_from_code(code,mode) {
         bedBelt: valueOf(set.bed_belt, false),
         resolutionX: valueOf(set.resolution_x, 1600),
         resolutionY: valueOf(set.resolution_y, 900),
+        slaFormat: valueOf(set.sla_format, ''),
+        slaFileExt: valueOf(set.sla_file_ext, ''),
+        slaFormatVersion: valueOf(set.sla_format_version, 1),
+        slaMachineEditable: valueOf(set.sla_machine_editable, false),
+        slaMachineName: valueOf(set.sla_machine_name, ''),
+        slaMotion: valueOf(set.sla_motion, ''),
         deviceZMax: valueOf(set.z_move_max, 0),
         gcodeTime: valueOf(set.time_factor, 1),
-        maxHeight: valueOf(set.build_height, 150),
+        maxHeight: valueOf(set.build_height || set.max_height, 150),
         originCenter: valueOf(set.origin_center, false),
         extrudeAbs: valueOf(set.extrude_abs, false),
         spindleMax: valueOf(set.spindle_max, 0),
@@ -367,7 +373,11 @@ export const conf = {
                 bedHeight: 1.5,
                 maxHeight: 150,
                 resolutionX: 1600,
-                resolutionY: 900
+                resolutionY: 900,
+                slaFormat: "",
+                slaFileExt: "",
+                slaFormatVersion: 1,
+                slaMachineEditable: false
             },
             // process defaults SLA:Process
             p:{
@@ -390,11 +400,12 @@ export const conf = {
                 slaFillDensity: 0,
                 slaFillLine: 0.5,
                 slaFirstOffset: 0,
-                slaSupportLayers: 10,
-                slaSupportDensity: 0.5,
-                slaSupportSize: 0.6,
+                slaSupportLayers: 0,
+                slaSupportDensity: 0.1,
+                slaSupportSize: 0.4,
                 slaSupportPoints: 4,
-                slaSupportGap: 10,
+                slaSupportAngle: 35,
+                slaSupportGap: 0,
                 slaSupportEnable: false
             }
         },

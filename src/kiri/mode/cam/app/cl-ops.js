@@ -598,7 +598,7 @@ export function createPopOps() {
         sep: UC.newBlank({ class: "pop-sep" }),
         thru: UC.newInput(LANG.cd_dtru_s, { title: LANG.cd_dtru_l, convert: toFloat, units, show: () => !env.poppedRec.mark }),
         precision: UC.newInput(LANG.cd_prcn_s, { title: LANG.cd_prcn_l, convert: toFloat, units, show: () => !env.poppedRec.mark }),
-        sep: UC.newBlank({ class: "pop-sep", }),
+        sep: UC.newBlank({ class: "pop-sep", show: () => !env.poppedRec.mark }),
         actions: UC.newRow([
             UC.newButton(LANG.select, () => selectHoles(true), { title: LANG.cd_seli_l }),
             UC.newButton(LANG.cd_sela_s, () => selectHoles(false), { title: LANG.cd_sela_l })

@@ -98,9 +98,16 @@ export function restoreTabs(widgets) {
     widgets.forEach(widget => {
         const tabs = api.widgets.annotate(widget.id).tab || [];
         tabs.forEach(rec => {
-            let [x, y, z, w] = rec.rot;
-            rec = Object.clone(rec);
-            rec.rot = new THREE.Quaternion(x, y, z, w);
+            // handle record format change
+            if (rec.rot.isQuaternion) {
+                let {_x, _y, _z, _w} = rec.rot;
+                rec = Object.clone(rec);
+                rec.rot = new THREE.Quaternion(_x, _y, _z, _w);
+            } else {
+                let [x, y, z, w] = rec.rot;
+                rec = Object.clone(rec);
+                rec.rot = new THREE.Quaternion(x, y, z, w);
+            }
             addWidgetTab(widget, rec);
         });
     });

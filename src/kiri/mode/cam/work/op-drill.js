@@ -43,7 +43,7 @@ class OpDrill extends CamOp {
             if (zBottom) drill.zBottom = Math.max(zBottom, drill.zBottom);
 
             // for thru holes, follow z thru when set
-            if ((op.thru > 0)) {
+            if (op.thru > 0 && !op.mark) {
                 drill.zBottom -= op.thru;
             }
 

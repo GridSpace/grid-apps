@@ -1,6 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { SLA } from './init-work.js';
+import { SLA, ensureSLAMemory } from './init-work.js';
 
 function generatePhoton(print, conf, progress) {
     let printset = print.settings,
@@ -445,8 +445,12 @@ function renderLayerWasm(params) {
         }
     });
 
-    let wasm = SLA.wasm;
     let imagelen = width * height;
+    let metadata = 6 + array.reduce((total, poly) => total + polyRecordBytes(poly), 0);
+    let rleSpace = masks.length ? imagelen : 0;
+    ensureSLAMemory(imagelen + Math.max(metadata, rleSpace) + 1024);
+
+    let wasm = SLA.wasm;
     let writer = new self.DataWriter(new DataView(wasm.memory.buffer), imagelen);
     writer.writeU16(width, true);
     writer.writeU16(height, true);
@@ -469,6 +473,16 @@ function renderLayerWasm(params) {
     }
 
     return { image, layers, end: count === 0, area };
+}
+
+function polyRecordBytes(poly) {
+    let bytes = 14 + poly.points.length * 8;
+    if (poly.inner) {
+        for (let i=0, il=poly.inner.length; i<il; i++) {
+            bytes += polyRecordBytes(poly.inner[i]);
+        }
+    }
+    return bytes;
 }
 
 // legacy JS-only rasterizer uses OffscreenCanvas

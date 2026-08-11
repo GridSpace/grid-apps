@@ -1,0 +1,15 @@
+{
+    "no_clone": true,
+    "cmd": {},
+    "settings": {
+        "bed_width": 218.88,
+        "bed_depth": 122.88,
+        "bed_height": 1,
+        "max_height": 200,
+        "resolution_x": 11520,
+        "resolution_y": 5120,
+        "sla_format": "pm5",
+        "sla_file_ext": "pm5",
+        "sla_format_version": 517
+    }
+}

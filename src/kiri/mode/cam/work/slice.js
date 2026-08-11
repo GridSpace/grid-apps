@@ -35,8 +35,8 @@ export function cam_slice_pre(settings) {
 export async function cam_slice(settings, widget, onupdate, ondone) {
     if (widget.track.synth) return ondone();
 
-    // get tab widgets
-    let tabW = widget.group.filter(w => w != widget);
+    // get tab widgets for this specific widget
+    let tabW = widget.group.filter(w => w != widget && w.track.tabOwner === widget.id);
 
     // merge overlapping tabs
     for (let i=0; i<tabW.length; i++) {

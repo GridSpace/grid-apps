@@ -1,0 +1,17 @@
+{
+    "no_clone": true,
+    "cmd": {},
+    "settings": {
+        "bed_width": 153.36,
+        "bed_depth": 77.76,
+        "bed_height": 1,
+        "max_height": 165,
+        "resolution_x": 8520,
+        "resolution_y": 4320,
+        "sla_format": "goo",
+        "sla_file_ext": "goo",
+        "sla_machine_name": "Mars 5 Ultra",
+        "sla_motion": "tilt",
+        "sla_format_version": 3
+    }
+}

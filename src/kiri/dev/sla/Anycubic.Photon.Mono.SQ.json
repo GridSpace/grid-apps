@@ -1,0 +1,15 @@
+{
+    "no_clone": true,
+    "cmd": {},
+    "settings": {
+        "bed_width": 120,
+        "bed_depth": 128,
+        "bed_height": 1,
+        "max_height": 200,
+        "resolution_x": 2400,
+        "resolution_y": 2560,
+        "sla_format": "pmsq",
+        "sla_file_ext": "pmsq",
+        "sla_format_version": 516
+    }
+}

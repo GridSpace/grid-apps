@@ -56,7 +56,7 @@ export class Topo {
 
         this.zBottom = state.zBottom ?? 0;
         this.resolution = resolution;
-        this.vertices = widget.getGeoVertices({ unroll: true, translate: true });
+        this.vertices = widget.getGeoVertices({ unroll: true, translate: true }).slice();
         this.tabverts = widget.getTabVertices();
         this.tool = tool.generateProfile(resolution).profile;
         this.maxo = tool.profileDim.maxo * resolution;

@@ -48,6 +48,8 @@
     "kiri/mode/sla/driver",
     "kiri/mode/sla/x_cxdlp",
     "kiri/mode/sla/x_photon",
+    "kiri/mode/sla/x_rsla",
+    "kiri/mode/sla/x_vsla",
     "kiri/mode/sla/export",
     "kiri/mode/sla/slice",
     "kiri/core/codec",

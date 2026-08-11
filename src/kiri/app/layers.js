@@ -213,6 +213,42 @@ export class Layers {
     }
 
     /**
+     * Add closed polygons as filled Z volumes.
+     * By default, the polygon Z is treated as the volume center. Pass
+     * { base:true } to treat polygon Z as the bottom face instead.
+     * @param {Polygon|Array<Polygon>} polys - Closed polygon(s), with inners preserved as voids
+     * @param {object} [options] - Options: {height, z, base, outline}
+     * @returns {Layers} This instance for chaining
+     */
+    addZVolume(polys, options) {
+        const opts = options || {};
+        const height = opts.height || 1;
+        const faces = this.current.faces;
+        polys = Array.isArray(polys) ? polys.clone(true) : [ polys.clone(true) ];
+
+        for (let poly of polys) {
+            if (poly.open || poly.length < 3) {
+                continue;
+            }
+
+            let z = opts.z !== undefined ? opts.z : poly.getZ(),
+                zoff = opts.base ? z : z - height / 2,
+                volume = poly.setZ(0).extrude(height, { zadd: zoff });
+
+            faces.appendAll(volume);
+
+            if (opts.outline) {
+                this.addPolys([
+                    poly.clone(true).setZ(zoff),
+                    poly.clone(true).setZ(zoff + height)
+                ]);
+            }
+        }
+
+        return this;
+    }
+
+    /**
      * Add 2D polyline paths with width (usually FDM extrusion paths).
      * Creates flat ribbons with vertex normals for lighting.
      * @param {Array<Polygon>} polys - Polygons to render as flat ribbons

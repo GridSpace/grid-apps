@@ -195,7 +195,7 @@ export function parse(text, opt = { }) {
 
     // Extrude polygons to 3D
     for (let poly of nest) {
-        let obj = poly.extrude(depth);
+        let obj = poly.extrude(depth * scale);
         objs.push(obj);
     }
 

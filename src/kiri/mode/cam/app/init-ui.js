@@ -906,20 +906,22 @@ export function init() {
         clearPops();
         recreateTabs();
         for (let group of Widget.Groups.list()) {
-            let root = group[0];
-            if (root.tabs)
-            for (let tab of Object.values(root.tabs)) {
-                let geo = tab.box.geometry.clone();
-                if (geo.index) geo = geo.toNonIndexed();
-                geo.translate(tab.x, tab.y, tab.z);
-                let bbg = BufferGeometryUtils.mergeGeometries([ geo ]);
-                let sw = newWidget(null, group);
-                let fwp = group[0].track.pos;
-                sw.loadGeometry(bbg);
-                sw._move(fwp.x, fwp.y, fwp.z);
-                api.widgets.add(sw);
-                sw.track.synth = true;
-                sw.track.indexed = root.track.indexed;
+            for (let widget of group) {
+                if (widget.tabs)
+                for (let tab of Object.values(widget.tabs)) {
+                    let geo = tab.box.geometry.clone();
+                    if (geo.index) geo = geo.toNonIndexed();
+                    geo.translate(tab.x, tab.y, tab.z);
+                    let bbg = BufferGeometryUtils.mergeGeometries([ geo ]);
+                    let sw = newWidget(null, group);
+                    let fwp = widget.track.pos;
+                    sw.loadGeometry(bbg);
+                    sw._move(fwp.x, fwp.y, fwp.z);
+                    api.widgets.add(sw);
+                    sw.track.synth = true;
+                    sw.track.indexed = widget.track.indexed;
+                    sw.track.tabOwner = widget.id;
+                }
             }
         }
     });

@@ -556,7 +556,7 @@ const dispatch = {
         });
     },
 
-    export(data, send) {
+    async export(data, send) {
         const mode = data.settings.mode;
         const driver = drivers[mode];
 
@@ -566,7 +566,7 @@ const dispatch = {
         }
 
         let output;
-        driver.export(current.print, (line, direct) => {
+        let result = driver.export(current.print, (line, direct) => {
             send.data({line}, direct);
         }, (done) => {
             // SLA workaround
@@ -574,6 +574,9 @@ const dispatch = {
         }, (debug) => {
             send.data({debug});
         });
+        if (result && result.then) {
+            await result;
+        }
 
         const {
             bounds,

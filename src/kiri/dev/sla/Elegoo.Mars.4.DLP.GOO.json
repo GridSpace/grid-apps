@@ -1,0 +1,16 @@
+{
+    "no_clone": true,
+    "cmd": {},
+    "settings": {
+        "bed_width": 132.8,
+        "bed_depth": 74.7,
+        "bed_height": 1,
+        "max_height": 150,
+        "resolution_x": 4098,
+        "resolution_y": 2560,
+        "sla_format": "goo",
+        "sla_file_ext": "goo",
+        "sla_machine_name": "Mars 4 DLP",
+        "sla_format_version": 3
+    }
+}

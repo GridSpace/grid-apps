@@ -1,0 +1,16 @@
+{
+    "no_clone": true,
+    "cmd": {},
+    "settings": {
+        "bed_width": 165.792,
+        "bed_depth": 71.28,
+        "bed_height": 1,
+        "max_height": 170,
+        "resolution_x": 7536,
+        "resolution_y": 3240,
+        "sla_format": "prz",
+        "sla_file_ext": "prz",
+        "sla_machine_name": "Sonic Mini 8K S",
+        "sla_format_version": 3
+    }
+}

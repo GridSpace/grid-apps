@@ -241,6 +241,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         drillDown = down;
         drillLift = lift;
         drillDwell = dwell;
+        toolDiamMove = toolDiam * 1.1;
     }
 
     function emitDrills(polys) {

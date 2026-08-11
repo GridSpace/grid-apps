@@ -1011,8 +1011,8 @@ self.lang['en-us'] = {
     sa_iflw_l:      ["hatch line width","in millimeters"],
 
     sa_supp_m:      "support",
-    sa_slyr_s:      "base layers",
-    sa_slyr_l:      ["base support layers","value range 0-10"],
+    sa_slyr_s:      "raft layers",
+    sa_slyr_l:      ["support raft layers","0 disables raft","value range 0-100"],
     sa_slgp_s:      "gap layers",
     sa_slgp_l:      ["number of layers between","raft and bottom of object"],
     sa_sldn_s:      "density",
@@ -1021,6 +1021,8 @@ self.lang['en-us'] = {
     sa_slsz_l:      ["max size of a","support pillar","in millimeters"],
     sa_slpt_s:      "points",
     sa_slpt_l:      ["number of points in","each support pillar","in millimeters"],
+    sa_slan_s:      "angle",
+    sa_slan_l:      ["max branch angle","from vertical","5-45 degrees"],
     sl_slen_l:      "enable supports",
 
     sa_outp_m:      "output",

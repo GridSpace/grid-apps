@@ -11,9 +11,9 @@
 
 let args = process.argv.slice(2);
 
-if (args.length % 3 !== 0) {
+if (args.length % 4 !== 0) {
     console.log([
-        'usage: ssdp [name] [host] [serial-no]',
+        'usage: ssdp [name] [host] [serial-no] [model]',
         'where:',
         '  name = name of printer to appear in slicer',
         '  host = host name or IP address of printer',
@@ -39,14 +39,15 @@ socket.bind(1900, () => {
 });
 
 while (args.length) {
-    const [name, host, serial] = args;
-    args = args.slice(3);
+    const [name, host, serial, model] = args;
+    args = args.slice(4);
 
     console.log([
         `Broadcasting Bambu Printer`,
         `Name: ${name}`,
         `Host: ${host}`,
         `Serial: ${serial}`,
+        `Model: ${model}`,
     ].join('\n'));
 
     // SSDP discovery message
@@ -58,7 +59,7 @@ while (args.length) {
     NT: urn:bambulab-com:device:3dprinter:1
     USN: ${serial}
     Cache-Control: max-age=1800
-    DevModel.bambu.com: C11
+    DevModel.bambu.com: ${model}
     DevName.bambu.com: ${name}
     DevSignal.bambu.com: -66
     DevConnect.bambu.com: lan

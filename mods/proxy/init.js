@@ -46,7 +46,7 @@ function proxy_post(req, res, next) {
                         res.end();
                     });
                 } else {
-                    console.log('drop proxy due to lack of host');
+                    console.log('drop proxy due to lack of host', { chunks: chunks.map(c => c.toString()) });
                 }
             });
     } else {

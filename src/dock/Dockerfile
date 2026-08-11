@@ -10,6 +10,8 @@ RUN apt-get -y update; apt-get -y install curl git
 EXPOSE 8080
 RUN npm i
 RUN npm run webpack-ext
+RUN mkdir -p src/pack
+RUN npm run pack-prod
 RUN npm install -g @gridspace/app-server
 RUN npm run pack-prod
 RUN rm -rf /grid/bin

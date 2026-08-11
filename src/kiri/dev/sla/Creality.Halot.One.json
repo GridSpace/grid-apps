@@ -7,6 +7,8 @@
         "bed_height": 1,
         "max_height": 160,
         "resolution_x": 1620,
-        "resolution_y": 2560
+        "resolution_y": 2560,
+        "sla_format": "cxdlp",
+        "sla_file_ext": "cxdlp"
     }
 }

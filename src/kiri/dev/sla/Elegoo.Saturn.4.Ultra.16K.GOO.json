@@ -1,0 +1,17 @@
+{
+    "no_clone": true,
+    "cmd": {},
+    "settings": {
+        "bed_width": 211.68,
+        "bed_depth": 118.37,
+        "bed_height": 1,
+        "max_height": 220,
+        "resolution_x": 15120,
+        "resolution_y": 6230,
+        "sla_format": "goo",
+        "sla_file_ext": "goo",
+        "sla_machine_name": "Saturn 4 Ultra 16K",
+        "sla_motion": "tilt",
+        "sla_format_version": 3
+    }
+}

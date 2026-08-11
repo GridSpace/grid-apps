@@ -309,7 +309,7 @@ export function cam_export(print, online) {
         }
         if (da) {
             pos.a = newpos.a;
-            nl.append(space).append(axis.A).append(add0(consts.pos_a = pos.a * -factor));
+            nl.append(space).append(axis.A).append(add0(consts.pos_a = pos.a));
         }
         if (newFeed) {
             pos.f = feed;

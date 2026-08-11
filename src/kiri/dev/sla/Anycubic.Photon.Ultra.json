@@ -1,0 +1,15 @@
+{
+    "no_clone": true,
+    "cmd": {},
+    "settings": {
+        "bed_width": 102.4,
+        "bed_depth": 57.6,
+        "bed_height": 1,
+        "max_height": 165,
+        "resolution_x": 1280,
+        "resolution_y": 720,
+        "sla_format": "dlp",
+        "sla_file_ext": "dlp",
+        "sla_format_version": 516
+    }
+}

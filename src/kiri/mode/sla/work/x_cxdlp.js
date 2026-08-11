@@ -1,5 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
+import { SLA, ensureSLAMemory } from './init-work.js';
+
 const default_values = {
     magic1: 'CXSW3DV2',
     magic2: 'CXSW3DV2',
@@ -392,8 +394,11 @@ CXDLP.render = function(params) {
         }
     });
 
-    let wasm = kiri.driver.SLA.wasm;
     let imagelen = width * height;
+    let metadata = 6 + array.reduce((total, poly) => total + polyRecordBytes(poly), 0);
+    ensureSLAMemory(imagelen + metadata + 1024);
+
+    let wasm = SLA.wasm;
     let writer = new self.DataWriter(new DataView(wasm.memory.buffer), imagelen);
     writer.writeU16(width, true);
     writer.writeU16(height, true);
@@ -428,4 +433,14 @@ CXDLP.render = function(params) {
         }
     }
     return { lines, area };
+}
+
+function polyRecordBytes(poly) {
+    let bytes = 14 + poly.points.length * 8;
+    if (poly.inner) {
+        for (let i=0, il=poly.inner.length; i<il; i++) {
+            bytes += polyRecordBytes(poly.inner[i]);
+        }
+    }
+    return bytes;
 }

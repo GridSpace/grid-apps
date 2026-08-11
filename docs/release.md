@@ -2,6 +2,399 @@
 
 Full docs @ https://docs.grid.space/projects/kiri-moto
 
+# Release 4.7.0
+
+A broad update focused on SLA/MSLA export coverage, DXF import, CAM routing and drilling fixes, and a substantial menu/theme cleanup across Kiri:Moto.
+
+## SLA / MSLA
+
+- add CTB export support with Chitubox machine profiles
+- add Goo and PRZ export support for Elegoo and Phrozen targets
+- add Photon Workshop family export support for newer Anycubic Photon machines
+- add generic raster SLA and vector SLA output formats
+- add volume rendering and make it the default SLA rendering path
+- improve SLA support generation and support geometry handling
+- add SLA raster, metadata, and process timing helpers for exposure, lift, retract, waits, PWM, and transition layers
+- add tilt-motion support for Goo/Elegoo targets
+- add memory growth and fallback handling for SLA wasm slicing
+- add and enable new Anycubic Photon, Creality, Elegoo, and Phrozen SLA printer profiles
+- add CTB conversion utility and MSLA format reference documentation
+
+## CAM
+
+- add basic finish cut capability to Area clear operations
+- improve routing between Area operation regions
+- add tool move epsilon to reduce false-positive collision detection
+- fix contour filtering errors
+- fix CPU contouring with more than one isolated body
+- fix contour Y handling that could mutate cached widget vertices
+- fix tool change dwell time
+- force tool lift between drill operations
+- fix drill marking with latent thru settings
+- fix widget and tab assignment during slicing
+- patch tab record format handling
+- remove metric/imperial scaling factor from A axis output
+
+## Import / Export
+
+- add DXF import support
+- add DXF spline support
+- reconnect DXF open lines with shared endpoints
+- normalize the DXF import dialog
+- add automatic DXF unit detection and scaling, including Z/depth scaling
+- proxy print start commands when needed
+- add Bambu SSDP model option
+
+## UI / Workflow
+
+- rebuild the Kiri:Moto menubar from JS instead of static HTML
+- restructure top menus and move mode tools into the menubar build
+- add a shared palette and theme CSS foundation
+- reorganize Kiri CSS and normalize menu colors
+- make rotate and scale panels draggable
+- make CAM setting groups collapsible
+- move device/profile controls to the left menu
+- move Save As commands into the file menu
+- replace transient alerts with a busy spinner
+- add middle-button drag support
+- add automatic slideshow behavior for narrow windows
+- improve popup positioning, z-index layering, and menu hover behavior
+- add missing language keys for new menu items
+- fix file New/Open state clearing and rebuild behavior
+
+## Mesh:Tool / Void:Form
+
+- update Mesh:Tool visuals and add document history support
+- continue Void:Form boundary provenance work
+- add Void:Form constraints and chamfer/offset planning docs
+- improve Void:Form solids, geometry store, rebuild, and toolbar internals
+
+## Platform / Build
+
+- add localhost HTTP POST proxy support for embedded HTTPS contexts such as Onshape
+- add CORS headers and secure-request handling for proxy routes
+- fix Docker build steps and update Docker Node version
+- fix esbuild mkdir race and node module external handling
+- remove Windows build from GitHub workflow
+- update Electron hide/show handling and Windows link workaround
+
+# Release 4.6.3
+
+## General
+
+- merge experimental Void:Form app code
+- add permissive graphics card flags for Linux Electron builds
+
+## CAM
+
+- fix register operation cutout modes
+
+# Release 4.6.2
+
+## CAM
+
+- add Carvera Air device support
+- add spindle spin-up delay for Carvera Air
+- reduce max spindle speed for Carvera Air
+- add trace offset Z option
+- allow drill operations to obey Z bottom
+
+## Features
+
+- add install progress bar
+- add OPFS support and API link
+- add engine workspace export
+- add layer diff support
+
+## UI / Workflow
+
+- resize engine code and preview boxes
+- fix Mesh:Tool window close behavior so it returns to Kiri:Moto
+
+## Bug Fixes
+
+- fix leave XY offset for roughing cutout
+- fix API URL object loading
+- fix engine stock origin and center handling
+- fix engine setMode()
+- fix floating-point noise in Z vertices with shadow clipping
+
+## Development
+
+- expose mesh worker log function
+- add slicePre() and slicePost() engine requirements
+- update shared-array-buffer origin trial token
+
+# Release 4.6.1
+
+## CAM
+
+- fix deep ease-down paths that wrap a polygon more than once
+- add ease-down safeguards for bad geometry
+- cap ease-down speed by engage setting
+- correct tool shadow epsilon
+- raise Z safe when Z top is above it
+- improve outline strategy for depth-first operations
+- add trace option to ignore part boundaries
+- disable trace merge until Area can handle it properly
+
+## FDM
+
+- async FDM slicing layer diffs for roughly 3x speedup
+- trim support shadow to overhangs
+- improve support clipping
+- change support gap offset from numeric to boolean
+- refactor slice progress tracking
+- tighten FDM slice shadow range
+
+## Bug Fixes
+
+- fix unit scale when visual Z is set
+- fix G-code import origin
+- fix negative level Z order
+- fix wireframe opacity
+- fix missing macro token handling
+- filter invalid area polygons
+- fix LOCAL const handling
+- remove input filter on iOS mobile
+
+## UI / Platform
+
+- invert dolly sign
+- remove beta tag
+- update Electron app base
+- fix docs formatting for controls.md
+
+# Release 4.6.0
+
+A major update focused on FDM support system improvements, belt printer support, CAM loop and selection workflows, and significant code modernization.
+
+## Major Features
+
+- redesign FDM support generation with manual support painting and erase mode
+- add angle-aware support painting with automatic overhang filtering
+- extract support structures into synthetic widgets for independent extruder assignment
+- integrate manual support painting with belt printer coordinate transforms
+- fix purge tower allocation for sparse, non-contiguous extruder configurations
+
+## FDM
+
+- add manual support painting visual overlay
+- add automatic support generation using shadow projection
+- support dedicated extruder selection for support structures
+- clip belt-mode support to the angled platform
+- fix support slice height propagation
+- improve nested top fill offset calculations
+- fix arc output center point calculations
+- add delta thickness filtering for variable layer heights
+- add Moonraker auto-start remote print option
+- fix finish speed ratio calculations for flats and bridges
+
+## CAM
+
+- add Loop operation for rotary and indexing workflows
+- add SVG trace path loading for arbitrary vector import
+- add Area operation vertical-wall clearing option
+- improve lathe step-down output for rotary operations
+- add alternating/zigzag options for Area linear surfacing
+- add shadow selection mode for Area operations
+- improve drag knife routing
+- add coastline move routes for contour operations
+- support manual slice ordering
+- improve progress reporting for shadow generation, Area surfacing, and lathe operations
+- parallelize widget shadow generation
+- add optional clip-to-stock for non-GPU topo3 contouring
+
+## UI / Workflow
+
+- add visual selection of Z top and Z bottom constraints
+- show Z top/bottom overrides in operation summaries
+- add collapsible operations list
+- add slicing and preview statistics in developer mode hover
+- persist widget transparency across sessions
+- add expandable preview in developer mode
+- add W shortcut for ghost/wire toggle
+- improve colors, opacity, and edge rendering
+- expose file type parsers as api.load
+
+## Architecture
+
+- document the FDM slicing pipeline
+- reorganize UI code into app/init and app/ui modules
+- extract keyboard, slider, and modal handling into dedicated modules
+- consolidate STL/OBJ loading into unified load classes
+- split widget into core and app-ui subclasses
+- add async initialization for startup
+- remove legacy code and unused dependencies
+- add JSDoc developer documentation
+
+## Bug Fixes
+
+- normalize mouse wheel scrolling across Chrome, Firefox, and Safari
+- fix widget cloning issues
+- fix broken API sync link
+- fix Z base layer height for parts not on bed
+- fix ghost/wire/solid toggle states
+- fix Area operation rotation handling
+- fix Loop operation expansion and rendering
+- fix shadow and lathe progress reporting
+- fix trace outside with drape duplication
+- fix starting offsets with multiple widgets
+- fix import slider max-value click
+- fix widget edge updates after mesh moves
+
+## Platform
+
+- add Snapmaker U1 belt printer profile
+- remove deprecated Gridbots devices
+- update FlashForge Adventurer 5M profile
+- update Three.js and Manifold libraries
+- add QuickJS evaluation engine for macros
+
+# Release 4.5.1
+
+## Bug Fixes
+
+- fix findConnectedSurface for pocket operations in indexed mode
+- fix use of flatness when dropping points in CPU contour processing
+- fix erroneous tab matching in CPU contouring
+- fix GPU contour Y coordinate handling with inside-only mode
+- fix trace-through backward compatibility
+- fix order-of-operations issue with tabs and inner-only processing
+
+## Improvements
+
+- increase Bambu FTP timeout for more reliable connectivity
+- update FlashForge Adventurer 5M printer profile
+- add support for exported formats in packed devices
+- reorganize help menu layout
+- expose file type parsers as api.load
+- distinguish fit contents from resize operations
+- improve visibility for hover-only UI elements
+- update Three.js and Manifold libraries
+
+# Release 4.5.0
+
+## Major Features
+
+- rewrite CNC path routing engine for improved collision detection
+- add unified Area operation combining roughing, outlining, tracing, and surfacing workflows
+- add taper ball tool support for CNC operations
+- add on-the-fly switching between orthographic and perspective cameras
+- preserve and restore camera projection settings across workspace import
+- add Shift+F zoom to contents and F zoom to fit shortcuts
+
+## CAM
+
+- add Area clear, trace, outline, and surface modes
+- add depth-first pocket routing
+- add roughing flat passes option
+- improve leave stock handling in XY and Z
+- enable inside/outside trace for open polylines
+- add trace-through option
+- improve dogbone generation
+- add wide cutout support for outlines
+- add contour grace factor and stock clip-to restoration
+- add linear surface output mode
+- merge overlapping tabs automatically
+- make tabs respect travel boundaries
+- ensure ease-down paths avoid tabs
+- improve tab cutting for indexed rotations
+- speed up tool shadow computation with grid-bucketed recursive union
+- improve travel boundary handling and outside travel safeties
+- add rotational interpolation for G-code parsing
+- improve lathe preview rendering
+- add lathe axis reset macro
+- improve drilling hole selection and circularity detection
+- add milling direction per operation
+- tighten arc tolerances for G-code output
+
+## FDM
+
+- add Solidify option to remove inner voids at slice time
+- fix support on-demand detection
+- improve bridge detection and handling
+
+## Laser
+
+- add stacking STL reconstruction option for multi-layer engraving
+
+## UI / Workflow
+
+- improve CAM render colors
+- soften edge traces in light mode
+- mute dark part outlines for better visibility
+- improve indexed path visualization
+- fix colors and layer-first shadow rendering
+- hide outline omit-through option when not applicable
+- improve settings mutex handling for legacy operation import
+- fix safe moves between operations with widget platform offsets
+- improve stock clipping for multiple models with offset centers
+- fix origin selection with offset origin
+- fix first-save behavior when moving between widgets
+
+## Bug Fixes
+
+- fix Z bottom validation and related error messages
+- warn when Z bottom is below Z through
+- fix trace tool shadow clone
+- fix clamp min/max swap
+- fix stock clear all functionality
+- fix pocket bottom for slab slicing
+- clamp single trace to Z top/bottom
+- fix Area trace early termination conflict with drape
+- filter empty slices from drape artifacts
+- fix offsetting open polygons with array offsets
+- skip raster when no paths are produced
+- fix orthographic aspect ratio and zoom behavior
+- fix ball taper rendering in indexed mode
+- fix new tool units bug
+- prevent double registration of frame listeners
+- fix async/await issue in CAM prepare
+- convert slice bounds errors to alerts
+
+## Documentation / Build
+
+- add geometry library JSDoc documentation
+- update Kiri:Moto UI documentation and interface images
+- add docs redirects and fix broken links
+- update Docusaurus to 3.9
+- improve cross-platform build workflow with cross-env
+- update raster-path dependency
+- improve Electron build process
+- improve Onshape and Bambu Lab integration behavior
+
+# Release 4.4.1
+
+## CAM
+
+- fix contour Y bounds swap
+- fix tab cuts and stock clip-to in roughing operations
+- fix outline stock clipping with offset origin
+- fix origin selection with offset origin
+- fix stock clipping for multiple models with offset centers
+- fix multi-widget safe moves between operations
+- fix thru cuts with new up/over tab paths
+
+## FDM
+
+- fix FDM support on-demand detection
+- fix asset append missing module root
+
+## Core
+
+- fix bad worker reference
+- add install pass-through for root requests
+
+## Improvements
+
+- improve smoothing and pocket developer-mode visuals
+- change Electron build context detection
+- move mods package dependencies to the main package
+- move Bambu initialization to load-done
+- remove beta tag
+- backport cross-env dependency
+
 # Release 4.4.0
 
 ## General

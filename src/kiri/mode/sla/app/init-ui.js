@@ -2,6 +2,7 @@
 
 import { $ } from '../../../../moto/webui.js';
 import { api } from '../../../app/api.js';
+import { getSLAFileExt } from '../core/formats.js';
 
 export const SLA = {
     init,
@@ -63,21 +64,10 @@ export function printDownload(output, api, names) {
     $('print-layers').value = layers;
     $('print-time').value = `${print_hrs}:${print_min}:${print_sec}`;
 
-    switch (device.deviceName) {
-        case 'Anycubic.Photon':
-            download.innerText += " .photon";
-            download.onclick = () => { saveFile(api, file, ".photon") };
-            break;
-        case 'Anycubic.Photon.S':
-            download.innerText += " .photons";
-            download.onclick = () => { saveFile(api, file, ".photons") };
-            break;
-        case 'Creality.Halot.Sky':
-        default:
-            download.innerText += " .cxdlp";
-            download.onclick = () => { saveFile(api, file, ".cxdlp") };
-            break;
-    }
+    let ext = getSLAFileExt(device);
+    ext = ext.startsWith(".") ? ext : `.${ext}`;
+    download.innerText = `${api.language.current.ex_dwnl || 'download'} ${ext}`;
+    download.onclick = () => { saveFile(api, file, ext) };
 }
 
 function saveFile(api, file, ext) {

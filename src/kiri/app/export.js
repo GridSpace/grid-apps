@@ -284,9 +284,12 @@ function exportGCodeDialog(gcode, sections, info, names) {
                 }
                 api.show.progress(0);
                 if (start && type === 'moonraker') {
+                    const headers = { 'Content-Type': 'application/json' };
+                    if (proxy) hdr['X-Host'] = proxy;
+                    if (apik) hdr['X-Api-Key'] = apik;
                     fetch(`${host}/printer/print/start`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers,
                         body: JSON.stringify({ filename })
                     })
                     .then(r => r.json())

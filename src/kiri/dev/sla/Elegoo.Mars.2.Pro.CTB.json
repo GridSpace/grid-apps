@@ -1,0 +1,15 @@
+{
+    "no_clone": true,
+    "cmd": {},
+    "settings": {
+        "bed_width": 129,
+        "bed_depth": 80,
+        "bed_height": 1,
+        "max_height": 160,
+        "resolution_x": 1620,
+        "resolution_y": 2560,
+        "sla_format": "ctb",
+        "sla_file_ext": "ctb",
+        "sla_format_version": 3
+    }
+}
