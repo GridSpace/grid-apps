@@ -584,9 +584,14 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
                 emit = 1;
             } else
             // otherwise move over before descending
-            if (deltaZ <= -tolerance) {
-                if (debug) console.log('over before descend', deltaZ, -tolerance);
-                layerPush(point.clone().setZ(printPoint.z), 0, 0, tool);
+            if (deltaZ < Math.min(-tolerance, -0.001)) {
+                let lift = printPoint.clone();
+                lift.z += 0.1;
+                let target = point.clone();
+                target.z = printPoint.z + 0.1;
+                
+                layerPush(lift, 0, 0, tool);
+                layerPush(target, 0, 0, tool);
                 newLayer();
             }
         } else
@@ -626,6 +631,30 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
                 }
             }
             lastTravelBounds = undefined;
+
+            // If we are NOT retracting (didn't cross boundaries):
+            if (!upAndOver) {
+                if (deltaZ < Math.min(-tolerance, -0.001)) {
+                    // Descending transition within the pocket -> Z-hop
+                    let lift = printPoint.clone();
+                    lift.z += 0.1;
+                    let target = point.clone();
+                    target.z = printPoint.z + 0.1;
+                    
+                    layerPush(lift, 0, 0, tool);
+                    layerPush(target, 0, 0, tool);
+                    newLayer();
+                } else if (deltaXY <= shortCut && deltaZ <= 0 && !lasering) {
+                    // If this is a short move and the deltaZ failed the check
+                    // in the first branch of this conditional (ie, it's not a
+                    // significant z-descent), but it's still either zero
+                    // (in-plane move) or insignificantly negative, that means
+                    // that we're likely making a cut through stock (a stepover
+                    // cut is the best example of this). Since that's still
+                    // going through material, we force a G1 move for this cut.
+                    emit = 1;
+                }
+            }
         } else
         // for longer moves
         if (isMove) {
