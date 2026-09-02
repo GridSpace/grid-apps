@@ -626,6 +626,16 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
                 }
             }
             lastTravelBounds = undefined;
+
+            // Retract if moving longer distances across stock within pocket bounds
+            if (!upAndOver && deltaXY > shortCut && (camForceZMax || printPoint.z < stockZ || point.z < stockZ)) {
+                // For longer travel moves within bounds that pass below stock height (or if force Z max is set),
+                // trigger an up-and-over retract to zSafe to avoid plowing through uncleared stock at G0.
+                //
+                // A future improvement might add an option for a stepdown-height
+                // Z-hop for in-stock travel moves as an alternative to full zSafe clearance retracts.
+                upAndOver = "in-stock";
+            }
         } else
         // for longer moves
         if (isMove) {
