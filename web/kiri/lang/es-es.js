@@ -637,7 +637,7 @@ self.lang['es-es'] = {
     cd_mark_s:      "marcado",
     cd_mark_l:      ["solo marcar agujeros, no taladrar","la configuración de profundidad de paso se usa","para determinar qué tan profundo marcar"],
     cd_ftop_s:      "desde la parte superior del material",
-    cd_ftop_l:      ["taladrar desde la parte superior del material","en lugar de la superficie de la pieza"],
+    cd_ftop_l:      ["taladrar desde la parte superior del material","en lugar de la superficie de la pieza","(se ignora si se establece un z superior explícito)"],
     cd_prcn_s:      "precisión",
     cd_prcn_l:      ["distancia entre cortes","para buscar agujeros","en unidades de espacio de trabajo","más bajo es más lento y","usa más memoria","0 = solo planos"],
 
@@ -827,7 +827,7 @@ self.lang['es-es'] = {
     ou_ztof_s:      "desplazamiento z",
     ou_ztof_l:      ["desplazar anclaje z","en unidades de espacio de trabajo"],
     ou_ztop_s:      "z superior",
-    ou_ztop_l:      ["desplazamiento desde el fondo del material","para establecer inicio de profundidad de corte","en unidades de espacio de trabajo","* taladro/contorno ignoran esto *"],
+    ou_ztop_l:      ["desplazamiento desde el fondo del material","para establecer inicio de profundidad de corte","en unidades de espacio de trabajo","* contorno ignora esto *"],
     ou_zbot_s:      "z inferior",
     ou_zbot_l:      ["desplazamiento desde el fondo del material","para limitar la profundidad de corte","en unidades de espacio de trabajo"],
     ou_zclr_s:      "z despeje",

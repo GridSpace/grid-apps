@@ -637,7 +637,7 @@ self.lang['pt-pt'] = {
     cd_mark_s:      "marcação",
     cd_mark_l:      ["apenas marcar furos, não furar","a definição de profundidade de passo é usada","para determinar quão fundo marcar"],
     cd_ftop_s:      "do topo do material",
-    cd_ftop_l:      ["furar do topo do material","em vez da superfície da peça"],
+    cd_ftop_l:      ["furar do topo do material","em vez da superfície da peça","(ignorado se z superior explícito for definido)"],
     cd_prcn_s:      "precisão",
     cd_prcn_l:      ["distância entre fatias","para procurar furos","em unidades de espaço de trabalho","mais baixo é mais lento e","usa mais memória","0 = apenas planos"],
 
@@ -827,7 +827,7 @@ self.lang['pt-pt'] = {
     ou_ztof_s:      "desvio z",
     ou_ztof_l:      ["desviar âncora z","em unidades de espaço de trabalho"],
     ou_ztop_s:      "z superior",
-    ou_ztop_l:      ["desvio do fundo do material","para definir início de profundidade de corte","em unidades de espaço de trabalho","* furação/contorno ignoram isto *"],
+    ou_ztop_l:      ["desvio do fundo do material","para definir início de profundidade de corte","em unidades de espaço de trabalho","* contorno ignora isto *"],
     ou_zbot_s:      "z inferior",
     ou_zbot_l:      ["desvio do fundo do material","para limitar profundidade de corte","em unidades de espaço de trabalho"],
     ou_zclr_s:      "folga z",
