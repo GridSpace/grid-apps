@@ -114,6 +114,12 @@ The Trace operation is likely the most configurable, allowing for generation of 
 It can trace on, inside, or outside a line and can take multiple passes to step down to the desired position.  
 When the type parameter is set to "clear," it can even act like a [Pocket](#pocket),  
 clearing the area above the shape created by the selected lines or loop.  
+
+The trace operation supports continuous z-ramping for closed paths:
+- **Continuous**: Linearly interpolates the Z depth around the path's perimeter as the tool travels continuously along the loop, avoiding discrete plunge step-downs between passes. If step down is set to `0`, a single continuous sweep from top Z to target bottom Z is generated. Open paths remain unaffected.
+- **Flat Top**: When continuous mode is active, optionally executes a flat pass at top Z before ramping down.
+- **Flat Bottom**: When continuous mode is active, optionally executes a flat pass at target bottom Z after completing the ramp passes (enabled by default to ensure a level floor).
+
 While the Trace op can do a lot, some specific use cases include:
 
 - Engraving lettering or other text
