@@ -372,7 +372,7 @@ class OpArea extends CamOp {
                             pts.push(pts[0].clone().setZ(zEnd));
                             rampPoly.setOpen(true);
                             newOuts.push(rampPoly);
-                            // optional flat bottom pass: append unmodified 2D closed loop at final bottom Z (defaults to true)
+                            // optional flat bottom pass: append unmodified 2D closed loop at final bottom Z
                             if (i === zs.length - 1 && (op.cont_bottom ?? true)) {
                                 newOuts.push(poly.clone(true).setZ(zEnd));
                             }
