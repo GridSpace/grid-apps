@@ -292,11 +292,16 @@ class OpArea extends CamOp {
             } else
             if (mode === 'trace') {
                 let { tr_over, tr_offz, tr_type  } = op;
-                let zs = down ? base_util.lerp(zTop, op.thru ? zBottom : Math.max(zBottom, area.minZ()), down) : [ bounds.min.z ];
+                // determine target bottom Z level based on cut-thru option or minimum geometry Z
+                let zTarget = op.thru ? zBottom : Math.max(zBottom, area.minZ());
+                // generate Z level array; if continuous mode is enabled without step-down (down = 0), perform a single sweep from zTop to zTarget
+                let zs = down ? base_util.lerp(zTop, zTarget, down) :
+                    (op.continuous && zTop !== zTarget ? [ zTop, zTarget ] : [ bounds.min.z ]);
                 let zroc = 0;
                 let zinc = 1 / zs.length;
                 if (tr_offz) zs = zs.map(z => z - tr_offz);
-                for (let z of zs) {
+                for (let i = 0; i < zs.length; i++) {
+                    let z = zs[i];
                     let slice = newLayer(z);
                     let layers = slice.output();
                     let shadow = op.base ? state.shadow.base : await shadowAt(z);
@@ -333,8 +338,48 @@ class OpArea extends CamOp {
                     }
                     // cut tabs when present
                     if (tabs.length) outs = cutTabs(tabs, outs);
-                    slice.camLines = outs;
                     POLY.setWinding(outs, direction === 'climb');
+                    // transform closed loops into continuous 3D ramping paths when continuous mode is active
+                    if (op.continuous && zs.length > 1) {
+                        // start Z for current pass: zTop (adjusted for tr_offz) for pass 0, or previous pass Z
+                        let zStart = i === 0 ? zTop - (tr_offz ?? 0) : zs[i - 1];
+                        let zEnd = z;
+                        let newOuts = [];
+                        for (let poly of outs) {
+                            // open polylines remain flat and flat top/bottom passes are skipped to prevent duplicate moves
+                            if (poly.isOpen()) {
+                                newOuts.push(poly);
+                                continue;
+                            }
+                            // optional flat top pass: prepend unmodified 2D closed loop at zStart before ramping begins
+                            if (i === 0 && op.cont_top) {
+                                newOuts.push(poly.clone(true).setZ(zStart));
+                            }
+                            // continuous ramp pass: linearly interpolate Z height along perimeter length from zStart to zEnd
+                            let rampPoly = poly.clone(true);
+                            let pts = rampPoly.points;
+                            let n = pts.length;
+                            let totalDist = rampPoly.perimeter();
+                            let dist = 0;
+                            for (let j = 0; j < n; j++) {
+                                let p1 = pts[j];
+                                let p2 = pts[(j + 1) % n];
+                                let t = totalDist > 0 ? dist / totalDist : 0;
+                                p1.z = zStart - t * (zStart - zEnd);
+                                dist += Math.sqrt(p1.distToSq2D(p2));
+                            }
+                            // append closing point at zEnd and set open to avoid auto-closing flat horizontal jumps
+                            pts.push(pts[0].clone().setZ(zEnd));
+                            rampPoly.setOpen(true);
+                            newOuts.push(rampPoly);
+                            // optional flat bottom pass: append unmodified 2D closed loop at final bottom Z (defaults to true)
+                            if (i === zs.length - 1 && (op.cont_bottom ?? true)) {
+                                newOuts.push(poly.clone(true).setZ(zEnd));
+                            }
+                        }
+                        outs = newOuts;
+                    }
+                    slice.camLines = outs;
                     // store travel boundary that triggers up and over moves
                     let tool_shadow = slice.tool_shadow = shadow.clone(true);
                     if (area.isOpen()) {

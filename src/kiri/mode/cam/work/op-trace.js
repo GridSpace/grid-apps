@@ -17,6 +17,9 @@ class OpTrace extends CamOp {
         let trace = {
             areas,
             clearing,
+            continuous: op.continuous,
+            cont_top: op.cont_top ?? op.camTraceContTop ?? false,
+            cont_bottom: op.cont_bottom ?? op.camTraceContBottom ?? true,
             direction,
             dogbones: op.dogbone,
             down,
