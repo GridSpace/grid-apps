@@ -552,7 +552,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
             hasBounds = (travelBounds || lastTravelBounds),
             upAndOver = false;
         // propose camForceZMax enforces moves to safeZ
-        if (camForceZMax) {
+        if (isMove && camForceZMax) {
             upAndOver = true;
         } else
         // contouring logic
