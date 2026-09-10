@@ -551,7 +551,10 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
             isMove = (emit === 0 || emit === false),
             hasBounds = (travelBounds || lastTravelBounds),
             upAndOver = false;
-
+        // propose camForceZMax enforces moves to safeZ
+        if (camForceZMax) {
+            upAndOver = true;
+        } else
         // contouring logic
         if (isMove && contouring) {
             if (coastline && deltaXY < 5 && coastlineMove(point)) {
@@ -636,7 +639,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
             if (bigXY || bigZ || midZ) {
                 if (debug) console.log({ fromz: printPoint.z, toz: point.z });
                 // for big moves intersecting stock...
-                if (camForceZMax || inStock) {
+                if (inStock) {
                     upAndOver = true;
                 }
             }
