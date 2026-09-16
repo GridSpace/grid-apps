@@ -2545,3 +2545,70 @@ details[open] summary::after {
 .em20 {
     max-width: 20em;
 }
+
+/* DXF layer selection and live geometry preview.
+ * The application makes every div a flex row; explicitly define each panel.
+ */
+.dxf-import-dialog {
+    box-sizing: border-box;
+    width: min(1000px, calc(100vw - 80px));
+    min-width: 0;
+    max-height: 72vh;
+}
+.dxf-import-dialog * { box-sizing: border-box; }
+.dxf-import-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+    align-items: start;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+.dxf-preview {
+    display: block;
+    min-width: 0;
+    padding: 12px;
+    border-right: 1px solid #8886;
+}
+.dxf-preview canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: #f7f9fc;
+    border-radius: 4px;
+}
+.dxf-preview p { min-height: 1.5em; white-space: normal; }
+.dxf-options {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 0 12px;
+    min-width: 0;
+}
+.dxf-options h4 { margin: 0; }
+.dxf-layers {
+    display: block;
+    max-height: 220px;
+    overflow-y: auto;
+    border: 1px solid #8886;
+    padding: 6px;
+}
+.dxf-layers label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    padding: 4px;
+    cursor: pointer;
+}
+.dxf-layers input { flex-shrink: 0; }
+.dxf-options .image-convert-copy { width: auto; text-align: left; }
+.dxf-options .image-convert-fields { display: block; }
+.dxf-options table { width: 100%; }
+.dxf-options th { white-space: normal; }
+.dxf-options td { width: 110px; }
+.dxf-options td input:not([type="checkbox"]),
+.dxf-options td select { width: 100%; min-width: 0; }
+.dxf-options .image-convert-actions { flex: none; align-items: center; }

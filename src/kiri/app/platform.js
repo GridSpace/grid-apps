@@ -1082,7 +1082,7 @@ function load_files(files, group) {
                     load_dec();
                 });
             } else if (isdxf) {
-                loadDXFDialog(opt => {
+                loadDXFDialog(data.textDecode('utf-8'), opt => {
                     group = group || [];
                     let dxf = file_load.DXF.parse(data.textDecode('utf-8'), opt);
                     let ind = 0;
@@ -1145,12 +1145,15 @@ function loadSVGDialog(doit) {
  * @param {Function} doit - Callback with options: {soup, depth, segmentSize, minSegments}
  * @private
  */
-function loadDXFDialog(doit) {
+function loadDXFDialog(text, doit) {
     const rnd = Date.now().toString(36);
     const host = $('mod-any');
     host.innerHTML = [
-        `<div class="image-convert-dialog f-col a-center">`,
+        `<div class="image-convert-dialog dxf-import-dialog f-col">`,
         `  <h3 class="image-convert-title">Import DXF</h3>`,
+        `  <div class="dxf-import-body">`,
+        `    <div class="dxf-preview"><canvas id="dxf-preview-${rnd}" width="700" height="500" aria-label="DXF preview"></canvas><p id="dxf-status-${rnd}" role="status"></p></div>`,
+        `    <div class="dxf-options"><h4>Layers</h4><div id="dxf-layers-${rnd}" class="dxf-layers"></div>`,
         `  <p class="image-convert-copy t-just">`,
         `  Extrude a 3D model from a 2D DXF.`,
         `  Supports POLYLINE, LWPOLYLINE, LINE, CIRCLE, ARC, and SPLINE entities.`,
@@ -1165,7 +1168,7 @@ function loadDXFDialog(doit) {
         `  <div class="f-row j-end image-convert-actions">`,
         `    <button id="dxf-convert-ok-${rnd}">import</button>`,
         `    <button id="dxf-convert-cancel-${rnd}">cancel</button>`,
-        `  </div>`,
+        `  </div></div></div>`,
         `</div>`
     ].join('');
 
@@ -1177,16 +1180,78 @@ function loadDXFDialog(doit) {
     const okBtn = $(`dxf-convert-ok-${rnd}`);
     const cancelBtn = $(`dxf-convert-cancel-${rnd}`);
 
+    const canvas = $(`dxf-preview-${rnd}`);
+    const status = $(`dxf-status-${rnd}`);
+    const layerList = $(`dxf-layers-${rnd}`);
+    const selected = new Set(file_load.DXF.getLayers(text));
+    const options = () => ({
+        soup: nest.checked,
+        depth: Math.max(0.1, parseFloat(depth.value) || 5),
+        segmentSize: Math.max(0.01, parseFloat(segmentSize.value) || 1),
+        minSegments: Math.max(3, parseInt(minSegments.value) || 4),
+        units: units.value,
+        layers: [...selected]
+    });
+    function renderPreview() {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        okBtn.disabled = selected.size === 0;
+        status.textContent = selected.size ? '' : 'Select at least one layer';
+        if (!selected.size) return;
+        try {
+            const paths = [];
+            function collect(poly) {
+                if (poly.points.length) paths.push(poly);
+                for (const inner of poly.inner || []) collect(inner);
+            }
+            file_load.DXF.parse(text, { ...options(), flat: true }).forEach(collect);
+            if (!paths.length) {
+                status.textContent = 'No supported geometry in selected layers';
+                okBtn.disabled = true;
+                return;
+            }
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            for (const path of paths) for (const p of path.points) {
+                minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+                minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
+            }
+            const scale = Math.min(660 / Math.max(maxX - minX, 1), 460 / Math.max(maxY - minY, 1));
+            ctx.strokeStyle = '#3989ce';
+            ctx.lineWidth = 1.5;
+            for (const path of paths) {
+                ctx.beginPath();
+                path.points.forEach((p, i) => {
+                    const x = 350 + (p.x - (minX + maxX) / 2) * scale;
+                    const y = 250 - (p.y - (minY + maxY) / 2) * scale;
+                    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                });
+                if (!path.open) ctx.closePath();
+                ctx.stroke();
+            }
+        } catch (error) {
+            status.textContent = 'Unable to preview DXF: ' + error.message;
+            okBtn.disabled = true;
+        }
+    }
+    for (const layer of selected) {
+        const label = document.createElement('label');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = true;
+        checkbox.onchange = () => {
+            if (checkbox.checked) selected.add(layer); else selected.delete(layer);
+            renderPreview();
+        };
+        label.append(checkbox, document.createTextNode(layer));
+        layerList.append(label);
+    }
+    for (const input of [units, segmentSize, minSegments, nest]) input.onchange = renderPreview;
+    renderPreview();
+
     okBtn.onclick = () => {
         api.modal.hide();
         setTimeout(() => {
-            doit({
-                soup: nest.checked,
-                depth: Math.max(0.1, parseFloat(depth.value)),
-                segmentSize: Math.max(0.01, parseFloat(segmentSize.value)),
-                minSegments: Math.max(3, parseInt(minSegments.value)),
-                units: units.value
-            });
+            doit(options());
         }, 50);
     };
     cancelBtn.onclick = () => api.modal.hide();

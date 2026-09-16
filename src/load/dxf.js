@@ -4,6 +4,24 @@ import { newPolygon } from '../geo/polygon.js';
 import { newPoint } from '../geo/point.js';
 import { polygons } from '../geo/polygons.js';
 
+/** List declared layers and layers used by entities, including unsupported entities. */
+export function getLayers(text) {
+    const lines = text.replace(/\r\n?/g, '\n').split('\n').map(line => line.trim());
+    const layers = new Set();
+    let section = '';
+    let record = '';
+    for (let i = 0; i < lines.length - 1; i += 2) {
+        const code = lines[i], value = lines[i + 1];
+        if (code === '0') record = value;
+        if (record === 'SECTION' && code === '2') section = value;
+        if (record === 'ENDSEC') section = '';
+        if (section === 'TABLES' && record === 'LAYER' && code === '2') layers.add(value);
+        if (section === 'ENTITIES' && code === '8') layers.add(value);
+    }
+    for (const entity of extractEntities(lines)) layers.add(entity.layer);
+    return [...layers].sort((a, b) => a.localeCompare(b));
+}
+
 export function parseAsync(text, opt) {
     return new Promise((resolve, reject) => {
         try {
@@ -32,7 +50,8 @@ export function parse(text, opt = { }) {
     const inputUnits = (!opt.units || opt.units === 'auto') ? fileUnits : opt.units;
     const scale = getScaleToMM(inputUnits); // convert to mm (Kiri:Moto's internal unit)
 
-    const entities = extractEntities(lines);
+    const selected = opt.layers === undefined ? null : new Set(opt.layers);
+    const entities = extractEntities(lines).filter(entity => !selected || selected.has(entity.layer));
 
     // Scale all entities to mm BEFORE stitching
     scaleEntities(entities, scale);
@@ -225,9 +244,14 @@ function extractEntities(lines) {
         }
 
         if (inEntities && code === '0') {
+            let layer = '0';
+            for (let j = i + 2; j < lines.length - 1 && lines[j] !== '0'; j += 2) {
+                if (lines[j] === '8') layer = lines[j + 1];
+            }
             if (value === 'POLYLINE') {
                 const entity = parsePolyline(lines, i);
                 if (entity) {
+                    entity.layer = layer;
                     entities.push(entity);
                     i = entity.endIndex;
                     continue;
@@ -235,6 +259,7 @@ function extractEntities(lines) {
             } else if (value === 'LWPOLYLINE') {
                 const entity = parseLWPolyline(lines, i);
                 if (entity) {
+                    entity.layer = layer;
                     entities.push(entity);
                     i = entity.endIndex;
                     continue;
@@ -242,6 +267,7 @@ function extractEntities(lines) {
             } else if (value === 'LINE') {
                 const entity = parseLine(lines, i);
                 if (entity) {
+                    entity.layer = layer;
                     entities.push(entity);
                     i = entity.endIndex;
                     continue;
@@ -249,6 +275,7 @@ function extractEntities(lines) {
             } else if (value === 'CIRCLE') {
                 const entity = parseCircle(lines, i);
                 if (entity) {
+                    entity.layer = layer;
                     entities.push(entity);
                     i = entity.endIndex;
                     continue;
@@ -256,6 +283,7 @@ function extractEntities(lines) {
             } else if (value === 'ARC') {
                 const entity = parseArc(lines, i);
                 if (entity) {
+                    entity.layer = layer;
                     entities.push(entity);
                     i = entity.endIndex;
                     continue;
@@ -263,6 +291,7 @@ function extractEntities(lines) {
             } else if (value === 'SPLINE') {
                 const entity = parseSpline(lines, i);
                 if (entity) {
+                    entity.layer = layer;
                     entities.push(entity);
                     i = entity.endIndex;
                     continue;
