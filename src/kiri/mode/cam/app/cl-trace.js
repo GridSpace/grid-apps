@@ -137,10 +137,23 @@ export function traceAdd(ev) {
     }
 }
 
+export let lastHoverData;
+
+function onKeyChange(evt) {
+    // Re-evaluate hover highlight when Shift, Control, or Meta (macOS Command ⌘) modifier keys change
+    if (traceOn && lastHoverData && (evt.key === 'Shift' || evt.key === 'Control' || evt.key === 'Meta')) {
+        traceHover({ ...lastHoverData, event: evt });
+    }
+}
+
+window.addEventListener('keydown', onKeyChange);
+window.addEventListener('keyup', onKeyChange);
+
 export function traceDone() {
     if (!traceOn) {
         return;
     }
+    lastHoverData = null;
     env.func.unpop();
     traceOn.classList.remove("editing");
     traceOn = false;
@@ -158,30 +171,56 @@ export function traceDone() {
 }
 
 export function traceHover(data) {
+    // Un-highlight previously hovered trace(s)
     if (lastTrace) {
-        let { color, colorSave } = lastTrace.material[0] || lastTrace.material;
-        color.r = colorSave.r;
-        color.g = colorSave.g;
-        color.b = colorSave.b;
+        let list = Array.isArray(lastTrace) ? lastTrace : [ lastTrace ];
+        for (let obj of list) {
+            let material = obj.material[0] || obj.material;
+            if (material) {
+                let { color, colorSave } = material;
+                if (colorSave) {
+                    color.r = colorSave.r;
+                    color.g = colorSave.g;
+                    color.b = colorSave.b;
+                }
+            }
+        }
     }
     lastTrace = null;
-    if (data.type === 'platform') {
+
+    if (data.type === 'platform' || !data.int || !data.int.object || !data.int.object.trace) {
+        lastHoverData = null;
         return;
     }
-    if (!data.int.object.trace) {
-        return;
+
+    lastHoverData = data;
+    let object = data.int.object;
+    let ev = data.event || {};
+
+    // Determine target set of trace meshes to highlight based on modifier keys
+    let targets;
+    if (ev.shiftKey) {
+        targets = getConnectedTraces(object);
+    } else if (ev.metaKey || ev.ctrlKey) {
+        targets = getSameZTraces(object);
+    } else {
+        targets = [ object ];
     }
-    lastTrace = data.int.object;
-    if (lastTrace.selected) {
-        let event = data.event;
-        let target = event.target;
-        let { clientX, clientY } = event;
-        let { offsetWidth, offsetHeight } = target;
+
+    lastTrace = targets;
+
+    // Apply hover highlight color to all target meshes
+    let hoverColorHex = isDark() ? 0x0066ff : 0x0000ff;
+    for (let obj of targets) {
+        let material = obj.material[0] || obj.material;
+        if (material) {
+            let color = material.color;
+            if (!material.colorSave) {
+                material.colorSave = color.clone();
+            }
+            color.setHex(hoverColorHex);
+        }
     }
-    let material = lastTrace.material[0] || lastTrace.material;
-    let color = material.color;
-    material.colorSave = color.clone();
-    color.setHex(isDark() ? 0x0066ff : 0x0000ff);
 }
 
 /**
