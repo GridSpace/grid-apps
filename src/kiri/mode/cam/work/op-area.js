@@ -36,7 +36,7 @@ class OpArea extends CamOp {
     async slice(progress) {
         let { op, state } = this;
         let { direction, down, expand, flats, flatOff, follow } = op;
-        let { limitPart, limitPocket, mode, outline, over, rename, smooth, tool } = op;
+        let { mode, outline, over, rename, smooth, tool } = op;
         let { addSlices, axisIndex, color, cutTabs, settings } = state;
         let { shadowAt, setToolDiam, tabs, widget, workarea } = state;
 
@@ -47,6 +47,12 @@ class OpArea extends CamOp {
         let zTop = workarea.top_z;
         let zBottom = workarea.bottom_z;
         let shadowBase = state.shadow.base;
+        // Outer part shadow profiles (ignoring any interior holes) for part bounds limiting
+        let shadowBaseOuter = shadowBase ? shadowBase.map(p => {
+            let outer = p.clone(true);
+            outer.inner = undefined;
+            return outer;
+        }) : [];
         let thruHoles = state.shadow.holes;
         let roundSharps = settings.process.camRoundCorners;
 
@@ -187,22 +193,23 @@ class OpArea extends CamOp {
                 // Helper function to compute the clipped area-to-be-machined for a given target Z height.
                 async function computeAreaToBeMachined(targetArea, targetZ) {
                     let expandedArea;
-                    if (op.ignore) {
-                        expandedArea = POLY.offset([ targetArea ], toolRadius, { z: targetZ, ...offopt });
-                    } else if (limitPocket) {
-                        // Limit to pocket bounds: tool center cannot extend outside selected pocket boundary
-                        expandedArea = [ targetArea.clone(true) ];
+                    if (op.limitPocket) {
+                        // Limit the whole tool to stay within selected pocket bounds: inset pocket boundary by tool radius
+                        expandedArea = POLY.offset([ targetArea ], -toolRadius, { z: targetZ, ...offopt });
                     } else {
                         // Expand selected area by tool radius to allow tool center to extend into open air boundaries
                         expandedArea = POLY.offset([ targetArea ], toolRadius, { z: targetZ, ...offopt });
-                        // Limit to part bounds: tool center cannot extend outside global part footprint
-                        if (limitPart && shadowBase && shadowBase.length) {
-                            expandedArea = POLY.trimTo(expandedArea, shadowBase) || [];
+
+                        if (op.limitPart && shadowBaseOuter && shadowBaseOuter.length) {
+                            // Limit the whole tool to stay within part bounds: trim to outer part footprint (shadowBaseOuter) inset by tool radius
+                            let partLimit = POLY.offset(shadowBaseOuter, -toolRadius, { z: targetZ, ...offopt });
+                            expandedArea = POLY.trimTo(expandedArea, partLimit) || [];
                         }
                     }
 
-                    let shadow = await shadowAt(targetZ + 0.01);
-                    if (op.omitthru) {
+                    // When op.ignore is set, bypass shadow clipping entirely
+                    let shadow = (op.ignore) ? [] : await shadowAt(targetZ + 0.01);
+                    if (op.omitthru && shadow.length) {
                         shadow = omitMatching(shadow, thruHoles);
                     }
 
