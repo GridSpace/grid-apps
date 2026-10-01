@@ -444,17 +444,18 @@ class OpArea extends CamOp {
                     // skip raster if no output generated
                     continue;
                 }
+                let zFloor = zBottom - 1;
                 let output = await raster.generateToolpaths({
                     paths,
                     step: toolOver / 2,
-                    zFloor: zBottom - 1,
+                    zFloor,
                     onProgress: pct => progress(proc + (pinc * (pct/100)))
                 });
                 raster.terminate();
 
                 let slopeMin = sr_slope_min ?? 0;
                 let slopeMax = sr_slope_max ?? 90;
-                output.paths = filterSlopePaths(output.paths, slopeMin, slopeMax, toolDiam/2);
+                output.paths = filterSlopePaths(output.paths, slopeMin, slopeMax, toolDiam/2, zFloor);
 
                 // convert terrain raster output back to open polylines
                 // todo: add leave_z support
@@ -669,7 +670,7 @@ function routeLinearLines(lines) {
     return routed;
 }
 
-function filterSlopePaths(paths, min, max, minRunLength = 0) {
+function filterSlopePaths(paths, min, max, minRunLength = 0, zFloor) {
     min = Math.max(0, Math.min(90, min));
     max = Math.max(0, Math.min(90, max));
     if (min > max) {
@@ -683,9 +684,11 @@ function filterSlopePaths(paths, min, max, minRunLength = 0) {
 
     const out = [];
     const eps = 0.00001;
+    const avoidVoid = max < 90;
     for (let path of paths) {
         let run;
         let lastAngle;
+        let resumeZ;
         for (let i = 3; i < path.length; i += 3) {
             let x0 = path[i - 3],
                 y0 = path[i - 2],
@@ -697,6 +700,21 @@ function filterSlopePaths(paths, min, max, minRunLength = 0) {
                 dz = z1 - z0,
                 angle = Math.atan2(Math.abs(dz), dxy) * RAD2DEG,
                 signedAngle = normalizeSlopeAngle(Math.atan2(dz, dxy) * RAD2DEG);
+
+            if (resumeZ !== undefined) {
+                if (z1 >= resumeZ - eps) {
+                    resumeZ = undefined;
+                }
+                continue;
+            }
+
+            if (avoidVoid && (z0 <= zFloor + eps || z1 <= zFloor + eps)) {
+                if (run) emitSlopeRun(out, run, minRunLength);
+                run = undefined;
+                lastAngle = undefined;
+                resumeZ = zFloor + 1;
+                continue;
+            }
 
             if (run && Math.hypot(dxy, dz) <= surfaceSlopeMergePointEps) {
                 run[run.length - 3] = x1;
@@ -722,10 +740,22 @@ function filterSlopePaths(paths, min, max, minRunLength = 0) {
                 run = undefined;
                 lastAngle = undefined;
             }
+            if (dz < 0 && angle > max + eps && reachesVoidFloor(path, i, z0, zFloor, eps)) {
+                resumeZ = z0;
+            }
         }
         if (run) emitSlopeRun(out, run, minRunLength);
     }
     return out;
+}
+
+function reachesVoidFloor(path, start, entryZ, zFloor, eps) {
+    for (let i = start; i < path.length; i += 3) {
+        let z = path[i + 2];
+        if (z <= zFloor + eps) return true;
+        if (z >= entryZ - eps) return false;
+    }
+    return false;
 }
 
 function emitSlopeRun(out, run, minRunLength) {

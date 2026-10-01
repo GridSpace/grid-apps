@@ -44,7 +44,7 @@ export class Topo {
             tool = new Tool(settings, contour.tool),
             toolOffset = tool.generateProfile(resolution).profile,
             toolDiameter = tool.fluteDiameter(),
-            toolStep = toolDiameter * contour.step,
+            toolStep = tool.hasTaper() ? contour.step : toolDiameter * contour.step,
             leave = contour.leave || 0,
             maxangle = contour.angle,
             curvesOnly = contour.curves,
