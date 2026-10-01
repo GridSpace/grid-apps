@@ -180,7 +180,50 @@ class OpArea extends CamOp {
                 let zinc = 1 / zs.length;
                 let lzo;
 
+                let toolRadius = toolDiam / 2 + (op.leave_xy ?? 0);
+
                 if (!zs.length) break;
+
+                // Helper function to compute the clipped area-to-be-machined for a given target Z height.
+                async function computeAreaToBeMachined(targetArea, targetZ) {
+                    let expandedArea;
+                    if (op.ignore) {
+                        expandedArea = POLY.offset([ targetArea ], toolRadius, { z: targetZ, ...offopt });
+                    } else if (limitPocket) {
+                        // Limit to pocket bounds: tool center cannot extend outside selected pocket boundary
+                        expandedArea = [ targetArea.clone(true) ];
+                    } else {
+                        // Expand selected area by tool radius to allow tool center to extend into open air boundaries
+                        expandedArea = POLY.offset([ targetArea ], toolRadius, { z: targetZ, ...offopt });
+                        // Limit to part bounds: tool center cannot extend outside global part footprint
+                        if (limitPart && shadowBase && shadowBase.length) {
+                            expandedArea = POLY.trimTo(expandedArea, shadowBase) || [];
+                        }
+                    }
+
+                    let shadow = await shadowAt(targetZ + 0.01);
+                    if (op.omitthru) {
+                        shadow = omitMatching(shadow, thruHoles);
+                    }
+
+                    let clip = [];
+                    let wallObstacles = shadow && shadow.length ?
+                        POLY.offset(shadow, toolRadius, { z: targetZ, ...offopt }) : [];
+                    if (wallObstacles.length) {
+                        POLY.subtract(expandedArea, wallObstacles, clip, undefined, undefined, 0);
+                    } else {
+                        clip = expandedArea;
+                    }
+
+                    POLY.setZ(clip, targetZ);
+                    return clip;
+                }
+
+                // Identify the z-plane of the pocket (z-height of highest point in pocket polygon)
+                let pocketZ = area.getBounds3D()?.max?.z ?? area.maxZ();
+
+                // Compute pocket bottom milling area once before the per-slice loop
+                let pocketBottomArea = await computeAreaToBeMachined(area, pocketZ);
 
                 outer: for (;;)
                 for (let z of zs) {
@@ -195,41 +238,19 @@ class OpArea extends CamOp {
                     if (op.omitthru) {
                         shadow = omitMatching(shadow, thruHoles);
                     }
-                    // Calculate safe tool-center region (clip) considering tool radius and wall obstacles.
-                    // Instead of unconditionally insetting area by -toolRadius (which assumes all edges are walls),
-                    // we subtract expanded rising wall obstacles (shadow) from area. Open air boundaries remain at full size,
-                    // allowing small bosses/columns (smaller than tool diam) to be cleared without collapsing to 0 area.
                     let outs = [];
-                    let clip = [];
-                    let toolRadius = toolDiam / 2 + (op.leave_xy ?? 0);
                     let targetZ = z - zMov;
 
-                    let expandedArea;
-                    if (op.ignore) {
-                        expandedArea = POLY.offset([ area ], toolRadius, { z: targetZ, ...offopt });
-                    } else if (limitPocket) {
-                        // Limit to pocket bounds: tool center cannot extend outside selected pocket boundary
-                        expandedArea = [ area.clone(true) ];
-                    } else {
-                        // Expand selected area by tool radius to allow tool center to extend into open air boundaries
-                        expandedArea = POLY.offset([ area ], toolRadius, { z: targetZ, ...offopt });
-                        // Limit to part bounds: tool center cannot extend outside global part footprint
-                        if (limitPart && shadowBase && shadowBase.length) {
-                            expandedArea = POLY.trimTo(expandedArea, shadowBase) || [];
-                        }
-                    }
+                    // Compute clipped area-to-be-machined at current slice Z height
+                    let clip = await computeAreaToBeMachined(area, targetZ);
 
-                    // Expand rising wall obstacles by tool radius to form forbidden collision zone
-                    let wallObstacles = shadow && shadow.length ?
-                        POLY.offset(shadow, toolRadius, { z: targetZ, ...offopt }) : [];
-                    if (wallObstacles.length) {
-                        POLY.subtract(expandedArea, wallObstacles, clip, undefined, undefined, 0);
-                    } else {
-                        clip = expandedArea;
+                    // Clip every layer to pocketBottomArea
+                    if (pocketBottomArea && pocketBottomArea.length && clip && clip.length) {
+                        let pocketBottomAtZ = pocketBottomArea.map(p => p.clone(true));
+                        POLY.setZ(pocketBottomAtZ, targetZ);
+                        clip = POLY.trimTo(clip, pocketBottomAtZ) || [];
+                        POLY.setZ(clip, targetZ);
                     }
-
-                    // Ensure all points in clip are set to the current slice Z height
-                    POLY.setZ(clip, targetZ);
 
                     if (op.clearing === 'linear') {
                         let perimeter = outs;
