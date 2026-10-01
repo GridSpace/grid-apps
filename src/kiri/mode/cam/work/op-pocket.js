@@ -14,6 +14,8 @@ class OpPocket extends CamOp {
         let { plunge, rate, refine, smooth, spindle, surfaces, tolerance, tool } = op;
         let pocket = {
             areas: {},
+            // Constrain higher Z slices to the pocket bottom profile footprint (pocketBottomArea)
+            clipToBottomProfile: true,
             direction,
             down,
             expand,

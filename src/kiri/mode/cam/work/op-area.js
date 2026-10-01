@@ -36,7 +36,27 @@ class OpArea extends CamOp {
     async slice(progress) {
         let { op, state } = this;
         let { direction, down, expand, flats, flatOff, follow } = op;
-        let { mode, outline, over, rename, smooth, tool } = op;
+        let {
+          // clipToBottomProfile: when true (set by OpPocket), restricts higher
+          // Z slices to the footprint of the pocket bottom profile
+          clipToBottomProfile,
+          // limitPart: when true, restricts tool motion to stay within outer part footprint
+          limitPart,
+          // limitPocket: when true, restricts tool motion to stay within selected pocket bounds
+          limitPocket,
+          // mode: clearing mode ('clear', 'trace', or 'surface')
+          mode,
+          // outline: when true, ignores interior voids and processes perimeter outline only
+          outline,
+          // over: tool stepover distance override or fraction of tool diameter
+          over,
+          // rename: custom layer label or operation name override
+          rename,
+          // smooth: smoothing factor for polygon contour jaggies
+          smooth,
+          // tool: tool configuration ID or object
+          tool
+        } = op;
         let { addSlices, axisIndex, color, cutTabs, settings } = state;
         let { shadowAt, setToolDiam, tabs, widget, workarea } = state;
 
@@ -191,6 +211,7 @@ class OpArea extends CamOp {
                 if (!zs.length) break;
 
                 // Helper function to compute the clipped area-to-be-machined for a given target Z height.
+                // Applied uniformly across all clearing operations (pocket, rough, flats).
                 async function computeAreaToBeMachined(targetArea, targetZ) {
                     let expandedArea;
                     if (op.limitPocket) {
@@ -229,8 +250,13 @@ class OpArea extends CamOp {
                 // Identify the z-plane of the pocket (z-height of highest point in pocket polygon)
                 let pocketZ = area.getBounds3D()?.max?.z ?? area.maxZ();
 
-                // Compute pocket bottom milling area once before the per-slice loop
-                let pocketBottomArea = await computeAreaToBeMachined(area, pocketZ);
+                /**
+                 * pocketBottomArea: Pre-computed milling boundary calculated at pocketZ (the pocket floor/bottom depth).
+                 * When clipToBottomProfile is enabled (e.g. for pocket ops), this bounding area ensures that slices at higher
+                 * Z planes (z > pocketZ) are strictly constrained/trimmed to the footprint of the target pocket feature,
+                 * preventing toolpaths from expanding into unrelated open-air regions above surrounding geometry.
+                 */
+                let pocketBottomArea = clipToBottomProfile ? await computeAreaToBeMachined(area, pocketZ) : undefined;
 
                 outer: for (;;)
                 for (let z of zs) {
@@ -251,8 +277,9 @@ class OpArea extends CamOp {
                     // Compute clipped area-to-be-machined at current slice Z height
                     let clip = await computeAreaToBeMachined(area, targetZ);
 
-                    // Clip every layer to pocketBottomArea
-                    if (pocketBottomArea && pocketBottomArea.length && clip && clip.length) {
+                    // When clipToBottomProfile is enabled (pocket ops), restrict the slice's clearable area to pocketBottomArea.
+                    // This constrains machining at higher Z levels to the footprint of the pocket feature floor.
+                    if (clipToBottomProfile && pocketBottomArea && pocketBottomArea.length && clip && clip.length) {
                         let pocketBottomAtZ = pocketBottomArea.map(p => p.clone(true));
                         POLY.setZ(pocketBottomAtZ, targetZ);
                         clip = POLY.trimTo(clip, pocketBottomAtZ) || [];
@@ -285,9 +312,8 @@ class OpArea extends CamOp {
 
                         // Generate inward concentric offsets using stepover
                         let offsets = [];
-                        //if we need a finish cut, add it
                         let finish_cut = op.finish_cut ?? 0;
-                        if (finish_cut != 0) { //todo: this should check for camInnerFirst and warn if it is not true
+                        if (finish_cut != 0) {
                             offsets.push(-finish_cut);
                         }
                         offsets.push(-toolOver);

@@ -27,7 +27,7 @@ class OpRough extends CamOp {
             shadowBase = [ newPolygon().centerRectangle(stock.center, stock.x, stock.y) ];
         }
 
-        let areas = POLY.flatten(POLY.expand(shadowBase, tool.fluteDiameter() / 2 - 0.001));
+        let areas = POLY.flatten(shadowBase.map(p => p.clone(true)));
         let ops_list = this.ops_list = [ ];
 
         ops_list.push(new OpArea(state, {
@@ -89,10 +89,8 @@ class OpRough extends CamOp {
 
         // outside only if we're not clearing all of stock
         if (cutOutside && !op.all) {
-            if (op.leave) {
-                // recompute area with offset when provided
-                areas = POLY.flatten(POLY.expand(shadowBase, tool.fluteDiameter() / 2 - 0.001 + op.leave));
-            }
+            // Cutout trace operation requires area expanded by tool radius (plus leave offset if set)
+            let cutoutAreas = POLY.flatten(POLY.expand(shadowBase, tool.fluteDiameter() / 2 - 0.001 + (op.leave ?? 0)));
             ops_list.push(new OpArea(state, {
                 rename: op.rename ?? "cutout",
                 spindle: op.spindle,
@@ -109,7 +107,7 @@ class OpRough extends CamOp {
                 ov_botz: op.ov_botz,
                 ov_topz: op.ov_topz,
                 rotated: true,
-                areas: { [widget.id]: areas.map(p => p.toArray()) },
+                areas: { [widget.id]: cutoutAreas.map(p => p.toArray()) },
                 surfaces: {},
                 thru: true
             }));
