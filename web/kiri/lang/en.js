@@ -623,6 +623,10 @@ self.lang['en-us'] = {
     cp_outl_l:      ["ignore interior voids and features"],
     cp_shad_s:      "shadow",
     cp_shad_l:      ["select part shadow as work area. overrides selected edges and surface areas"],
+    cp_lmpt_s:      "limit to part bounds",
+    cp_lmpt_l:      ["Limit tool motion to the boundary of the part. This might cause narrow areas near the part border to remain uncut"],
+    cp_lmpk_s:      "limit to pocket bounds",
+    cp_lmpk_l:      ["Limit tool motion to the boundary of the selected pocket. This might cause narrow areas to remain uncut"],
 
     // CNC DRILLING
     cd_menu:        "drill",

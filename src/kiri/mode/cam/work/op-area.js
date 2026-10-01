@@ -36,7 +36,7 @@ class OpArea extends CamOp {
     async slice(progress) {
         let { op, state } = this;
         let { direction, down, expand, flats, flatOff, follow } = op;
-        let { mode, outline, over, rename, smooth, tool } = op;
+        let { limitPart, limitPocket, mode, outline, over, rename, smooth, tool } = op;
         let { addSlices, axisIndex, color, cutTabs, settings } = state;
         let { shadowAt, setToolDiam, tabs, widget, workarea } = state;
 
@@ -195,26 +195,50 @@ class OpArea extends CamOp {
                     if (op.omitthru) {
                         shadow = omitMatching(shadow, thruHoles);
                     }
-                    // progressive offset of polygons inside area clipped to the shadow
+                    // Calculate safe tool-center region (clip) considering tool radius and wall obstacles.
+                    // Instead of unconditionally insetting area by -toolRadius (which assumes all edges are walls),
+                    // we subtract expanded rising wall obstacles (shadow) from area. Open air boundaries remain at full size,
+                    // allowing small bosses/columns (smaller than tool diam) to be cleared without collapsing to 0 area.
                     let outs = [];
                     let clip = [];
-                    let firstOff = -(toolDiam / 2 + (op.leave_xy ?? 0));
-                    // remove shadow from area
+                    let toolRadius = toolDiam / 2 + (op.leave_xy ?? 0);
+                    let targetZ = z - zMov;
+
+                    let expandedArea;
                     if (op.ignore) {
-                        clip = [ area ];
+                        expandedArea = POLY.offset([ area ], toolRadius, { z: targetZ, ...offopt });
+                    } else if (limitPocket) {
+                        // Limit to pocket bounds: tool center cannot extend outside selected pocket boundary
+                        expandedArea = [ area.clone(true) ];
                     } else {
-                        POLY.subtract([ area ], shadow, clip, undefined, undefined, 0);
+                        // Expand selected area by tool radius to allow tool center to extend into open air boundaries
+                        expandedArea = POLY.offset([ area ], toolRadius, { z: targetZ, ...offopt });
+                        // Limit to part bounds: tool center cannot extend outside global part footprint
+                        if (limitPart && shadowBase && shadowBase.length) {
+                            expandedArea = POLY.trimTo(expandedArea, shadowBase) || [];
+                        }
                     }
+
+                    // Expand rising wall obstacles by tool radius to form forbidden collision zone
+                    let wallObstacles = shadow && shadow.length ?
+                        POLY.offset(shadow, toolRadius, { z: targetZ, ...offopt }) : [];
+                    if (wallObstacles.length) {
+                        POLY.subtract(expandedArea, wallObstacles, clip, undefined, undefined, 0);
+                    } else {
+                        clip = expandedArea;
+                    }
+
+                    // Ensure all points in clip are set to the current slice Z height
+                    POLY.setZ(clip, targetZ);
+
                     if (op.clearing === 'linear') {
                         let perimeter = outs;
-                        POLY.offset(clip, [ firstOff ], {
-                            count: 1, outs: perimeter, flat: true, z: z - zMov, ...offopt
-                        });
+                        perimeter.push(...clip);
                         if (!op.walls && perimeter.length) {
                             let fillArea = [],
                                 fillGap = Math.max(linearClearWallGap, toolDiam * linearClearWallGapToolFactor);
                             POLY.offset(perimeter, [ -fillGap ], {
-                                count: 1, outs: fillArea, flat: true, z: z - zMov, ...offopt
+                                count: 1, outs: fillArea, flat: true, z: targetZ, ...offopt
                             });
                             let fill = linearClear(fillArea, toolOver, toolDiam);
                             let linearClearRoute = {
@@ -227,19 +251,25 @@ class OpArea extends CamOp {
                             outs.push(...fill);
                         }
                     } else {
-                        //generate offsets to use
-                        let offsets = [ firstOff ];
+                        // The clip polygon represents the outermost safe tool-center boundary.
+                        // Add initial boundary pass to output.
+                        outs.push(...clip);
+
+                        // Generate inward concentric offsets using stepover
+                        let offsets = [];
                         //if we need a finish cut, add it
                         let finish_cut = op.finish_cut ?? 0;
                         if (finish_cut != 0) { //todo: this should check for camInnerFirst and warn if it is not true
                             offsets.push(-finish_cut);
                         }
-                        //everything else uses the tool stepover
                         offsets.push(-toolOver);
-                        //actually offset the walls inwards
-                        POLY.offset(clip, offsets, {
-                            count: op.walls ? 1 : (op.steps ?? 999), outs, flat: true, z: z - zMov, ...offopt
-                        });
+
+                        // Offset inwards from the safe boundary
+                        if (clip.length) {
+                            POLY.offset(clip, offsets, {
+                                count: op.walls ? 0 : (op.steps ?? 999), outs, flat: true, z: targetZ, ...offopt
+                            });
+                        }
                     }
                     // if we see no offsets, re-check the mesh bottom Z then exit
                     if (outs.length === 0) {

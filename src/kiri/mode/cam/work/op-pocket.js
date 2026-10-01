@@ -10,7 +10,7 @@ class OpPocket extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { contour, direction, down, expand, follow, outline, ov_botz, ov_topz } = op;
+        let { contour, direction, down, expand, follow, limitPart, limitPocket, outline, ov_botz, ov_topz } = op;
         let { plunge, rate, refine, smooth, spindle, surfaces, tolerance, tool } = op;
         let pocket = {
             areas: {},
@@ -18,6 +18,8 @@ class OpPocket extends CamOp {
             down,
             expand,
             follow,
+            limitPart,
+            limitPocket,
             mode: contour ? 'surface' : 'clear',
             outline,
             ov_botz,
