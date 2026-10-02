@@ -619,6 +619,10 @@ self.lang['fr-fr'] = {
     cp_engr_l:      ["configure une passe unique autour du périmètre de la zone sélectionnée. également utile pour le marquage laser 3D"],
     cp_outl_s:      "contour seulement",
     cp_outl_l:      ["ignorer les vides et caractéristiques intérieurs"],
+    cp_lmpt_s:      "limiter aux limites de pièce",
+    cp_lmpt_l:      ["Limiter le mouvement de l'outil au contour de la pièce. Cela peut laisser non usinées des zones étroites près des bords"],
+    cp_lmpk_s:      "limiter aux limites de poche",
+    cp_lmpk_l:      ["Limiter le mouvement de l'outil aux limites de la poche sélectionnée. Cela peut laisser des zones étroites non usinées"],
 
     // CNC DRILLING
     cd_menu:        "perçage",
