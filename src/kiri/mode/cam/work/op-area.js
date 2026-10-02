@@ -222,8 +222,8 @@ class OpArea extends CamOp {
                         expandedArea = POLY.offset([ targetArea ], toolRadius, { z: targetZ, ...offopt });
 
                         if (op.limitPart && shadowBaseOuter && shadowBaseOuter.length) {
-                            // Limit the whole tool to stay within part bounds: trim to outer part footprint (shadowBaseOuter) inset by tool radius
-                            let partLimit = POLY.offset(shadowBaseOuter, -toolRadius, { z: targetZ, ...offopt });
+                            // Limit tool to stay within part bounds: trim to outer part footprint inset by tool radius
+                            let partLimit = POLY.offset(shadowBaseOuter.map(p => p.clone(true)), -toolRadius, { z: targetZ, ...offopt });
                             expandedArea = POLY.trimTo(expandedArea, partLimit) || [];
                         }
                     }
@@ -247,8 +247,8 @@ class OpArea extends CamOp {
                     return clip;
                 }
 
-                // Identify the z-plane of the pocket (z-height of highest point in pocket polygon)
-                let pocketZ = area.getBounds3D()?.max?.z ?? area.maxZ();
+                // Identify the z-plane of the pocket (maximum Z height of points in the pocket polygon)
+                let pocketZ = area.maxZ();
 
                 /**
                  * pocketBottomArea: Pre-computed milling boundary calculated at pocketZ (the pocket floor/bottom depth).

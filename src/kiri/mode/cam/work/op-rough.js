@@ -70,21 +70,15 @@ class OpRough extends CamOp {
                 let slicesAbove = await slicer.slice(flatZs.map(z => z + flatOff), { flatoff: 0 });
                 let slicesBelow = await slicer.slice(flatZs.map(z => z - flatOff), { flatoff: 0 });
 
-                // Map slice output records by target Z height string representation
-                let aboveMap = new Map();
-                for (let s of slicesAbove) {
-                    aboveMap.set(s.z.toFixed(2), s.tops || []);
-                }
-                let belowMap = new Map();
-                for (let s of slicesBelow) {
-                    belowMap.set(s.z.toFixed(2), s.tops || []);
+                // Helper to retrieve slice tops matching a target Z height within numerical tolerance
+                function findSliceTops(slices, targetZ, tolerance = 0.001) {
+                    let match = slices.find(s => Math.abs(s.z - targetZ) < tolerance);
+                    return match ? (match.tops || []) : [];
                 }
 
                 for (let z of flatZs) {
-                    let zAboveKey = (z + flatOff).toFixed(2);
-                    let zBelowKey = (z - flatOff).toFixed(2);
-                    let topsAbove = aboveMap.get(zAboveKey) || [];
-                    let topsBelow = belowMap.get(zBelowKey) || [];
+                    let topsAbove = findSliceTops(slicesAbove, z + flatOff);
+                    let topsBelow = findSliceTops(slicesBelow, z - flatOff);
 
                     // If slicing below flat height yields no geometry (e.g. lowest Z pocket at the bottom of the part),
                     // fall back to using the part shadow at height z as the base area below the flat height.
