@@ -637,7 +637,7 @@ export class Polygon {
         let maxZ = Math.max(...this.points.map(p => p.z));
         if (this.inner) {
             for (let i of this.inner) {
-                maxZ = Math.max(minZ, i.maxZ());
+                maxZ = Math.max(maxZ, i.maxZ());
             }
         }
         return maxZ;
