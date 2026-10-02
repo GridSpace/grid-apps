@@ -11,6 +11,7 @@ import { newPolygon } from '../../../../geo/polygon.js';
 const debug = false;
 const debug_push = false;
 const CLOSEST_TO_PP = -999;
+const linearClearRouteMaxFactor = 2;
 
 /**
  * DRIVER PRINT CONTRACT
@@ -126,7 +127,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         layerOut = [],
         lasering = false,
         laserPower = 0,
-        lastLinearClearBoundary,
+        lastLinearClearRoute,
         lastOp,
         lastTool,
         lastTravelBounds,
@@ -356,8 +357,8 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         );
     }
 
-    function setNextIsMove() {
-        nextIsMove = true;
+    function setNextIsMove(safe) {
+        nextIsMove = safe ? "safe" : true;
     }
 
     function setChangeOp() {
@@ -469,23 +470,28 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         return closest;
     }
 
-    function linearClearMove(point, boundary) {
-        if (!boundary || boundary !== lastLinearClearBoundary) {
-            return false;
+    function linearClearMove(point, routeData) {
+        if (!routeData || routeData !== lastLinearClearRoute) {
+            return 0;
         }
+        let { boundary, tolerance: routeTolerance = 0 } = routeData;
         let from = toWidgetCoords(printPoint);
         let start = nearestBoundaryPoint(from, boundary);
         let end = nearestBoundaryPoint(point, boundary);
-        let epsilon = Math.max(toolDiamEpsilon, 0.01);
+        let epsilon = Math.max(toolDiamEpsilon, routeTolerance, 0.01);
         if (!start || !end || start.poly !== end.poly ||
             start.dist > epsilon || end.dist > epsilon) {
-            return false;
+            return 0;
         }
         let route = shortestBoundaryRoute(start, end);
-        for (let next of route) {
+        let direct = from.distTo2D(point);
+        if (direct > 0.01 && route.length >= direct * linearClearRouteMaxFactor) {
+            return -1;
+        }
+        for (let next of route.points) {
             camOut(next.clone().setZ(point.z), 1);
         }
-        return true;
+        return 1;
     }
 
     function nearestBoundaryPoint(point, boundary) {
@@ -524,8 +530,13 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         }
         backward.push(end.point);
 
-        let route = boundaryRouteLength(forward) <= boundaryRouteLength(backward) ? forward : backward;
-        return route.slice(1);
+        let forwardLength = boundaryRouteLength(forward);
+        let backwardLength = boundaryRouteLength(backward);
+        let route = forwardLength <= backwardLength ? forward : backward;
+        return {
+            length: Math.min(forwardLength, backwardLength),
+            points: route.slice(1)
+        };
     }
 
     function boundaryRouteLength(route) {
@@ -576,6 +587,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
 
         // consume forced next move flag and convert to move
         // this is usually set right before a `polyEmit`
+        let forceUpAndOver = nextIsMove === "safe";
         if (nextIsMove) {
             emit = 0;
             nextIsMove = false;
@@ -618,7 +630,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
             absDeltaZ = Math.abs(deltaZ),
             isMove = (emit === 0 || emit === false),
             hasBounds = (travelBounds || lastTravelBounds),
-            upAndOver = false;
+            upAndOver = forceUpAndOver;
 
         // contouring logic
         if (isMove && contouring) {
@@ -775,7 +787,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
                 // poly is child if has parent
                 let child = poly.parent;
                 // for depth, collapse parent to 1 or 0 (has, missing)
-                if (depthFirst) { poly = poly.clone(false, [ 'linearClearBoundary' ]); poly.parent = child ? 1 : 0 }
+                if (depthFirst) { poly = poly.clone(false, [ 'linearClearRoute' ]); poly.parent = child ? 1 : 0 }
                 // place poly into top or child bucket
                 if (child) c.push(poly); else t.push(poly);
                 polys.push(poly);
@@ -917,11 +929,11 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
             points = poly.points;
         }
 
-        let linearClearBoundary = poly.linearClearBoundary;
-        let perimeterMove = linearClearBoundary && linearClearMove(points[0], linearClearBoundary);
-        lastLinearClearBoundary = linearClearBoundary;
-        if (!perimeterMove) {
-            setNextIsMove();
+        let linearClearRoute = poly.linearClearRoute;
+        let perimeterMove = linearClearRoute && linearClearMove(points[0], linearClearRoute);
+        lastLinearClearRoute = linearClearRoute;
+        if (perimeterMove !== 1) {
+            setNextIsMove(perimeterMove === -1);
         }
 
         // we skip ease-down logic in contouring mode or for open polys (traces .. maybe later)
