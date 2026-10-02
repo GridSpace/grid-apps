@@ -23,6 +23,7 @@ class OpTrace extends CamOp {
             expand,
             follow,
             ignore,
+            limitPocket: true,
             mode: mode === 'clear' ? 'clear' : 'trace',
             outline,
             ov_botz,
