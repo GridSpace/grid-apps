@@ -198,6 +198,81 @@ class OpArea extends CamOp {
             newArea();
 
             if (mode === 'clear') {
+                /**
+                 * Area Clearing Algorithm Overview:
+                 * Generates 2D toolpaths for area, pocket, rough, and flat clearing operations
+                 * across a series of Z slice depths.
+                 *
+                 * The algorithm for this isn't complicated, but there are a few non-obvious bits so
+                 * I've done my best to explain it here. The goal is to compute the "allowed" area for
+                 * the tool to go, then clear as much of the selected area as we can without leaving
+                 * that safe area. What "allowed" means is modified based on the input flags
+                 * (limitPocket, limitPart, clipToBottomProfile, ignore, omitthru). This may seem a
+                 * little overcomplicated at first: a simpler approach would just be to take the
+                 * input pocket, clip it to the walls, then inset it by the tool radius. However,
+                 * that approach misses a few important cases: by taking the approach detailed
+                 * below, we allow the center of the tool to move outside of the input pocket when
+                 * it's safe to do so, which can clear sections narrower than the tool which are
+                 * adjacent to empty space.
+                 *
+                 * This is what happens at each z-slice:
+                 *
+                 * We start with the area to be cleared. This might just be the selected pocket, or
+                 * it might be one profile from a rough operation. It may also have been modified by
+                 * a setting like "leave stock xy" by the time we get here.
+                 *
+                 * First, we offset the area by the tool radius. In most cases, we offset *out*
+                 * (expand the area). If we could move the center of the tool around the outer
+                 * perimeter of that offset shape, the edge of the tool would trace around the
+                 * outside of the desired clearing area. 
+                 *
+                 * The one exception is when the `limitPocket` flag is set to true. This means that
+                 * we should restrict the tool's movement so that it never leaves the input area, so
+                 * we *shrink* the area by the tool radius.  If we move the center of the tool
+                 * around the perimeter of this inset area, the edge of the tool traces along the
+                 * *inside* edge of the desired clearing area. This is effectively a "shortcut" to
+                 * limiting the movement of the tool to stay within the pocket. Note that if the
+                 * area has sections narrower than the tool diameter, this can result in multiple
+                 * disjoint regions to be cleared. For simplicity, I've explained the rest of this
+                 * algorithm as if we're left with one contiguous region, but the logic (and code)
+                 * work just as well for multiple regions.
+                 *
+                 * If the `ignore` flag is set, we're done, and move on to generating the clearing
+                 * toolpath to clear this entire area. Otherwise, we continue.
+                 *
+                 * Next, we slice the part at the current working z-height plus a small positive
+                 * epsilon. This gives us the boundaries that the tool must stay within. (The
+                 * upward shift is to account for any plane surfaces at exactly our current Z; we
+                 * can safely move over those). If the `limitPart` flag is set, we also include the
+                 * base shadow (the global part outline, shifted up to our current height) as a
+                 * "wall" in this computation. We take those walls and *inset* them by the tool
+                 * radius, which gives us the safe region that the tool center can occupy without
+                 * colliding with any walls (or, if `limitPart` was set, moving outside of the part
+                 * boundary). The `omitthru` flag drops any interior contours from the base shadow
+                 * (which represent the outlines of holes that extend all the way through the part),
+                 * which we can do safely because they don't represent "walls" like the part outline
+                 * does.
+                 *
+                 * Finally, we clip the "desired" region from the first step so that it stays within
+                 * the "walls" region from the second step. The result is the region which is both
+                 * desired to be cleared and can be safely cleared. If `clipToBottomProfile` is set,
+                 * we make one last modification: we look ahead to see what gets cleared at the
+                 * lowest level of our cut, then clip the resulting path to that. This is set
+                 * implicitly by the `pocket` operation, so that we don't waste time clearing an
+                 * expanded version of the profile above what we're ultimately going to want to cut.
+                 *
+                 * Finally, we pass the generated contour(s) on to toolpath generation, where the
+                 * `walls` and `clearing` flags dictate what toolpath is generated.
+                 *
+                 * All Flags:
+                 * - limitPocket: Restricts tool center to remain strictly within selected pocket boundary (insets by tool radius).
+                 * - limitPart: Clips toolpath area to stay inside outer part footprint (shadowBaseOuter inset by tool radius).
+                 * - clipToBottomProfile: Constrains upper Z slices to the bottom pocket footprint (set by OpPocket).
+                 * - ignore: Bypasses shadow wall obstacle subtraction, cutting through interior model walls.
+                 * - omitthru: Filters thru-hole shadows so tool motion ignores thru-holes and cuts continuously.
+                 * - clearing: 'pocket' for concentric stepover offsets; 'linear' for parallel scanline clearing.
+                 * - walls: Restricts output to boundary perimeter passes without inward stepover fill.
+                 */
                 let zMov = flatOff ?? 0;
                 let zs = flats ?
                     flats.filter(z => z <= zTop && z >= zBottom).map(v => v + zMov) :
