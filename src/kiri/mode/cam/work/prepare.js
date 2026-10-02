@@ -126,6 +126,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         layerOut = [],
         lasering = false,
         laserPower = 0,
+        lastLinearClearBoundary,
         lastOp,
         lastTool,
         lastTravelBounds,
@@ -468,6 +469,73 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         return closest;
     }
 
+    function linearClearMove(point, boundary) {
+        if (!boundary || boundary !== lastLinearClearBoundary) {
+            return false;
+        }
+        let from = toWidgetCoords(printPoint);
+        let start = nearestBoundaryPoint(from, boundary);
+        let end = nearestBoundaryPoint(point, boundary);
+        let epsilon = Math.max(toolDiamEpsilon, 0.01);
+        if (!start || !end || start.poly !== end.poly ||
+            start.dist > epsilon || end.dist > epsilon) {
+            return false;
+        }
+        let route = shortestBoundaryRoute(start, end);
+        for (let next of route) {
+            camOut(next.clone().setZ(point.z), 1);
+        }
+        return true;
+    }
+
+    function nearestBoundaryPoint(point, boundary) {
+        let closest;
+        for (let poly of boundary) {
+            poly.forEachSegment((p1, p2, pos) => {
+                let dx = p2.x - p1.x;
+                let dy = p2.y - p1.y;
+                let len2 = dx * dx + dy * dy;
+                let t = len2 ? ((point.x - p1.x) * dx + (point.y - p1.y) * dy) / len2 : 0;
+                t = Math.max(0, Math.min(1, t));
+                let projected = newPoint(p1.x + dx * t, p1.y + dy * t, point.z);
+                let dist = point.distTo2D(projected);
+                if (!closest || dist < closest.dist) {
+                    closest = { poly, pos, point: projected, dist };
+                }
+            });
+        }
+        return closest;
+    }
+
+    function shortestBoundaryRoute(start, end) {
+        let { poly } = start;
+        let points = poly.points;
+        let length = points.length;
+        let forward = [ start.point ];
+        let backward = [ start.point ];
+
+        for (let pos = (start.pos + 1) % length; pos !== (end.pos + 1) % length; pos = (pos + 1) % length) {
+            forward.push(points[pos]);
+        }
+        forward.push(end.point);
+
+        for (let pos = start.pos; pos !== end.pos; pos = (pos - 1 + length) % length) {
+            backward.push(points[pos]);
+        }
+        backward.push(end.point);
+
+        let route = boundaryRouteLength(forward) <= boundaryRouteLength(backward) ? forward : backward;
+        return route.slice(1);
+    }
+
+    function boundaryRouteLength(route) {
+        let length = 0;
+        for (let i = 1; i < route.length; i++) {
+            length += route[i - 1].distTo2D(route[i]);
+        }
+        return length;
+    }
+
     /**
      * emit a cut or move operation from the current location to a new location
      * @param {Point} point destination for move in widget coordinate space
@@ -707,7 +775,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
                 // poly is child if has parent
                 let child = poly.parent;
                 // for depth, collapse parent to 1 or 0 (has, missing)
-                if (depthFirst) { poly = poly.clone(); poly.parent = child ? 1 : 0 }
+                if (depthFirst) { poly = poly.clone(false, [ 'linearClearBoundary' ]); poly.parent = child ? 1 : 0 }
                 // place poly into top or child bucket
                 if (child) c.push(poly); else t.push(poly);
                 polys.push(poly);
@@ -849,7 +917,12 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
             points = poly.points;
         }
 
-        setNextIsMove();
+        let linearClearBoundary = poly.linearClearBoundary;
+        let perimeterMove = linearClearBoundary && linearClearMove(points[0], linearClearBoundary);
+        lastLinearClearBoundary = linearClearBoundary;
+        if (!perimeterMove) {
+            setNextIsMove();
+        }
 
         // we skip ease-down logic in contouring mode or for open polys (traces .. maybe later)
         if (!contouring && camEaseDown && poly.isClosed()) {

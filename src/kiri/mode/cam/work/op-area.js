@@ -217,6 +217,7 @@ class OpArea extends CamOp {
                                 count: 1, outs: fillArea, flat: true, z: z - zMov, ...offopt
                             });
                             let fill = linearClear(fillArea, toolOver, toolDiam);
+                            fill.forEach(poly => poly.linearClearBoundary = fillArea);
                             alignPerimeterToFill(perimeter, fill);
                             outs.push(...fill);
                         }
