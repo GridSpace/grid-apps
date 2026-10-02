@@ -210,8 +210,14 @@ class OpArea extends CamOp {
 
                 if (!zs.length) break;
 
-                // Helper function to compute the clipped area-to-be-machined for a given target Z height.
-                // Applied uniformly across all clearing operations (pocket, rough, flats).
+                /**
+                 * Helper function to compute the clipped area-to-be-machined for a given target Z height.
+                 * Applied uniformly across clearing operations (pocket, rough, flats).
+                 *
+                 * @param {Polygon} targetArea - 2D/3D polygon representing the target boundary selection
+                 * @param {number} targetZ - target Z plane height for slicing and clipping
+                 * @returns {Promise<Polygon[]>} clipped clearable toolpath boundary polygons at targetZ
+                 */
                 async function computeAreaToBeMachined(targetArea, targetZ) {
                     let expandedArea;
                     if (op.limitPocket) {
@@ -222,7 +228,7 @@ class OpArea extends CamOp {
                         expandedArea = POLY.offset([ targetArea ], toolRadius, { z: targetZ, ...offopt });
 
                         if (op.limitPart && shadowBaseOuter && shadowBaseOuter.length) {
-                            // Limit tool to stay within part bounds: trim to outer part footprint inset by tool radius
+                            // Limit tool to stay within part bounds: trim to outer part footprint (shadowBaseOuter) inset by tool radius
                             let partLimit = POLY.offset(shadowBaseOuter.map(p => p.clone(true)), -toolRadius, { z: targetZ, ...offopt });
                             expandedArea = POLY.trimTo(expandedArea, partLimit) || [];
                         }
@@ -234,6 +240,7 @@ class OpArea extends CamOp {
                         shadow = omitMatching(shadow, thruHoles);
                     }
 
+                    // Subtract solid part wall obstacles (offset by tool radius) from clearable area
                     let clip = [];
                     let wallObstacles = shadow && shadow.length ?
                         POLY.offset(shadow, toolRadius, { z: targetZ, ...offopt }) : [];
