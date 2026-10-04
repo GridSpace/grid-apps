@@ -2,6 +2,35 @@
 
 Full docs @ https://docs.grid.space/projects/kiri-moto
 
+# Release 4.7.4
+
+A focused patch release for CAM linear clearing and surface path safety, FDM belt support generation, and shared geometry correctness.
+
+## CAM
+
+- route adjacent linear clearing passes along their shared inset perimeter instead of making unnecessary retract and plunge moves
+- connect the clearing outline to the first linear fill pass using the same bounded perimeter routing
+- limit linear clearing perimeter detours and use an up-and-over move when the perimeter route is at least twice the direct travel distance
+- prevent slope-limited Area surface paths from descending into and cutting across through-hole void floors
+- preserve absolute stepover values for tapered tools in contour operations
+- skip CAM ease-down loops for small circular residual features barely larger than the cutter
+
+## FDM / Slicing
+
+- generate belt printer supports straight up from the belt instead of at the model's transformed 45-degree angle
+- project accumulated belt support shadows between slices so supports remain aligned with the moving belt plane
+- extend belt support slices as needed so generated supports reach the belt
+
+## Geometry
+
+- deep-copy polygon points and inner polygons to prevent cached CAM shadow geometry from being mutated by callers
+- allow point moves with omitted axis deltas without producing invalid coordinates
+- fix maximum-Z calculation for polygons containing inner polygons
+
+## Platform / Build
+
+- update Electron to version 44
+
 # Release 4.7.3
 
 A focused patch release for CAM clearing and surfacing controls, workspace import selection, render performance, and slicing memory/stability fixes.
