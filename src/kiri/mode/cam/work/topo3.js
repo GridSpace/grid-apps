@@ -174,13 +174,25 @@ export class Topo {
             gpu.mode = 'tracing';
             // create coastline path around part for tip-to-tip travels
             // convert shadow/clip poly lines to raster float32 array groups
-            let paths = POLY.flatten(clipTo).map(poly => poly.points.map(p => [ p.x, p.y ]).flat().toFloat32());
+            let paths = POLY.flatten(clipTo).map(poly => {
+                let points = poly.points.map(point => point.clone());
+                if (contourY) points.forEach(point => point.swapXY());
+                points.push(points[0]);
+                return points.map(p => [ p.x, p.y ]).flat().toFloat32();
+            });
             let coastline = await gpu.generateToolpaths({
                 paths,
                 step: 1,
                 zFloor: zBottom
             });
-            this.coastline = coastline.paths.map(arr => newPolygon().fromArray([0,...arr]));
+            this.coastline = coastline.paths.map(arr => {
+                let poly = newPolygon().fromArray([ 0, ...arr ]);
+                if (poly.length > 1 && poly.first().isEqual2D(poly.last())) {
+                    poly.points.pop();
+                }
+                if (contourY) poly.points.forEach(point => point.swapXY());
+                return poly;
+            });
             gpu.terminate();
 
             let { numScanlines, pointsPerLine, pathData } = output;
@@ -389,6 +401,20 @@ export class Topo {
             });
             topo.raster = false;
         }
+
+        this.coastline = POLY.flatten(clipTo).map(poly => {
+            let coast = newPolygon();
+            poly.forEachSegment((p1, p2) => {
+                let count = Math.max(1, Math.ceil(p1.distTo2D(p2)));
+                for (let i = 0; i < count; i++) {
+                    let t = i / count;
+                    let x = p1.x + (p2.x - p1.x) * t;
+                    let y = p1.y + (p2.y - p1.y) * t;
+                    coast.add(x, y, toolAtXY(x, y) + leave);
+                }
+            });
+            return coast;
+        }).filter(poly => poly.length > 2);
 
         await this.contour({
             box: topo.box,
@@ -659,7 +685,7 @@ export class Probe {
     constructor(params) {
 
         const { data, profile } = params;
-        const { stepsX, stepsY, boundsX, zMin, minX, minY } = params;
+        const { stepsX, stepsY, boundsX, boundsY, zMin, minX, minY } = params;
 
         this.params = params;
 
@@ -693,7 +719,7 @@ export class Probe {
 
         // export z probe function
         const rx = stepsX / boundsX;
-        const ry = stepsX / boundsX;
+        const ry = stepsY / boundsY;
         const toolAtXY = this.toolAtXY = function (px, py) {
             px = Math.round(rx * (px - minX));
             py = Math.round(ry * (py - minY));

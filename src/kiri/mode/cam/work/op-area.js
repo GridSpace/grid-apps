@@ -422,6 +422,12 @@ class OpArea extends CamOp {
                     POLY.setWinding(paths.filter(p => p.isClosed()), direction === 'climb');
                 }
 
+                // retain the selected boundary for safe travel routing
+                let coastPaths = POLY.flatten([ area ]).map(poly => {
+                    let points = [ ...poly.points, poly.first() ];
+                    return points.map(p => [ p.x, p.y ]).flat().toFloat32();
+                });
+
                 // convert resulting poly lines to raster float32 array groups
                 paths = paths.map(poly => poly.points.map(p => [ p.x, p.y ]).flat().toFloat32());
 
@@ -457,6 +463,11 @@ class OpArea extends CamOp {
                     zFloor,
                     onProgress: pct => progress(proc + (pinc * (pct/100)))
                 });
+                let coastOutput = await raster.generateToolpaths({
+                    paths: coastPaths,
+                    step: toolOver / 2,
+                    zFloor
+                });
                 raster.terminate();
 
                 let slopeMin = sr_slope_min ?? 0;
@@ -477,6 +488,13 @@ class OpArea extends CamOp {
                 }
 
                 // output this surface
+                surface.coastline = coastOutput.paths.map(path => {
+                    let poly = newPolygon().fromArray([ 0, ...path ]);
+                    if (poly.length > 1 && poly.first().isEqual2D(poly.last())) {
+                        poly.points.pop();
+                    }
+                    return poly;
+                }).filter(poly => poly.points.every(point => point.z > zFloor + 0.00001));
                 surfaces.push(surface);
 
                 proc += pinc;
@@ -500,8 +518,8 @@ class OpArea extends CamOp {
 
         // process surface paths
         if (surfaces.length) {
-            setContouring(true, toolOver * 2);
             for (let surface of surfaces) {
+                setContouring(true, toolOver * 2, surface.coastline);
                 for (let poly of surface) {
                     setNextIsMove();
                     printPoint = polyEmit(poly);

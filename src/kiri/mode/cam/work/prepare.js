@@ -11,7 +11,7 @@ import { newPolygon } from '../../../../geo/polygon.js';
 const debug = false;
 const debug_push = false;
 const CLOSEST_TO_PP = -999;
-const linearClearRouteMaxFactor = 2;
+const perimeterRouteMaxFactor = 2;
 
 /**
  * DRIVER PRINT CONTRACT
@@ -402,57 +402,18 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
             return false;
         }
         let minz = Math.min(from.z, to.z);
-        let start = { dist: 1, poly: 0, pt: from };
-        let end = { dist: 1, poly: 1, pt: to };
-        for (let poly of coastline) {
-            let { points } = poly;
-            for (let i=0; i<points.length; i++) {
-                let pt = points[i];
-                let dist = from.distTo2D(pt);
-                if (dist < start.dist) {
-                    start.dist = dist;
-                    start.poly = poly;
-                    start.pos = i;
-                    start.mp = pt;
-                }
-                dist = to.distTo2D(pt);
-                if (dist < end.dist) {
-                    end.dist = dist;
-                    end.poly = poly;
-                    end.pos = i;
-                    end.mp = pt;
-                }
-            }
-        }
-        if (start.poly !== end.poly || start.pos === end.pos) {
+        let start = nearestBoundaryPoint(from, coastline);
+        let end = nearestBoundaryPoint(to, coastline);
+        if (!start || !end || start.dist > 1 || end.dist > 1 || start.poly !== end.poly) {
             return false;
         }
-        let { poly } = start;
-        let { points } = poly;
-        let pl = poly.length;
-        let sp = start.pos, ep = end.pos;
-        let adist = Math.abs(ep - sp);
-        let bdist = ep > sp ?
-            sp + (pl - ep):
-            ep + (pl - sp);
-        let dir = 1;
-        let dist;
-        if (adist < bdist) {
-            dist = adist;
-            if (ep < sp) {
-                dir = -1;
-            }
-        } else {
-            dist = bdist;
-            if (ep < sp) {
-                ep += pl;
-            } else {
-                sp += pl;
-                dir = -1;
-            }
+        let route = shortestBoundaryRoute(start, end);
+        let direct = from.distTo2D(to);
+        if (direct > 0.01 && route.length >= direct * perimeterRouteMaxFactor && route.length > toolDiam) {
+            return false;
         }
-        for (let i=sp, d=0; d < dist; i += dir, d++) {
-            let cp = points[i % pl].clone();
+        for (let point of route.points) {
+            let cp = point.clone();
             cp.z = Math.max(minz, cp.z);
             layerPush(toWorkCoords(cp), 1, 0, tool);
         }
@@ -485,7 +446,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         }
         let route = shortestBoundaryRoute(start, end);
         let direct = from.distTo2D(point);
-        if (direct > 0.01 && route.length >= direct * linearClearRouteMaxFactor) {
+        if (direct > 0.01 && route.length >= direct * perimeterRouteMaxFactor) {
             return -1;
         }
         for (let next of route.points) {
@@ -503,7 +464,11 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
                 let len2 = dx * dx + dy * dy;
                 let t = len2 ? ((point.x - p1.x) * dx + (point.y - p1.y) * dy) / len2 : 0;
                 t = Math.max(0, Math.min(1, t));
-                let projected = newPoint(p1.x + dx * t, p1.y + dy * t, point.z);
+                let projected = newPoint(
+                    p1.x + dx * t,
+                    p1.y + dy * t,
+                    p1.z + (p2.z - p1.z) * t
+                );
                 let dist = point.distTo2D(projected);
                 if (!closest || dist < closest.dist) {
                     closest = { poly, pos, point: projected, dist };
@@ -634,8 +599,9 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
 
         // contouring logic
         if (isMove && contouring) {
-            if (coastline && deltaXY < 5 && coastlineMove(point)) {
+            if (coastline && coastlineMove(point)) {
                 // console.log('coastline move');
+                emit = 1;
             } else if (deltaXY > toolDiamMove) {
                 upAndOver = true;
             } else if (absDeltaZ < 0.01) {
