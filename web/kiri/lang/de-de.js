@@ -619,6 +619,10 @@ self.lang['de-de'] = {
     cp_engr_l:      ["Richtet einzelnen Durchgang um Perimeter des ausgewählten Bereichs ein. Auch nützlich für 3D-Laser-Markierung"],
     cp_outl_s:      "Nur Umriss",
     cp_outl_l:      ["Innere Hohlräume und Features ignorieren"],
+    cp_lmpt_s:      "Auf Bauteilgrenzen beschränken",
+    cp_lmpt_l:      ["Werkzeugbewegung auf die Grenze des Bauteils beschränken. Dies kann dazu führen, dass schmale Bereiche am Rand ungeschnitten bleiben"],
+    cp_lmpk_s:      "Auf Taschengrenzen beschränken",
+    cp_lmpk_l:      ["Werkzeugbewegung auf die Grenze der ausgewählten Tasche beschränken. Dies kann dazu führen, dass schmale Bereiche ungeschnitten bleiben"],
 
     // CNC DRILLING
     cd_menu:        "Bohren",

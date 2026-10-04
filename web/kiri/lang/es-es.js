@@ -619,6 +619,10 @@ self.lang['es-es'] = {
     cp_engr_l:      ["configura una sola pasada alrededor del perímetro del área seleccionada. también útil para marcado láser 3D"],
     cp_outl_s:      "solo contorno",
     cp_outl_l:      ["ignorar vacíos y características interiores"],
+    cp_lmpt_s:      "limitar a límites de pieza",
+    cp_lmpt_l:      ["Limitar el movimiento de la herramienta al límite de la pieza. Esto puede hacer que queden sin cortar zonas estrechas cerca del borde"],
+    cp_lmpk_s:      "limitar a límites de cajera",
+    cp_lmpk_l:      ["Limitar el movimiento de la herramienta al límite de la cajera seleccionada. Esto puede hacer que queden zonas estrechas sin cortar"],
 
     // CNC DRILLING
     cd_menu:        "taladrar",

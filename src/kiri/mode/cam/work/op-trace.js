@@ -23,6 +23,8 @@ class OpTrace extends CamOp {
             expand,
             follow,
             ignore,
+            // Trace clear operations should always stay strictly within the selected bounds
+            limitPocket: true,
             mode: mode === 'clear' ? 'clear' : 'trace',
             outline,
             ov_botz,
