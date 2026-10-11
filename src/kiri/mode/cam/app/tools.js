@@ -262,8 +262,7 @@ function _showTools() {
     setToolChanged(false);
 
     ui.toolsClose.onclick = function() {
-        if (editTools.changed && !confirm("abandon changes?")) return;
-        api.dialog.hide();
+        api.modal.hide();
     };
     ui.toolAdd.onclick = function() {
         let metric = settings().controller.units === 'mm';
@@ -350,6 +349,18 @@ function _showTools() {
 
     api.dialog.show('tools');
     ui.toolSelect.focus();
+
+    // guard every exit from the dialog, including the shared close button.
+    // must follow show() -- show() clears any previously registered guard
+    api.modal.setGuard(() => {
+        if (!editTools.changed) {
+            return true;
+        }
+        api.uc.confirm("abandon changes?").then(yes => {
+            if (yes) api.modal.hide(true);
+        });
+        return false;
+    });
 }
 
 export const tools = {
