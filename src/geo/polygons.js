@@ -703,7 +703,8 @@ export function offset(polys, dist, opts = {}) {
     let open = opts.open ? polys.filter(p => p.open) : [];
     if (open.length) {
         open = open.map(p => paths.pointsToPath(p.points, Array.isArray(dist) ? dist[0] : dist, true));
-        open = open.map(p => newPolygon().setOpen().addPoints(p.right));
+        // we use p.left here instead of p.right due to https://github.com/GridSpace/grid-apps/issues/510
+        open = open.map(p => newPolygon().setOpen().addPoints(p.left));
         if (opts.z) open.forEach(p => p.setZ(opts.z));
     }
 

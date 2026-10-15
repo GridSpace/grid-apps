@@ -9,7 +9,7 @@ import { newSlice } from '../../../core/slice.js';
 import { newPoint } from '../../../../geo/point.js';
 import { newPolygon } from '../../../../geo/polygon.js';
 import { polygons as POLY } from '../../../../geo/polygons.js';
-import { util as base_util } from '../../../../geo/base.js';
+import { base, util as base_util } from "../../../../geo/base.js";
 import { tip2tipJoin } from '../../../../geo/paths.js';
 import { CAM } from './init-work.js';
 
@@ -96,6 +96,125 @@ class OpArea extends CamOp {
         // surface and edge selections produce open polygons by default
         polys = POLY.nest(POLY.reconnect(polys, false));
 
+        // Align open polylines with the winding direction relative to the slice
+        // shadow.  We calculate a test point slightly offset along the
+        // perpendicular right-hand normal of the first non-trivial segment of the
+        // polyline (or, more accurately, the projection of that segment onto the xy
+        // plane).
+        //
+        // If this test point lies inside the slice shadow (solid body), it means
+        // the right side of the path points inside, so we reverse the polyline to
+        // ensure that the right side (positive offset / "outside") always points
+        // outward into the air.
+        //
+        // There are a few corner cases (pun intended) that require this check
+        // to be slightly more complex. An open polyline that separates
+        // a flat face from a taller feature lies completely within the shadow
+        // at its z height, and so both the left and right normals will test as
+        // "inside" the part. As a simple example, consider a model of stairs. The
+        // line that separates the tread on the bottom step from the riser of
+        // the next step up demonstrates this issue: the shadow at that height
+        // contains the face of the bottom step and the cross-section of the top
+        // step. To avoid this issue, we instead test against the shadow from a
+        // small epsilon (0.01) above the z height of the segment.
+        //
+        // However, this workaround introduces another edge case: if the
+        // selected polyline is on a local top edge (in the stair example,
+        // imagine any edge around the perimeter of the top step), the shadow
+        // above that layer will either be empty (if this is the tallest feature
+        // in the model) or locally empty but with irrelevant other
+        // cross-sections from taller features. In either of these cases, both
+        // points will test as "outside" the part. If this happens, we fall back
+        // to the testing with the shadow at the given z height.
+        //
+        // This check runs once per unconnected group of merged segments in a trace.
+        // It uses the cached 2D slice shadows, which fully handles sloped and
+        // Z-varying curves.
+        //
+        // This test is only performed for open polygons, since closed shapes are
+        // handled by Clipper's offset functionality which automatically fixes
+        // winding order issues.
+        if (shadowAt) {
+          for (let poly of polys) {
+            // Only open paths of length > 1 need winding orientation alignment
+            if (poly.open && poly.points.length > 1) {
+              let p1 = null,
+                p2 = null;
+
+              // Find the first segment with an XY projection length greater than
+              // precision_merge to avoid division-by-zero or precision issues on
+              // vertical/micro segments.
+              for (let i = 0; i < poly.points.length - 1; i++) {
+                let pt1 = poly.points[i];
+                let pt2 = poly.points[i + 1];
+                let dx = pt2.x - pt1.x;
+                let dy = pt2.y - pt1.y;
+                let distSq = dx * dx + dy * dy;
+                if (distSq > base.config.precision_merge_sq) {
+                  p1 = pt1;
+                  p2 = pt2;
+                  break;
+                }
+              }
+
+              // If a valid non-vertical segment was found, perform the containment check
+              if (p1 && p2) {
+                let dx = p2.x - p1.x;
+                let dy = p2.y - p1.y;
+                let len = Math.sqrt(dx * dx + dy * dy);
+
+                // Perpendicular right normal in the XY plane (z-component is zeroed out)
+                let nx = dy / len;
+                let ny = -dx / len;
+
+                // Midpoint of the segment
+                let mid = newPoint(
+                  (p1.x + p2.x) / 2,
+                  (p1.y + p2.y) / 2,
+                  (p1.z + p2.z) / 2
+                );
+
+                // Test points offset along the right and left normal vectors using local epsilon
+                let testRight = newPoint(
+                  mid.x + nx * ts_eps,
+                  mid.y + ny * ts_eps,
+                  mid.z
+                );
+                let testLeft = newPoint(
+                  mid.x - nx * ts_eps,
+                  mid.y - ny * ts_eps,
+                  mid.z
+                );
+
+                // Retrieve the cumulative slice shadow above mid.z (+0.01) to probe
+                // 2D cross-sections of feature walls and pockets rising above a floor or step.
+                let shadowAbove = await shadowAt(mid.z + 0.01);
+                let inRight = shadowAbove ? testRight.isInPolygon(shadowAbove) : false;
+                let inLeft = shadowAbove ? testLeft.isInPolygon(shadowAbove) : false;
+
+                let shadow = null;
+                // If exactly one side is inside shadowAbove, a local feature wall/step rises above mid.z.
+                // If both sides are outside (e.g. local top rim, even if taller features exist elsewhere)
+                // or both sides are inside (only possible if the model has
+                // overhangs), fall back to shadowAt(mid.z).
+                if (inRight !== inLeft) {
+                  shadow = shadowAbove;
+                } else {
+                  shadow = await shadowAt(mid.z);
+                }
+
+                if (shadow) {
+                  // If the right side points inside the part shadow (material),
+                  // reverse the path so the right side points outward into the air.
+                  if (testRight.isInPolygon(shadow)) {
+                    poly.reverse();
+                  }
+                }
+              }
+            }
+          }
+        }
+
         // gather surface selections
         if (!op.shadow) {
             let vert = widget.getGeoVertices({ unroll: true, translate: true }).map(v => v.round(4));
@@ -143,7 +262,8 @@ class OpArea extends CamOp {
         }
 
         // filter out invalid polys
-        polys = polys.filter(p => p && p.length > 2);
+        // filter out invalid polys; open polys (traces) can have 2 points (length > 1)
+        polys = polys.filter(p => p && (p.open ? p.length > 1 : p.length > 2));
 
         // process each area separately
         let proc = 0;
