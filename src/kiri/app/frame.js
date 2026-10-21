@@ -7,6 +7,7 @@
  * Controlled by api.feature.frame flag.
  *
  * Supported message types:
+ * - connect: Set parent window origin for cross-domain messaging.
  * - mode: Set operating mode (FDM, CAM, SLA, LASER, etc.)
  * - view: Set view mode (ARRANGE, SLICE, PREVIEW, etc.)
  * - function: Call api.function methods (slice, print, export, etc.)
@@ -33,6 +34,9 @@ import { widgets } from './widgets.js';
  * Frame message API listener.
  * Handles postMessage communication between parent window and embedded Kiri:Moto.
  */
+
+let kiriMotoTargetOrigin = null
+
 window.addEventListener('message', msg => {
     const { conf, event, feature, platform, settings, show } = api;
 
@@ -42,7 +46,14 @@ window.addEventListener('message', msg => {
 
     if (source.window === target.window) return;
 
-    const send = source.window.postMessage;
+    const send = (message) => {
+      source.window.postMessage(message, kiriMotoTargetOrigin);
+    }
+
+    if (data.connect) {
+      kiriMotoTargetOrigin = data.connect
+      send({event: 'connected', data: 'OK'});
+    }
 
     if (data.mode) {
         api.mode.set(data.mode.toUpperCase());
