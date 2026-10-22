@@ -641,7 +641,7 @@ self.lang['en-us'] = {
     cd_mark_s:      "marking",
     cd_mark_l:      ["only mark holes, do not drill out","the step down setting is used","to determine how deep to mark"],
     cd_ftop_s:      "from stock top",
-    cd_ftop_l:      ["drill from stock top","instead of part surface"],
+    cd_ftop_l:      ["drill from stock top","instead of part surface","(ignored if explicit z top is set)"],
     cd_prcn_s:      "precision",
     cd_prcn_l:      ["distance between slices","to search for holes","in workspace units","lower is slower and","uses more memory","0 = only flats"],
 
@@ -843,7 +843,7 @@ self.lang['en-us'] = {
     ou_ztof_s:      "z offset",
     ou_ztof_l:      ["offset z anchor","in workspace units"],
     ou_ztop_s:      "z top",
-    ou_ztop_l:      ["offset from stock bottom","to set start of cutting depth","in workspace units","* drill/contour ignore this *"],
+    ou_ztop_l:      ["offset from stock bottom","to set start of cutting depth","in workspace units","* contour ignores this *"],
     ou_zbot_s:      "z bottom",
     ou_zbot_l:      ["offset from stock bottom","to limit cutting depth","in workspace units"],
     ou_zclr_s:      "z clearance",

@@ -636,7 +636,7 @@ self.lang['da-dk'] = {
     cd_mark_s: "markering",
     cd_mark_l: ["kun marker huller, bor ikke ud","step ned indstillingen bruges","til at bestemme hvor dybt at markere"],
     cd_ftop_s: "fra lager top",
-    cd_ftop_l: ["bor fra lager top","i stedet for del overflade"],
+    cd_ftop_l: ["bor fra lager top","i stedet for del overflade","(ignoreres hvis eksplicit z top er angivet)"],
     cd_prcn_s: "præcision",
     cd_prcn_l: ["afstand mellem slices","til at søge efter huller","i arbejdsområde enheder","lavere er langsommere og","bruger mere hukommelse","0 = kun flader"],
 
@@ -826,7 +826,7 @@ self.lang['da-dk'] = {
     ou_ztof_s: "z forskydning",
     ou_ztof_l: ["forskyd z anker","i arbejdsområde enheder"],
     ou_ztop_s: "z top",
-    ou_ztop_l: ["forskydning fra lager bund","til at sætte start af skæredybde","i arbejdsområde enheder","* boring/kontur ignorer dette *"],
+    ou_ztop_l: ["forskydning fra lager bund","til at sætte start af skæredybde","i arbejdsområde enheder","* kontur ignorer dette *"],
     ou_zbot_s: "z bund",
     ou_zbot_l: ["forskydning fra lager bund","til at begrænse skæredybde","i arbejdsområde enheder"],
     ou_zclr_s: "z frigang",
