@@ -47,7 +47,13 @@ window.addEventListener('message', msg => {
     if (source.window === target.window) return;
 
     const send = (message) => {
-      source.window.postMessage(message, kiriMotoTargetOrigin);
+      try {
+        source.window.postMessage(message, kiriMotoTargetOrigin);
+      } catch (DataCloneError) {
+        // Some message data can't be sent via postMessage; for instance `init-done` carries a Stats object with it.
+        // In that case, just send the event name with no data
+        source.window.postMessage({event: message.event}, kiriMotoTargetOrigin);
+      }
     }
 
     if (data.connect) {
