@@ -12,6 +12,8 @@ class OpOutline extends CamOp {
         let { op, state } = this;
         let { direction, dogbones, down, inside, omitthru, omitvoid, outside } = op;
         let { ov_botz, ov_topz, plunge, rate, rename, revbones, spindle, tool } = op;
+        // extract optional XY leave stock value
+        let { leave } = op;
         let { shadow, widget } = state;
 
         let shadow_base = shadow.base;
@@ -31,6 +33,7 @@ class OpOutline extends CamOp {
                 down,
                 drape: true,
                 expand: 0,
+                leave_xy: leave,
                 mode: 'trace',
                 omitinner: omitvoid,
                 omitthru,
@@ -59,6 +62,7 @@ class OpOutline extends CamOp {
                 down,
                 drape: true,
                 expand: 0,
+                leave_xy: leave,
                 mode: 'trace',
                 omitinner: omitvoid,
                 omitouter: inside,
