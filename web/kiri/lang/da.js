@@ -618,6 +618,10 @@ self.lang['da-dk'] = {
     cp_engr_l: ["opsætter en enkelt passage omkring omkredsen af det valgte område. også nyttigt til 3D laser markering"],
     cp_outl_s: "kun omrids",
     cp_outl_l: ["ignorer indvendige hulrum og funktioner"],
+    cp_lmpt_s: "begræns til delens grænser",
+    cp_lmpt_l: ["Begræns værktøjsbevægelse til delens grænser. Dette kan medføre, at smalle områder nær delens kant forbliver uskåret"],
+    cp_lmpk_s: "begræns til lommegrænser",
+    cp_lmpk_l: ["Begræns værktøjsbevægelse til den valgte lommes grænser. Dette kan medføre, at smalle områder forbliver uskåret"],
 
     // CNC DRILLING
     cd_menu: "boring",

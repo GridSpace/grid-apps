@@ -127,7 +127,14 @@ While the Trace op can do a lot, some specific use cases include:
 
 The Pocket operation takes a selection of polygon faces and generates a pocket toolpath that cuts down to them.  
 The operation has options to expand and smooth the pocket selection, and the contour option even allows  
-for an approximation of a v-bit carve. Some use cases specific to the Pocket op include:
+for an approximation of a v-bit carve.
+
+Pocket and Area clearing operations include boundary limiting options:
+
+- **Limit to Part Bounds**: Restricts tool motion to stay within the footprint of the part, even if that means not clearing narrow areas of the pocket.
+- **Limit to Pocket Bounds**: Restricts tool motion to stay strictly within the boundary of the selected pocket, even if that means not clearing narrow areas of the pocket.
+
+Some use cases specific to the Pocket op include:
 
 - Creating one pocket in a part with multiple
 - Attempting a v-carve

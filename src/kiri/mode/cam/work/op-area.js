@@ -36,7 +36,27 @@ class OpArea extends CamOp {
     async slice(progress) {
         let { op, state } = this;
         let { direction, down, expand, flats, flatOff, follow } = op;
-        let { mode, outline, over, rename, smooth, tool } = op;
+        let {
+          // clipToBottomProfile: when true (set by OpPocket), restricts higher
+          // Z slices to the footprint of the pocket bottom profile
+          clipToBottomProfile,
+          // limitPart: when true, restricts tool motion to stay within outer part footprint
+          limitPart,
+          // limitPocket: when true, restricts tool motion to stay within selected pocket bounds
+          limitPocket,
+          // mode: clearing mode ('clear', 'trace', or 'surface')
+          mode,
+          // outline: when true, ignores interior voids and processes perimeter outline only
+          outline,
+          // over: tool stepover distance override or fraction of tool diameter
+          over,
+          // rename: custom layer label or operation name override
+          rename,
+          // smooth: smoothing factor for polygon contour jaggies
+          smooth,
+          // tool: tool configuration ID or object
+          tool
+        } = op;
         let { addSlices, axisIndex, color, cutTabs, settings } = state;
         let { shadowAt, setToolDiam, tabs, widget, workarea } = state;
 
@@ -47,6 +67,12 @@ class OpArea extends CamOp {
         let zTop = workarea.top_z;
         let zBottom = workarea.bottom_z;
         let shadowBase = state.shadow.base;
+        // Outer part shadow profiles (ignoring any interior holes) for part bounds limiting
+        let shadowBaseOuter = shadowBase ? shadowBase.map(p => {
+            let outer = p.clone(true);
+            outer.inner = undefined;
+            return outer;
+        }) : [];
         let thruHoles = state.shadow.holes;
         let roundSharps = settings.process.camRoundCorners;
 
@@ -172,6 +198,81 @@ class OpArea extends CamOp {
             newArea();
 
             if (mode === 'clear') {
+                /**
+                 * Area Clearing Algorithm Overview:
+                 * Generates 2D toolpaths for area, pocket, rough, and flat clearing operations
+                 * across a series of Z slice depths.
+                 *
+                 * The algorithm for this isn't complicated, but there are a few non-obvious bits so
+                 * I've done my best to explain it here. The goal is to compute the "allowed" area for
+                 * the tool to go, then clear as much of the selected area as we can without leaving
+                 * that safe area. What "allowed" means is modified based on the input flags
+                 * (limitPocket, limitPart, clipToBottomProfile, ignore, omitthru). This may seem a
+                 * little overcomplicated at first: a simpler approach would just be to take the
+                 * input pocket, clip it to the walls, then inset it by the tool radius. However,
+                 * that approach misses a few important cases: by taking the approach detailed
+                 * below, we allow the center of the tool to move outside of the input pocket when
+                 * it's safe to do so, which can clear sections narrower than the tool which are
+                 * adjacent to empty space.
+                 *
+                 * This is what happens at each z-slice:
+                 *
+                 * We start with the area to be cleared. This might just be the selected pocket, or
+                 * it might be one profile from a rough operation. It may also have been modified by
+                 * a setting like "leave stock xy" by the time we get here.
+                 *
+                 * First, we offset the area by the tool radius. In most cases, we offset *out*
+                 * (expand the area). If we could move the center of the tool around the outer
+                 * perimeter of that offset shape, the edge of the tool would trace around the
+                 * outside of the desired clearing area. 
+                 *
+                 * The one exception is when the `limitPocket` flag is set to true. This means that
+                 * we should restrict the tool's movement so that it never leaves the input area, so
+                 * we *shrink* the area by the tool radius.  If we move the center of the tool
+                 * around the perimeter of this inset area, the edge of the tool traces along the
+                 * *inside* edge of the desired clearing area. This is effectively a "shortcut" to
+                 * limiting the movement of the tool to stay within the pocket. Note that if the
+                 * area has sections narrower than the tool diameter, this can result in multiple
+                 * disjoint regions to be cleared. For simplicity, I've explained the rest of this
+                 * algorithm as if we're left with one contiguous region, but the logic (and code)
+                 * work just as well for multiple regions.
+                 *
+                 * If the `ignore` flag is set, we're done, and move on to generating the clearing
+                 * toolpath to clear this entire area. Otherwise, we continue.
+                 *
+                 * Next, we slice the part at the current working z-height plus a small positive
+                 * epsilon. This gives us the boundaries that the tool must stay within. (The
+                 * upward shift is to account for any plane surfaces at exactly our current Z; we
+                 * can safely move over those). If the `limitPart` flag is set, we also include the
+                 * base shadow (the global part outline, shifted up to our current height) as a
+                 * "wall" in this computation. We take those walls and *inset* them by the tool
+                 * radius, which gives us the safe region that the tool center can occupy without
+                 * colliding with any walls (or, if `limitPart` was set, moving outside of the part
+                 * boundary). The `omitthru` flag drops any interior contours from the base shadow
+                 * (which represent the outlines of holes that extend all the way through the part),
+                 * which we can do safely because they don't represent "walls" like the part outline
+                 * does.
+                 *
+                 * Finally, we clip the "desired" region from the first step so that it stays within
+                 * the "walls" region from the second step. The result is the region which is both
+                 * desired to be cleared and can be safely cleared. If `clipToBottomProfile` is set,
+                 * we make one last modification: we look ahead to see what gets cleared at the
+                 * lowest level of our cut, then clip the resulting path to that. This is set
+                 * implicitly by the `pocket` operation, so that we don't waste time clearing an
+                 * expanded version of the profile above what we're ultimately going to want to cut.
+                 *
+                 * Finally, we pass the generated contour(s) on to toolpath generation, where the
+                 * `walls` and `clearing` flags dictate what toolpath is generated.
+                 *
+                 * All Flags:
+                 * - limitPocket: Restricts tool center to remain strictly within selected pocket boundary (insets by tool radius).
+                 * - limitPart: Clips toolpath area to stay inside outer part footprint (shadowBaseOuter inset by tool radius).
+                 * - clipToBottomProfile: Constrains upper Z slices to the bottom pocket footprint (set by OpPocket).
+                 * - ignore: Bypasses shadow wall obstacle subtraction, cutting through interior model walls.
+                 * - omitthru: Filters thru-hole shadows so tool motion ignores thru-holes and cuts continuously.
+                 * - clearing: 'pocket' for concentric stepover offsets; 'linear' for parallel scanline clearing.
+                 * - walls: Restricts output to boundary perimeter passes without inward stepover fill.
+                 */
                 let zMov = flatOff ?? 0;
                 let zs = flats ?
                     flats.filter(z => z <= zTop && z >= zBottom).map(v => v + zMov) :
@@ -180,7 +281,64 @@ class OpArea extends CamOp {
                 let zinc = 1 / zs.length;
                 let lzo;
 
+                let toolRadius = toolDiam / 2 + (op.leave_xy ?? 0);
+
                 if (!zs.length) break;
+
+                /**
+                 * Helper function to compute the clipped area-to-be-machined for a given target Z height.
+                 * Applied uniformly across clearing operations (pocket, rough, flats).
+                 *
+                 * @param {Polygon} targetArea - 2D/3D polygon representing the target boundary selection
+                 * @param {number} targetZ - target Z plane height for slicing and clipping
+                 * @returns {Promise<Polygon[]>} clipped clearable toolpath boundary polygons at targetZ
+                 */
+                async function computeAreaToBeMachined(targetArea, targetZ) {
+                    let expandedArea;
+                    if (op.limitPocket) {
+                        // Limit the whole tool to stay within selected pocket bounds: inset pocket boundary by tool radius
+                        expandedArea = POLY.offset([ targetArea ], -toolRadius, { z: targetZ, ...offopt });
+                    } else {
+                        // Expand selected area by tool radius to allow tool center to extend into open air boundaries
+                        expandedArea = POLY.offset([ targetArea ], toolRadius, { z: targetZ, ...offopt });
+
+                        if (op.limitPart && shadowBaseOuter && shadowBaseOuter.length) {
+                            // Limit tool to stay within part bounds: trim to outer part footprint (shadowBaseOuter) inset by tool radius
+                            let partLimit = POLY.offset(shadowBaseOuter.map(p => p.clone(true)), -toolRadius, { z: targetZ, ...offopt });
+                            expandedArea = POLY.trimTo(expandedArea, partLimit) || [];
+                        }
+                    }
+
+                    // When op.ignore is set, bypass shadow clipping entirely
+                    let shadow = (op.ignore) ? [] : await shadowAt(targetZ + 0.01);
+                    if (op.omitthru && shadow.length) {
+                        shadow = omitMatching(shadow, thruHoles);
+                    }
+
+                    // Subtract solid part wall obstacles (offset by tool radius) from clearable area
+                    let clip = [];
+                    let wallObstacles = shadow && shadow.length ?
+                        POLY.offset(shadow, toolRadius, { z: targetZ, ...offopt }) : [];
+                    if (wallObstacles.length) {
+                        POLY.subtract(expandedArea, wallObstacles, clip, undefined, undefined, 0);
+                    } else {
+                        clip = expandedArea;
+                    }
+
+                    POLY.setZ(clip, targetZ);
+                    return clip;
+                }
+
+                // Identify the z-plane of the pocket (maximum Z height of points in the pocket polygon)
+                let pocketZ = area.maxZ();
+
+                /**
+                 * pocketBottomArea: Pre-computed milling boundary calculated at pocketZ (the pocket floor/bottom depth).
+                 * When clipToBottomProfile is enabled (e.g. for pocket ops), this bounding area ensures that slices at higher
+                 * Z planes (z > pocketZ) are strictly constrained/trimmed to the footprint of the target pocket feature,
+                 * preventing toolpaths from expanding into unrelated open-air regions above surrounding geometry.
+                 */
+                let pocketBottomArea = clipToBottomProfile ? await computeAreaToBeMachined(area, pocketZ) : undefined;
 
                 outer: for (;;)
                 for (let z of zs) {
@@ -195,26 +353,29 @@ class OpArea extends CamOp {
                     if (op.omitthru) {
                         shadow = omitMatching(shadow, thruHoles);
                     }
-                    // progressive offset of polygons inside area clipped to the shadow
                     let outs = [];
-                    let clip = [];
-                    let firstOff = -(toolDiam / 2 + (op.leave_xy ?? 0));
-                    // remove shadow from area
-                    if (op.ignore) {
-                        clip = [ area ];
-                    } else {
-                        POLY.subtract([ area ], shadow, clip, undefined, undefined, 0);
+                    let targetZ = z - zMov;
+
+                    // Compute clipped area-to-be-machined at current slice Z height
+                    let clip = await computeAreaToBeMachined(area, targetZ);
+
+                    // When clipToBottomProfile is enabled (pocket ops), restrict the slice's clearable area to pocketBottomArea.
+                    // This constrains machining at higher Z levels to the footprint of the pocket feature floor.
+                    if (clipToBottomProfile && pocketBottomArea && pocketBottomArea.length && clip && clip.length) {
+                        let pocketBottomAtZ = pocketBottomArea.map(p => p.clone(true));
+                        POLY.setZ(pocketBottomAtZ, targetZ);
+                        clip = POLY.trimTo(clip, pocketBottomAtZ) || [];
+                        POLY.setZ(clip, targetZ);
                     }
+
                     if (op.clearing === 'linear') {
                         let perimeter = outs;
-                        POLY.offset(clip, [ firstOff ], {
-                            count: 1, outs: perimeter, flat: true, z: z - zMov, ...offopt
-                        });
+                        perimeter.push(...clip);
                         if (!op.walls && perimeter.length) {
                             let fillArea = [],
                                 fillGap = Math.max(linearClearWallGap, toolDiam * linearClearWallGapToolFactor);
                             POLY.offset(perimeter, [ -fillGap ], {
-                                count: 1, outs: fillArea, flat: true, z: z - zMov, ...offopt
+                                count: 1, outs: fillArea, flat: true, z: targetZ, ...offopt
                             });
                             let fill = linearClear(fillArea, toolOver, toolDiam);
                             let linearClearRoute = {
@@ -227,19 +388,24 @@ class OpArea extends CamOp {
                             outs.push(...fill);
                         }
                     } else {
-                        //generate offsets to use
-                        let offsets = [ firstOff ];
-                        //if we need a finish cut, add it
+                        // The clip polygon represents the outermost safe tool-center boundary.
+                        // Add initial boundary pass to output.
+                        outs.push(...clip);
+
+                        // Generate inward concentric offsets using stepover
+                        let offsets = [];
                         let finish_cut = op.finish_cut ?? 0;
-                        if (finish_cut != 0) { //todo: this should check for camInnerFirst and warn if it is not true
+                        if (finish_cut != 0) {
                             offsets.push(-finish_cut);
                         }
-                        //everything else uses the tool stepover
                         offsets.push(-toolOver);
-                        //actually offset the walls inwards
-                        POLY.offset(clip, offsets, {
-                            count: op.walls ? 1 : (op.steps ?? 999), outs, flat: true, z: z - zMov, ...offopt
-                        });
+
+                        // Offset inwards from the safe boundary
+                        if (clip.length) {
+                            POLY.offset(clip, offsets, {
+                                count: op.walls ? 0 : (op.steps ?? 999), outs, flat: true, z: targetZ, ...offopt
+                            });
+                        }
                     }
                     // if we see no offsets, re-check the mesh bottom Z then exit
                     if (outs.length === 0) {
