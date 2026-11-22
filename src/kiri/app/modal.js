@@ -10,6 +10,7 @@ class ModalControl {
     #onShow;
     #onHide;
     #showing;
+    #guard;
     #initialized = false;
 
     /**
@@ -51,10 +52,22 @@ class ModalControl {
     }
 
     /**
+     * Register a guard consulted before the modal is hidden. Return false to
+     * block the hide -- eg. to prompt first, then call hide(true) to proceed.
+     * Cleared whenever a modal is shown or hidden.
+     * @param {function} fn - Returns false to block the hide
+     */
+    setGuard(fn) {
+        modal.#guard = fn;
+    }
+
+    /**
      * Show a specific modal with animation
      * @param {string} which - Name of the modal to show
      */
     show(which) {
+        modal.#guard = undefined;
+
         let mod = modal.#ui.modal,
             style = mod.style,
             visible = modal.visible(),
@@ -91,12 +104,18 @@ class ModalControl {
 
     /**
      * Hide the modal with animation
+     * @param {boolean} [force] - Bypass any registered guard
      */
-    hide() {
+    hide(force) {
+        if (!force && modal.#guard && modal.#guard() === false) {
+            return;
+        }
+
         if (!modal.visible()) {
             return;
         }
 
+        modal.#guard = undefined;
         modal.#showing = undefined;
 
         let mod = modal.#ui.modal,

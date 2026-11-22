@@ -429,7 +429,8 @@ function setup_keybd_nav() {
     makePanelDraggable('panel-scale', 'panel-scale-head', 'win.scale');
 
     // enable modal hiding
-    $('mod-x').onclick = api.modal.hide;
+    // wrapped so the click event is not passed as the hide() force flag
+    $('mod-x').onclick = () => api.modal.hide();
 
     // dismiss gdpr alert
     $('gotit').onclick = () => {
