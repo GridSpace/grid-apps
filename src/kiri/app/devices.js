@@ -48,8 +48,8 @@ function _showDevices() {
     api.modal.show('setup');
 }
 
-function updateDeviceList() {
-    renderDevices(getModeDevices());
+function updateDeviceList(preserveDevice = false) {
+    renderDevices(getModeDevices(), preserveDevice);
 }
 
 function updateDeviceName(newname) {
@@ -301,8 +301,9 @@ function setDeviceCode(code, devicename) {
  * Builds device list dropdown, sets up event handlers for save/add/delete/rename/export,
  * and separates local "My Devices" from "Stock Devices" in the UI.
  * @param {string[]} devices - Array of stock device names for current mode
+ * @param {boolean} preserveDevice - Keep the active cached device instead of selecting it again
  */
-function renderDevices(devices) {
+function renderDevices(devices, preserveDevice = false) {
     let selected = api.device.get() || devices[0],
         devs = setconf.get().devices;
 
@@ -370,7 +371,9 @@ function renderDevices(devices) {
 
     updateDeviceSelector(devices, api.ui.modeDevice, selected);
     updateDeviceSelector(devices, $('dev-list'), selected);
-    selectDevice(selected);
+    if (!preserveDevice) {
+        selectDevice(selected);
+    }
 
     // update related settings list
     let curr = settings.get();
