@@ -23,7 +23,7 @@
     ],
     "gcodeSpindle": [
         "M3 S{spindle}",
-        "G4 P4000"
+        "G4 P4"
     ],
     "gcodeChange": [
         "M6 T{tool} ; change tool to '{tool_name}'"
