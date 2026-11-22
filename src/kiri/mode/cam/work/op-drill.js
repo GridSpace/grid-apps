@@ -32,12 +32,31 @@ class OpDrill extends CamOp {
             }
 
             let slice = newSlice(0);
-            if (op.mark) {
-                // replace depth with single down peck
-                drill.depth = op.down
+
+            // Determine starting Z top height:
+            // - If 'fromTop' (from stock top) is enabled: start at stock top (settings.stock.z)
+            // - If 'fromTop' is disabled: start at part top (widget.track.top)
+            let stockZ = settings.stock?.z;
+            let partTop = widget?.track?.top;
+            let zTop = drill.z;
+
+            if (op.fromTop && stockZ && stockZ > drill.z) {
+                // Start from stock top when fromTop is selected
+                zTop = stockZ;
+            } else if (!op.fromTop && partTop !== undefined && partTop > drill.z) {
+                // Start from part top when fromTop is deselected
+                zTop = partTop;
             }
 
-            drill.zBottom = drill.z - drill.depth;
+            // Extend plunge depth if starting above the hole's surface Z so plunge reaches target hole bottom
+            let depth = (zTop > drill.z) ? (drill.depth + (zTop - drill.z)) : drill.depth;
+
+            if (op.mark) {
+                // replace depth with single down peck
+                depth = op.down;
+            }
+
+            drill.zBottom = zTop - depth;
 
             // honor zBottom when set
             if (zBottom) drill.zBottom = Math.max(zBottom, drill.zBottom);
@@ -48,7 +67,7 @@ class OpDrill extends CamOp {
             }
 
             const poly = newPolygon()
-            poly.points.push(newPoint(drill.x, drill.y, drill.z))
+            poly.points.push(newPoint(drill.x, drill.y, zTop))
             poly.points.push(newPoint(drill.x, drill.y, drill.zBottom))
 
             slice.camTrace = { tool: op.tool, rate: op.feed, plunge: op.rate };
