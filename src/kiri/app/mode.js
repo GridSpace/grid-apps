@@ -60,6 +60,7 @@ function setMode(mode, lock, then) {
         mode = 'FDM';
     }
     const current = settings.get();
+    const hasCachedDevice = Boolean(current.cdev[mode]?.deviceName);
     // change mode constants
     current.mode = mode;
     MODE = MODES[mode];
@@ -87,6 +88,8 @@ function setMode(mode, lock, then) {
     api.uc.setMode(MODE);
     // sanitize and persist settings
     api.conf.load();
+    // Refresh the selectors without replacing an already cached device.
+    api.devices.refresh(hasCachedDevice);
     api.conf.save();
     // trigger settings event
     api.event.emit('settings', settings.get());
