@@ -190,7 +190,7 @@ export function fdm_export(print, online, ondone, ondebug) {
         rloops.push({
             start: layers[0].slice.index,
             end: Infinity,
-            iter: oloops - 1
+            iter: oloops
         });
     } else if (oloops < 0) {
         // if oloops negative, loop entire part to infinity
@@ -207,7 +207,8 @@ export function fdm_export(print, online, ondone, ondebug) {
                 rloops.push({
                     start: range.lo,
                     end: range.hi,
-                    iter: range.fields.outputLoops - 1
+                    // The UI uses -1 for an indefinite loop; M808 uses L0.
+                    iter: Math.max(0, range.fields.outputLoops)
                 });
             }
         }
