@@ -319,8 +319,8 @@ class OpArea extends CamOp {
                         }
                         // todo: move this out of the zs loop
                         let stepping = tr_type === 'inside' ?
-                            ( tr_over ? -tr_over : [ -toolDiam / 2, -toolOver ] ) :
-                            ( tr_over ? tr_over : [ toolDiam / 2, toolOver ] );
+                            ( tr_over ? -tr_over : [ -toolDiam / 2 - (op.leave_xy ?? 0), -toolOver ] ) :
+                            ( tr_over ? tr_over : [ toolDiam / 2 + (op.leave_xy ?? 0), toolOver ] );
                         POLY.offset(offit, stepping, {
                             count: op.steps ?? 1, outs, flat: true, z, minArea: 0, open: true
                         });

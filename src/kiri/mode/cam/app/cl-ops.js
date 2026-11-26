@@ -361,6 +361,7 @@ export function createPopOps() {
         down: 'camOutlineDown',
         rate: 'camOutlineSpeed',
         plunge: 'camOutlinePlunge',
+        leave: 'camOutlineStock',
         dogbones: 'camOutlineDogbone',
         revbones: 'camOutlineRevbone',
         omitthru: 'camOutlineOmitThru',
@@ -377,6 +378,8 @@ export function createPopOps() {
         down: UC.newInput(LANG.cc_sdwn_s, { title: LANG.cc_sdwn_l, convert: toFloat, units }),
         step: UC.newInput(LANG.cc_sovr_s, { title: LANG.cc_sovr_l, convert: toFloat, bound: UC.bound(0.01, 1.0), show: () => env.popOp.outline.rec.wide }),
         steps: UC.newInput(LANG.cc_sovc_s, { title: LANG.cc_sovc_l, convert: toInt, bound: UC.bound(1, 500), show: () => env.popOp.outline.rec.wide }),
+        // Leave stock option (XY stock offset) for outline operation
+        leave: UC.newInput(LANG.cr_lsto_s, { title: LANG.cr_lsto_l, convert: toFloat, units }),
         sep: UC.newBlank({ class: "pop-sep" }),
         inside: UC.newBoolean(LANG.co_olin_s, undefined, { title: LANG.co_olin_l, show: (op) => { return !op.inputs.outside.checked } }),
         outside: UC.newBoolean(LANG.co_olot_s, undefined, { title: LANG.co_olot_l, show: (op) => { return !op.inputs.inside.checked } }),
