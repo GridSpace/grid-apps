@@ -489,6 +489,8 @@ export const conf = {
                 camDrillSpindle: 1000,
                 camDrillThru: 5,
                 camDrillTool: 1006,
+                camDrillZBottom: 0,
+                camDrillZTop: 0,
                 camEaseAngle: 10,
                 camEaseDown: false,
                 camExpertFast: false,

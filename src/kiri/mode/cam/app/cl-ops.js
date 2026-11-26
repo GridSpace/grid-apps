@@ -589,6 +589,8 @@ export function createPopOps() {
         precision: 'camDrillPrecision',
         thru: 'camDrillThru',
         fromTop: 'camDrillFromStockTop',
+        ov_topz: 'camDrillZTop',
+        ov_botz: 'camDrillZBottom',
     }).inputs = {
         tool: UC.newSelect(LANG.cc_tool, {}, "tools"),
         sep: UC.newBlank({ class: "pop-sep" }),
@@ -602,6 +604,10 @@ export function createPopOps() {
         sep: UC.newBlank({ class: "pop-sep" }),
         thru: UC.newInput(LANG.cd_dtru_s, { title: LANG.cd_dtru_l, convert: toFloat, units, show: () => !env.poppedRec.mark }),
         precision: UC.newInput(LANG.cd_prcn_s, { title: LANG.cd_prcn_l, convert: toFloat, units, show: () => !env.poppedRec.mark }),
+        exp: UC.newExpand("top & bottom", ov_hover),
+        ov_topz: UC.newInput(LANG.ou_ztop_s, ov_topz),
+        ov_botz: UC.newInput(LANG.ou_zbot_s, ov_botz),
+        exp_end: UC.endExpand(),
         sep: UC.newBlank({ class: "pop-sep", show: () => !env.poppedRec.mark }),
         actions: UC.newRow([
             UC.newButton(LANG.select, () => selectHoles(true), { title: LANG.cd_seli_l }),

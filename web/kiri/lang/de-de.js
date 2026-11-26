@@ -637,7 +637,7 @@ self.lang['de-de'] = {
     cd_mark_s:      "Markieren",
     cd_mark_l:      ["Nur Löcher markieren, nicht ausbohren","Zustellungs-Einstellung wird verwendet","um zu bestimmen wie tief zu markieren"],
     cd_ftop_s:      "Von Rohteil-Oberseite",
-    cd_ftop_l:      ["Von Rohteil-Oberseite bohren","statt von Teil-Oberfläche"],
+    cd_ftop_l:      ["Von Rohteil-Oberseite bohren","statt von Teil-Oberfläche","(ignoriert wenn explizites Z oben gesetzt ist)"],
     cd_prcn_s:      "Präzision",
     cd_prcn_l:      ["Distanz zwischen Slices","um nach Löchern zu suchen","in Arbeitsbereich-Einheiten","niedriger ist langsamer und","verwendet mehr Speicher","0 = nur Ebenen"],
 
@@ -827,7 +827,7 @@ self.lang['de-de'] = {
     ou_ztof_s:      "Z-Offset",
     ou_ztof_l:      ["Z-Anker offsetieren","in Arbeitsbereich-Einheiten"],
     ou_ztop_s:      "Z oben",
-    ou_ztop_l:      ["Offset von Rohteil-Unterseite","um Start der Schnitttiefe zu setzen","in Arbeitsbereich-Einheiten","* Bohren/Kontur ignorieren dies *"],
+    ou_ztop_l:      ["Offset von Rohteil-Unterseite","um Start der Schnitttiefe zu setzen","in Arbeitsbereich-Einheiten","* Kontur ignoriert dies *"],
     ou_zbot_s:      "Z unten",
     ou_zbot_l:      ["Offset von Rohteil-Unterseite","um Schnitttiefe zu begrenzen","in Arbeitsbereich-Einheiten"],
     ou_zclr_s:      "Z-Freiraum",

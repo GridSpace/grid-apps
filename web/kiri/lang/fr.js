@@ -637,7 +637,7 @@ self.lang['fr-fr'] = {
     cd_mark_s:      "marquage",
     cd_mark_l:      ["uniquement marquer les trous, ne pas percer","le réglage de pas de descente est utilisé","pour déterminer la profondeur de marquage"],
     cd_ftop_s:      "depuis le dessus du brut",
-    cd_ftop_l:      ["percer depuis le dessus du brut","au lieu de la surface de la pièce"],
+    cd_ftop_l:      ["percer depuis le dessus du brut","au lieu de la surface de la pièce","(ignoré si un z haut explicite est défini)"],
     cd_prcn_s:      "précision",
     cd_prcn_l:      ["distance entre les tranches","pour rechercher les trous","en unités d'espace de travail","plus bas est plus lent et","utilise plus de mémoire","0 = uniquement les plats"],
 
@@ -827,7 +827,7 @@ self.lang['fr-fr'] = {
     ou_ztof_s:      "décalage z",
     ou_ztof_l:      ["décaler l'ancrage z","en unités d'espace de travail"],
     ou_ztop_s:      "z haut",
-    ou_ztop_l:      ["décalage depuis le bas du brut","pour définir le début de la profondeur de coupe","en unités d'espace de travail","* le perçage/contournage ignore ceci *"],
+    ou_ztop_l:      ["décalage depuis le bas du brut","pour définir le début de la profondeur de coupe","en unités d'espace de travail","* le contournage ignore ceci *"],
     ou_zbot_s:      "z bas",
     ou_zbot_l:      ["décalage depuis le bas du brut","pour limiter la profondeur de coupe","en unités d'espace de travail"],
     ou_zclr_s:      "dégagement z",

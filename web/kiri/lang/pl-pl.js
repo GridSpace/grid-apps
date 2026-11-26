@@ -636,7 +636,7 @@ self.lang['pl-pl'] = {
     cd_mark_s:      "znakowanie",
     cd_mark_l:      ["tylko oznacz otwory, nie wierć","ustawienie kroku w dół jest używane","do określenia głębokości znakowania"],
     cd_ftop_s:      "od góry materiału",
-    cd_ftop_l:      ["wierć od góry materiału","zamiast powierzchni części"],
+    cd_ftop_l:      ["wierć od góry materiału","zamiast powierzchni części","(ignorowane jeśli ustawiono jawne z góra)"],
     cd_prcn_s:      "precyzja",
     cd_prcn_l:      ["odległość między plastrami","do wyszukiwania otworów","w jednostkach przestrzeni roboczej","niższa jest wolniejsza i","używa więcej pamięci","0 = tylko płaskie"],
 
@@ -826,7 +826,7 @@ self.lang['pl-pl'] = {
     ou_ztof_s:      "przesunięcie z",
     ou_ztof_l:      ["przesuń kotwicę z","w jednostkach przestrzeni roboczej"],
     ou_ztop_s:      "z góra",
-    ou_ztop_l:      ["przesunięcie od dna materiału","aby ustawić początek głębokości cięcia","w jednostkach przestrzeni roboczej","* wiercenie/kontur to ignoruje *"],
+    ou_ztop_l:      ["przesunięcie od dna materiału","aby ustawić początek głębokości cięcia","w jednostkach przestrzeni roboczej","* kontur to ignoruje *"],
     ou_zbot_s:      "z dół",
     ou_zbot_l:      ["przesunięcie od dna materiału","aby ograniczyć głębokość cięcia","w jednostkach przestrzeni roboczej"],
     ou_zclr_s:      "prześwit z",
