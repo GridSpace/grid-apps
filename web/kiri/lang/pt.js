@@ -619,6 +619,10 @@ self.lang['pt-pt'] = {
     cp_engr_l:      ["configura uma única passagem em torno do perímetro da área seleccionada. também útil para marcação a laser 3D"],
     cp_outl_s:      "apenas contorno",
     cp_outl_l:      ["ignorar vazios e características interiores"],
+    cp_lmpt_s:      "limitar aos limites da peça",
+    cp_lmpt_l:      ["Limitar o movimento da ferramenta ao limite da peça. Isto pode fazer com que áreas estreitas perto do bordo fiquem por cortar"],
+    cp_lmpk_s:      "limitar aos limites da bolsa",
+    cp_lmpk_l:      ["Limitar o movimento da ferramenta aos limites da bolsa seleccionada. Isto pode fazer com que áreas estreitas fiquem por cortar"],
 
     // CNC DRILLING
     cd_menu:        "furar",

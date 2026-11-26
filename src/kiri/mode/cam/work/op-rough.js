@@ -27,7 +27,7 @@ class OpRough extends CamOp {
             shadowBase = [ newPolygon().centerRectangle(stock.center, stock.x, stock.y) ];
         }
 
-        let areas = POLY.flatten(POLY.expand(shadowBase, tool.fluteDiameter() / 2 - 0.001));
+        let areas = POLY.flatten(shadowBase.map(p => p.clone(true)));
         let ops_list = this.ops_list = [ ];
 
         ops_list.push(new OpArea(state, {
@@ -50,49 +50,90 @@ class OpRough extends CamOp {
             ov_botz: op.ov_botz,
             ov_topz: op.ov_topz,
             rotated: true,
+            // when true, implicitly limit area clearing to part boundary when inside only (op.inside) is checked
+            limitPart: op.inside || op.limitPart,
             areas: { [widget.id]: areas.map(p => p.toArray()) },
             surfaces: {}
         }));
 
         if (op.flats) {
+            // Detect z-heights where flat horizontal faces exist on the model
             let slicer = newSlicer({ zflatup: true });
-            let flats = Object.entries(slicer.zFlat)
+            let flatZs = Object.entries(slicer.zFlat)
                 .filter(row => row[1] > 1)
                 .map(row => parseFloat(row[0]))
                 .sort((a,b) => b-a);
-            ops_list.push(new OpArea(state, {
-                rename: op.rename ?? "flats",
-                spindle: op.spindle,
-                direction: op.direction,
-                tool: op.tool,
-                rate: op.rate,
-                plunge: op.plunge,
-                clearing: op.clear,
-                mode: 'clear',
-                over: op.step,
-                down: op.down,
-                expand: 0,
-                smooth: 0,
-                outline: true,
-                omitthru: op.omitthru,
-                leave_xy: op.leave,
-                leave_z: op.leavez,
-                ov_botz: op.ov_botz,
-                ov_topz: op.ov_topz,
-                rotated: true,
-                areas: { [widget.id]: areas.map(p => p.toArray()) },
-                surfaces: {},
-                flats,
-                flatOff: 0.01
-            }));
+
+            if (flatZs.length) {
+                let flatOff = 0.01;
+                // Slice model just above (+flatOff) and below (-flatOff) detected flat Z heights
+                let slicesAbove = await slicer.slice(flatZs.map(z => z + flatOff), { flatoff: 0 });
+                let slicesBelow = await slicer.slice(flatZs.map(z => z - flatOff), { flatoff: 0 });
+
+                // Helper to retrieve slice tops matching a target Z height within numerical tolerance
+                function findSliceTops(slices, targetZ, tolerance = 0.001) {
+                    let match = slices.find(s => Math.abs(s.z - targetZ) < tolerance);
+                    return match ? (match.tops || []) : [];
+                }
+
+                for (let z of flatZs) {
+                    let topsAbove = findSliceTops(slicesAbove, z + flatOff);
+                    let topsBelow = findSliceTops(slicesBelow, z - flatOff);
+
+                    // If slicing below flat height yields no geometry (e.g. lowest Z pocket at the bottom of the part),
+                    // fall back to using the part shadow at height z as the base area below the flat height.
+                    if (!topsBelow.length) {
+                        topsBelow = await state.shadowAt(z);
+                        if (!topsBelow || !topsBelow.length) {
+                            topsBelow = shadowBase;
+                        }
+                    }
+
+                    // Extract flat face areas at Z height: region present below flat height but absent above
+                    // Preserve nested polygon topology (topsBelow, topsAbove) so Clipper subtracts solid regions
+                    let flatAreas = [];
+                    POLY.subtract(topsBelow, topsAbove, flatAreas, null, z, 0.01);
+                    flatAreas = POLY.flatten(flatAreas).filter(p => p && p.area() > 0.01);
+
+                    // Clear only the detected flat face pocket regions for this Z height
+                    if (flatAreas.length) {
+                        POLY.setZ(flatAreas, z);
+                        ops_list.push(new OpArea(state, {
+                            rename: op.rename ?? "flats",
+                            spindle: op.spindle,
+                            direction: op.direction,
+                            tool: op.tool,
+                            rate: op.rate,
+                            plunge: op.plunge,
+                            clearing: op.clear,
+                            mode: 'clear',
+                            over: op.step,
+                            down: op.down,
+                            expand: 0,
+                            smooth: 0,
+                            outline: true,
+                            omitthru: op.omitthru,
+                            leave_xy: op.leave,
+                            leave_z: op.leavez,
+                            ov_botz: op.ov_botz,
+                            ov_topz: op.ov_topz,
+                            rotated: true,
+                            // when true, implicitly limit flats area clearing to part boundary when inside only (op.inside) is checked
+                            limitPart: op.inside || op.limitPart,
+                            areas: { [widget.id]: flatAreas.map(p => p.toArray()) },
+                            surfaces: {},
+                            flats: [ z ],
+                            flatOff
+                        }));
+                    }
+                }
+            }
         }
 
         // outside only if we're not clearing all of stock
         if (cutOutside && !op.all) {
-            if (op.leave) {
-                // recompute area with offset when provided
-                areas = POLY.flatten(POLY.expand(shadowBase, tool.fluteDiameter() / 2 - 0.001 + op.leave));
-            }
+            // Cutout trace operation requires area expanded by tool radius (plus leave offset if set)
+            let cutoutAreas = POLY.flatten(POLY.expand(shadowBase, tool.fluteDiameter() / 2 - 0.001 + (op.leave ?? 0)));
             ops_list.push(new OpArea(state, {
                 rename: op.rename ?? "cutout",
                 spindle: op.spindle,
@@ -109,7 +150,7 @@ class OpRough extends CamOp {
                 ov_botz: op.ov_botz,
                 ov_topz: op.ov_topz,
                 rotated: true,
-                areas: { [widget.id]: areas.map(p => p.toArray()) },
+                areas: { [widget.id]: cutoutAreas.map(p => p.toArray()) },
                 surfaces: {},
                 thru: true
             }));

@@ -618,6 +618,10 @@ self.lang['pl-pl'] = {
     cp_engr_l:      ["ustawia pojedyncze przejście wokół obwodu wybranego obszaru. również przydatne do znakowania laserowego 3D"],
     cp_outl_s:      "tylko kontur",
     cp_outl_l:      ["ignoruj wewnętrzne puste przestrzenie i cechy"],
+    cp_lmpt_s:      "ogranicz do granic części",
+    cp_lmpt_l:      ["Ogranicz ruch narzędzia do granicy części. Może to spowodować pozostawienie nieprzyciętych wąskich obszarów przy krawędzi"],
+    cp_lmpk_s:      "ogranicz do granic kieszeni",
+    cp_lmpk_l:      ["Ogranicz ruch narzędzia do granicy wybranej kieszeni. Może to spowodować pozostawienie nieprzyciętych wąskich obszarów"],
 
     // CNC DRILLING
     cd_menu:        "wiercenie",
