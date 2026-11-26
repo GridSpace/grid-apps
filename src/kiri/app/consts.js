@@ -52,6 +52,9 @@ const LISTS = {
         { name: "line" }
     ],
     animesh: [
+        { name: "10" },
+        { name: "25" },
+        { name: "50" },
         { name: "100" },
         { name: "200" },
         { name: "300" },
